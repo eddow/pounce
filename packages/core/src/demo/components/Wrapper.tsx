@@ -2,7 +2,7 @@
  * Wrapper Component to demonstrate children usage
  */
 
-import { compose } from '../lib'
+import { compose } from '../../lib'
 import './Wrapper.scss'
 
 export default function WrapperComponent(props: {

@@ -15,8 +15,7 @@ export type InterceptorMiddleware = (
 ) => Promise<PounceResponse>
 
 import { addContextInterceptor, getContext, trackSSRPromise } from './context.js'
-import type { RouteDefinition } from '../router/defs.js'
-import { z } from 'zod'
+import type { AssertSchema, RouteDefinition } from '../router/defs.js'
 
 interface InterceptorEntry {
 	pattern: string | RegExp
@@ -413,7 +412,7 @@ export interface ApiClient {
 		options?: { timeout?: number; retries?: number; retryDelay?: number }
 	): ApiClientInstance<P>
 
-	<P extends string, Q extends z.ZodType>(
+	<P extends string, Q extends AssertSchema>(
 		routeDef: RouteDefinition<P, Q>,
 		params: any,
 		options?: { timeout?: number; retries?: number; retryDelay?: number }

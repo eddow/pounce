@@ -28,7 +28,7 @@ import { Icon } from '../components/icon'
 import { Container, Grid, Inline, Stack } from '../components/layout'
 import { Badge, Chip, Pill } from '../components/status'
 import { Heading, Link, Text } from '../components/typography'
-import { css, sass } from '../lib/css'
+import { css, sass } from '@pounce/toolbox/entry-dom'
 
 // Test the css tag function
 css`.css-tag-test { 

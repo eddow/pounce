@@ -1,4 +1,4 @@
-import { createApiClientFactory, type RequestExecutor, type ApiClient, type ApiClientInstance } from '../api/base-client.js'
+import { createApiClientFactory, type RequestExecutor } from '../api/base-client.js'
 import { ApiError } from '../api/core.js'
 
 const fetchExecutor: RequestExecutor = async (req: Request, timeout: number) => {

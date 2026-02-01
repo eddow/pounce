@@ -1,30 +1,13 @@
-import { effect, getActiveEffect, reactiveOptions } from 'mutts'
-import { type ComponentInfo, Stack } from './debug-helpers'
+import { effect, reactiveOptions } from 'mutts'
+import { EffectOptions } from 'mutts/reactive/types'
 export * from './debug-helpers'
-
-export function ownedBy<T extends Function>(owner: ComponentInfo | undefined, fn: T): T {
-	return (owner ? function(this: any, ...args: any[]) {
-		componentStack.enter(owner)
-		try {
-			return fn.apply(this, args)
-		} finally {
-			componentStack.exit()
-		}
-	} : fn) as T
-}
-
-export const componentStack = new Stack<ComponentInfo>()
 
 export function nf<T extends Function>(name: string, fn: T): T {
 	if (!fn.name) Object.defineProperty(fn, 'name', { value: name })
 	return fn
 }
-export function namedEffect(name: string, fn: () => void): () => void {
-	if (!getActiveEffect()) {
-		console.warn(`TL;DR: Define reactive behaviors in components, not in the root code.
-Reactive behavior should only occur within effects.`)
-	}
-	return effect(nf(name, fn))
+export function namedEffect(name: string, fn: () => void, options?: EffectOptions): () => void {
+	return effect(nf(name, fn), options)
 }
 export class AssertionError extends Error {
 	constructor(message: string) {

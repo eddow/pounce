@@ -1,5 +1,5 @@
 import { reactive } from 'mutts'
-import { api } from '@pounce/board'
+import { api, A } from '@pounce/board'
 import { userRoute } from './def'
 
 export default function UserDetail({ params }: { params: { id: string } }) {

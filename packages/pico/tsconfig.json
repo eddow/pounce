@@ -51,7 +51,7 @@
 		"src/directives/**/*",
 		"src/lib/**/*",
 		"src/types/**/*"
-	],
+, "../toolbox/src/router/router.test.ts"	],
 	"exclude": [
 		"src/routes/**/*",
 		"src/main.tsx",

@@ -4,7 +4,7 @@
 
 import { effect, memoize } from 'mutts'
 import './Todo.scss'
-import { array, compose } from '../lib/utils'
+import { array, compose } from '../../lib/utils'
 
 //import { Scope } from '../lib'
 

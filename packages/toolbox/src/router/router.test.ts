@@ -1,4 +1,4 @@
-import { buildRoute, matchRoute, routeMatcher } from './router'
+import { buildRoute, matchRoute, routeMatcher } from '../../../pico/src/lib/router'
 
 describe('matchRoute', () => {
 	test('matches literal routes and extracts path parameters', () => {

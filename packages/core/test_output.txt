@@ -1,0 +1,71 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/home/fmdm/dev/ownk/pounce/packages/core[39m
+
+[90mstdout[2m | tests/unit/debug.spec.tsx[2m > [22m[2mComponent association debug tools[2m > [22m[2mshould associate DOM elements with their owner component
+[22m[39mprocessing Parent a47714f5-2333-412e-b348-4dd7bc74c72d
+processing Child ad823da6-e9aa-4400-bede-181a3a987ab8
+reducing ad823da6-e9aa-4400-bede-181a3a987ab8
+reducing a47714f5-2333-412e-b348-4dd7bc74c72d
+
+[90mstdout[2m | tests/unit/debug.spec.tsx[2m > [22m[2mComponent association debug tools[2m > [22m[2mshould trace hierarchy back to root
+[22m[39mprocessing Parent 1e6b9ad2-8657-42a1-97cc-7ef7ceff1649
+processing Child 65a07458-1fe6-4812-be47-f0e88d557777
+processing GrandChild 3703189e-62b4-457b-85af-d99fd6fadd01
+reducing 3703189e-62b4-457b-85af-d99fd6fadd01
+reducing 65a07458-1fe6-4812-be47-f0e88d557777
+reducing 1e6b9ad2-8657-42a1-97cc-7ef7ceff1649
+
+[90mstdout[2m | tests/unit/debug.spec.tsx[2m > [22m[2mComponent association debug tools[2m > [22m[2mshould maintain association in reactive updates
+[22m[39mprocessing Conditional df03ce7d-a44a-4ef9-bcc3-d0465ceacbdd
+reducing df03ce7d-a44a-4ef9-bcc3-d0465ceacbdd
+
+[90mstdout[2m | tests/unit/debug.spec.tsx[2m > [22m[2mComponent association debug tools[2m > [22m[2mshould work with projections
+[22m[39mprocessing ListComponent 2b3ceff1-5c57-4852-9c35-425c847ac48b
+processing for 251356ce-1629-4573-8750-89ee6010a9c0
+reducing 251356ce-1629-4573-8750-89ee6010a9c0
+reducing 2b3ceff1-5c57-4852-9c35-425c847ac48b
+reducing 251356ce-1629-4573-8750-89ee6010a9c0
+
+[90mstderr[2m | tests/unit/debug.spec.tsx[2m > [22m[2mComponent association debug tools[2m > [22m[2mshould work with projections
+[22m[39mEffects are broken
+
+[90mstdout[2m | tests/unit/debug.spec.tsx[2m > [22m[2mComponent association debug tools[2m > [22m[2mshould track root components
+[22m[39mprocessing Root 60f2b778-81df-4380-b2fd-9632031eb5d1
+reducing 60f2b778-81df-4380-b2fd-9632031eb5d1
+
+ [31m❯[39m tests/unit/debug.spec.tsx [2m([22m[2m5 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 39[2mms[22m[39m
+     [32m✓[39m should associate DOM elements with their owner component[32m 12[2mms[22m[39m
+     [32m✓[39m should trace hierarchy back to root[32m 5[2mms[22m[39m
+     [32m✓[39m should maintain association in reactive updates[32m 4[2mms[22m[39m
+[31m     [31m×[31m should work with projections[39m[32m 15[2mms[22m[39m
+     [32m✓[39m should track root components[32m 1[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/unit/debug.spec.tsx[2m > [22mComponent association debug tools[2m > [22mshould work with projections
+[31m[1mDynamicRenderingError[22m: Renderer returned no content[39m
+[36m [2m❯[22m render src/lib/renderer.ts:[2m572:21[22m[39m
+    [90m570| [39m  }
+    [90m571| [39m })
+    [90m572| [39m if(!partial) throw new DynamicRenderingError('Renderer returned no co…
+    [90m   | [39m                    [31m^[39m
+    [90m573| [39m // getTarget is not an AI hallucination - partial content can change …
+    [90m574| [39m const getTarget = () => (Array.isArray(partial) && partial.length ===…
+[90m [2m❯[22m apply src/lib/renderer.ts:[2m664:38[22m[39m
+[90m [2m❯[22m fn ../../../mutts/src/reactive/project.ts:[2m131:23[22m[39m
+[90m [2m❯[22m fn ../../../mutts/src/reactive/effects.ts:[2m1141:27[22m[39m
+[90m [2m❯[22m effectAggregator.with ../../../mutts/src/zone.ts:[2m25:10[22m[39m
+[90m [2m❯[22m tracked ../../../mutts/src/zone.ts:[2m43:54[22m[39m
+[90m [2m❯[22m nextEffect ../../../mutts/src/reactive/effects.ts:[2m1141:13[22m[39m
+[90m [2m❯[22m executeNext ../../../mutts/src/reactive/effects.ts:[2m909:17[22m[39m
+[90m [2m❯[22m batch ../../../mutts/src/reactive/effects.ts:[2m1019:17[22m[39m
+[90m [2m❯[22m touched ../../../mutts/src/reactive/change.ts:[2m92:8[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m4 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 23:50:20
+[2m   Duration [22m 943ms[2m (transform 503ms, setup 465ms, import 81ms, tests 39ms, environment 279ms)[22m
+

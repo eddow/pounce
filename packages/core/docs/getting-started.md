@@ -53,7 +53,7 @@ Create a file `src/app.tsx`:
 
 ```tsx
 import { reactive } from 'mutts'
-import { bindApp } from './lib/renderer'
+import { bindApp } from '@pounce/core'
 
 // Create reactive state
 const state = reactive({

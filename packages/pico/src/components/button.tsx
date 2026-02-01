@@ -1,5 +1,5 @@
+import { css } from '@pounce/toolbox/entry-dom'
 import { compose } from '@pounce/core'
-import { css } from '../lib/css'
 import { Icon } from './icon'
 import { Variant, variantClass } from './variants'
 
@@ -71,24 +71,24 @@ export const Button = (props: ButtonProps) => {
 			tag: 'button' as const,
 		},
 		props,
-		(state) => ({
+		(s) => ({
 			get iconElement() {
-				return state.icon !== undefined ? (
+				return s.icon !== undefined ? (
 					<span
 						class="pp-button-icon"
-						aria-hidden={typeof state.icon === 'string' ? true : undefined}
+						aria-hidden={typeof s.icon === 'string' ? true : undefined}
 					>
-						{typeof state.icon === 'string' ? <Icon icon={state.icon} size="18px" /> : state.icon}
+						{typeof s.icon === 'string' ? <Icon icon={s.icon} size="18px" /> : s.icon}
 					</span>
 				) : null
 			},
 			get hasLabel() {
 				return (
-					!!state.children && (!Array.isArray(state.children) || state.children.some((e) => !!e))
+					!!s.children && (!Array.isArray(s.children) || s.children.some((e) => !!e))
 				)
 			},
 			get isIconOnly() {
-				return state.icon && !this.hasLabel
+				return s.icon && !this.hasLabel
 			},
 		})
 	)

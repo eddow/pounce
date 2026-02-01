@@ -23,7 +23,7 @@ import { Container, Stack } from '../components/layout'
 import { RadioButton } from '../components/radiobutton'
 import { Toolbar } from '../components/toolbar'
 import { Heading, Text } from '../components/typography'
-import { stored } from '../lib/storage'
+import { stored } from '@pounce/toolbox/entry-dom'
 
 export default () => {
 	const toolbarState = stored({

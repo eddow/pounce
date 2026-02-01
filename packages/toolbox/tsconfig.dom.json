@@ -24,6 +24,8 @@
 	"exclude": [
 		"src/no-dom/**/*",
 		"src/entry-no-dom.ts",
-		"src/router/node-router.ts"
+		"src/router/node-router.ts",
+		"**/*.test.ts",
+		"**/*.test.tsx"
 	]
 }

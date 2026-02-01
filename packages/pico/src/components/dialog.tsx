@@ -1,7 +1,7 @@
 import { effect, reactive } from 'mutts'
 import { bindApp, compose, isElement } from '@pounce/core'
 import { tablerOutlineX } from 'pure-glyf/icons'
-import { css } from '../lib/css'
+import { css } from '@pounce/toolbox/entry-dom'
 import { Icon } from './icon'
 import { Variant, variantClass } from './variants'
 

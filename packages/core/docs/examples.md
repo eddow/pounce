@@ -8,7 +8,7 @@ A simple counter with increment and decrement buttons:
 
 ```tsx
 import { reactive } from 'mutts'
-import { bindApp } from '../lib/renderer'
+import { bindApp } from '@pounce/core'
 
 function Counter() {
   const state = reactive({ count: 0 })
@@ -31,7 +31,7 @@ function Counter() {
   )
 }
 
-bindApp(<Counter />)
+bindApp(() => <Counter />, '#app')
 ```
 
 ## Todo List
@@ -40,8 +40,8 @@ A complete todo list with add, delete, and filter functionality:
 
 ```tsx
 import { reactive, computed } from 'mutts'
-import { bindApp } from '../lib/renderer'
-import { array } from '../lib/utils'
+import { bindApp } from '@pounce/core'
+import { array } from '@pounce/core'
 
 interface Todo {
   id: number
@@ -147,7 +147,7 @@ function TodoApp() {
   )
 }
 
-bindApp(<TodoApp />)
+bindApp(() => <TodoApp />, '#app')
 ```
 
 ## Form with Validation
@@ -156,7 +156,7 @@ A form with real-time validation:
 
 ```tsx
 import { reactive, computed } from 'mutts'
-import { bindApp } from '../lib/renderer'
+import { bindApp } from '@pounce/core'
 
 function FormApp() {
   const state = reactive({
@@ -259,8 +259,7 @@ function FormApp() {
   )
 }
 
-const app = <FormApp />.render()
-bindApp(app)
+bindApp(() => <FormApp />, '#app')
 ```
 
 ## Search with Debounce
@@ -269,7 +268,7 @@ A search input with debounced results:
 
 ```tsx
 import { reactive, computed, watch } from 'mutts'
-import { bindApp } from '../lib/renderer'
+import { bindApp } from '@pounce/core'
 
 function SearchApp() {
   const state = reactive({
@@ -319,8 +318,7 @@ function SearchApp() {
   )
 }
 
-const app = <SearchApp />.render()
-bindApp(app)
+bindApp(() => <SearchApp />, '#app')
 ```
 
 ## Shopping Cart
@@ -329,7 +327,7 @@ A shopping cart with quantity management:
 
 ```tsx
 import { reactive, computed } from 'mutts'
-import { bindApp } from '../lib/renderer'
+import { bindApp } from '@pounce/core'
 
 interface CartItem {
   id: number
@@ -396,8 +394,7 @@ function ShoppingCart() {
   )
 }
 
-const app = <ShoppingCart />.render()
-bindApp(app)
+bindApp(() => <ShoppingCart />, '#app')
 ```
 
 ## Tabbed Interface
@@ -406,7 +403,7 @@ A tabbed interface with content switching:
 
 ```tsx
 import { reactive } from 'mutts'
-import { bindApp } from '../lib/renderer'
+import { bindApp } from '@pounce/core'
 
 function TabbedInterface() {
   const state = reactive({
@@ -442,8 +439,7 @@ function TabbedInterface() {
   )
 }
 
-const app = <TabbedInterface />.render()
-bindApp(app)
+bindApp(() => <TabbedInterface />, '#app')
 ```
 
 ## Real-World Example: Task Manager
@@ -452,8 +448,8 @@ A complete task management application combining multiple features:
 
 ```tsx
 import { reactive, computed, effect } from 'mutts'
-import { bindApp } from '../lib/renderer'
-import { array } from '../lib/utils'
+import { bindApp } from '@pounce/core'
+import { array } from '@pounce/core'
 
 interface Task {
   id: number
@@ -637,8 +633,7 @@ function TaskManager() {
   )
 }
 
-const app = <TaskManager />.render()
-bindApp(app)
+bindApp(() => <TaskManager />, '#app')
 ```
 
 

@@ -8,7 +8,8 @@
  */
 
 import { compose } from '@pounce/core'
-import { css } from '../lib/css'
+import { css } from '@pounce/toolbox'
+
 
 css`
 .pp-buttongroup {

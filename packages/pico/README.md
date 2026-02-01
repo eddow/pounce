@@ -26,7 +26,7 @@ See the docs per topic in `/docs`:
 ## TODOs
 
 - [ ] Make one plugin to rule them all.
-	Basically, the @pounce/pico plugin should initialize and use al the @pounce/core, pure-glyf, pico, etc. plugins.
+	Basically, the @pounce/pico plugin should initialize and use all the @pounce/core, pure-glyf, pico, etc. plugins.
 
 - Form primitives
 	- Accessible `Field`, `Label`, `Description`, `Error` scaffolding

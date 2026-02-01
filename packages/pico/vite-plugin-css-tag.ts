@@ -13,6 +13,7 @@
  *    standard PostCSS pipeline (autoprefixer, etc.).
  */
 import { dirname, relative } from 'path'
+import { stringify } from 'querystring'
 import { compileString } from 'sass'
 import type { Plugin } from 'vite'
 
@@ -36,116 +37,9 @@ export function cssTagPlugin(): Plugin {
 		enforce: 'pre',
 
 		async transform(code, id) {
-			// Only process TypeScript/JavaScript files
-			if (!/\.(tsx?|jsx?)$/.test(id)) return null
-
-			// Skip processing the css.ts file itself to avoid circular imports
-			if (id.includes('/lib/css.ts') || id.endsWith('lib/css.ts')) return null
-
-			// Find all css/sass/scss template literal calls
-			const matches = findCSSTagCalls(code)
-			if (matches.length === 0) return null
-
-			// Check if __injectCSS is already imported
-			const hasInjectCSSImport = /import\s+.*__injectCSS.*from/.test(code)
-
-			let transformedCode = code
-			let offset = 0
-
-			// Process matches in reverse order to maintain indices
-			for (const match of matches.reverse()) {
-				// Start from the raw template literal content
-				let processedCSS = match.cssContent
-
-				// For sass`...` use indented SASS syntax and compile to CSS
-				if (match.tagName === 'sass') {
-					try {
-						const result = compileString(processedCSS, {
-							syntax: 'indented',
-							style: 'expanded',
-							sourceMap: false,
-						})
-						processedCSS = result.css
-					} catch (error) {
-						throw new Error(
-							`SASS compilation failed in ${id}: ${
-								error instanceof Error ? error.message : String(error)
-							}`,
-						)
-					}
-				} else if (match.tagName === 'scss') {
-					// For scss`...` use SCSS syntax and compile to CSS
-					try {
-						const result = compileString(processedCSS, {
-							syntax: 'scss',
-							style: 'expanded',
-							sourceMap: false,
-						})
-						processedCSS = result.css
-					} catch (error) {
-						throw new Error(
-							`SCSS compilation failed in ${id}: ${
-								error instanceof Error ? error.message : String(error)
-							}`,
-						)
-					}
-				}
-
-				// For css`...` we currently treat content as plain CSS
-
-				// Inline the processed CSS directly into the module
-				const replacement = `__injectCSS(${JSON.stringify(processedCSS)});`
-
-				const before = transformedCode.substring(0, match.startIndex + offset)
-				const after = transformedCode.substring(match.endIndex + offset)
-				transformedCode = before + replacement + after
-
-				// Adjust offset for next replacement
-				offset += replacement.length - (match.endIndex - match.startIndex)
-			}
-
-			// Only add import if it doesn't already exist
-			if (matches.length > 0 && !hasInjectCSSImport) {
-				// Calculate relative path to css.ts
-				let relativePath = './lib/css'
-				try {
-					if (id.includes('/src/')) {
-						const fileDir = dirname(id)
-						const srcIndex = id.indexOf('/src/')
-						const srcPath = id.substring(0, srcIndex + 5) // includes /src/
-						const targetPath = `${srcPath}lib/css.ts`
-
-						// Calculate relative path from current file to target
-						const rel = relative(fileDir, targetPath).replace(/\\/g, '/')
-
-						// Ensure it starts with ./ or ../
-						if (rel && !rel.startsWith('.')) {
-							relativePath = `./${rel.replace(/\.ts$/, '')}`
-						} else if (rel) {
-							relativePath = rel.replace(/\.ts$/, '')
-						}
-					}
-				} catch (error) {
-					// Fallback - try to use a simple relative path
-					// If file is in src/, assume lib/css is at same level or one level up
-					if (id.includes('/src/')) {
-						const depth =
-							(id.match(/\//g) || []).length - (id.indexOf('/src/') + '/src/'.split('/').length - 1)
-						if (depth > 1) {
-							relativePath = '../lib/css'
-						} else {
-							relativePath = './lib/css'
-						}
-					}
-				}
-
-				transformedCode = `import { __injectCSS } from ${JSON.stringify(relativePath)}; ${transformedCode}`
-			}
-
-			return {
-				code: transformedCode,
-				map: null, // Could generate source map if needed
-			}
+			// Disabled: pico now imports directly from @pounce/toolbox/entry-dom
+			// which provides css/sass/scss template tag functions
+			return null
 		},
 
 		resolveId(id) {

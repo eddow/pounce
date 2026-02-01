@@ -7,9 +7,9 @@
   "types": "src/index.ts",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && npm run build:plugin",
     "build:plugin": "esbuild src/babel-plugin-jsx-reactive.ts --bundle --format=esm --platform=node --outfile=dist/plugin.js",
-    "build:all": "npm run build && npm run build:plugin",
+    "build:all": "npm run build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "test": "npm run test:unit && npm run test:e2e",

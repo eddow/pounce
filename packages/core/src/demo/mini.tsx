@@ -2,7 +2,7 @@
  * Main entry point for Pounce-TS application
  */
 import { effect, project, reactive, trackEffect } from 'mutts'
-import { bindApp, compose, type Scope } from './lib'
+import { bindApp, compose, type Scope } from '../lib'
 
 function isFunction(value: any): value is Function {
 	return typeof value === 'function'

@@ -24,11 +24,11 @@
 	"dependencies": {
 		"@pounce/core": "workspace:*",
 		"mutts": "link:../../../mutts",
-		"zod": "^3.24.1"
+		"arktype": "^2.1.0"
 	},
 	"devDependencies": {
 		"@types/node": "25.1.0",
-		"happy-dom": "^20.4.0",
+		"jsdom": "^27.4.0",
 		"rollup": "4.57.1",
 		"typescript": "5.9.3",
 		"vite": "7.3.1",

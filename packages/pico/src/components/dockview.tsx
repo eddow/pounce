@@ -13,7 +13,7 @@ import { biDi, effect, reactive, type ScopedCallback, unreactive } from 'mutts'
 import { bindApp, extend } from '@pounce/core'
 import { tablerOutlineX } from 'pure-glyf/icons'
 import { Button } from './button'
-import { sass } from '../lib'
+import { sass } from '@pounce/toolbox/entry-dom'
 
 sass`
 .pp-dv-item

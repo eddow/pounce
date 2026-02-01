@@ -75,6 +75,17 @@ export default defineConfig({
 		exclude: ['mutts'],
 	},
 	build: {
+		lib: {
+			entry: {
+				index: resolvePath(projectRootDir, 'src/index.ts'),
+				'index-node': resolvePath(projectRootDir, 'src/index-node.ts'),
+			},
+			formats: ['es', 'cjs'],
+			fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'js' : 'cjs'}`,
+		},
+		rollupOptions: {
+			external: ['mutts', 'jsdom', '@babel/core', 'node:path', 'node:url'],
+		},
 		outDir: 'dist',
 		target: 'esnext',
 		minify: false,
@@ -83,7 +94,7 @@ export default defineConfig({
 	test: {
 		environment: 'jsdom',
 		setupFiles: ['./tests/setup-mutts.ts'],
-		include: ['src/**/*.spec.ts', 'tests/**/*.spec.ts', 'tests/**/*.spec.tsx'],
+		include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx', 'tests/**/*.spec.ts', 'tests/**/*.spec.tsx'],
 
 	}
 })

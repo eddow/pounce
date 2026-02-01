@@ -87,7 +87,7 @@ The `<scope>` component is a special component that forwards its children but ad
 **Usage example:**
 
 ```tsx
-import { Scope } from '../lib/renderer'
+import { Scope } from '@pounce/core'
 
 function App() {
   return (
@@ -284,7 +284,7 @@ function MyComponent() {
 Enable debug mode to see reactive changes:
 
 ```tsx
-import { debug, trackEffect } from '../lib/debug'
+import { debug, trackEffect } from '@pounce/core'
 
 function MyComponent() {
   trackEffect((obj, evolution) => {

@@ -1,5 +1,5 @@
+import { css } from '@pounce/toolbox/entry-dom'
 import { compose } from '@pounce/core'
-import { css } from '../lib/css'
 import { Icon } from './icon'
 import { Variant, variantClass } from './variants'
 
@@ -95,14 +95,14 @@ export const CheckButton = (props: CheckButtonProps) => {
 	const state = compose(
 		{ variant: 'primary', iconPosition: 'start', checked: false },
 		props,
-		(state) => ({
+		(s) => ({
 			iconElement:
-				state.icon !== undefined ? (
+				s.icon !== undefined ? (
 					<span
 						class="pp-checkbutton-icon"
-						aria-hidden={typeof state.icon === 'string' ? true : undefined}
+						aria-hidden={typeof s.icon === 'string' ? true : undefined}
 					>
-						{typeof state.icon === 'string' ? <Icon icon={state.icon} size="18px" /> : state.icon}
+						{typeof s.icon === 'string' ? <Icon icon={s.icon} size="18px" /> : s.icon}
 					</span>
 				) : null,
 		})

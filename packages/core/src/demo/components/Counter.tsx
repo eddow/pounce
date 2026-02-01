@@ -4,7 +4,7 @@
 
 import { effect, trackEffect, watch } from 'mutts'
 import './Counter.scss'
-import { compose, type Scope } from '../lib'
+import { compose, type Scope } from '../../lib'
 
 export default function CounterWebComponent(
 	props: {

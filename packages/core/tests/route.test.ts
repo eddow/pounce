@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { buildRoute, matchRoute, parseRoute, routeMatcher } from '../src/lib/route'
+import { buildRoute, matchRoute, parseRoute, routeMatcher } from '../../toolbox/src/router/logic.js'
 
 test.describe('parseRoute', () => {
 	test('parses literal path', () => {

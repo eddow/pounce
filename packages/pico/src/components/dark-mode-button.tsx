@@ -2,7 +2,7 @@ import { effect } from 'mutts'
 import { compose } from '@pounce/core'
 import { tablerOutlineMoon, tablerOutlineSun } from 'pure-glyf/icons'
 import { client } from '@pounce/toolbox'
-import { stored } from '../lib/storage'
+import { stored } from '@pounce/toolbox/entry-dom'
 import { Button } from './button'
 
 export interface DarkModeButtonProps {

@@ -1,7 +1,7 @@
 import { project } from 'mutts'
 import { compose } from '@pounce/core'
 import { tablerFilledStar, tablerOutlineStar } from 'pure-glyf/icons'
-import { css } from '../lib/css'
+import { css } from '@pounce/toolbox/entry-dom'
 import { Icon } from './icon'
 
 css`

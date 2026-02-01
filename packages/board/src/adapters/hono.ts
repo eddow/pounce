@@ -140,7 +140,7 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
                 try {
                     // Dynamic import to be safe? Or stick to static.
                     // Static is cleaner.
-                    const { getSSRStyles } = await import('@pounce/pico')
+                    const { getSSRStyles } = await import('@pounce/toolbox/entry-dom')
                     const styles = getSSRStyles()
                     if (styles) {
                         finalHtml = finalHtml.replace('</head>', `${styles}</head>`)

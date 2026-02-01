@@ -1,7 +1,10 @@
-import { z } from 'zod'
 import { parsePathSegment as _parsePathSegment } from './logic.js'
 
 export type RouteParams<_Path extends string> = Record<string, string>
+
+export type AssertSchema = {
+	assert: (input: any) => any
+}
 
 // Helper to extract params from path string like /users/[id]
 type ExtractParams<Path extends string> = Path extends `${infer Start}/${infer Rest}`
@@ -14,18 +17,18 @@ type ExtractParams<Path extends string> = Path extends `${infer Start}/${infer R
 
 export interface RouteDefinition<
 	Path extends string = string,
-	QuerySchema extends z.ZodType = z.ZodType,
+	QuerySchema extends AssertSchema = AssertSchema,
 > {
 	path: Path
 	querySchema?: QuerySchema
 	buildUrl: (
-		params: ExtractParams<Path> & z.input<QuerySchema>
+		params: ExtractParams<Path> & Parameters<QuerySchema['assert']>[0]
 	) => string
 }
 
 export function defineRoute<
 	Path extends string,
-	QuerySchema extends z.ZodType
+	QuerySchema extends AssertSchema
 >(
 	path: Path,
 	querySchema?: QuerySchema
@@ -67,7 +70,7 @@ export function defineRoute<
                     }
                 }
 
-				const parsedQuery = querySchema.parse(potentialQueryParams)
+				const parsedQuery = querySchema.assert(potentialQueryParams)
 				for (const [key, value] of Object.entries(parsedQuery)) {
 					if (value !== undefined && value !== null) {
 						queryParams.set(key, String(value))

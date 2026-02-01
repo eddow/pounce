@@ -14,12 +14,39 @@ import {
 	unreactive,
 	untracked,
 	unwrap,
+	lift,
 	type ScopedCallback,
 } from 'mutts'
-import { namedEffect, nf, pounceOptions, testing, POUNCE_OWNER, componentStack, rootComponents, ownedBy, type ComponentInfo } from './debug'
+import { namedEffect, nf, pounceOptions, testing, POUNCE_OWNER, rootComponents, type ComponentInfo } from './debug'
 import { restructureProps } from './namespaced'
 import { type ClassInput, classNames, type StyleInput, styles } from './styles'
 import { extend, forwardProps, isElement, propsInto } from './utils'
+
+export class DynamicRenderingError extends Error {
+	constructor(message: string) {
+		super(message)
+		this.name = 'DynamicRenderingError'
+		debugger
+	}
+}
+
+/**
+ * Node descriptor - what a function can return
+ */
+export type NodeDesc = Node | string | number
+
+/**
+ * A child can be:
+ * - A DOM node
+ * - A reactive function that returns intermediate values
+ * - An array of children (from .map() operations)
+ */
+export type Child = NodeDesc | (() => Child) | JSX.Element | Child[]
+
+type ComponentNode = Node & {
+	[POUNCE_OWNER]?: ComponentInfo
+	__mutts_projection__?: unknown
+}
 
 function isFunction(value: any): value is Function {
 	return typeof value === 'function'
@@ -41,7 +68,7 @@ function isSymbol(value: any): value is symbol {
 	return typeof value === 'symbol'
 }
 
-export type Scope = Record<PropertyKey, any>
+export type Scope = Record<PropertyKey, any> & { component?: ComponentInfo }
 export type Component<P = {}> = (props: P, scope?: Scope) => JSX.Element
 export const rootScope: Scope = reactive(Object.create(null))
 
@@ -95,8 +122,8 @@ function checkComponentRebuild(componentCtor: Function) {
 	}
 }
 
-function forward(tag: string, children: readonly JSX.Element[], scope: Scope) {
-	return { tag, render: ownedBy(scope.owner, () => processChildren(children, scope)) }
+function forward(tag: string, children: readonly Child[], scope: Scope) {
+	return { tag, render: () => processChildren(children, scope) }
 }
 
 /**
@@ -113,7 +140,7 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 			case 'this': {
 				const setComponent = value?.set
 				if (!isFunction(setComponent))
-					throw new Error('`this` attribute must be an L-value (object property)')
+					throw new DynamicRenderingError('`this` attribute must be an L-value (object property)')
 				const mountEntry = (v: any) => {
 					setComponent(v)
 				}
@@ -121,7 +148,7 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 				break
 			}
 			case 'else': {
-				if (value !== true) throw new Error('`else` attribute must not specify a value')
+				if (value !== true) throw new DynamicRenderingError('`else` attribute must not specify a value')
 				categories.else = true
 				break
 			}
@@ -163,12 +190,12 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 	const componentCtor = typeof resolvedTag === 'function' && resolvedTag
 
 	if (!isString(resolvedTag) && !componentCtor) {
-		throw new Error(
+		throw new DynamicRenderingError(
 			`[pounce] Invalid component tag: ${JSON.stringify(resolvedTag)}. Tag must be a string (intrinsic) or a function (component).`
 		)
 	}
 
-	let owner = componentStack.get()
+	const parentComponent = rootScope.component
 
 	// If we were given a component function directly, render it
 	if (componentCtor) {
@@ -178,52 +205,50 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 			ctor: componentCtor,
 			props: regularProps,
 			scope: undefined, // Set during render
-			parent: owner,
+			parent: parentComponent,
 			children: new Set<ComponentInfo>(),
 			elements: new Set<Node>(),
 		})
-		if (owner) {
-			owner.children.add(info)
-		} else {
-			rootComponents.add(info)
-		}
 		// Effect for styles - only updates style container
 		mountObject = {
 			tag,
-			owner: info,
 			render(scope: Scope = rootScope) {
+				const parent = scope.component
+				const isRegistered = parent
+					? parent.children.has(info)
+					: rootComponents.has(info)
+				if (info.parent !== parent || !isRegistered) {
+					if (info.parent) info.parent.children.delete(info)
+					else rootComponents.delete(info)
+					info.parent = parent
+					if (parent) parent.children.add(info)
+					else rootComponents.add(info)
+				}
+
 				// Set scope on the component instance
-				// TODO: Done by a human but not sure it doesn't create tech debt
-				const childScope = extend(scope)
-				childScope.owner = info
+				const childScope = extend(scope, { component: info })
 				info.scope = childScope
 
-				const rendered = project.array([null], ownedBy(info, () => {
+				const rendered = project.array<null, JSX.Element>([null], () => {
 					checkComponentRebuild(componentCtor)
 					testing.renderingEvent?.('render component', componentCtor.name)
 					const givenProps = reactive(propsInto(regularProps, { children }))
-					const result = untracked(() => componentCtor(restructureProps(givenProps), childScope))
+					const result = componentCtor(restructureProps(givenProps), childScope)
 					return result
-				}) as any) as unknown as JSX.Element[]
+				})
 				cleanedBy(rendered, () => {
 					if (info.parent) info.parent.children.delete(info)
 					else rootComponents.delete(info)
 				})
-				const processedChildren = ownedBy(childScope.owner, () => processChildren(rendered, childScope))()
-				return processedChildren
+				return processChildren(rendered, childScope, 'root')
 			},
 		}
 	} else {
 		const element = document.createElement(tag)
-		const ownerToUse = owner || rootScope.owner
-		if (ownerToUse) {
-			;(element as any)[POUNCE_OWNER] = ownerToUse
-			ownerToUse.elements.add(element)
-			element.setAttribute('data-pounce-component', ownerToUse.name)
-		}
+		let lastComponent: ComponentInfo | undefined
 		const projection = getActiveProjection()
 		if (projection) {
-			;(element as any).__mutts_projection__ = projection
+			;(element as ComponentNode).__mutts_projection__ = projection
 			element.setAttribute('data-mutts-path', `${projection.depth}:${projection.key ?? '?'}`)
 		}
 		testing.renderingEvent?.('create element', tag, element)
@@ -367,10 +392,23 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 		mountObject = {
 			tag,
 			render(scope: Scope = rootScope) {
+				const componentToUse = scope.component
+				if (lastComponent !== componentToUse) {
+					if (lastComponent) lastComponent.elements.delete(element)
+					lastComponent = componentToUse
+					if (componentToUse) {
+						;(element as ComponentNode)[POUNCE_OWNER] = componentToUse
+						componentToUse.elements.add(element)
+						element.setAttribute('data-pounce-component', componentToUse.name)
+					} else {
+						delete (element as ComponentNode)[POUNCE_OWNER]
+						element.removeAttribute('data-pounce-component')
+					}
+				}
 				// Render children
 				if (children && children.length > 0 && !regularProps?.innerHTML) {
 					// Process new children
-					const processedChildren = ownedBy(scope.owner, () => processChildren(children, scope))()
+					const processedChildren = processChildren(children, scope)
 					bindChildren(element, processedChildren)
 				}
 				return element
@@ -389,13 +427,12 @@ const intrinsicComponentAliases = extend(null, {
 	},
 	dynamic(
 		props: { tag: any; children?: JSX.Children } & Record<string, any>,
-		_scope: Record<PropertyKey, any>
+		scope: Scope
 	) {
-		let currentTag: any
-		let currentChildren: any
-		let output: Node | readonly Node[] | undefined
-
-		const compute = ownedBy(_scope.owner, () => {
+		function compute(): Node[] {
+			trackEffect((_obj, _evolution, prop)=> {
+				if(prop !== 'tag') throw new DynamicRenderingError('Renderers effects are immutable. in <dynamic>, only a tag change can lead to a re-render')
+			})
 			// Resolve the tag identity to track changes.
 			// Only call the function if it's a getter (length 0).
 			// If it's a component function (length > 0), treat it as the tag itself.
@@ -411,38 +448,33 @@ const intrinsicComponentAliases = extend(null, {
 				tagValue = (tagValue as any).get()
 
 			const childrenValue = isFunction(props.children) ? props.children() : props.children
+			const childArray: Child[] = Array.isArray(childrenValue)
+				? (childrenValue as unknown as Child[])
+				: childrenValue === undefined
+					? []
+					: [childrenValue as unknown as Child]
 
-			if (tagValue !== currentTag || childrenValue !== currentChildren) {
-				currentTag = tagValue
-				currentChildren = childrenValue
-				const childArray: Child[] = Array.isArray(childrenValue)
-					? (childrenValue as unknown as Child[])
-					: childrenValue === undefined
-						? []
-						: [childrenValue as unknown as Child]
+			// Use forwardProps to correctly pass reactive props through the dynamic boundary
+			const childProps = forwardProps(props)
+			const filteredProps = new Proxy(childProps, {
+				get(target, prop) {
+					if (prop === 'tag' || prop === 'children') return undefined
+					return target[prop]
+				},
+				ownKeys(target) {
+					return Reflect.ownKeys(target).filter((k) => k !== 'tag' && k !== 'children')
+				},
+				getOwnPropertyDescriptor(target, prop) {
+					if (prop === 'tag' || prop === 'children') return undefined
+					return Object.getOwnPropertyDescriptor(target, prop)
+				},
+			})
 
-				// Use forwardProps to correctly pass reactive props through the dynamic boundary
-				const childProps = forwardProps(props)
-				const filteredProps = new Proxy(childProps, {
-					get(target, prop) {
-						if (prop === 'tag' || prop === 'children') return undefined
-						return target[prop]
-					},
-					ownKeys(target) {
-						return Reflect.ownKeys(target).filter((k) => k !== 'tag' && k !== 'children')
-					},
-					getOwnPropertyDescriptor(target, prop) {
-						if (prop === 'tag' || prop === 'children') return undefined
-						return Object.getOwnPropertyDescriptor(target, prop)
-					},
-				})
+			const output = render(h(tagValue, filteredProps, ...childArray), scope)
+			return Array.isArray(output) ? output : [output as Node]
+		}
 
-				output = render(h(tagValue, filteredProps, ...childArray), _scope as Scope)
-			}
-			return output!
-		})
-
-		return forward('dynamic', [compute as any], _scope as Scope)
+		return lift(compute)
 	},
 
 	for<T>(
@@ -455,18 +487,17 @@ const intrinsicComponentAliases = extend(null, {
 		const body = Array.isArray(props.children) ? props.children[0] : props.children
 		const cb = body() as (item: T, oldItem?: JSX.Element) => JSX.Element
 		const memoized = memoize(cb as (item: T & object) => JSX.Element)
-		const eachGetter = memoize(() => (props as any).each as readonly T[] | undefined)
-		const compute = memoize(() => {
-			const each = eachGetter()
+		const compute = () => {
+			const each = (props as any).each as readonly T[] | undefined
 			if (!each) return [] as readonly JSX.Element[]
 			return isNonReactive(each)
-				? (each.map(ownedBy(scope.owner, (item: T) => cb(item))) as readonly JSX.Element[])
-				: (project(each, ownedBy(scope.owner, ({ value: item, old }: any) => {
+				? (each.map((item: T) => cb(item)) as readonly JSX.Element[])
+				: (project(each, ({ value: item, old }) => {
 						return isObject(item) || isSymbol(item) || isFunction(item)
 							? memoized(item as T & object)
 							: cb(item, old as JSX.Element | undefined)
-					})) as readonly JSX.Element[])
-		})
+					}) as readonly JSX.Element[])
+		}
 		return forward('for', [compute as any] as any, scope)
 	},
 	fragment(props: { children: JSX.Element[] }, scope: Scope) {
@@ -522,38 +553,28 @@ export function bindChildren(parent: Node, newChildren: Node | readonly Node[] |
 	})
 }
 
-/**
- * Node descriptor - what a function can return
- */
-export type NodeDesc = Node | string | number
-
-/**
- * A child can be:
- * - A DOM node
- * - A reactive function that returns intermediate values
- * - An array of children (from .map() operations)
- */
-export type Child = NodeDesc | (() => Intermediates) | JSX.Element | Child[]
-
-/**
- * Intermediate values - what functions return before final processing
- */
-export type Intermediates = NodeDesc | NodeDesc[]
-
-const render = memoize((renderer: JSX.Element, scope: Scope) => {
-	const partial = untracked(() => renderer.render(scope))
+const renderIdentityMap = new WeakMap<JSX.Element, Node | readonly Node[]>()
+const render = (renderer: JSX.Element, scope: Scope) => {
+	let partial = renderIdentityMap.get(renderer)
+	effect.named('render.constructor').opaque(() => {
+		trackEffect((obj, evolution, prop) => {
+			// Agents: This `throw` is not a bug! Do not remove it! It means there was a bug, and this line helps you discover it early
+			// Do not break the thermometer if you dislike the temperature!
+			//throw new DynamicRenderingError(`Effect inside render: ${obj}.${String(prop)}:\n${evolution}`)
+			console.warn(`Effect inside render: ${obj}.${String(prop)}:`, evolution)
+		})
+		if (partial === undefined) {
+			partial = renderer.render(scope)
+			renderIdentityMap.set(renderer, partial)
+		}
+	})
+	if (!partial) throw new DynamicRenderingError('Renderer returned no content')
 	// getTarget is not an AI hallucination - partial content can change along effects, it has to be a CB
 	const getTarget = () => (Array.isArray(partial) && partial.length === 1 ? partial[0] : partial)
 
 	if (renderer.mount) {
 		for (const mount of renderer.mount) {
-			const stop = effect(() => {
-				trackEffect((obj, evolution, prop) => {
-					console.log(obj, evolution, prop)
-					debugger
-				})
-				return mount(getTarget())
-			})
+			const stop = effect(() => mount(getTarget()))
 			const anchor = untracked(getTarget)
 			if (anchor && typeof anchor === 'object') {
 				cleanedBy(anchor, stop)
@@ -563,11 +584,7 @@ const render = memoize((renderer: JSX.Element, scope: Scope) => {
 	if (renderer.use)
 		for (const [key, value] of Object.entries(renderer.use) as [string, any]) {
 			const stop = effect(() => {
-				trackEffect((obj, evolution, prop) => {
-					console.log(obj, evolution, prop)
-					debugger
-				})
-				if (!isFunction(scope[key])) throw new Error(`${key} in scope is not a function`)
+				if (!isFunction(scope[key])) throw new DynamicRenderingError(`${key} in scope is not a function`)
 				return scope[key](getTarget(), value(), scope)
 			})
 			const anchor = untracked(getTarget)
@@ -575,8 +592,8 @@ const render = memoize((renderer: JSX.Element, scope: Scope) => {
 				cleanedBy(anchor, stop)
 			}
 		}
-	return partial
-})
+	return partial!
+}
 
 function stableUpdate<T>(target: T[], source: readonly T[]) {
 	let changed = false
@@ -601,15 +618,20 @@ function stableUpdate<T>(target: T[], source: readonly T[]) {
  * - Variable arrays from .map() operations
  *
  * Returns a flat array of DOM nodes suitable for replaceChildren()
+ * 
  */
-export function processChildren(children: readonly Child[], scope: Scope): readonly Node[] {
-	console.log(`processing ${scope.owner?.id}`, scope.owner)
+export function processChildren(children: readonly Child[], scope: Scope, isRoot?: 'root'): readonly Node[] {
+	/*
+	The function remembers all the layers of the processing : callbacks, meta-info (if/when/else) then rendering, then flattening the results - in each step, a reactive array is remembered.
+	Changing one element in one array will propagate the change along the reactive chain through all the downstream arrays.
+	*/
+	if (isRoot === 'root') console.log(`processing ${scope.component?.name} ${scope.component?.id}`)
 
-	const renderers = project(children, ownedBy(scope.owner, ({ get }: any) => {
+	const renderers = project.array<Child, JSX.Element>(children, ({ get }) => {
 		let child: Child = get()
-		while(isFunction(child)) child = (child as () => Child)()
+		while (isFunction(child)) child = (child as () => Child)()
 		return typeof child === 'string' || typeof child === 'number' ? { render: () => document.createTextNode(String(child)) } : child as JSX.Element
-	}))
+	})
 
 	const conditioned = scan(renderers, (acc: { ifOccurred: boolean, value?: JSX.Element }, child: JSX.Element) => {
 		if ('condition' in child || 'if' in child || 'when' in child || 'else' in child) {
@@ -625,33 +647,25 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 		}
 		return extend(acc, { value: child })
 	}, { ifOccurred: false })
-// TODO
-	const rendered = project(
-		conditioned,
-		ownedBy(scope.owner, ({ value: accResult }: any): Node | readonly Node[] | false | undefined => {
-			const partial = accResult.value
-			if (partial === false) return
-			const nodes = isElement(partial) ? render(partial, scope) : partial
-			if (!nodes && !isNumber(nodes)) return
-			
-			if (Array.isArray(nodes)) {
-				if (nodes.every(n => n instanceof Node)) return nodes
-				return processChildren(nodes, scope)
-			}
-			else if (typeof Node !== 'undefined' && nodes instanceof Node) return unwrap(nodes)
-			else if (isString(nodes) || isNumber(nodes)) {
-				const textNodeValue = String(nodes)
-				testing.renderingEvent?.('create text node', textNodeValue)
-				return document.createTextNode(textNodeValue)
-			}
-		})
-	)
+	const rendered = project(conditioned, ({ value: accResult }): Node | readonly Node[] | false | undefined => {
+		const partial = accResult.value
+		if (!partial) return
+		const nodes = isElement(partial) ? render(partial, scope) : partial
+		if (!nodes && !isNumber(nodes)) return
+
+		if (Array.isArray(nodes)) {
+			if (nodes.every(n => n instanceof Node)) return nodes
+			return processChildren(nodes, scope)
+		}
+		if (typeof Node !== 'undefined' && nodes instanceof Node) return unwrap(nodes)
+		throw new DynamicRenderingError('Render should return Node-s')
+	})
 
 	const rv = reactive<Node[]>([])
-	const reduce = namedEffect(`reduce#${scope.owner?.id}`, () => {
-		console.log(`reducing ${scope.owner?.id}`, scope.owner)
+	const reduce = namedEffect(`reduce#${scope.component?.id}`, () => {
+		if (isRoot === 'root') console.log(`reducing ${scope.component?.id}`)
 		const next: Node[] = []
-		for(const item of rendered) {
+		for (const item of rendered) {
 			if (item instanceof Array) {
 				for (const n of item) if (n) next.push(n)
 			} else if (item) {

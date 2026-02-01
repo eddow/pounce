@@ -27,6 +27,8 @@
 	],
 	"exclude": [
 		"src/dom/**/*",
-		"src/entry-browser.ts"
+		"src/entry-browser.ts",
+		"**/*.test.ts",
+		"**/*.test.tsx"
 	]
 }

@@ -18,7 +18,7 @@ Redoing one was done to have something simple, who is simply reactive without ha
 
 ## 📖 Documentation
 
-Complete documentation is available in the [docs folder](src/docs):
+Complete documentation is available in the [docs folder](docs):
 
 - **[Getting Started](docs/getting-started.md)** - Introduction and quick start guide
 - **[Components](docs/components.md)** - Building and using components
@@ -26,7 +26,6 @@ Complete documentation is available in the [docs folder](src/docs):
 - **[Two-Way Binding](docs/binding.md)** - Form inputs and data binding
 - **[Advanced Features](docs/advanced.md)** - Conditional rendering, scopes, and more
 - **[API Reference](docs/api-reference.md)** - Complete API documentation
-- **[Migration Guide](docs/migration.md)** - Migrating to the new bindApp pattern
 - **[Examples](docs/examples.md)** - Complete working examples
 
 ## 🚀 Quick Start
@@ -55,7 +54,7 @@ Here's a simple counter component:
 
 ```tsx
 import { reactive } from 'mutts'
-import { bindApp } from './lib/renderer'
+import { bindApp } from '@pounce/core'
 
 function Counter() {
   const state = reactive({ count: 0 })
@@ -69,7 +68,7 @@ function Counter() {
   )
 }
 
-bindApp(<Counter />)
+bindApp(() => <Counter />, '#app')
 ```
 
 ## 🎯 Key Concepts
@@ -133,7 +132,6 @@ function Counter(props: { value: number, onReset?(): void }) {
 - Master [Two-Way Binding](docs/binding.md)
 - Check out [Advanced Features](docs/advanced.md)
 - Browse the [API Reference](docs/api-reference.md)
-- Follow the [Migration Guide](docs/migration.md)
 - See [Examples](docs/examples.md)
 
 ## 🛠️ Tech Stack
@@ -146,8 +144,8 @@ function Counter(props: { value: number, onReset?(): void }) {
 
 ## 📝 License
 
-ISC
+MIT
 
 # TODOs
 
-- cf `@pounce/pico/debug-actions` - pointer position tracking poosition text refreshing fails at a moment
+- cf `@pounce/pico/debug-actions` - pointer position tracking position text refreshing fails at a moment
