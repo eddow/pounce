@@ -1,0 +1,80 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": [
+			"ES2023",
+			"DOM",
+			"DOM.Iterable"
+		],
+		"module": "ESNext",
+		"skipLibCheck": true,
+		"moduleResolution": "bundler",
+		"baseUrl": ".",
+		"paths": {
+			"mutts": [
+				"../../../mutts/dist/index.d.ts"
+			],
+			"mutts/*": [
+				"../../../mutts/dist/*"
+			],
+			"npc-script": [
+				"../../../npcs/dist/index.d.ts"
+			],
+			"npc-script/*": [
+				"../../../npcs/dist/*"
+			],
+			"omni18n": [
+				"../../../omni18n/src/client.ts"
+			],
+			"pure-glyf": [
+				"../../../pure-glyf/dist/index.d.ts"
+			],
+			"pure-glyf/*": [
+				"../../../pure-glyf/dist/*"
+			],
+			"@pounce/runtime/jsx-runtime": [
+				"src/runtime/jsx-runtime.ts"
+			],
+			"@pounce/runtime/jsx-dev-runtime": [
+				"src/runtime/jsx-dev-runtime.ts"
+			],
+			"@pounce/runtime": [
+				"src/lib/index.ts"
+			],
+			"@pounce/core": [
+				"./dist/index.d.ts"
+			]
+		},
+		"allowImportingTsExtensions": true,
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"noEmit": true,
+		"jsx": "react",
+		"jsxFactory": "h",
+		"jsxFragmentFactory": "Fragment",
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+		"sourceMap": true,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
+		"useDefineForClassFields": true,
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true
+	},
+	"include": [
+		"src/**/*",
+		"tests/**/*.ts",
+		"tests/**/*.tsx",
+	],
+	"exclude": [
+		"../../../mutts/**/*"
+	],
+	"references": [
+		{
+			"path": "./tsconfig.node.json"
+		}
+	]
+}

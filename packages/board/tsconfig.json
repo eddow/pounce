@@ -1,0 +1,67 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"declaration": true,
+		"declarationMap": true,
+		"noEmit": true,
+		"baseUrl": ".",
+		"paths": {
+			"~/lib/*": [
+				"./src/lib/*"
+			],
+			"~/adapters/*": [
+				"./src/adapters/*"
+			],
+			"~/cli/*": [
+				"./src/cli/*"
+			],
+			"@pounce/board": [
+				"./src/server/index.ts"
+			],
+			"@pounce/board/client": [
+				"./src/client/index.ts"
+			],
+			"@pounce/board/server": [
+				"./src/server/index.ts"
+			],
+			"@pounce/core": [
+				"../core/src/lib/index.ts"
+			],
+			"@pounce/core/*": [
+				"../core/dist/*"
+			],
+			"@pounce/pico": [
+				"../pico/dist/index.d.ts"
+			],
+			"@pounce/pico/*": [
+				"../pico/dist/*"
+			],
+			"mutts": [
+				"../../../mutts/dist/index.d.ts"
+			],
+			"mutts/*": [
+				"../../../mutts/dist/*"
+			],
+			"npc-script": [
+				"../../../npcs/dist/index.d.ts"
+			],
+			"omni18n": [
+				"../../../omni18n/src/client.ts"
+			]
+		}
+	},
+	"include": [
+		"src/**/*",
+		"tests/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"dist"
+	]
+}

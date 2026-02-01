@@ -1,0 +1,27 @@
+{
+	"name": "minimal-app",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"dev": "tsx ../../../src/cli/index.ts dev",
+		"build": "tsx ../../../src/cli/index.ts build",
+		"preview": "tsx ../../../src/cli/index.ts preview"
+	},
+	"dependencies": {
+		"@hono/node-server": "latest",
+		"hono": "latest",
+		"mutts": "link:../../../../mutts",
+		"@pounce/board": "link:../../..",
+		"@pounce/core": "link:../../../../@pounce/core"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.28.6",
+		"@babel/plugin-proposal-decorators": "^7.28.6",
+		"@babel/plugin-transform-react-jsx": "^7.28.6",
+		"@babel/plugin-transform-typescript": "^7.28.6",
+		"jsdom": "^27.4.0",
+		"tsx": "latest",
+		"vite": "latest"
+	}
+}

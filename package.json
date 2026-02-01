@@ -1,0 +1,14 @@
+{
+	"name": "@pounce/monorepo",
+	"private": true,
+	"license": "MIT",
+	"scripts": {
+		"build": "pnpm -r run build",
+		"test": "pnpm -r run test",
+		"lint": "pnpm -r run lint"
+	},
+	"devDependencies": {
+		"typescript": "^5.9.3"
+	},
+	"packageManager": "pnpm@10.28.2"
+}

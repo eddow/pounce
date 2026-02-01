@@ -1,0 +1,42 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"noEmit": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "@pounce/core",
+		"baseUrl": ".",
+		"paths": {
+			"@pounce/core": [
+				"../../../../core/src/lib"
+			],
+			"@pounce/core/*": [
+				"../../../../core/src/lib/*"
+			],
+			"mutts": [
+				"../../../../mutts/src"
+			],
+			"mutts/*": [
+				"../../../../mutts/src/*"
+			],
+			"@pounce/board": [
+				"../../../../board/src/server/index.ts"
+			],
+			"@pounce/board/client": [
+				"../../../../board/src/client/index.ts"
+			],
+			"@pounce/board/server": [
+				"../../../../board/src/server/index.ts"
+			]
+		}
+	},
+	"include": [
+		"**/*",
+		"../../../../core/**/*",
+		"../../../../mutts/**/*"
+	]
+}

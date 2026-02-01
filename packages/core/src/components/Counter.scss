@@ -1,0 +1,161 @@
+// Theme Variables (inlined to avoid @import issues with adoptedStyleSheets)
+$primary-color: #667eea;
+$secondary-color: #764ba2;
+$success-color: #4caf50;
+$warning-color: #ffa726;
+$danger-color: #ff6b6b;
+$info-color: #42b883;
+
+$border-radius: 8px;
+$border-radius-sm: 4px;
+$shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+$shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.3);
+
+$font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+$font-size-base: 16px;
+$font-size-sm: 12px;
+$font-size-lg: 18px;
+
+$spacing-xs: 5px;
+$spacing-sm: 10px;
+$spacing-md: 15px;
+$spacing-lg: 20px;
+$spacing-xl: 30px;
+
+$transition: all 0.2s ease;
+
+:host {
+	display: block;
+	padding: $spacing-lg;
+	border: 2px solid $primary-color;
+	border-radius: $border-radius;
+	margin: $spacing-lg 0;
+	font-family: $font-family;
+}
+
+h2 {
+	color: #333;
+	margin-top: 0;
+}
+
+.count-display {
+	margin: $spacing-md 0;
+	font-size: $font-size-lg;
+	font-weight: bold;
+	color: $primary-color;
+}
+
+.message {
+	margin: $spacing-md 0;
+	color: #666;
+}
+
+.controls {
+	display: flex;
+	gap: $spacing-sm;
+	margin-top: $spacing-lg;
+}
+
+button {
+	padding: $spacing-sm $spacing-lg;
+	border: none;
+	border-radius: $border-radius-sm;
+	cursor: pointer;
+	font-size: $font-size-base;
+	transition: $transition;
+	
+	&:hover {
+		transform: translateY(-1px);
+		box-shadow: $shadow;
+	}
+}
+
+.decrement {
+	background: $danger-color;
+	color: white;
+}
+
+.reset {
+	background: $warning-color;
+	color: white;
+}
+
+.increment {
+	background: $success-color;
+	color: white;
+}
+
+.slider-container {
+	margin: $spacing-lg 0;
+}
+
+.slider {
+	width: 100%;
+	height: 6px;
+	border-radius: 3px;
+	background: #ddd;
+	outline: none;
+	-webkit-appearance: none;
+	
+	&::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		appearance: none;
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background: $primary-color;
+		cursor: pointer;
+	}
+	
+	&::-moz-range-thumb {
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background: $primary-color;
+		cursor: pointer;
+		border: none;
+	}
+}
+
+.slider-label {
+	display: block;
+	margin-bottom: $spacing-sm;
+	font-weight: bold;
+	color: #333;
+}
+
+.input-container {
+	margin: $spacing-lg 0;
+}
+
+.input-label {
+	display: block;
+	margin-bottom: $spacing-sm;
+	font-weight: bold;
+	color: #333;
+}
+
+.count-input {
+	width: 100px;
+	padding: $spacing-sm;
+	border: 2px solid $primary-color;
+	border-radius: $border-radius-sm;
+	font-size: $font-size-base;
+	text-align: center;
+	transition: $transition;
+	
+	&:focus {
+		outline: none;
+		border-color: $secondary-color;
+		box-shadow: 0 0 0 2px rgba(118, 75, 162, 0.2);
+	}
+	
+	&:invalid {
+		border-color: $danger-color;
+	}
+}
+
+// Dynamic styles for counter text color
+.counter-text {
+	transition: color 0.3s ease;
+}
