@@ -42,6 +42,15 @@
 			"@pounce/pico/*": [
 				"../pico/dist/*"
 			],
+			"@pounce/toolbox": [
+				"../toolbox/src/entry-no-dom.ts"
+			],
+			"@pounce/toolbox/entry-dom": [
+				"../toolbox/src/entry-dom.ts"
+			],
+			"@pounce/toolbox/entry-no-dom": [
+				"../toolbox/src/entry-no-dom.ts"
+			],
 			"mutts": [
 				"../../../mutts/dist/index.d.ts"
 			],

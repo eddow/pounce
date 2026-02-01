@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import { parsePathSegment, type ParsedPathSegment, type RouteParams } from '@pounce/core'
-import type { Middleware, RouteHandler } from '../http/core.js'
+import { parsePathSegment, type ParsedPathSegment, type RouteParams } from './logic.js'
+import type { Middleware, RouteHandler } from '../api/core.js'
 
 /**
  * Convert a file path to a file:// URL without encoding special characters like brackets.

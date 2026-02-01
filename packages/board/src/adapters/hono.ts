@@ -5,11 +5,17 @@
 
 import type { Context, MiddlewareHandler } from 'hono'
 import { Hono } from 'hono'
-import { runMiddlewares } from '../lib/http/core.js'
-import { enableSSR } from '../lib/http/client.js'
-import { buildRouteTree, matchRoute, type RouteTreeNode } from '../lib/router/index.js'
-import { getCollectedSSRResponses, injectApiResponses, withSSRContext } from '../lib/ssr/utils.js'
-import { setRouteRegistry } from '../lib/http/client.js'
+import {
+	runMiddlewares,
+	enableSSR,
+	buildRouteTree,
+	matchRoute,
+	type RouteTreeNode,
+	getCollectedSSRResponses,
+	injectApiResponses,
+	withSSRContext,
+	setRouteRegistry
+} from '../server/index.js'
 
 export interface PounceMiddlewareOptions {
 	/** Path to routes directory. Defaults to './routes' */

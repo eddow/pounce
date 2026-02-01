@@ -7,7 +7,7 @@ import type { AsyncLocalStorage } from 'node:async_hooks'
 // Define the Interceptor type here to avoid circular imports if possible, 
 // or import strictly as type. 
 // We'll import InterceptorMiddleware from client.ts, but only as type.
-import type { InterceptorMiddleware } from './client.js'
+import type { InterceptorMiddleware } from './base-client.js'
 
 export interface InterceptorEntry {
 	pattern: string | RegExp

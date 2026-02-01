@@ -1,7 +1,7 @@
 import { effect } from 'mutts'
 import { compose } from '@pounce/core'
 import { tablerOutlineMoon, tablerOutlineSun } from 'pure-glyf/icons'
-import { browser } from '../lib/browser'
+import { client } from '@pounce/toolbox'
 import { stored } from '../lib/storage'
 import { Button } from './button'
 
@@ -23,7 +23,7 @@ const defaultChildren = {
 	light: 'Dark',
 }
 const themeStorage = stored({
-	theme: (browser.prefersDark?.() ? 'dark' : 'light') as 'light' | 'dark',
+	theme: (client.prefersDark?.() ? 'dark' : 'light') as 'light' | 'dark',
 })
 
 export const DarkModeButton = (props: DarkModeButtonProps) => {

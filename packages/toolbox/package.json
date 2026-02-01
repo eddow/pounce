@@ -1,23 +1,37 @@
 {
 	"name": "@pounce/toolbox",
-	"version": "1.0.0",
-	"description": "Shared utilities: Router, Browser Helpers, API clients",
+	"version": "0.0.1",
 	"type": "module",
-	"main": "src/index.ts",
-	"types": "src/index.ts",
 	"exports": {
-		".": "./src/index.ts"
+		".": {
+			"browser": "./src/entry-dom.ts",
+			"node": "./src/entry-no-dom.ts",
+			"default": "./src/entry-no-dom.ts"
+		},
+		"./entry-dom": "./src/entry-dom.ts",
+		"./entry-no-dom": "./src/entry-no-dom.ts"
+	},
+	"imports": {
+		"#client": {
+			"browser": "./src/dom/client.ts",
+			"default": "./src/no-dom/client.ts"
+		}
 	},
 	"scripts": {
-		"build": "tsc",
+		"build": "tsc -b tsconfig.dom.json tsconfig.json && vite build",
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@pounce/core": "workspace:^"
+		"@pounce/core": "workspace:*",
+		"mutts": "link:../../../mutts",
+		"zod": "^3.24.1"
 	},
 	"devDependencies": {
-		"typescript": "^5.9.3",
+		"@types/node": "25.1.0",
+		"rollup": "4.57.1",
+		"typescript": "5.9.3",
+		"vite": "7.3.1",
+		"vite-plugin-dts": "^4.5.3",
 		"vitest": "^4.0.18"
-	},
-	"packageManager": "pnpm@10.28.2"
+	}
 }

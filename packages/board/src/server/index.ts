@@ -1,72 +1,19 @@
 /**
  * Server-side exports for @pounce/board
- * Use: import { buildRouteTree } from '@pounce/board/server'
+ * Consumes @pounce/toolbox
  */
 
-// Router
-export {
-	buildRouteTree,
-	matchRoute,
-	collectMiddleware,
-	parseSegment,
-	type RouteMatch,
-	type RouteTreeNode,
-	type RouteParams,
-} from '../lib/router/index.js'
+import { serverRouter } from '@pounce/toolbox/entry-no-dom'
+export * from '@pounce/toolbox/entry-no-dom'
 
-export { defineRoute, type RouteDefinition } from '../lib/router/defs.js'
+// Re-export router functions flattened for compatibility
+export const buildRouteTree = serverRouter.buildRouteTree
+export const matchRoute = serverRouter.matchRoute // Verified locally in node-router that it is exported as matchRoute
+export const collectMiddleware = serverRouter.collectMiddleware
+export const parseSegment = serverRouter.parseSegment
 
-// HTTP core
-export {
-	runMiddlewares,
-	createJsonResponse,
-	createErrorResponse,
-	addSecurityHeaders,
-	compressResponse,
-	ApiError,
-	type Middleware,
-	type RouteHandler,
-	type RequestContext,
-	type RouteResponse,
-	type HttpMethod,
-} from '../lib/http/core.js'
-
-// HTTP client (works on server too for SSR dispatch)
-export {
-	api,
-	config,
-	enableSSR,
-	disableSSR,
-	clearSSRData,
-	setRouteRegistry,
-	clearRouteRegistry,
-	intercept,
-	clearInterceptors,
-} from '../lib/http/client.js'
-
-// SSR injection
-export {
-	withSSRContext,
-	injectSSRData,
-	getCollectedSSRResponses,
-	injectApiResponses,
-	escapeJson,
-	getSSRId,
-	type SSRDataMap,
-} from '../lib/ssr/utils.js'
-
-// Context
-export {
-	getContext,
-	runWithContext,
-	createScope,
-	trackSSRPromise,
-	flushSSRPromises,
-	type RequestScope,
-} from '../lib/http/context.js'
-
-// Proxy
-export { defineProxy, type ProxyConfig, type ProxyEndpointConfig } from '../lib/http/proxy.js'
-
-// Adapters
-export { createPounceApp, createPounceMiddleware, clearRouteTreeCache } from '../adapters/hono.js'
+// Types
+export type RouteMatch = serverRouter.RouteMatch
+export type RouteTreeNode = serverRouter.RouteTreeNode
+export type RouteParams = serverRouter.RouteParams
+export type SegmentInfo = serverRouter.SegmentInfo

@@ -1,9 +1,8 @@
-import { getContext, type RequestScope, runWithContext, createScope } from '../http/context.js'
+import { getContext, type RequestScope, runWithContext, createScope } from '../api/context.js'
 
 
 export type SSRDataMap = Record<string, { id: string; data: unknown }>
 
-let globalClientCounter = 0
 const clientHydrationCache = new Map<string, unknown>()
 
 /**
@@ -76,7 +75,6 @@ export function clearSSRData(): void {
 		ctx.ssr.responses.clear()
 		ctx.ssr.counter = 0
 	} else if (typeof window !== 'undefined') {
-        globalClientCounter = 0
 		clientHydrationCache.clear()
     }
 }

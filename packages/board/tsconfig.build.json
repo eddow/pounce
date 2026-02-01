@@ -13,7 +13,7 @@
 		"declaration": true,
 		"declarationMap": true,
 		"outDir": "./dist",
-		"rootDir": "./src",
+		// "rootDir": "./src",
 		"baseUrl": ".",
 		"paths": {
 			"~/lib/*": [
@@ -39,12 +39,22 @@
 			],
 			"pure-glyf/*": [
 				"../../../pure-glyf/src/*"
+			],
+			"@pounce/toolbox": [
+				"../toolbox/src/entry-no-dom.ts"
+			],
+			"@pounce/toolbox/entry-dom": [
+				"../toolbox/src/entry-dom.ts"
+			],
+			"@pounce/toolbox/entry-no-dom": [
+				"../toolbox/src/entry-no-dom.ts"
 			]
 		}
 	},
 	"include": [
 		"src/**/*",
-		"../pico/src/types"
+		"../pico/src/types",
+		"../toolbox/src/**/*"
 	],
 	"exclude": [
 		"node_modules",

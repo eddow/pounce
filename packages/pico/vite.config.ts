@@ -7,8 +7,9 @@ const projectRootDir = dirname(fileURLToPath(import.meta.url))
 
 // @TEMPORARY: Using relative paths for build-time plugins to ensure they are loaded from source.
 // This avoids ERR_UNKNOWN_FILE_EXTENSION that occurs when Node loads .ts files via package resolution.
-import { babelPluginJsxReactive } from '../core/src/babel-plugin-jsx-reactive'
-import { pureGlyfPlugin } from '../../../pure-glyf/src/plugin'
+import dts from 'vite-plugin-dts'
+import { babelPluginJsxReactive } from '@pounce/core/src/babel-plugin-jsx-reactive'
+import { pureGlyfPlugin } from 'pure-glyf/src/plugin'
 import { cssTagPlugin } from './vite-plugin-css-tag'
 
 export default defineConfig({
@@ -23,7 +24,12 @@ export default defineConfig({
 			icons: {
 				tabler: 'node_modules/@tabler/icons/icons',
 			},
+			dts: 'src/types/pure-glyf.d.ts'
 		}) as any,
+		dts({
+            rollupTypes: false,
+            insertTypesEntry: true
+        }),
 		cssTagPlugin(),
 		{
 			name: 'babel-jsx-transform',

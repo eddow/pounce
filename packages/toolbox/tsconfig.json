@@ -1,19 +1,32 @@
 {
 	"compilerOptions": {
-		"target": "ES2022",
+		"target": "ESNext",
 		"module": "ESNext",
 		"moduleResolution": "bundler",
 		"strict": true,
-		"baseUrl": ".",
-		"paths": {
-			"@pounce/core": [
-				"../core/src/index.ts"
-			]
-		},
+		"jsx": "react-jsx",
+		"jsxImportSource": "@pounce/core",
+		"lib": [
+			"ESNext",
+			"DOM",
+			"DOM.Iterable"
+		],
+		"types": [
+			"node"
+		],
 		"skipLibCheck": true,
-		"noEmit": true
+		"noEmit": true,
+		"paths": {
+			"#client": [
+				"./src/no-dom/client.ts"
+			]
+		}
 	},
 	"include": [
-		"src"
+		"src/**/*"
+	],
+	"exclude": [
+		"src/dom/**/*",
+		"src/entry-browser.ts"
 	]
 }

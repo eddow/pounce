@@ -408,7 +408,7 @@ function matchPreparedRoutes<T extends { path: string }>(
  * @example
  * const match = matchRoute('/users/123', [{ path: '/users/[id]' }])
  * // match?.params.id === '123'
- */
+ * */
 export function matchRoute<T extends { path: string }>(
 	url: string,
 	definitions: readonly T[]

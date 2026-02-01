@@ -11,8 +11,10 @@ function isString(value: any): value is string {
 }
 
 export { bindChildren, Fragment, h, type Scope, type Child, type Component }
-export * from './route'
+// export * from './route' // Moved to toolbox
+
 export * from './utils'
+export * from './platform'
 
 export function bindApp(
 	app: JSX.Element,

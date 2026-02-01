@@ -1,0 +1,29 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"lib": [
+			"ESNext",
+			"DOM",
+			"DOM.Iterable"
+		],
+		"noEmit": true,
+		"paths": {
+			"#client": [
+				"./src/dom/client.ts"
+			]
+		}
+	},
+	"include": [
+		"src/dom/**/*",
+		"src/entry-dom.ts",
+		"src/router/**/*",
+		"src/api/**/*",
+		"src/ssr/**/*",
+		"src/client/**/*"
+	],
+	"exclude": [
+		"src/no-dom/**/*",
+		"src/entry-no-dom.ts",
+		"src/router/node-router.ts"
+	]
+}

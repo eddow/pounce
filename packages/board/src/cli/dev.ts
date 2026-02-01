@@ -5,9 +5,8 @@ import { createServer } from 'node:http'
 import * as path from 'node:path'
 import { createServer as createViteServer } from 'vite'
 import { createPounceMiddleware, clearRouteTreeCache } from '../adapters/hono.js'
-import { api, enableSSR } from '../lib/http/client.js'
+import { api, enableSSR, matchRoute, buildRouteTree } from '../server/index.js'
 import { fileURLToPath } from 'node:url'
-import { matchRoute, buildRouteTree } from '../lib/router/index.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -90,7 +89,7 @@ export async function runDevServer(options: DevServerOptions = {}) {
 		const url = new URL(c.req.url)
 
 		// Import SSR utilities dynamically to avoid circular deps
-		const { withSSRContext, injectApiResponses, getCollectedSSRResponses } = await import('../lib/ssr/utils.js')
+		const { withSSRContext, injectApiResponses, getCollectedSSRResponses } = await import('../server/index.js')
 
 		// Run all SSR operations within a proper context
 		const origin = `${url.protocol}//${url.host}`
