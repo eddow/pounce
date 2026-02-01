@@ -1,6 +1,10 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite'
-import { resolve } from 'path'
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'node:url'
 import dts from 'vite-plugin-dts'
+
+const projectRootDir = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   plugins: [
@@ -32,14 +36,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      // Vite doesn't automatically read imports field from package.json for internal resolution in development?
-      // Check if we need explicit alias here.
-      // '#browser': resolve(__dirname, './src/no-dom/browser.ts') // Default?
-      // Wait, we want separate builds?
-      // The current config builds BOTH entries in ONE pass.
-      // But one needs DOM and one needs Node.
-      // Vite build is usually for Browser (ESM).
-      // Node build logic is tricky with single Vite config unless we use environment config or multiple inputs?
+      // mutts: resolve(projectRootDir, '../../../mutts/src'),
     }
   }
 })
