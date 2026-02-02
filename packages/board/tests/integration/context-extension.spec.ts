@@ -4,10 +4,10 @@
 
 import { describe, it, expect } from 'vitest'
 import type { RequestContext, Middleware, RouteHandler } from '../../src/server/index.js'
-import { runMiddlewares } from '@pounce/toolbox/entry-no-dom'
+import { runMiddlewares } from '@pounce/kit/entry-no-dom'
 
 // Extend RequestContext for testing
-declare module '@pounce/toolbox/entry-no-dom' {
+declare module '@pounce/kit/entry-no-dom' {
 	interface RequestContext {
 		user?: {
 			id: string

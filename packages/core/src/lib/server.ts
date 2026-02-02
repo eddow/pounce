@@ -1,11 +1,14 @@
 import { JSDOM } from 'jsdom'
-import { bindChildren, rootScope, type Scope } from './renderer.js'
+import { als, bootstrap as bootstrapNode } from '../node/bootstrap'
+import { bindChildren, rootScope, type Scope } from './renderer'
 
 /**
  * Runs a function within an SSR DOM environment.
  * Sets up global document, window, Node, etc.
  */
 export function withSSR<T>(fn: (dom: { document: Document; window: Window }) => T): T {
+	bootstrapNode()
+
 	const jsdom = new JSDOM(
 		'<!DOCTYPE html><html><body><div id="root"></div><div id="mini"></div><div id="app"></div><div id="tests"></div></body></html>',
 		{
@@ -13,96 +16,16 @@ export function withSSR<T>(fn: (dom: { document: Document; window: Window }) => 
 			pretendToBeVisual: true,
 		}
 	)
+
 	const { window } = jsdom
 	const { document } = window
 
-	const prevGlobals = new Map<string, any>()
-	const keysToHoist = [
-		'window',
-		'document',
-		'Node',
-		'HTMLElement',
-		'Element',
-		'Event',
-		'CustomEvent',
-		'navigator',
-		'location',
-		'history',
-		'self',
-		'top',
-		'parent',
-		'Text',
-		'Comment',
-		'DocumentFragment',
-		'SVGElement',
-		'HTMLInputElement',
-		'HTMLLabelElement',
-		'CharacterData',
-		'Attr',
-	]
-
-	for (const key of keysToHoist) {
-		prevGlobals.set(key, Object.getOwnPropertyDescriptor(globalThis, key))
-		if (key in window) {
-			Object.defineProperty(globalThis, key, {
-				value: (window as any)[key],
-				configurable: true,
-				writable: true,
-				enumerable: true,
-			})
-		}
-	}
-
-	// Mock ResizeObserver if it doesn't exist (jsdom doesn't have it)
-	if (!('ResizeObserver' in globalThis)) {
-		prevGlobals.set('ResizeObserver', (globalThis as any).ResizeObserver)
-		;(globalThis as any).ResizeObserver = class ResizeObserver {
-			observe() {}
-			unobserve() {}
-			disconnect() {}
-		}
-	}
-
-	const cleanup = () => {
-		for (const [key, descriptor] of prevGlobals) {
-			if (descriptor === undefined) {
-				delete (globalThis as any)[key]
-			} else {
-				Object.defineProperty(globalThis, key, descriptor)
-			}
-		}
-	}
-
-	try {
-		const result = fn({
+	return als.run(jsdom, () =>
+		fn({
 			document: document as unknown as Document,
 			window: window as unknown as Window,
 		})
-
-		if (
-			result &&
-			typeof result === 'object' &&
-			'then' in result &&
-			typeof (result as any).then === 'function'
-		) {
-			return (result as any).then(
-				(val: any) => {
-					cleanup()
-					return val
-				},
-				(err: any) => {
-					cleanup()
-					throw err
-				}
-			) as T
-		}
-
-		cleanup()
-		return result
-	} catch (e) {
-		cleanup()
-		throw e
-	}
+	)
 }
 
 /**

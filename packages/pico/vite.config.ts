@@ -59,6 +59,7 @@ export default defineConfig({
 		alias: [
 			{ find: 'mutts', replacement: resolvePath(projectRootDir, '../../../mutts/src') },
 			{ find: '@pounce/core', replacement: resolvePath(projectRootDir, '../core/src') },
+			{ find: '@pounce/kit', replacement: resolvePath(projectRootDir, '../kit/src') },
 			{ find: /^pure-glyf$/, replacement: resolvePath(projectRootDir, '../../../pure-glyf/src') },
 			{ find: /^pure-glyf\/(?!(icons|icons\.css))/, replacement: resolvePath(projectRootDir, '../../../pure-glyf/src/$1') },
 			{ find: 'npc-script', replacement: resolvePath(projectRootDir, '../../../npcs/src') },
@@ -79,6 +80,7 @@ export default defineConfig({
 		rollupOptions: {
 			external: [
 				'@pounce/core',
+				'@pounce/kit',
 				'@picocss/pico',
 			],
 		},

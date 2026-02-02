@@ -1,6 +1,6 @@
 import { compose } from '@pounce/core'
 import { tablerOutlineX } from 'pure-glyf/icons'
-import { css } from '@pounce/toolbox/entry-dom'
+import { css } from '@pounce/kit'
 import { Icon } from './icon'
 import type { Variant } from './variants'
 import { variantClass } from './variants'

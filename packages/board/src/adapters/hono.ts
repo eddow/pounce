@@ -5,6 +5,7 @@
 
 import type { Context, MiddlewareHandler } from 'hono'
 import { Hono } from 'hono'
+import { getSSRStyles } from '@pounce/kit/entry-dom'
 import {
 	runMiddlewares,
 	enableSSR,
@@ -138,9 +139,6 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
                 
                 // Inject CSS
                 try {
-                    // Dynamic import to be safe? Or stick to static.
-                    // Static is cleaner.
-                    const { getSSRStyles } = await import('@pounce/toolbox/dom')
                     const styles = getSSRStyles()
                     if (styles) {
                         finalHtml = finalHtml.replace('</head>', `${styles}</head>`)

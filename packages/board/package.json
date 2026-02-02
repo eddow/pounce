@@ -69,7 +69,7 @@
 		"hono": "^4.6.14",
 		"mutts": "link:../../../mutts",
 		"@pounce/core": "workspace:*",
-		"@pounce/toolbox": "workspace:*",
+		"@pounce/kit": "workspace:*",
 		"@pounce/pico": "workspace:*",
 		"arktype": "^2.1.0"
 	},

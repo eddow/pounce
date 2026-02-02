@@ -1,4 +1,4 @@
-import { css } from '@pounce/toolbox/entry-dom'
+import { css } from '@pounce/kit'
 import { compose } from '@pounce/core'
 import { Icon } from './icon'
 import { Variant, variantClass } from './variants'

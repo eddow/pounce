@@ -35,7 +35,7 @@ async function dispatchToHandler(request: Request): Promise<Response> {
         // The user suggested "throw Not Implemented" for common, but here we ARE in the server implementation.
         // If the server implementation is used but no registry is provided, it's an error.
 		throw new Error(
-			'[@pounce/toolbox] SSR dispatch failed: No route registry set. ' +
+			'[@pounce/kit] SSR dispatch failed: No route registry set. ' +
 				'Ensure setRouteRegistry() is called during app initialization.'
 		)
 	}
@@ -62,7 +62,7 @@ async function dispatchToHandler(request: Request): Promise<Response> {
         // Actually, let's keep it simple as per user request: No-DOM EP = Direct Dispatch.
         // If I want to fetch external, I might need a different client or this client should be smart.
         // "board will implement all the 'throw notImplemented' functions for SSR" - this refers to the Base/Abstract.
-		throw new Error(`[@pounce/toolbox] SSR dispatch failed: No handler found for ${method} ${path}`)
+		throw new Error(`[@pounce/kit] SSR dispatch failed: No handler found for ${method} ${path}`)
 	}
 
 	const context: RequestContext = {

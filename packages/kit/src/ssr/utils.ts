@@ -1,7 +1,37 @@
 import { getContext, type RequestScope, runWithContext, createScope } from '../api/context.js'
-
+import { withSSR as coreWithSSR } from '@pounce/core/server'
+import { runWithClientAsync, createClientInstance } from '../node/bootstrap.js'
 
 export type SSRDataMap = Record<string, { id: string; data: unknown }>
+
+/**
+ * Unified SSR wrapper that composes both @pounce/core and @pounce/kit isolation.
+ * This ensures both the JSDOM environment and the client singleton are properly isolated per request.
+ */
+export async function withSSR<T>(
+	fn: () => Promise<T>,
+	options?: { url?: string | URL }
+): Promise<T> {
+	return coreWithSSR(({ document, window }) => {
+		return runWithClientAsync(async (client) => {
+			return fn()
+		}, options)
+	})
+}
+
+/**
+ * Synchronous version of withSSR for simple cases.
+ */
+export function withSSRSync<T>(
+	fn: () => T,
+	options?: { url?: string | URL }
+): T {
+	return coreWithSSR(({ document, window }) => {
+		const clientInstance = createClientInstance(options?.url)
+		const { als } = require('../node/bootstrap.js')
+		return als.run(clientInstance, () => fn())
+	})
+}
 
 const clientHydrationCache = new Map<string, unknown>()
 

@@ -1,10 +1,10 @@
 /**
  * Server-side exports for @pounce/board
- * Consumes @pounce/toolbox
+ * Consumes @pounce/kit
  */
 
-import { serverRouter } from '@pounce/toolbox'
-export * from '@pounce/toolbox'
+import { serverRouter } from '@pounce/kit'
+export * from '@pounce/kit'
 
 // Re-export router functions flattened for compatibility
 export const buildRouteTree = serverRouter.buildRouteTree
@@ -25,4 +25,4 @@ export type {
 	RouteHandler,
 	RouteResponse,
 	HttpMethod,
-} from '@pounce/toolbox'
+} from '@pounce/kit'

@@ -13,9 +13,9 @@
  * ```
  */
 
-// Re-export core types from toolbox
-export * from '@pounce/toolbox'
-import * as serverRouter from '@pounce/toolbox'
+// Re-export core types from kit
+export * from '@pounce/kit'
+import * as serverRouter from '@pounce/kit'
 
 // Re-export router functions flattened for compatibility
 export const buildRouteTree = serverRouter.buildRouteTree
@@ -36,4 +36,4 @@ export type {
 	RouteHandler,
 	RouteResponse,
 	HttpMethod,
-} from '@pounce/toolbox'
+} from '@pounce/kit'

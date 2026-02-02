@@ -7,20 +7,16 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { reactive, trackEffect } from 'mutts'
-import { JSDOM } from 'jsdom'
-import { bindApp, compose, h, type Scope } from '../../src/lib'
+import { bindApp, h, type Scope } from '../../src/lib'
 
 describe('Effect during render bug', () => {
 	let document: Document
 	let container: HTMLElement
 
 	beforeEach(() => {
-		const dom = new JSDOM('<!DOCTYPE html><div id="app"></div>')
-		document = dom.window.document
-		globalThis.document = document
-		// Also set Node from jsdom window
-		globalThis.Node = dom.window.Node as any
-		container = document.getElementById('app')!
+		document = globalThis.document
+		document.body.innerHTML = '<div id="app"></div>'
+		container = document.getElementById('app') as HTMLElement
 	})
 
 	it('should NOT re-render parent when child modifies shared state', () => {

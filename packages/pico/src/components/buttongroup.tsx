@@ -8,7 +8,7 @@
  */
 
 import { compose } from '@pounce/core'
-import { css } from '@pounce/toolbox'
+import { css } from '@pounce/kit'
 
 
 css`

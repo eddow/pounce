@@ -1,4 +1,5 @@
 import { effect, type ScopedCallback } from 'mutts'
+import { document } from '../shared'
 import { testing } from './debug'
 import { bindChildren, type Child, type Component, Fragment, h, render, rootScope, type Scope } from './renderer'
 
@@ -11,10 +12,10 @@ function isString(value: any): value is string {
 }
 
 export { bindChildren, Fragment, h, type Scope, type Child, type Component }
-// export * from './route' // Moved to toolbox
 
 export * from './utils'
 export * from './platform'
+export * from '../shared'
 
 export function bindApp(
 	app: JSX.Element,
@@ -42,5 +43,3 @@ export function bindApp(
 	}
 	return () => stop?.()
 }
-
-Object.assign(globalThis, { h, Fragment })

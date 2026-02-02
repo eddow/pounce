@@ -2,7 +2,7 @@ import { effect, reactive } from 'mutts'
 import { compose } from '@pounce/core'
 import { resize } from '../directives/resize'
 import { scroll } from '../directives/scroll'
-import { css } from '@pounce/toolbox/entry-dom'
+import { css } from '@pounce/kit'
 
 css`
 .pp-infinite-scroll {

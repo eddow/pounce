@@ -7,6 +7,7 @@ import CounterComponent from './components/Counter'
 import TodoComponent from './components/Todo'
 import WrapperComponent from './components/Wrapper'
 import { bindApp } from '../lib'
+import '../dom/bootstrap'
 
 // Create a reactive state for 2-way binding demo
 const state = reactive({

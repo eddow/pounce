@@ -40,27 +40,30 @@
 			"pure-glyf/*": [
 				"../../../pure-glyf/src/*"
 			],
-			"@pounce/toolbox": [
-				"../toolbox/src/entry-no-dom.ts"
+			"@pounce/kit": [
+				"../kit/src/entry-no-dom.ts"
 			],
-			"@pounce/toolbox/dom": [
-				"../toolbox/src/dom/index.ts"
+			"@pounce/kit/dom": [
+				"../kit/src/dom/index.ts"
 			],
-			"@pounce/toolbox/entry-no-dom": [
-				"../toolbox/src/entry-no-dom.ts"
+			"@pounce/kit/entry-dom": [
+				"../kit/src/entry-dom.ts"
+			],
+			"@pounce/kit/entry-no-dom": [
+				"../kit/src/entry-no-dom.ts"
 			]
 		}
 	},
 	"include": [
 		"src/**/*",
 		"../pico/src/types",
-		"../toolbox/src/**/*"
+		"../kit/src/**/*"
 	],
 	"exclude": [
 		"node_modules",
 		"dist",
 		"tests",
-		"../toolbox/src/**/*.test.ts",
-		"../toolbox/src/**/*.test.tsx"
+		"../kit/src/**/*.test.ts",
+		"../kit/src/**/*.test.tsx"
 	]
 }

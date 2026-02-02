@@ -15,9 +15,10 @@ export class ImplementationError extends Error {
 
 /**
  * Placeholder for functions that are implementation-dependent.
- * Throws ImplementationError when called.
- * Type is generic (...args: any[]) => any to allow assignment to any function signature.
+ * Returns a function that throws ImplementationError when called.
  */
-export function implementationDependent(..._args: any[]): any {
-	throw new ImplementationError()
+export function implementationDependent(feature: string): any {
+	return (..._args: any[]) => {
+		throw new ImplementationError(feature)
+	}
 }

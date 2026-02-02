@@ -28,9 +28,9 @@ importers:
       '@pounce/pico':
         specifier: workspace:*
         version: link:../pico
-      '@pounce/toolbox':
+      '@pounce/kit':
         specifier: workspace:*
-        version: link:../toolbox
+        version: link:../kit
       arktype:
         specifier: ^2.1.0
         version: 2.1.29
@@ -153,9 +153,9 @@ importers:
       '@pounce/core':
         specifier: workspace:*
         version: link:../core
-      '@pounce/toolbox':
+      '@pounce/kit':
         specifier: workspace:*
-        version: link:../toolbox
+        version: link:../kit
       '@tabler/icons':
         specifier: ^3.36.1
         version: 3.36.1
@@ -233,7 +233,7 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(@types/node@25.1.0)(@vitest/ui@4.0.18)(happy-dom@20.4.0)(jsdom@27.4.0)(sass@1.97.3)(terser@5.46.0)
 
-  packages/toolbox:
+  packages/kit:
     dependencies:
       '@pounce/core':
         specifier: workspace:*

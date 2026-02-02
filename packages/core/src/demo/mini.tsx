@@ -1,5 +1,6 @@
 import { effect, reactive } from 'mutts'
 import { bindApp, compose, type Scope } from '../lib'
+import '../dom/bootstrap'
 
 function isFunction(value: any): value is Function {
 	return typeof value === 'function'

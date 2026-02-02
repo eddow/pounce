@@ -18,6 +18,7 @@ import {
 	type ScopedCallback,
 } from 'mutts'
 import { namedEffect, nf, pounceOptions, testing, POUNCE_OWNER, rootComponents, type ComponentInfo } from './debug'
+import { crypto, document, Node } from '../shared'
 import { restructureProps } from './namespaced'
 import { type ClassInput, classNames, type StyleInput, styles } from './styles'
 import { extend, forwardProps, isElement, propsInto } from './utils'
@@ -208,7 +209,7 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 	// If we were given a component function directly, render it
 	if (componentCtor) {
 		const info: ComponentInfo = unreactive({
-			id: crypto.randomUUID(),
+			id: (typeof crypto !== 'undefined' && crypto?.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2),
 			name: componentCtor.name,
 			ctor: componentCtor,
 			props: regularProps,
@@ -656,7 +657,6 @@ export function processChildren(children: readonly Child[], scope: Scope, isRoot
 		if (!nodes && !isNumber(nodes)) return
 
 		if (Array.isArray(nodes)) {
-			if (nodes.every(n => n instanceof Node)) return nodes
 			return processChildren(nodes, scope)
 		}
 		if (typeof Node !== 'undefined' && nodes instanceof Node) return unwrap(nodes)

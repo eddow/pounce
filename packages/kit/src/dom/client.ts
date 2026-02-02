@@ -1,9 +1,15 @@
-import { client } from '../client/implementation.js'
+import { setClient, client } from '../client/shared.js'
+import { client as baseClient } from '../client/implementation.js'
 import type { ClientHistoryState, ClientUrl, ClientViewport, NavigateOptions } from '../client/types.js'
+
+// Bind the base reactive client implementation
+setClient(baseClient)
 
 export { client }
 
 // --- Initialization ---
+// Note: This file is DOM-only, so we use native window/document directly
+// The canonical exports from @pounce/core are for shared isomorphic code
 
 if (typeof window !== 'undefined') {
 	initializeClientListeners()

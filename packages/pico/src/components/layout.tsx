@@ -1,6 +1,6 @@
 import { effect, reactive } from 'mutts'
 import { compose } from '@pounce/core'
-import { css } from '@pounce/toolbox/entry-dom'
+import { css } from '@pounce/kit'
 
 css`
 .pp-stack {

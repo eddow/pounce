@@ -15,19 +15,12 @@
 			"node"
 		],
 		"skipLibCheck": true,
-		"noEmit": true,
-		"paths": {
-			"#client": [
-				"./src/no-dom/client.ts"
-			]
-		}
+		"noEmit": true
 	},
 	"include": [
 		"src/**/*"
 	],
 	"exclude": [
-		"src/dom/**/*",
-		"src/entry-browser.ts",
 		"**/*.test.ts",
 		"**/*.test.tsx",
 		"**/*.spec.ts",

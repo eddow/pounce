@@ -1,5 +1,5 @@
 import { describe, test } from 'vitest'
-import { h } from '@pounce/core'
+import { h } from '../../src/lib'
 
 describe('edgeProps', () => {
     test('should explain why property set fails', () => {

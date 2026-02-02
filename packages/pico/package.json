@@ -53,7 +53,7 @@
 		"dockview-core": "^4.11.0",
 		"mutts": "link:../../../mutts",
 		"@pounce/core": "workspace:*",
-		"@pounce/toolbox": "workspace:*",
+		"@pounce/kit": "workspace:*",
 		"pure-glyf": "link:../../../pure-glyf"
 	},
 	"packageManager": "pnpm@10.28.2"

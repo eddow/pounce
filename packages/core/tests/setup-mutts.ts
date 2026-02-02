@@ -1,4 +1,7 @@
 import { reactiveOptions } from 'mutts';
+import { bootstrap } from '../src/dom/bootstrap';
+
+bootstrap();
 
 reactiveOptions.onMemoizationDiscrepancy = (cached, fresh, fn, args, cause) => {
     const stringify = (val: any): string => {

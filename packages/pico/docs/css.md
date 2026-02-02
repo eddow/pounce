@@ -11,7 +11,7 @@ The CSS template tag system allows you to write CSS directly in your TypeScript/
 The CSS template tag functions are available from `./lib/css`:
 
 ```ts
-import { css, sass, scss } from '@pounce/toolbox/dom'
+import { css, sass, scss } from '@pounce/kit/dom'
 ```
 
 ## Basic Usage
@@ -91,7 +91,7 @@ This extension automatically detects `css`, `sass`, and `scss` tags in template 
 ### Component Styles
 
 ```tsx
-import { css } from '@pounce/toolbox/dom'
+import { css } from '@pounce/kit/dom'
 
 // Define styles at module level
 css`
@@ -116,7 +116,7 @@ export const MyComponent = () => (
 ### SASS with Nesting (indented syntax)
 
 ```tsx
-import { sass } from '@pounce/toolbox/dom'
+import { sass } from '@pounce/kit/dom'
 
 sass`
 .card
@@ -149,7 +149,7 @@ export const Button = () => <button class="pp-button">Click</button>
 
 **After:**
 ```tsx
-import { css } from '@pounce/toolbox/dom'
+import { css } from '@pounce/kit/dom'
 
 css`
   .pp-button {

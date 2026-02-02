@@ -2,20 +2,19 @@
  * Test to confirm bindApp re-render bug
  */
 import { describe, it, expect, beforeEach } from 'vitest'
-import { reactive, effect } from 'mutts'
-import { JSDOM } from 'jsdom'
-import { bindApp, h, type Scope } from '../../src/lib'
+import { reactive } from 'mutts'
+import { bindApp, h } from '../../src/lib'
+import { bootstrap } from '../../src/dom/bootstrap'
 
 describe('bindApp re-render bug', () => {
 	let document: Document
 	let container: HTMLElement
 
 	beforeEach(() => {
-		const dom = new JSDOM('<!DOCTYPE html><div id="app"></div>')
-		document = dom.window.document
-		globalThis.document = document
-		globalThis.Node = dom.window.Node as any
-		container = document.getElementById('app')!
+		bootstrap()
+		document = globalThis.document
+		document.body.innerHTML = '<div id="app"></div>'
+		container = document.getElementById('app') as HTMLElement
 	})
 
 	it('should NOT re-render whole app when state changes if bindApp is correct', () => {

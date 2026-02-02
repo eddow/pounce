@@ -10,11 +10,9 @@
     "build": "tsc && vite build && npm run build:plugin",
     "build:plugin": "esbuild src/babel-plugin-jsx-reactive.ts --bundle --format=esm --platform=node --outfile=dist/plugin.js",
     "build:all": "npm run build",
-    "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "vitest run",
-    "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
     "test:ui": "playwright test --ui",
     "biome": "biome check --write src"
@@ -29,9 +27,19 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "node": "./dist/node.js",
+      "default": "./dist/dom.js"
+    },
+    "./dom": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/dom.js",
+      "default": "./dist/dom.js"
+    },
+    "./node": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/node.js",
+      "default": "./dist/node.js"
     },
     "./plugin": {
       "types": "./src/babel-plugin-jsx-reactive.ts",
@@ -39,34 +47,34 @@
       "default": "./dist/plugin.js"
     },
     "./runtime": {
-      "types": "./src/runtime/index.d.ts",
-      "import": "./src/runtime/index.ts",
-      "default": "./src/runtime/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./runtime/jsx-runtime": {
-      "types": "./src/runtime/jsx-runtime.ts",
-      "import": "./src/runtime/jsx-runtime.ts",
-      "default": "./src/runtime/jsx-runtime.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./jsx-runtime": {
-      "types": "./src/runtime/jsx-runtime.ts",
-      "import": "./src/runtime/jsx-runtime.ts",
-      "default": "./src/runtime/jsx-runtime.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./jsx-dev-runtime": {
-      "types": "./src/runtime/jsx-dev-runtime.ts",
-      "import": "./src/runtime/jsx-dev-runtime.ts",
-      "default": "./src/runtime/jsx-dev-runtime.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./runtime/jsx-dev-runtime": {
-      "types": "./src/runtime/jsx-dev-runtime.ts",
-      "import": "./src/runtime/jsx-dev-runtime.ts",
-      "default": "./src/runtime/jsx-dev-runtime.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./server": {
-      "types": "./src/lib/server.ts",
-      "import": "./src/lib/server.ts",
-      "default": "./src/lib/server.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/node.js",
+      "default": "./dist/node.js"
     },
     "./src": "./src/index.ts",
     "./src/*": "./src/*"

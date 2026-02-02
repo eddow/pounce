@@ -11,7 +11,7 @@ Pounce is a monorepo containing a collection of packages for building modern web
 | [`@pounce/core`](./packages/core) | Lightweight reactive UI framework with JSX | Stable |
 | [`@pounce/board`](./packages/board) | Full-stack meta-framework with SSR and file-based routing | In Development |
 | [`@pounce/pico`](./packages/pico) | UI components built on PicoCSS | Stable |
-| [`@pounce/toolbox`](./packages/toolbox) | Client utilities, routing, and API helpers | In Development |
+| [`@pounce/kit`](./packages/kit) | Client utilities, routing, and API helpers | In Development |
 
 ## 🌟 Features
 
@@ -24,7 +24,7 @@ Pounce is a monorepo containing a collection of packages for building modern web
 - **📦 No Runtime Overhead**: Works directly with the DOM
 - **🗂️ File-Based Routing** (Board): Automatic route generation from file structure
 - **🔄 SSR-First** (Board): Server-side rendering with hydration
-- **🛠️ Client Utilities** (Toolbox): Browser APIs, routing, and helpers
+- **🛠️ Client Utilities** (Kit): Browser APIs, routing, and helpers
 
 ## Quick Start
 
@@ -77,7 +77,7 @@ pnpm run lint
 - **[@pounce/core](./packages/core)** - Core reactive framework documentation
 - **[@pounce/board](./packages/board)** - Full-stack framework documentation
 - **[@pounce/pico](./packages/pico)** - UI components documentation
-- **[@pounce/toolbox](./packages/toolbox)** - Client utilities and routing documentation
+- **[@pounce/kit](./packages/kit)** - Client utilities and routing documentation
 
 ## License
 

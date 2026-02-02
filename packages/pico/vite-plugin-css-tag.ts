@@ -37,7 +37,7 @@ export function cssTagPlugin(): Plugin {
 		enforce: 'pre',
 
 		async transform(code, id) {
-			// Disabled: pico now imports directly from @pounce/toolbox/entry-dom
+			// Disabled: pico now imports directly from @pounce/kit/entry-dom
 			// which provides css/sass/scss template tag functions
 			return null
 		},

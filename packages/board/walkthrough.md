@@ -402,21 +402,21 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 
 ## Phase 2: Core HTTP Layer
 
-### 2.1 - 2.3 Core HTTP Layer (Now in @pounce/toolbox)
-- [x] **Moved to Toolbox:** `lib/http/core.ts` is now part of `@pounce/toolbox/api/core`.
-- [x] **Moved to Toolbox:** Middleware Runner implemented in `toolbox`.
-- [x] **Moved to Toolbox:** Response utilities implemented in `toolbox`.
+### 2.1 - 2.3 Core HTTP Layer (Now in @pounce/kit)
+- [x] **Moved to Kit:** `lib/http/core.ts` is now part of `@pounce/kit/api/core`.
+- [x] **Moved to Kit:** Middleware Runner implemented in `kit`.
+- [x] **Moved to Kit:** Response utilities implemented in `kit`.
 
 ---
 
 
 ## Phase 3: API Client
 
-### 3.1 - 3.5 API Client (Now in @pounce/toolbox)
-- [x] **Moved to Toolbox:** `lib/http/client.ts` is now `@pounce/toolbox/api/client`.
-- [x] **Moved to Toolbox:** Universal `api()` implementation (DOM vs No-DOM strategies).
-- [x] **Moved to Toolbox:** ImplementationDependent errors for environment-specific features.
-- [x] **Moved to Toolbox:** SSR data tracking and injection.
+### 3.1 - 3.5 API Client (Now in @pounce/kit)
+- [x] **Moved to Kit:** `lib/http/client.ts` is now `@pounce/kit/api/client`.
+- [x] **Moved to Kit:** Universal `api()` implementation (DOM vs No-DOM strategies).
+- [x] **Moved to Kit:** ImplementationDependent errors for environment-specific features.
+- [x] **Moved to Kit:** SSR data tracking and injection.
 ---
 
 ## Phase 4: SSR Integration (Phased)
@@ -452,16 +452,16 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 > [!NOTE]
 > Proxies are **code utilities** for calling external APIs, not HTTP routes or forwarders.
 
-### 5.1 - 5.3 External API Proxies (Now in @pounce/toolbox)
-- [x] **Moved to Toolbox:** Proxy system logic is part of `toolbox` API.
+### 5.1 - 5.3 External API Proxies (Now in @pounce/kit)
+- [x] **Moved to Kit:** Proxy system logic is part of `kit` API.
 
 ---
 
 ## Phase 6: File-Based Router
 
-### 6.1 - 6.4 File-Based Router (Now in @pounce/toolbox)
-- [x] **Moved to Toolbox:** `lib/router/index.ts` concepts moved to `toolbox/router`.
-- [x] **Board Responsibility:** Board still handles scanning user's `routes/` directory (via CLI/Adapter) and passing it to Toolbox's `buildRouteTree`.
+### 6.1 - 6.4 File-Based Router (Now in @pounce/kit)
+- [x] **Moved to Kit:** `lib/router/index.ts` concepts moved to `kit/router`.
+- [x] **Board Responsibility:** Board still handles scanning user's `routes/` directory (via CLI/Adapter) and passing it to Kit's `buildRouteTree`.
 - [ ] Load `types.d.ts` for shared types
 - [ ] Handle hot module replacement in dev
 
@@ -619,8 +619,8 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 └── package.json
 ```
 
-### 10.1 Unit Tests (Now in @pounce/toolbox)
-- **Note:** Unit tests for `router`, `client`, `http-core` are now located in `@pounce/toolbox`.
+### 10.1 Unit Tests (Now in @pounce/kit)
+- **Note:** Unit tests for `router`, `client`, `http-core` are now located in `@pounce/kit`.
 - Board tests focus on **Integration** and **Consumers**.
 
 ---

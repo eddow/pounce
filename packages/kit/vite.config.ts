@@ -18,10 +18,12 @@ export default defineConfig({
   build: {
     lib: {
       entry: {
-        'dom': resolve(__dirname, 'src/dom.ts'),
-        'no-dom': resolve(__dirname, 'src/no-dom.ts')
+        index: resolve(projectRootDir, 'src/index.ts'),
+        dom: resolve(projectRootDir, 'src/dom/index.ts'),
+        node: resolve(projectRootDir, 'src/node/index.ts'),
       },
-      formats: ['es', 'cjs']
+      formats: ['es', 'cjs'],
+      fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'js' : 'cjs'}`,
     },
     rollupOptions: {
       external: [

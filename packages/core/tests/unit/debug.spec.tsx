@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest'
 import { reactive } from 'mutts'
-import { h } from '@pounce/core'
+import { h } from '../../src/lib'
 import { getComponentInstance, getComponentHierarchy, rootComponents } from '../../src/lib/debug-helpers'
 
 describe('Component association debug tools', () => {

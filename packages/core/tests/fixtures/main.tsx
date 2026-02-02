@@ -3,6 +3,7 @@ import { bindApp } from '../../src/lib/index'
 import { testing } from '../../src/lib/debug'
 import ForwardPropsTests from './ForwardPropsTests'
 import DynamicTests from './DynamicTests'
+import '../../src/dom/bootstrap'
 
 declare global {
 	interface Window {

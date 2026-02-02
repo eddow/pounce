@@ -1,6 +1,6 @@
 /**
  * Client-side exports for @pounce/board
- * Consumes @pounce/toolbox
+ * Consumes @pounce/kit
  */
 
-export * from '@pounce/toolbox/dom'
+export * from '@pounce/kit/dom'

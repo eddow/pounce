@@ -3,7 +3,7 @@ import {
 	compose,
 	copyObject,
 } from '@pounce/core'
-import { client } from '#client'
+import { client } from '../client/shared.js'
 import {
 
 	matchRoute as coreMatchRoute,

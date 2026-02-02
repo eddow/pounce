@@ -1,7 +1,7 @@
 import { effect, reactive } from 'mutts'
 import { tablerOutlineMenu } from 'pure-glyf/icons'
-import { css } from '@pounce/toolbox/entry-dom'
-import { A } from '@pounce/toolbox/entry-dom'
+import { css } from '@pounce/kit'
+import { A } from '@pounce/kit'
 import { Button } from './button'
 import { Toolbar } from './toolbar'
 

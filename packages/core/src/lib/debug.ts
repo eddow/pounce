@@ -1,5 +1,8 @@
 import { effect, reactiveOptions, type EffectOptions } from 'mutts'
+import { window } from '../shared'
 export * from './debug-helpers'
+
+// ... (rest of imports)
 
 export function nf<T extends Function>(name: string, fn: T): T {
 	if (!fn.name) Object.defineProperty(fn, 'name', { value: name })
@@ -87,7 +90,12 @@ export const pounceOptions = {
 	writeRoProps: 'warn' as 'warn' | 'error' | 'ignore',
 }
 
-if (typeof window !== 'undefined') {
-	;(window as any).reactiveOptions = reactiveOptions
+try {
+	const win = window as any
+	if (win) {
+		win.reactiveOptions = reactiveOptions
+	}
+} catch {
+	// Platform not yet bound, ignore
 }
 

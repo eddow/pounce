@@ -27,6 +27,7 @@ export default defineConfig({
 		}
 	},
 	resolve: {
+		conditions: ['browser', 'default', 'import'],
 		alias: {
 			'@pounce/runtime/jsx-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-runtime.ts'),
 			'@pounce/runtime/jsx-dev-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-dev-runtime.ts'),
@@ -78,13 +79,14 @@ export default defineConfig({
 		lib: {
 			entry: {
 				index: resolvePath(projectRootDir, 'src/index.ts'),
-				'index-node': resolvePath(projectRootDir, 'src/index-node.ts'),
+				dom: resolvePath(projectRootDir, 'src/dom/index.ts'),
+				node: resolvePath(projectRootDir, 'src/node/index.ts'),
 			},
 			formats: ['es', 'cjs'],
 			fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'js' : 'cjs'}`,
 		},
 		rollupOptions: {
-			external: ['mutts', 'jsdom', '@babel/core', 'node:path', 'node:url'],
+			external: ['mutts', 'jsdom', '@babel/core', 'node:path', 'node:url', 'node:async_hooks'],
 		},
 		outDir: 'dist',
 		target: 'esnext',
