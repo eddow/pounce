@@ -72,6 +72,7 @@ export type Scope = Record<PropertyKey, any> & { component?: ComponentInfo }
 export type Component<P = {}> = (props: P, scope?: Scope) => JSX.Element
 export const rootScope: Scope = reactive(Object.create(null))
 
+// TODO: make an unreactive Element class who takes `produce` (our present element.render) and exposes `.render` (now a global function)
 function jsxEl(jsx: JSX.Element) {
 	return unreactive(jsx)
 }
@@ -161,10 +162,13 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 				break
 			}
 			case 'use': {
-				// The babel plugin automatically wraps the handler: `use={fn}` -> `use={() => fn}`.
-				// We execute the wrapper to get the actual handler.
-				// Users should NOT wrap it manually.
-				const mountEntry = valuedAttributeGetter(value)()
+				if (tag === 'dynamic') {
+					node[key] = value
+					break
+				}
+				const getter = valuedAttributeGetter(value)
+				// TODO: double-check this - it looks hacky
+				const mountEntry = isFunction(value) ? (value.length > 0 ? value : value()) : getter()
 				if (mountEntry !== undefined) {
 					categories.mount = [mountEntry, ...(categories.mount || [])]
 				}
@@ -434,8 +438,12 @@ const intrinsicComponentAliases = extend(null, {
 		scope: Scope
 	) {
 		function compute(): Node[] {
-			trackEffect((_obj, _evolution, prop)=> {
-				if(prop !== 'tag') throw new DynamicRenderingError('Renderers effects are immutable. in <dynamic>, only a tag change can lead to a re-render')
+			trackEffect((obj, _evolution, prop) => {
+				if (obj === props && prop !== 'tag') {
+					throw new DynamicRenderingError(
+						'Renderers effects are immutable. in <dynamic>, only a tag change can lead to a re-render'
+					)
+				}
 			})
 			// Resolve the tag identity to track changes.
 			// Only call the function if it's a getter (length 0).
@@ -470,7 +478,19 @@ const intrinsicComponentAliases = extend(null, {
 				},
 				getOwnPropertyDescriptor(target, prop) {
 					if (prop === 'tag' || prop === 'children') return undefined
-					return Object.getOwnPropertyDescriptor(target, prop)
+					const desc = Object.getOwnPropertyDescriptor(target, prop)
+					if (desc) return desc
+					if (prop in target) {
+						return {
+							enumerable: true,
+							configurable: true,
+							get: () => target[prop],
+							set: (value) => {
+								target[prop] = value
+							},
+						}
+					}
+					return undefined
 				},
 			})
 
