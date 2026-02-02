@@ -1,4 +1,3 @@
-import { describe, it, expectTypeOf } from 'vitest';
 import type { ExtractPathParams } from './inference';
 
 describe('Route Parameter Inference', () => {

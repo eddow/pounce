@@ -14,19 +14,26 @@
  */
 
 // Re-export core types from toolbox
+export * from '@pounce/toolbox'
+import * as serverRouter from '@pounce/toolbox'
+
+// Re-export router functions flattened for compatibility
+export const buildRouteTree = serverRouter.buildRouteTree
+export const matchRoute = serverRouter.matchFileRoute // Verified locally in node-router that it is exported as matchRoute
+export const collectMiddleware = serverRouter.collectMiddleware
+export const parseSegment = serverRouter.parseSegment
+
+// Types - re-export for augmentation support
+export type FileRouteMatch = serverRouter.FileRouteMatch
+export type RouteTreeNode = serverRouter.RouteTreeNode
+export type RouteParams = serverRouter.RouteParams
+export type SegmentInfo = serverRouter.SegmentInfo
+
+// Re-export core types to enable declaration merging
 export type {
-	HttpMethod,
 	RequestContext,
 	Middleware,
 	RouteHandler,
 	RouteResponse,
-} from '@pounce/toolbox/entry-no-dom'
-
-export type { ApiError } from '@pounce/toolbox/entry-no-dom'
-
-// Re-export router types from serverRouter namespace
-import type { serverRouter } from '@pounce/toolbox/entry-no-dom'
-export type RouteParams = serverRouter.RouteParams
-export type RouteTreeNode = serverRouter.RouteTreeNode
-export type RouteMatch = serverRouter.RouteMatch
-export type ParsedPathSegment = serverRouter.ParsedPathSegment
+	HttpMethod,
+} from '@pounce/toolbox'

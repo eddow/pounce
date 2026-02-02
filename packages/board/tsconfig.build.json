@@ -43,8 +43,8 @@
 			"@pounce/toolbox": [
 				"../toolbox/src/entry-no-dom.ts"
 			],
-			"@pounce/toolbox/entry-dom": [
-				"../toolbox/src/entry-dom.ts"
+			"@pounce/toolbox/dom": [
+				"../toolbox/src/dom/index.ts"
 			],
 			"@pounce/toolbox/entry-no-dom": [
 				"../toolbox/src/entry-no-dom.ts"

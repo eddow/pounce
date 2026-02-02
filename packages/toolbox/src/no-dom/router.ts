@@ -1,7 +1,8 @@
+// TODO: This file has nothing to do here, what is no-dom related should be in src/no-dom
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import { parsePathSegment, type ParsedPathSegment, type RouteParams } from './logic.js'
-import type { Middleware, RouteHandler } from '../api/core.js'
+import { parsePathSegment, type ParsedPathSegment, type RouteParams } from '../router/logic'
+import type { Middleware, RouteHandler } from '../api/core'
 
 /**
  * Convert a file path to a file:// URL without encoding special characters like brackets.
@@ -19,7 +20,7 @@ export type { Middleware, RouteHandler, RouteParams, ParsedPathSegment }
 /**
  * Result of a successful route match.
  */
-export type RouteMatch = {
+export type FileRouteMatch = {
 	/** Backend route handler functions (GET, POST, etc.) */
 	handler?: RouteHandler
 	/** Frontend page component (from index.tsx or named.tsx) */
@@ -114,11 +115,11 @@ export function parseSegment(segment: string): SegmentInfo {
  *
  * Priority: static routes > dynamic routes > catch-all routes > route groups
  */
-export function matchRoute(
+export function matchFileRoute(
 	urlPath: string,
 	routeTree: RouteTreeNode,
 	method = 'GET'
-): RouteMatch | null {
+): FileRouteMatch | null {
 	// Normalize path: remove trailing slash (except for root)
 	const normalizedPath = urlPath === '/' ? '/' : urlPath.replace(/\/$/, '')
 	const segments = normalizedPath.split('/').filter((s) => s !== '')
@@ -577,7 +578,7 @@ export async function buildRouteTree(
 
 /**
  * Collect middleware from ancestor nodes
- * Deprecated: matchRoute now handles this
+ * Deprecated: matchFileRoute now handles this
  */
 export function collectMiddleware(_path: string[]): Middleware[] {
 	return []

@@ -5,8 +5,7 @@ import { enableDevTools } from 'mutts'
 import { DarkModeButton } from './components/dark-mode-button'
 import { AppShell } from './components/layout'
 import { Menu } from './components/menu'
-import { browser } from './lib/browser'
-import { Router, type RouteWildcard } from './lib/router'
+import { Router, type RouteWildcard, client } from '@pounce/toolbox'
 import DebugActionsRoute from './routes/debug-directives'
 import DebugErrorRoute from './routes/debug-error'
 import DisplayRoute from './routes/display'
@@ -97,7 +96,7 @@ const App = (_props: {}, scope: Scope) => {
 							brand="Pounce UI"
 							trailing={<DarkModeButton theme={scope.theme} />}
 							items={sections.map(({ path, label }) => (
-								<Menu.Item href={`${path}${browser.url.hash ?? ''}`}>{label}</Menu.Item>
+								<Menu.Item href={`${path}${client.url.hash ?? ''}`}>{label}</Menu.Item>
 							))}
 						/>
 					</nav>

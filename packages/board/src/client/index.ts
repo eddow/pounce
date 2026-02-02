@@ -3,4 +3,4 @@
  * Consumes @pounce/toolbox
  */
 
-export * from '@pounce/toolbox/entry-dom'
+export * from '@pounce/toolbox/dom'

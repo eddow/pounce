@@ -3,17 +3,17 @@
  * Consumes @pounce/toolbox
  */
 
-import { serverRouter } from '@pounce/toolbox/entry-no-dom'
-export * from '@pounce/toolbox/entry-no-dom'
+import { serverRouter } from '@pounce/toolbox'
+export * from '@pounce/toolbox'
 
 // Re-export router functions flattened for compatibility
 export const buildRouteTree = serverRouter.buildRouteTree
-export const matchRoute = serverRouter.matchRoute // Verified locally in node-router that it is exported as matchRoute
+export const matchRoute = serverRouter.matchFileRoute // Verified locally in node-router that it is exported as matchRoute
 export const collectMiddleware = serverRouter.collectMiddleware
 export const parseSegment = serverRouter.parseSegment
 
 // Types - re-export for augmentation support
-export type RouteMatch = serverRouter.RouteMatch
+export type FileRouteMatch = serverRouter.FileRouteMatch
 export type RouteTreeNode = serverRouter.RouteTreeNode
 export type RouteParams = serverRouter.RouteParams
 export type SegmentInfo = serverRouter.SegmentInfo
@@ -25,4 +25,4 @@ export type {
 	RouteHandler,
 	RouteResponse,
 	HttpMethod,
-} from '@pounce/toolbox/entry-no-dom'
+} from '@pounce/toolbox'

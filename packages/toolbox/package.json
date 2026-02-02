@@ -4,12 +4,12 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"browser": "./dist/entry-dom.js",
-			"node": "./dist/entry-no-dom.js",
-			"default": "./dist/entry-no-dom.js"
+			"browser": "./dist/dom.js",
+			"node": "./dist/no-dom.js",
+			"default": "./dist/no-dom.js"
 		},
-		"./entry-dom": "./dist/entry-dom.js",
-		"./entry-no-dom": "./dist/entry-no-dom.js"
+		"./dom": "./dist/dom.js",
+		"./no-dom": "./dist/no-dom.js"
 	},
 	"imports": {
 		"#client": {

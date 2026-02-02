@@ -18,8 +18,8 @@ export default defineConfig({
   build: {
     lib: {
       entry: {
-        'entry-dom': resolve(__dirname, 'src/entry-dom.ts'),
-        'entry-no-dom': resolve(__dirname, 'src/entry-no-dom.ts')
+        'dom': resolve(__dirname, 'src/dom.ts'),
+        'no-dom': resolve(__dirname, 'src/no-dom.ts')
       },
       formats: ['es', 'cjs']
     },
