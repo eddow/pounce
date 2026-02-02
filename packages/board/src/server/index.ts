@@ -12,8 +12,17 @@ export const matchRoute = serverRouter.matchRoute // Verified locally in node-ro
 export const collectMiddleware = serverRouter.collectMiddleware
 export const parseSegment = serverRouter.parseSegment
 
-// Types
+// Types - re-export for augmentation support
 export type RouteMatch = serverRouter.RouteMatch
 export type RouteTreeNode = serverRouter.RouteTreeNode
 export type RouteParams = serverRouter.RouteParams
 export type SegmentInfo = serverRouter.SegmentInfo
+
+// Re-export core types to enable declaration merging
+export type {
+	RequestContext,
+	Middleware,
+	RouteHandler,
+	RouteResponse,
+	HttpMethod,
+} from '@pounce/toolbox/entry-no-dom'

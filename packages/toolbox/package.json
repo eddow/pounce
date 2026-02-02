@@ -4,12 +4,12 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"browser": "./src/entry-dom.ts",
-			"node": "./src/entry-no-dom.ts",
-			"default": "./src/entry-no-dom.ts"
+			"browser": "./dist/entry-dom.js",
+			"node": "./dist/entry-no-dom.js",
+			"default": "./dist/entry-no-dom.js"
 		},
-		"./entry-dom": "./src/entry-dom.ts",
-		"./entry-no-dom": "./src/entry-no-dom.ts"
+		"./entry-dom": "./dist/entry-dom.js",
+		"./entry-no-dom": "./dist/entry-no-dom.js"
 	},
 	"imports": {
 		"#client": {

@@ -39,6 +39,41 @@ test.describe('Mini demo', () => {
 		await expect(listItems).toHaveCount(0)
 	})
 
+	test('mini counter handles middle and last removal', async ({ page }) => {
+		const miniRoot = page.locator('#mini')
+		const miniInput = miniRoot.locator('input[type="text"]')
+		const addButton = miniRoot.locator('button.add')
+		const listItems = miniRoot.locator('button.remove')
+
+		// Add 3 items
+		await miniInput.fill('Item 1')
+		await addButton.click()
+		await miniInput.fill('Item 2')
+		await addButton.click()
+		await miniInput.fill('Item 3')
+		await addButton.click()
+
+		await expect(listItems).toHaveCount(3)
+		await expect(listItems.nth(0)).toContainText('Item 1')
+		await expect(listItems.nth(1)).toContainText('Item 2')
+		await expect(listItems.nth(2)).toContainText('Item 3')
+
+		// Remove middle item (Item 2)
+		await listItems.nth(1).click()
+		await expect(listItems).toHaveCount(2)
+		await expect(listItems.nth(0)).toContainText('Item 1')
+		await expect(listItems.nth(1)).toContainText('Item 3')
+
+		// Remove last item (Item 3)
+		await listItems.nth(1).click()
+		await expect(listItems).toHaveCount(1)
+		await expect(listItems.nth(0)).toContainText('Item 1')
+
+		// Remove remaining item
+		await listItems.nth(0).click()
+		await expect(listItems).toHaveCount(0)
+	})
+
 	test('resize sandbox renders helper copy', async ({ page }) => {
 		const resizeSection = page.locator('#mini').locator('text=Resize me')
 		await expect(resizeSection).toBeVisible()

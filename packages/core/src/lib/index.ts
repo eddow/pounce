@@ -1,6 +1,6 @@
 import { effect, type ScopedCallback } from 'mutts'
 import { testing } from './debug'
-import { bindChildren, type Child, type Component, Fragment, h, rootScope, type Scope } from './renderer'
+import { bindChildren, type Child, type Component, Fragment, h, render, rootScope, type Scope } from './renderer'
 
 function isFunction(value: any): value is Function {
 	return typeof value === 'function'
@@ -33,7 +33,7 @@ export function bindApp(
 			return
 		}
 		testing.renderingEvent?.('bind app root', appElement)
-		stop = effect(() => bindChildren(appElement, app.render(scope)))
+		stop = effect(() => bindChildren(appElement, render(app, scope)))
 	}
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', actuallyBind)

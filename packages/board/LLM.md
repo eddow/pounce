@@ -6,6 +6,10 @@
 - **Type Safety First**: Shared `.d.ts` files between client/server are mandatory
 - **Universal API Client**: Single `api()` function works with absolute, site-absolute, and site-relative URLs
 
+## File Organization Rules
+- **Temporary Files**: All temporary files, scripts, logs, notes, and scratch work MUST be created in the `sandbox/` folder
+- **No Root Clutter**: Never create temporary `.md`, `.txt`, or other scratch files in the project root
+
 ## Status & Caveats (Updated 2026-01-20)
 - **Status**: Core routing, Hono integration, SSR injection, and basic CLI (`pounce dev`) are implemented.
 - **Caveat**: `walkthrough.md` may lag behind code. Verified tests are the source of truth.

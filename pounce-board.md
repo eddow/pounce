@@ -483,13 +483,13 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 
 
 
-### 7.5 Vercel Adapter (`adapters/vercel.ts`)
+### 7.5 Vercel Adapter (`adapters/vercel.ts`) **[TO DO LAST]**
 - [ ] Implement serverless function handler
 - [ ] Handle edge function support
 - [ ] Support ISR (Incremental Static Regeneration)
 - [ ] Handle environment variables
 
-### 7.6 Additional Adapters (Future)
+### 7.6 Additional Adapters (Future) **[TO DO LAST]**
 - [ ] Netlify adapter
 - [ ] Cloudflare Workers adapter
 - [ ] Deno adapter
@@ -551,9 +551,9 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 - [ ] Handle error types
 
 ### 9.3 Middleware Types
-- [ ] Type context extensions properly
+- [x] Type context extensions properly (via declaration merging)
 - [ ] Support generic middleware factories
-- [ ] Type-safe context access in handlers
+- [x] Type-safe context access in handlers
 
 ### 9.4 External Proxy Types
 - [x] Infer types from `defineProxy()` config
@@ -748,7 +748,7 @@ Full blog implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/@pounce/
 - [ ] SSR with initial data
 - [ ] External API proxy for comments
 
-#### `tests/consumers/e-commerce-app/`
+#### `tests/consumers/e-commerce-app/` **[TO DO LAST]**
 E-commerce implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/EXAMPLES.md)):
 - [ ] Product catalog routes
 - [ ] Cart management
@@ -798,7 +798,7 @@ E-commerce implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/@pounce
 
 ---
 
-## Phase 11: Documentation
+## Phase 11: Documentation **[TO DO LAST]**
 
 ### 11.1 API Documentation
 - [ ] Document all public APIs
@@ -827,7 +827,7 @@ E-commerce implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/@pounce
 
 ---
 
-## Phase 12: Advanced Features (Future)
+## Phase 12: Advanced Features (Future) **[TO DO LAST]**
 
 ### 12.1 Plugin System
 - [ ] Define plugin interface
@@ -861,7 +861,7 @@ E-commerce implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/@pounce
 
 ---
 
-## Phase 13: Release & Maintenance
+## Phase 13: Release & Maintenance **[TO DO LAST]**
 
 ### 13.1 Package Publishing
 - [ ] Finalize `package.json`

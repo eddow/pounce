@@ -1,7 +1,4 @@
-/**
- * Main entry point for Pounce-TS application
- */
-import { effect, project, reactive, trackEffect } from 'mutts'
+import { effect, reactive } from 'mutts'
 import { bindApp, compose, type Scope } from '../lib'
 
 function isFunction(value: any): value is Function {
@@ -56,12 +53,8 @@ function ResizeSandbox(_props: {}, scope: Scope) {
 	)
 }
 
-function MiniCounter(props: { list?: string[]; addedText?: string }, scope: Scope) {
-	trackEffect((obj, evolution) => {
-		console.log(obj, evolution)
-	})
+function MiniCounter(props: { list?: string[]; addedText?: string }) {
 	const state = compose({ list: [] as string[], addedText: Date.now().toString() }, props)
-	console.log('🎯 Mini counter component mounted!', { scope: scope })
 	effect(() => {
 		return () => {
 			console.log('🎯 Counter component unmounted!', { finalList: state.list.join(', ') })
@@ -77,11 +70,18 @@ function MiniCounter(props: { list?: string[]; addedText?: string }, scope: Scop
 	return (
 		<>
 			<div>
-				{project(state.list, ({ get, key }) => (
-					<button class="remove" onClick={() => state.list.splice(key, 1)}>
-						{get()}
-					</button>
-				))}
+				<for each={state.list}>
+					{(item: string) => {
+						return (
+							<button class="remove" onClick={() => {
+								const idx = state.list.indexOf(item)
+								if (idx !== -1) state.list.splice(idx, 1)
+							}}>
+								{item}
+							</button>
+						)
+					}}
+				</for>
 			</div>
 			<div>
 				<input type="text" value={state.addedText} />

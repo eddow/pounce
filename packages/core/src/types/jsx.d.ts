@@ -44,6 +44,7 @@ declare global {
 			children: any
 		}
 		type Element = {
+			tag?: string | ComponentFunction
 			render(scope?: Record<PropertyKey, any>): Node | readonly Node[]
 			mount?: ((target: Node | readonly Node[]) => ScopedCallback)[]
 			condition?: any

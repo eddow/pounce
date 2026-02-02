@@ -1,5 +1,4 @@
-import { effect, reactiveOptions } from 'mutts'
-import { EffectOptions } from 'mutts/reactive/types'
+import { effect, reactiveOptions, type EffectOptions } from 'mutts'
 export * from './debug-helpers'
 
 export function nf<T extends Function>(name: string, fn: T): T {

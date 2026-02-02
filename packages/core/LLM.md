@@ -11,10 +11,21 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
 *   **Scope**: Components receive a `scope` object (in addition to props) which allows dependency injection down the tree.
 
 > [!IMPORTANT]
-> **NO MANUAL CALLBACKS IN ATTRIBUTES**
-> The `babel-plugin-jsx-reactive` automatically wraps expressions in getters.
-> *   **Bad**: `icon={() => state.icon}` (becomes `() => () => state.icon`)
-> *   **Good**: `icon={state.icon}` (becomes `() => state.icon`)
+> **NO MANUAL CALLBACKS IN JSX EXPRESSIONS**
+> Reactivity in Pounce is a **pair**:
+> 1.  **Babel Plugin**: Automatically rewrites `{expr}` into `{() => expr}`.
+> 2.  **Renderer**: Expects a callback and calls it to establish tracking.
+> 
+> **If you write `{() => expr}`, the plugin turns it into `{() => () => expr}`.** This breaks reactivity.
+> *   **Good**: `<span>{state.value}</span>`
+> *   **Bad**: `<span>{() => state.value}</span>`
+> 
+> #### 2. Attribute Transformations:
+> *   **Expressions**: `attr={value}` is transformed to `attr={() => value}` (getter).
+> *   **Two-Way Binding**:
+>     *   **Member Expressions**: `attr={obj.prop}` -> `{ get: () => obj.prop, set: (v) => obj.prop = v }`.
+>     *   **Element Binding**: `this={expr}` -> `{ set: (v) => expr = v }`.
+>     *   **Explicit Update**: `update:attr={(v) => ...} attr={...}` creates a get/set pair.
 > Direct assignment to attributes is the only way to ensure correct reactive propagation.
 *   **Expressions**: `attr={value}` is transformed to `attr={() => value}` (wrapped in a getter).
 *   **Two-Way Binding**:

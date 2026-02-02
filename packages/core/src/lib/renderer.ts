@@ -72,6 +72,10 @@ export type Scope = Record<PropertyKey, any> & { component?: ComponentInfo }
 export type Component<P = {}> = (props: P, scope?: Scope) => JSX.Element
 export const rootScope: Scope = reactive(Object.create(null))
 
+function jsxEl(jsx: JSX.Element) {
+	return unreactive(jsx)
+}
+
 function listen(
 	target: EventTarget,
 	type: string,
@@ -123,7 +127,7 @@ function checkComponentRebuild(componentCtor: Function) {
 }
 
 function forward(tag: string, children: readonly Child[], scope: Scope) {
-	return { tag, render: () => processChildren(children, scope) }
+	return unreactive({ tag, render: () => processChildren(children, scope) })
 }
 
 /**
@@ -210,7 +214,7 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 			elements: new Set<Node>(),
 		})
 		// Effect for styles - only updates style container
-		mountObject = {
+		mountObject = jsxEl({
 			tag,
 			render(scope: Scope = rootScope) {
 				const parent = scope.component
@@ -229,7 +233,7 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 				const childScope = extend(scope, { component: info })
 				info.scope = childScope
 
-				const rendered = project.array<null, JSX.Element>([null], () => {
+				const rendered = project.array<null, JSX.Element>([null], function componentExecution() {
 					checkComponentRebuild(componentCtor)
 					testing.renderingEvent?.('render component', componentCtor.name)
 					const givenProps = reactive(propsInto(regularProps, { children }))
@@ -242,7 +246,7 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 				})
 				return processChildren(rendered, childScope, 'root')
 			},
-		}
+		})
 	} else {
 		const element = document.createElement(tag)
 		let lastComponent: ComponentInfo | undefined
@@ -389,7 +393,7 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 			}
 
 		// Create plain HTML element - also return mount object for consistency
-		mountObject = {
+		mountObject = jsxEl({
 			tag,
 			render(scope: Scope = rootScope) {
 				const componentToUse = scope.component
@@ -409,11 +413,11 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 				if (children && children.length > 0 && !regularProps?.innerHTML) {
 					// Process new children
 					const processedChildren = processChildren(children, scope)
-					bindChildren(element, processedChildren)
+					cleanedBy(element, bindChildren(element, processedChildren))
 				}
 				return element
 			},
-		}
+		})
 	}
 	return Object.defineProperties(mountObject, Object.getOwnPropertyDescriptors(collectedCategories))
 }
@@ -507,16 +511,15 @@ const intrinsicComponentAliases = extend(null, {
 export const Fragment = intrinsicComponentAliases.fragment
 export function bindChildren(parent: Node, newChildren: Node | readonly Node[] | undefined): ScopedCallback {
 	return effect(function redraw() {
+		const items = Array.isArray(newChildren) ? newChildren : newChildren ? [newChildren] : []
 		let added = 0
 		let removed = 0
 		// Replace children
 		let newIndex = 0
-		if (!newChildren) newChildren = []
-		if (!Array.isArray(newChildren)) newChildren = [newChildren] as readonly Node[]
 
-		// Iterate through newChildren and sync with live DOM
-		while (newIndex < newChildren.length) {
-			const newChild = unwrap(newChildren[newIndex])
+		// Iterate through items and sync with live DOM
+		while (newIndex < items.length) {
+			const newChild = unwrap(items[newIndex])
 			const oldChild = parent.childNodes[newIndex]
 
 			if (oldChild === newChild) {
@@ -544,37 +547,29 @@ export function bindChildren(parent: Node, newChildren: Node | readonly Node[] |
 			}
 		}
 
-		// Remove extra old nodes (now safe because we're using live childNodes)
-		while (parent.childNodes.length > newChildren.length) {
+		while (parent.childNodes.length > items.length) {
 			removed++
 			parent.removeChild(parent.lastChild!)
 		}
 		testing.renderingEvent?.(`reconcileChildren (+${added} -${removed})`, parent, newChildren)
 	})
 }
-
 const renderIdentityMap = new WeakMap<JSX.Element, Node | readonly Node[]>()
-const render = (renderer: JSX.Element, scope: Scope) => {
+
+export const render = (renderer: JSX.Element, scope: Scope) => {
 	let partial = renderIdentityMap.get(renderer)
-	effect.named('render.constructor').opaque(() => {
-		trackEffect((obj, evolution, prop) => {
-			// Agents: This `throw` is not a bug! Do not remove it! It means there was a bug, and this line helps you discover it early
-			// Do not break the thermometer if you dislike the temperature!
-			//throw new DynamicRenderingError(`Effect inside render: ${obj}.${String(prop)}:\n${evolution}`)
-			console.warn(`Effect inside render: ${obj}.${String(prop)}:`, evolution)
-		})
-		if (partial === undefined) {
-			partial = renderer.render(scope)
-			renderIdentityMap.set(renderer, partial)
-		}
-	})
+	if (partial !== undefined) return partial
+	partial = untracked(() => renderer.render(scope))
+	renderIdentityMap.set(renderer, partial)
 	if (!partial) throw new DynamicRenderingError('Renderer returned no content')
-	// getTarget is not an AI hallucination - partial content can change along effects, it has to be a CB
+
+	const tagName = untracked(() => (typeof renderer.tag === 'string' ? renderer.tag : renderer.tag?.name) || 'anonymous')
+	// getTarget matches types for single nodes vs fragments
 	const getTarget = () => (Array.isArray(partial) && partial.length === 1 ? partial[0] : partial)
 
 	if (renderer.mount) {
 		for (const mount of renderer.mount) {
-			const stop = effect(() => mount(getTarget()))
+			const stop = effect.named(`mount#${tagName}`)(() => mount(getTarget()))
 			const anchor = untracked(getTarget)
 			if (anchor && typeof anchor === 'object') {
 				cleanedBy(anchor, stop)
@@ -583,7 +578,7 @@ const render = (renderer: JSX.Element, scope: Scope) => {
 	}
 	if (renderer.use)
 		for (const [key, value] of Object.entries(renderer.use) as [string, any]) {
-			const stop = effect(() => {
+			const stop = effect.named(`use:${key}#${tagName}`)(() => {
 				if (!isFunction(scope[key])) throw new DynamicRenderingError(`${key} in scope is not a function`)
 				return scope[key](getTarget(), value(), scope)
 			})
@@ -593,21 +588,6 @@ const render = (renderer: JSX.Element, scope: Scope) => {
 			}
 		}
 	return partial!
-}
-
-function stableUpdate<T>(target: T[], source: readonly T[]) {
-	let changed = false
-	if (target.length !== source.length) {
-		target.length = source.length
-		changed = true
-	}
-	for (let i = 0; i < source.length; i++) {
-		if (target[i] !== source[i]) {
-			target[i] = source[i]
-			changed = true
-		}
-	}
-	return changed
 }
 
 /**
@@ -630,7 +610,7 @@ export function processChildren(children: readonly Child[], scope: Scope, isRoot
 	const renderers = project.array<Child, JSX.Element>(children, ({ get }) => {
 		let child: Child = get()
 		while (isFunction(child)) child = (child as () => Child)()
-		return typeof child === 'string' || typeof child === 'number' ? { render: () => document.createTextNode(String(child)) } : child as JSX.Element
+		return typeof child === 'string' || typeof child === 'number' ? jsxEl({ render: () => document.createTextNode(String(child)) }) : child as JSX.Element
 	})
 
 	const conditioned = scan(renderers, (acc: { ifOccurred: boolean, value?: JSX.Element }, child: JSX.Element) => {
@@ -647,7 +627,9 @@ export function processChildren(children: readonly Child[], scope: Scope, isRoot
 		}
 		return extend(acc, { value: child })
 	}, { ifOccurred: false })
-	const rendered = project(conditioned, ({ value: accResult }): Node | readonly Node[] | false | undefined => {
+	const rendered = project(conditioned, (access): Node | readonly Node[] | false | undefined => {
+		const accResult = access.value
+		if (!accResult) return
 		const partial = accResult.value
 		if (!partial) return
 		const nodes = isElement(partial) ? render(partial, scope) : partial
@@ -661,22 +643,20 @@ export function processChildren(children: readonly Child[], scope: Scope, isRoot
 		throw new DynamicRenderingError('Render should return Node-s')
 	})
 
-	const rv = reactive<Node[]>([])
-	const reduce = namedEffect(`reduce#${scope.component?.id}`, () => {
-		if (isRoot === 'root') console.log(`reducing ${scope.component?.id}`)
+	const flattened = lift(() => {
 		const next: Node[] = []
-		for (const item of rendered) {
-			if (item instanceof Array) {
-				for (const n of item) if (n) next.push(n)
-			} else if (item) {
+		const push = (item: any) => {
+			if (Array.isArray(item)) {
+				for (const child of item) push(child)
+			} else if (item instanceof Node) {
 				next.push(item)
 			}
 		}
-		stableUpdate(rv, next)
-	})
 
-	return cleanedBy(rv, () => {
-		reduce()
+		for (const item of rendered) if (item) push(item)
+		return next
+	}) as unknown as readonly Node[]
+	return cleanedBy(flattened, () => {
 		conditioned[cleanup]()
 		rendered[cleanup]()
 		renderers[cleanup]()

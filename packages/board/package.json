@@ -30,9 +30,7 @@
 		"./server": {
 			"import": "./dist/server/index.js",
 			"types": "./dist/server/index.d.ts"
-		},
-		"./src": "./src/index.ts",
-		"./src/*": "./src/*"
+		}
 	},
 	"scripts": {
 		"dev": "tsc --watch",
