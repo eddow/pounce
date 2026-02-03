@@ -1,7 +1,7 @@
 import { type NodePath, type PluginObj, types as t } from '@babel/core'
 import { type JSXElement } from '@babel/types'
 
-interface BabelPluginOptions {
+interface PounceBabelPluginOptions {
 	types: typeof t
 	/**
 	 * The project root directory where src/lib/utils is located.
@@ -10,8 +10,8 @@ interface BabelPluginOptions {
 	projectRoot?: string
 }
 
-interface BabelPluginState {
-	opts?: Record<string, any>
+interface PounceBabelPluginState {
+	opts?: Record<string, unknown>
 	file?: {
 		opts: {
 			filename?: string
@@ -66,10 +66,10 @@ function resolveTargetPath(
 	return computeRelativeImport(normalizedFilename, normalizedTarget)
 }
 
-export function babelPluginJsxReactive({
+export function pounceBabelPlugin({
 	types: t,
 	projectRoot,
-}: BabelPluginOptions): PluginObj<BabelPluginState> {
+}: PounceBabelPluginOptions): PluginObj<PounceBabelPluginState> {
 	const EXTENDS_HELPERS = new Set(['_extends', '__assign'])
 
 	function isAttributesMergeCall(path: NodePath<t.CallExpression>) {
@@ -82,8 +82,8 @@ export function babelPluginJsxReactive({
 		return false
 	}
 
-	function ensureComposeImport(path: NodePath, state: BabelPluginState, forceForwardProps = false) {
-		const programPath = path.findParent((p) => p.isProgram()) as NodePath<t.Program> | null
+	function ensureComposeImport(path: NodePath, state: PounceBabelPluginState, forceForwardProps = false) {
+		const programPath = path.findParent((p: NodePath) => p.isProgram()) as NodePath<t.Program> | null
 		if (!programPath) return
 
 		const filename = state.file?.opts.filename
@@ -98,13 +98,14 @@ export function babelPluginJsxReactive({
 					t.isImportDeclaration(node) &&
 					node.source.value === normalizedSource &&
 					node.specifiers.some(
-						(specifier) => t.isImportSpecifier(specifier) && specifier.local.name === name
+						(specifier: t.ImportSpecifier | t.ImportDefaultSpecifier | t.ImportNamespaceSpecifier) =>
+							t.isImportSpecifier(specifier) && specifier.local.name === name
 					)
 			)
 			if (alreadyImported) return
 
 			const importDeclaration = programPath.node.body.find(
-				(node): node is t.ImportDeclaration =>
+				(node: t.Statement): node is t.ImportDeclaration =>
 					t.isImportDeclaration(node) && node.source.value === normalizedSource
 			)
 
@@ -128,7 +129,7 @@ export function babelPluginJsxReactive({
 		// Check if forwardProps is used in the program
 		let usesForwardProps = false
 		programPath.traverse({
-			Identifier(path) {
+			Identifier(path: NodePath<t.Identifier>) {
 				if (path.node.name === 'forwardProps' && path.isReferencedIdentifier()) {
 					usesForwardProps = true
 					path.stop()
@@ -149,7 +150,7 @@ export function babelPluginJsxReactive({
 
 	function buildComposeCall(args: t.CallExpression['arguments']) {
 		const filteredArgs = args.filter(isExpressionOrSpread)
-		const composeArgs = filteredArgs.map((arg) => {
+		const composeArgs = filteredArgs.map((arg: t.Expression | t.SpreadElement) => {
 			if (t.isSpreadElement(arg)) {
 				return t.arrowFunctionExpression(
 					[],
@@ -169,9 +170,9 @@ export function babelPluginJsxReactive({
 	}
 
 	return {
-		name: 'jsx-reactive',
+		name: 'pounce-babel',
 		visitor: {
-			CallExpression(path, state) {
+			CallExpression(path: NodePath<t.CallExpression>, state: PounceBabelPluginState) {
 				if (!path.isCallExpression()) return
 				const callee = path.node.callee
 				let shouldTransform = false
@@ -191,7 +192,7 @@ export function babelPluginJsxReactive({
 				ensureComposeImport(path, state, hasSpread)
 				path.replaceWith(buildComposeCall(path.node.arguments))
 			},
-			JSXElement(path: NodePath<JSXElement>, state) {
+			JSXElement(path: NodePath<JSXElement>, state: PounceBabelPluginState) {
 				ensureComposeImport(path, state)
 				// Traverse all JSX children and attributes
 				for (let index = 0; index < path.node.children.length; index++) {
@@ -280,13 +281,13 @@ export function babelPluginJsxReactive({
 									// Skip if already a binding object (from update: pass)
 									if (t.isObjectExpression(expression)) {
 										const hasGet = expression.properties.some(
-											(prop) =>
+											(prop: t.ObjectProperty | t.SpreadElement | t.ObjectMethod) =>
 												t.isObjectProperty(prop) &&
 												t.isIdentifier(prop.key) &&
 												prop.key.name === 'get'
 										)
 										const hasSet = expression.properties.some(
-											(prop) =>
+											(prop: t.ObjectProperty | t.SpreadElement | t.ObjectMethod) =>
 												t.isObjectProperty(prop) &&
 												t.isIdentifier(prop.key) &&
 												prop.key.name === 'set'

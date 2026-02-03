@@ -1,6 +1,11 @@
-import { setClient, client } from '../client/shared.js'
 import { client as baseClient } from '../client/implementation.js'
-import type { ClientHistoryState, ClientUrl, ClientViewport, NavigateOptions } from '../client/types.js'
+import { client, setClient } from '../client/shared.js'
+import type {
+	ClientHistoryState,
+	ClientUrl,
+	ClientViewport,
+	NavigateOptions,
+} from '../client/types.js'
 
 // Bind the base reactive client implementation
 setClient(baseClient)
@@ -10,6 +15,8 @@ export { client }
 // --- Initialization ---
 // Note: This file is DOM-only, so we use native window/document directly
 // The canonical exports from @pounce/core are for shared isomorphic code
+
+const cleanupFns: (() => void)[] = []
 
 if (typeof window !== 'undefined') {
 	initializeClientListeners()
@@ -48,8 +55,6 @@ client.reload = (): void => {
 	window.location.reload()
 }
 
-const cleanupFns: (() => void)[] = []
-
 client.dispose = (): void => {
 	while (cleanupFns.length > 0) {
 		const fn = cleanupFns.pop()
@@ -59,7 +64,14 @@ client.dispose = (): void => {
 
 client.prefersDark = (): boolean => {
 	try {
-		return window.matchMedia('(prefers-color-scheme: dark)').matches
+		const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+		return mediaQuery.matches
+		/* TODO: find how to organise a readonly-reactive (specific readonly biDi?)
+
+			mediaQuery.addEventListener('change', (e) => {
+				this.current = e.matches ? 'dark' : 'light'
+			})
+		*/
 	} catch {
 		return false
 	}

@@ -1,3 +1,5 @@
+**This plugin is tagged for deletion. It exists for the sole purpose of reference and should not be further used/corrected/modified.**
+
 # Pounce-UI Documentation
 
 ## Overview

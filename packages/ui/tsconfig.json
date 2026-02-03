@@ -1,0 +1,72 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"useDefineForClassFields": true,
+		"module": "ESNext",
+		"lib": [
+			"ES2023",
+			"DOM",
+			"DOM.Iterable"
+		],
+		"skipLibCheck": true,
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": true,
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"noEmit": false,
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"declarationMap": true,
+		"outDir": "dist",
+		"jsx": "react-jsx",
+		"jsxImportSource": "@pounce/core",
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+		"allowSyntheticDefaultImports": true,
+		"baseUrl": ".",
+		"paths": {
+			"mutts": [
+				"../../../mutts/dist/index.d.ts"
+			],
+			"mutts/*": [
+				"../../../mutts/dist/*"
+			],
+			"pure-glyf": [
+				"../../../pure-glyf/src/index.ts"
+			],
+			"pure-glyf/*": [
+				"../../../pure-glyf/src/*"
+			],
+			"@pounce/core": [
+				"../core/dist/index.d.ts"
+			],
+			"@pounce/core/*": [
+				"../core/dist/*"
+			],
+			"@pounce/kit": [
+				"../kit/src/index.ts"
+			],
+			"@pounce/kit/dom": [
+				"../kit/src/dom/index.ts"
+			]
+		}
+	},
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.tsx"
+	],
+	"exclude": [
+		"node_modules",
+		"dist",
+		"**/*.spec.ts",
+		"**/*.test.ts",
+		"tests/**/*"
+	],
+	"references": [
+		{
+			"path": "./tsconfig.node.json"
+		}
+	]
+}

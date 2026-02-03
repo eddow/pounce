@@ -31,7 +31,7 @@
 				"./src/server/index.ts"
 			],
 			"@pounce/core": [
-				"../core/src/lib/index.ts"
+				"../core/dist/index.d.ts"
 			],
 			"@pounce/core/*": [
 				"../core/dist/*"
@@ -43,16 +43,13 @@
 				"../pico/dist/*"
 			],
 			"@pounce/kit": [
-				"../kit/src/entry-no-dom.ts"
+				"../kit/src/index.ts"
+			],
+			"@pounce/kit/node": [
+				"../kit/src/node/index.ts"
 			],
 			"@pounce/kit/dom": [
 				"../kit/src/dom/index.ts"
-			],
-			"@pounce/kit/entry-dom": [
-				"../kit/src/entry-dom.ts"
-			],
-			"@pounce/kit/entry-no-dom": [
-				"../kit/src/entry-no-dom.ts"
 			],
 			"mutts": [
 				"../../../mutts/dist/index.d.ts"

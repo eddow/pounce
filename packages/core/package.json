@@ -4,11 +4,10 @@
   "description": "",
   "main": "src/index.ts",
   "module": "src/index.ts",
-  "types": "src/index.ts",
+  "types": "src/index.d.ts",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && npm run build:plugin",
-    "build:plugin": "esbuild src/babel-plugin-jsx-reactive.ts --bundle --format=esm --platform=node --outfile=dist/plugin.js",
+    "build": "vite build",
     "build:all": "npm run build",
     "type-check": "tsc --noEmit",
     "test": "npm run test:unit && npm run test:e2e",
@@ -41,11 +40,6 @@
       "import": "./dist/node.js",
       "default": "./dist/node.js"
     },
-    "./plugin": {
-      "types": "./src/babel-plugin-jsx-reactive.ts",
-      "import": "./dist/plugin.js",
-      "default": "./dist/plugin.js"
-    },
     "./runtime": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
@@ -57,12 +51,12 @@
       "default": "./dist/index.js"
     },
     "./jsx-runtime": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/runtime/jsx-runtime.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./jsx-dev-runtime": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/runtime/jsx-dev-runtime.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
@@ -80,29 +74,20 @@
     "./src/*": "./src/*"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.4",
-    "@babel/plugin-proposal-decorators": "^7.28.0",
-    "@babel/plugin-transform-react-jsx": "^7.27.1",
-    "@babel/plugin-transform-typescript": "^7.28.0",
-    "@babel/preset-env": "^7.28.3",
-    "@babel/preset-react": "^7.27.1",
-    "@babel/preset-typescript": "^7.27.1",
+    "@pounce/plugin": "workspace:*",
     "@biomejs/biome": "^2.2.7",
     "@playwright/test": "^1.56.1",
-    "@types/babel__core": "^7.20.5",
     "@types/jsdom": "^27.0.0",
     "@types/node": "^24.10.1",
     "@vitejs/plugin-legacy": "^7.2.1",
     "baseline-browser-mapping": "^2.9.11",
-    "esbuild": "^0.24.0",
     "sass": "^1.93.2",
     "typescript": "^5.9.3",
     "vite": "^7.1.11",
-    "vite-plugin-babel": "^1.3.2",
+    "vite-plugin-dts": "^4.5.3",
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "@babel/types": "^7.28.6",
     "dockview-core": "^4.13.1",
     "jsdom": "^27.4.0",
     "mutts": "link:../../../mutts"

@@ -1,9 +1,7 @@
 import { defineConfig } from 'vitest/config'
-import type { Plugin } from 'vite'
-import { transformSync } from '@babel/core'
 import { dirname, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { babelPluginJsxReactive } from './src/babel-plugin-jsx-reactive'
+import { pounceCorePackage } from '@pounce/plugin/packages'
 
 const projectRootDir = dirname(fileURLToPath(import.meta.url))
 
@@ -39,37 +37,30 @@ export default defineConfig({
 		},
 	},
 	plugins: [
-		{
-			name: 'babel-jsx-transform',
-			enforce: 'pre',
-			async transform(code, id) {
-				if (!/\.(tsx?|jsx?)$/.test(id)) return null
-				
-				const result = transformSync(code, {
-					filename: id,
-					cwd: projectRootDir,
-					babelrc: false,
-					configFile: false,
-					plugins: [
-					[babelPluginJsxReactive, { projectRoot: projectRootDir }],
-					['@babel/plugin-proposal-decorators', { version: '2023-05' }],
-						[
-							'@babel/plugin-transform-react-jsx',
-							{
-								runtime: 'automatic',
-								importSource: '@pounce/runtime',
-								throwIfNamespace: false,
-							},
-						],
-						['@babel/plugin-transform-typescript', { isTSX: id.endsWith('.tsx'), allowDeclareFields: true }],
-					],
-					sourceMaps: true,
-				})
-				
-				if (!result) return null
-				return { code: result.code || '', map: result.map as any }
+		...pounceCorePackage({
+			core: {
+				projectRoot: projectRootDir,
+				jsxRuntime: {
+					runtime: 'automatic',
+					importSource: '@pounce/runtime',
+				},
 			},
-		} as Plugin,
+			dts: {
+				rollupTypes: false,
+				copyDtsFiles: true,
+				include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.d.ts'],
+				beforeWriteFile: (filePath, content) => {
+					// Inject JSX types reference into main index.d.ts
+					if (filePath.endsWith('dist/index.d.ts')) {
+						const reference = '/// <reference path="./types/jsx.d.ts" />\n'
+						if (!content.includes(reference)) {
+							return { filePath, content: reference + content }
+						}
+					}
+					return { filePath, content }
+				}
+			}
+		}),
 	],
 	esbuild: false,
 	optimizeDeps: {

@@ -15,19 +15,19 @@
 
 // Re-export core types from kit
 export * from '@pounce/kit'
-import * as serverRouter from '@pounce/kit'
+import * as kitNode from '@pounce/kit/node'
 
 // Re-export router functions flattened for compatibility
-export const buildRouteTree = serverRouter.buildRouteTree
-export const matchRoute = serverRouter.matchFileRoute // Verified locally in node-router that it is exported as matchRoute
-export const collectMiddleware = serverRouter.collectMiddleware
-export const parseSegment = serverRouter.parseSegment
+export const buildRouteTree = kitNode.serverRouter.buildRouteTree
+export const matchRoute = kitNode.serverRouter.matchFileRoute
+export const collectMiddleware = kitNode.serverRouter.collectMiddleware
+export const parseSegment = kitNode.serverRouter.parseSegment
 
 // Types - re-export for augmentation support
-export type FileRouteMatch = serverRouter.FileRouteMatch
-export type RouteTreeNode = serverRouter.RouteTreeNode
-export type RouteParams = serverRouter.RouteParams
-export type SegmentInfo = serverRouter.SegmentInfo
+export type FileRouteMatch = kitNode.serverRouter.FileRouteMatch
+export type RouteTreeNode = kitNode.serverRouter.RouteTreeNode
+export type RouteParams = kitNode.serverRouter.RouteParams
+export type SegmentInfo = kitNode.serverRouter.SegmentInfo
 
 // Re-export core types to enable declaration merging
 export type {

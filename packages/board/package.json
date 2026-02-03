@@ -74,6 +74,9 @@
 		"arktype": "^2.1.0"
 	},
 	"devDependencies": {
+		"@pounce/plugin": "workspace:*",
+		"@babel/core": "^7.28.4",
+		"@types/babel__core": "^7.20.5",
 		"@biomejs/biome": "^2.0.6",
 		"@playwright/test": "^1.49.1",
 		"@types/node": "^22.10.5",

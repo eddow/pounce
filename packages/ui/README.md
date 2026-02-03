@@ -34,6 +34,33 @@ See the [analysis documentation](./analysis/README.md) for a comprehensive overv
 - `@pounce/ui-tailwind` - Tailwind CSS integration
 - `@pounce/ui-vanilla` - Standalone CSS without framework dependencies
 
+## Build Configuration
+
+When using `@pounce/ui`, configure your build with the UI plugin package:
+
+```typescript
+import { defineConfig } from 'vite'
+import { pounceUIPackage } from '@pounce/plugin/packages'
+
+export default defineConfig({
+  plugins: [
+    ...pounceUIPackage({
+      ui: {
+        core: {
+          jsxRuntime: { runtime: 'automatic', importSource: '@pounce/core' }
+        }
+      }
+    })
+  ]
+})
+```
+
+This provides:
+- JSX transformation with reactive enhancements
+- CSS/SASS layer wrapping (`@layer pounce.components`)
+- Forbidden variable validation (prevents `--pico-*` usage)
+- TypeScript declaration generation
+
 ## Development
 
 This package is part of the Pounce monorepo. See the root README for development setup.

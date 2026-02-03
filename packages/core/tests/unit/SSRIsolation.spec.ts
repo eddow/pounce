@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { withSSR } from '../../src/lib/server'
+import { withSSR } from '../../src/node/server'
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 

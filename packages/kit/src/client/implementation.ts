@@ -37,9 +37,9 @@ const state = reactive<MutableClient>({
 	language: 'en-US',
 	timezone: 'UTC',
 	// Default methods throw
-	navigate: implementationDependent,
-	replace: implementationDependent,
-	reload: implementationDependent,
+	navigate: implementationDependent('Client.navigate'),
+	replace: implementationDependent('Client.replace'),
+	reload: implementationDependent('Client.reload'),
 	dispose: () => {}, // Dispose is safe to be no-op by default
 	prefersDark: () => false,
 })

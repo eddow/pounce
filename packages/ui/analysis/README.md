@@ -37,11 +37,13 @@ Components currently rely on PicoCSS CSS variables:
 
 **Custom Styling Layer:**
 - Components use `css` and `sass` tagged templates from `@pounce/kit/entry-dom`
-- Custom prefix: `pp-*` classes (e.g., `pp-button`, `pp-radiobutton`, `pp-dv-item`)
-- Custom variables: `--pp-*` (e.g., `--pp-success`, `--pp-warning`, `--pp-danger`)
+- Current prefix: `pp-*` classes (e.g., `pp-button`, `pp-radiobutton`, `pp-dv-item`)
+- Current variables: `--pp-*` (e.g., `--pp-success`, `--pp-warning`, `--pp-danger`)
 
-**Migration Goal:**
-Replace all `--pico-*` references with `--pounce-*` variables that have sensible defaults. No fallback chain needed.
+**Migration Goals:**
+1. Replace all `--pico-*` references with `--pounce-*` variables (sensible defaults, no fallback chain)
+2. Rename `pp-*` classes to `pounce-*` for consistency with package name
+3. Consolidate `--pp-*` variables into the `--pounce-*` namespace
 
 ### Architecture Strengths
 - ✅ **Framework-agnostic logic**: Uses `mutts` for reactivity, not tied to React/Vue/etc.
@@ -76,36 +78,53 @@ Replace all `--pico-*` references with `--pounce-*` variables that have sensible
 
 ## Implementation Strategy
 
-### Phase 1: CSS Variable Contract
+### Phase 1: CSS Variable Contract & Layer Strategy
 
-Define minimal design tokens that components depend on:
+Define minimal design tokens that components depend on, using CSS `@layer` to manage specificity:
 
 ```css
-:root {
-  /* Core colors */
-  --pounce-primary: #3b82f6;
-  --pounce-secondary: #64748b;
-  --pounce-contrast: #0f172a;
-  
-  /* Semantic colors */
-  --pounce-success: #15803d;
-  --pounce-warning: #f59e0b;
-  --pounce-danger: #b91c1c;
-  
-  /* Layout */
-  --pounce-spacing: 1rem;
-  --pounce-border-radius: 0.5rem;
-  --pounce-form-height: 2.5rem;
-  
-  /* Backgrounds & borders */
-  --pounce-bg: #fff;
-  --pounce-card-bg: #fff;
-  --pounce-fg: #000;
-  --pounce-border: rgba(0, 0, 0, 0.2);
-  --pounce-muted: #888;
-  --pounce-muted-border: rgba(0, 0, 0, 0.2);
+/* Core package (@pounce/ui) uses @layer for easy overriding */
+@layer pounce.base {
+  :root {
+    /* Core colors */
+    --pounce-primary: #3b82f6;
+    --pounce-secondary: #64748b;
+    --pounce-contrast: #0f172a;
+    
+    /* Semantic colors */
+    --pounce-success: #15803d;
+    --pounce-warning: #f59e0b;
+    --pounce-danger: #b91c1c;
+    
+    /* Layout */
+    --pounce-spacing: 1rem;
+    --pounce-border-radius: 0.5rem;
+    --pounce-form-height: 2.5rem;
+    
+    /* Backgrounds & borders */
+    --pounce-bg: #fff;
+    --pounce-card-bg: #fff;
+    --pounce-fg: #000;
+    --pounce-border: rgba(0, 0, 0, 0.2);
+    --pounce-muted: #888;
+    --pounce-muted-border: rgba(0, 0, 0, 0.2);
+  }
+}
+
+@layer pounce.components {
+  /* All component styles go here */
+  .pounce-button {
+    border-color: var(--pounce-border);
+    /* ... */
+  }
 }
 ```
+
+**Layer Strategy Benefits:**
+- Adapters and user styles can override without `!important`
+- Predictable specificity regardless of selector complexity
+- Framework adapters can inject into `pounce.base` layer to override variables
+- User styles naturally win over component styles
 
 ### Phase 2: Component Refactoring
 
@@ -254,28 +273,60 @@ const config = {
 }
 ```
 
-#### 5. Transition/Animation Hooks
+#### 5. Transition/Animation Strategy
+
+**Reactive Approach** (preferred - aligns with `mutts` reactivity):
 
 ```typescript
-type TransitionHooks = {
-  onEnter?: (el: HTMLElement) => void | Promise<void>
-  onExit?: (el: HTMLElement) => void | Promise<void>
-  onEnterComplete?: (el: HTMLElement) => void
-  onExitComplete?: (el: HTMLElement) => void
+type TransitionConfig = {
+  enterClass?: string
+  exitClass?: string
+  activeClass?: string
+  duration?: number
 }
 
-// Tailwind adapter might use CSS classes
-const tailwindTransitions: TransitionHooks = {
-  onEnter: (el) => {
-    el.classList.add('transition-opacity', 'duration-200', 'opacity-0')
-    requestAnimationFrame(() => el.classList.replace('opacity-0', 'opacity-100'))
-  },
-  onExit: (el) => {
-    el.classList.add('transition-opacity', 'duration-200')
-    el.classList.replace('opacity-100', 'opacity-0')
+// Component uses reactive state for transitions
+const Dialog = (props) => {
+  const state = reactive({
+    isOpen: false,
+    isTransitioning: false
+  })
+  
+  const transitionConfig = getAdapter('Dialog').transitions || {
+    enterClass: 'pounce-enter',
+    exitClass: 'pounce-exit',
+    activeClass: 'pounce-active'
+  }
+  
+  return (
+    <div 
+      class={[
+        'pounce-dialog',
+        state.isOpen && transitionConfig.activeClass,
+        state.isTransitioning && (state.isOpen ? transitionConfig.enterClass : transitionConfig.exitClass)
+      ]}
+    >
+      {props.children}
+    </div>
+  )
+}
+
+// Tailwind adapter provides CSS classes
+const tailwindAdapter = {
+  Dialog: {
+    transitions: {
+      enterClass: 'transition-opacity duration-200 opacity-0',
+      activeClass: 'opacity-100',
+      exitClass: 'transition-opacity duration-200 opacity-0'
+    }
   }
 }
 ```
+
+**Benefits:**
+- Predictable: Transitions are part of reactive state, not imperative side effects
+- SSR-safe: Classes are computed during render, no client-only DOM manipulation
+- Debuggable: Transition state visible in component state, not hidden in closures
 
 ### Adapter Architecture
 
@@ -285,15 +336,16 @@ export type ComponentAdapter<Props = any> = {
   classes?: Partial<Record<string, string>>
   renderStructure?: (parts: ComponentParts) => JSX.Element
   events?: Partial<Record<string, EventTarget>>
-  transitions?: TransitionHooks
+  transitions?: TransitionConfig
   iconPlacement?: IconPlacement
+  iconResolver?: (name: string) => JSX.Element
 }
 
 export type FrameworkAdapter = {
   [ComponentName: string]: ComponentAdapter
 }
 
-// Global adapter registry
+// Simple global adapter (one per application)
 let currentAdapter: FrameworkAdapter = {}
 
 export function setAdapter(adapter: FrameworkAdapter) {
@@ -306,6 +358,14 @@ export function getAdapter<T extends keyof FrameworkAdapter>(
   return currentAdapter[component] || {}
 }
 ```
+
+**How It Works:**
+1. **Import adapter once** at app startup (e.g., `import '@pounce/ui-pico'`)
+2. **Adapter sets global config** via `setAdapter(picoAdapter)`
+3. **Components read config** via `getAdapter('Button')`
+4. **Bundler includes adapter** in your app bundle
+
+**No runtime registry complexity** - just a module-level variable that gets set once and read many times.
 
 ### Usage Examples
 
@@ -363,22 +423,72 @@ export const tailwindAdapter = {
 }
 ```
 
-### 2. CSS Variable Scope
+### 2. SSR Adapter Safety & Hydration
 
-**Challenge**: Some frameworks use different scoping strategies (`:where()` vs. direct selectors, specificity issues).
+**Challenge**: If `renderStructure` callbacks produce different DOM on server vs. client (e.g., adapter loaded only client-side), hydration will fail.
 
-**Solution**: Document specificity requirements and provide adapter-specific CSS resets:
+**Solution**: Adapters must be configured **before** SSR rendering:
+
+```typescript
+// server/entry.ts (Node.js entry point)
+import { setAdapter } from '@pounce/ui'
+import { picoAdapter } from '@pounce/ui-pico'
+
+// CRITICAL: Set adapter before any rendering
+setAdapter(picoAdapter)
+
+// Now safe to render
+import { renderToString } from '@pounce/core/ssr'
+const html = renderToString(<App />)
+```
+
+**Enforcement Strategy:**
+- Adapters export a synchronous configuration object (no async imports)
+- `setAdapter()` throws if called after first component render
+- SSR documentation emphasizes adapter setup in entry point
+- Dual entry-point architecture ensures adapter is available in both environments
+
+### 3. CSS Variable Scope
+
+**Challenge**: Some frameworks use different scoping strategies (specificity issues).
+
+**Solution**: Use CSS `@layer` (see Phase 1) to ensure adapters can override without specificity wars:
 
 ```css
 /* @pounce/ui-tailwind includes */
-@layer base {
+@layer pounce.base {
   :root {
     --pounce-primary: theme('colors.blue.500');
   }
 }
 ```
 
-### 3. Accessibility Attributes
+### 3. Icon Strategy
+
+**Challenge**: Different icon libraries (Lucide, FontAwesome, pure-glyf, SVG strings) have different APIs.
+
+**Solution**: Accept both string names and JSX elements, let adapters provide icon resolution:
+
+```typescript
+type IconResolver = (name: string) => JSX.Element
+
+// Default: uses pure-glyf (current implementation)
+const defaultIconResolver: IconResolver = (name) => <Icon icon={name} />
+
+// Adapter can override
+const lucideAdapter = {
+  iconResolver: (name) => {
+    const LucideIcon = lucideIcons[name]
+    return <LucideIcon size={18} />
+  }
+}
+
+// Component accepts both
+<Button icon="check" />           // String: uses adapter's resolver
+<Button icon={<CustomSvg />} />   // JSX: used directly
+```
+
+### 4. Accessibility Attributes
 
 **Challenge**: ARIA attributes might need different placement depending on structure.
 
@@ -553,16 +663,82 @@ useFocusRing()
 - [ ] Deprecate `@pounce/pico`
 - [ ] Announce and gather feedback
 
+## Architectural Clarifications
+
+### Dependency on @pounce/kit
+
+**Question**: Will `@pounce/ui` remain dependent on `@pounce/kit/entry-dom` for CSS/SASS tagged templates?
+
+**Answer**: **Yes, but only as a peer dependency**. The `css` and `sass` tagged templates from `@pounce/kit` provide:
+- Build-time CSS extraction (no runtime overhead)
+- Scoped styles that work with SSR
+- Integration with Vite's CSS pipeline
+
+This aligns with the dual entry-point architecture and keeps `@pounce/ui` focused on components rather than build tooling.
+
+### Naming Convention Migration
+
+**Current State:**
+- Classes: `pp-*` (e.g., `pp-button`, `pp-radiobutton`)
+- Variables: `--pp-*` (e.g., `--pp-success`) and `--pico-*` (framework dependency)
+
+**Target State:**
+- Classes: `pounce-*` (e.g., `pounce-button`, `pounce-radiobutton`)
+- Variables: `--pounce-*` only (e.g., `--pounce-success`, `--pounce-primary`)
+
+**Migration Strategy:**
+- Phase 2 includes renaming all `pp-*` → `pounce-*` for consistency
+- Consolidate `--pp-*` variables into `--pounce-*` namespace
+- No backward compatibility aliases (clean break from `@pounce/pico`)
+
+### Base CSS Requirements
+
+**Question**: If the base CSS isn't imported, will components look broken?
+
+**Answer**: **No**. The CSS is automatically included when importing from `@pounce/ui`:
+
+```typescript
+// This is all you need - CSS is bundled with components
+import { Button } from '@pounce/ui'
+```
+
+The `css` tagged templates from `@pounce/kit` ensure styles are:
+1. Co-located with components
+2. Automatically extracted during build
+3. Included in the component's module graph
+4. Properly scoped with `@layer pounce.components`
+
+No separate CSS import required (unlike traditional CSS frameworks).
+
 ## Conclusion
 
 The transformation from `@pounce/pico` to `@pounce/ui` is a natural evolution that:
 
 1. **Preserves all existing functionality** while removing framework lock-in
-2. **Aligns with project architecture** (dual entry-points, clean separation)
+2. **Aligns with project architecture** (dual entry-points, clean separation, ASNEAP)
 3. **Enables future growth** (new adapters, new components)
 4. **Maintains quality standards** (tests, accessibility, SSR)
 5. **Improves developer experience** (framework choice, customization)
+6. **Solves real problems** (CSS specificity via `@layer`, SSR safety, adapter consistency)
 
 The adapter pattern with maximum configurability ensures that any CSS framework can integrate seamlessly, while the CSS variable contract provides a stable foundation that won't require frequent breaking changes.
 
 By providing **everything-by-default and everything-configurable**, we create a UI library that is both immediately useful (with sensible defaults) and infinitely flexible (with comprehensive configuration options).
+
+### Key Architectural Decisions
+
+✅ **CSS `@layer`**: Prevents specificity wars, allows easy overriding (automated via Vite plugin)  
+✅ **Mono-adapter focus**: Simple global registry, ASNEAP compliant  
+✅ **Build-time validation**: Vite plugin ensures design token contract integrity  
+✅ **Reactive transitions**: Predictable, SSR-safe, debuggable  
+✅ **Synchronous adapters**: No hydration mismatches  
+✅ **Icon flexibility**: Supports any icon library via resolver pattern  
+✅ **Self-contained**: CSS bundled with components, no separate imports needed
+
+## Build-Time Tooling (Via @pounce/kit)
+
+To enforce this architecture without runtime overhead, the `css` utility in `@pounce/kit` is paired with a Vite plugin that handles:
+
+1.  **Automatic @layer Wrapping**: Wraps all `css` template literals in `@layer pounce.components`.
+2.  **Contract Validation**: Scans all `css` calls and fails the build if `--pico-*` or hardcoded colors are used instead of `--pounce-*` tokens.
+3.  **Static Manifest**: Generates a JSON manifest of all required design tokens to aid in adapter implementation.

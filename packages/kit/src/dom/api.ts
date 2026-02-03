@@ -2,22 +2,22 @@ import { createApiClientFactory, type RequestExecutor } from '../api/base-client
 import { ApiError } from '../api/core.js'
 
 const fetchExecutor: RequestExecutor = async (req: Request, timeout: number) => {
-    const controller = new AbortController()
-    const id = timeout > 0 ? setTimeout(() => controller.abort(), timeout) : undefined
-    
-    try {
-        const response = await fetch(req, {
-            signal: controller.signal
-        })
-        return response
-    } catch (error: any) {
-        if (error.name === 'AbortError') {
-            throw new ApiError(408, 'Request Timeout', null, req.url)
-        }
-        throw error
-    } finally {
-        if (id) clearTimeout(id)
-    }
+	const controller = new AbortController()
+	const id = timeout > 0 ? setTimeout(() => controller.abort(), timeout) : undefined
+
+	try {
+		const response = await fetch(req, {
+			signal: controller.signal,
+		})
+		return response
+	} catch (error: any) {
+		if (error.name === 'AbortError') {
+			throw new ApiError(408, 'Request Timeout', null, req.url)
+		}
+		throw error
+	} finally {
+		if (id) clearTimeout(id)
+	}
 }
 
 // Export the singleton API instance configured with Fetch

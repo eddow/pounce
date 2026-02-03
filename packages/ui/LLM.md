@@ -15,6 +15,9 @@ Framework-agnostic UI component library for Pounce applications. Evolved from `@
 4. **SSR-ready**: Follows Pounce's dual entry-point architecture
 5. **Fully Configurable**: Classes, structure, events, transitions all configurable
 
+## ⚠️ Critical
+- **SSR Safety**: `@pounce/ui` works in SSR. Kit uses dual entry-points (auto-selects `kit/dom` or `kit/node`)
+
 ## Documentation
 See `./analysis/README.md` for comprehensive architectural analysis and migration strategy.
 

@@ -15,7 +15,15 @@
 			"node"
 		],
 		"skipLibCheck": true,
-		"noEmit": true
+		"noEmit": true,
+		"baseUrl": ".",
+		"paths": {
+			"@pounce/core": ["../core/dist/index.d.ts"],
+			"@pounce/core/server": ["../core/dist/node.d.ts"],
+			"@pounce/core/*": ["../core/dist/*"],
+			"mutts": ["../../../mutts/dist/index.d.ts"],
+			"mutts/*": ["../../../mutts/dist/*"]
+		}
 	},
 	"include": [
 		"src/**/*"

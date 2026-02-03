@@ -1,11 +1,12 @@
+import type { PounceElement, Scope } from '../lib/renderer'
 import type { ScopedCallback } from 'mutts'
-import { Scope } from '../lib'
 import type { NameSpacedProps } from '../lib/namespaced'
 import type { StyleInput } from '../lib/styles'
 
 declare global {
 	const h: (type: any, props?: any, ...children: any[]) => JSX.Element
 	const Fragment: (props: { children: any }) => any
+	const window: never  // Prevent accidental window usage in SSR - import from @pounce/core instead
 	type ComponentFunction = (props: any, scope: Scope) => JSX.Element | null | undefined
 	namespace JSX {
 		// biome-ignore lint/suspicious/noConfusingVoidType: Void ends up automatically
@@ -43,17 +44,7 @@ declare global {
 		interface ElementChildrenAttribute {
 			children: any
 		}
-		type Element = {
-			tag?: string | ComponentFunction
-			render(scope?: Record<PropertyKey, any>): Node | readonly Node[]
-			mount?: ((target: Node | readonly Node[]) => ScopedCallback)[]
-			condition?: any
-			else?: true
-			// categories
-			when?: Record<string, any> // when:condition
-			if?: Record<string, any> // if:value
-			use?: Record<string, any> // use:callback
-		}
+		type Element = PounceElement
 		interface ElementClass {
 			template: any
 		}
@@ -96,7 +87,7 @@ declare global {
 			| { children: Children }
 			| ({
 					children?: any
-					// Meta: capture component reference on render
+					// PounceElement class - encapsulates JSX element creation and rendering
 					this?: ThisBinding<N>
 					if?: any
 					use?: (target: N) => void

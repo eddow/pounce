@@ -7,4 +7,4 @@ bootstrap()
 export * from '../index.js'
 
 // Also export the withSSR helper which is Node-specific
-export { withSSR, renderToString, renderToStringAsync } from '../lib/server.js'
+export { withSSR, renderToString, renderToStringAsync } from './server.js'

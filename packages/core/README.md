@@ -33,8 +33,30 @@ Complete documentation is available in the [docs folder](docs):
 ### Installation
 
 ```bash
-npm install
+npm install @pounce/core
+npm install -D @pounce/plugin
 ```
+
+### Build Configuration
+
+Pounce uses a centralized plugin system for JSX transformation. Configure your `vite.config.ts`:
+
+```typescript
+import { defineConfig } from 'vite'
+import { pounceCorePackage } from '@pounce/plugin/packages'
+
+export default defineConfig({
+  plugins: [
+    ...pounceCorePackage({
+      core: {
+        jsxRuntime: { runtime: 'automatic', importSource: '@pounce/core' }
+      }
+    })
+  ]
+})
+```
+
+**Note**: JSX globals (`h`, `Fragment`) are automatically available when you import from `@pounce/core`. No manual imports needed!
 
 ### Development
 
@@ -140,7 +162,7 @@ function Counter(props: { value: number, onReset?(): void }) {
 - **JSX** - Familiar component syntax
 - **mutts** - Reactive state management
 - **Vite** - Fast development and build tool
-- **Babel** - JSX transformation and reactive enhancements
+- **@pounce/plugin** - Build-time JSX transformation and reactive enhancements
 
 ## 📝 License
 

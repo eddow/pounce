@@ -1,8 +1,8 @@
 // TODO: This file has nothing to do here, what is no-dom related should be in src/no-dom
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import { parsePathSegment, type ParsedPathSegment, type RouteParams } from '../router/logic'
 import type { Middleware, RouteHandler } from '../api/core'
+import { type ParsedPathSegment, parsePathSegment, type RouteParams } from '../router/logic'
 
 /**
  * Convert a file path to a file:// URL without encoding special characters like brackets.
@@ -134,7 +134,12 @@ export function matchFileRoute(
 		node: RouteTreeNode,
 		segmentIndex: number,
 		depth = 0
-	): { node: RouteTreeNode; params: RouteParams; middlewareStack: Middleware[]; layouts: any[] } | null {
+	): {
+		node: RouteTreeNode
+		params: RouteParams
+		middlewareStack: Middleware[]
+		layouts: any[]
+	} | null {
 		if (depth > 50) {
 			console.warn('[@pounce/board] Route matching depth exceeded')
 			return null
@@ -155,10 +160,15 @@ export function matchFileRoute(
 
 		// Helper to prepend this node's middleware and layout to result
 		const withStack = (
-			result: { node: RouteTreeNode; params: RouteParams; middlewareStack: Middleware[]; layouts: any[] } | null
+			result: {
+				node: RouteTreeNode
+				params: RouteParams
+				middlewareStack: Middleware[]
+				layouts: any[]
+			} | null
 		) => {
 			if (!result) return null
-			
+
 			if (node.middleware) {
 				result.middlewareStack.unshift(...node.middleware)
 			}
@@ -220,7 +230,6 @@ export function matchFileRoute(
 		return null
 	}
 
-
 	const result = traverse(routeTree, 0)
 	if (!result) return null
 
@@ -236,7 +245,7 @@ export function matchFileRoute(
 
 /**
  * Scan routes directory and build route tree.
- * 
+ *
  * Discovers:
  * - `index.ts` -> Backend handlers
  * - `index.tsx` -> Frontend page components
@@ -244,7 +253,7 @@ export function matchFileRoute(
  * - `common.tsx` -> Layouts (inherited, wraps children)
  * - `named.ts` -> Route handlers (e.g. `users.ts` -> `/users`)
  * - `named.tsx` -> Page components (e.g. `list.tsx` -> `/list`)
- * 
+ *
  * This uses node:fs and is intended for server-side usage.
  */
 export async function buildRouteTree(
@@ -264,44 +273,44 @@ export async function buildRouteTree(
 		for (const [filePath, loader] of Object.entries(globRoutes)) {
 			// Normalize path to be relative to routesDir (virtual or real)
 			// Glob keys are usually like "/src/routes/api/index.ts" or "./routes/api/index.ts"
-			
+
 			// We need to extract the segments relative to the routes root
 			// Assumption: keys contain the full path. We need to find where "routes" starts.
 			// Or we assume the glob is exactly import.meta.glob('/src/routes/**')
-			
+
 			// Simple heuristic: remove everything up to and including "routes/"
 			// If routesDir is "./routes", we look for that.
-			
+
 			// Better approach: expected input is relative paths like "./index.tsx", "./users/[id].ts"
 			// OR absolute paths if simpler.
-			
+
 			// Let's assume the keys are relative to the project root, and we filter by routesDir
 			// Actually, let consumer handle filtering. We just need to parse the path relative to routesDir.
-			
+
 			// Let's assume the user passes import.meta.glob('/src/routes/**')
 			// The keys will be like "/src/routes/index.tsx"
-			
+
 			// For simplicity and robustness, lets just take the relative path from the key
 			// If routesDir is "src/routes", and key is "/app/src/routes/index.tsx", we want "index.tsx"
-			
+
 			let relativePath = filePath
 			if (filePath.includes(routesDir.replace(/^\.\//, ''))) {
 				const parts = filePath.split(routesDir.replace(/^\.\//, ''))
 				relativePath = parts[parts.length - 1] // Take the part after routesDir
 				if (relativePath.startsWith('/')) relativePath = relativePath.slice(1)
 			}
-			
+
 			const segments = relativePath.split('/')
 			const fileName = segments.pop()!
-			
+
 			// Traverse/Create nodes for directories
 			let currentNode = root
 			for (const segmentName of segments) {
 				if (segmentName === '' || segmentName === '.') continue
-				
+
 				const segmentInfo = parseSegment(segmentName)
 				const isGroup = segmentName.startsWith('(') && segmentName.endsWith(')')
-				
+
 				let child = currentNode.children.get(segmentName)
 				if (!child) {
 					child = {
@@ -316,15 +325,20 @@ export async function buildRouteTree(
 				}
 				currentNode = child
 			}
-			
+
 			// Handle the file
 			await processFile(fileName, loader, currentNode, filePath)
 		}
-		
+
 		return root
 	}
 
-	async function processFile(name: string, loader: () => Promise<any>, node: RouteTreeNode, fullPath?: string) {
+	async function processFile(
+		name: string,
+		loader: () => Promise<any>,
+		node: RouteTreeNode,
+		fullPath?: string
+	) {
 		if (name === 'common.ts') {
 			try {
 				const mod = await loader()
@@ -347,7 +361,8 @@ export async function buildRouteTree(
 				for (const method of methods) {
 					const exportName = method
 					if (typeof mod[exportName] === 'function') {
-						const upperMethod = method === 'del' || method === 'delete' ? 'DELETE' : method.toUpperCase()
+						const upperMethod =
+							method === 'del' || method === 'delete' ? 'DELETE' : method.toUpperCase()
 						handlers[upperMethod] = mod[exportName]
 					}
 				}
@@ -471,7 +486,8 @@ export async function buildRouteTree(
 							// exports can be 'get', 'GET', etc.
 							const exportName = method
 							if (typeof mod[exportName] === 'function') {
-								const upperMethod = method === 'del' || method === 'delete' ? 'DELETE' : method.toUpperCase()
+								const upperMethod =
+									method === 'del' || method === 'delete' ? 'DELETE' : method.toUpperCase()
 								handlers[upperMethod] = mod[exportName]
 							}
 						}
@@ -489,7 +505,10 @@ export async function buildRouteTree(
 					} catch (e) {
 						console.error(`Failed to load component from ${entryPath}`, e)
 					}
-				} else if ((entry.name.endsWith('.ts') && !entry.name.endsWith('.d.ts')) || entry.name.endsWith('.tsx')) {
+				} else if (
+					(entry.name.endsWith('.ts') && !entry.name.endsWith('.d.ts')) ||
+					entry.name.endsWith('.tsx')
+				) {
 					// Named route file (e.g. users.ts -> /users or users.tsx)
 					const fileName = path.parse(entry.name).name
 					const segmentInfo = parseSegment(fileName)
@@ -510,7 +529,7 @@ export async function buildRouteTree(
 
 					try {
 						const mod = await importFn(entryPath)
-						
+
 						if (entry.name.endsWith('.ts')) {
 							const handlers: Record<string, RouteHandler> = {}
 							const methods = ['get', 'post', 'put', 'del', 'patch', 'delete']

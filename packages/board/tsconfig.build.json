@@ -41,29 +41,31 @@
 				"../../../pure-glyf/src/*"
 			],
 			"@pounce/kit": [
-				"../kit/src/entry-no-dom.ts"
+				"../kit/dist/index.d.ts"
+			],
+			"@pounce/kit/node": [
+				"../kit/dist/node.d.ts"
 			],
 			"@pounce/kit/dom": [
-				"../kit/src/dom/index.ts"
+				"../kit/dist/dom.d.ts"
 			],
-			"@pounce/kit/entry-dom": [
-				"../kit/src/entry-dom.ts"
+			"mutts": [
+				"../../../mutts/dist/index.d.ts"
 			],
-			"@pounce/kit/entry-no-dom": [
-				"../kit/src/entry-no-dom.ts"
+			"mutts/*": [
+				"../../../mutts/dist/*"
 			]
 		}
 	},
 	"include": [
 		"src/**/*",
-		"../pico/src/types",
-		"../kit/src/**/*"
+		"../pico/src/types"
 	],
 	"exclude": [
 		"node_modules",
 		"dist",
 		"tests",
-		"../kit/src/**/*.test.ts",
-		"../kit/src/**/*.test.tsx"
+		"../../../mutts/src/**/*",
+		"../kit/src/**/*"
 	]
 }

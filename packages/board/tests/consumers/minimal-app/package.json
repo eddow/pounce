@@ -16,9 +16,9 @@
 		"@pounce/core": "link:../../../../@pounce/core"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.28.6",
+		"@pounce/plugin": "workspace:*",
 		"@babel/plugin-proposal-decorators": "^7.28.6",
-		"@babel/plugin-transform-react-jsx": "^7.28.6",
+		"@babel/plugin-transform-react-jsx": "^7.25.9",
 		"@babel/plugin-transform-typescript": "^7.28.6",
 		"jsdom": "^27.4.0",
 		"tsx": "latest",

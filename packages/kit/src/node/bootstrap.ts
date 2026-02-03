@@ -12,7 +12,7 @@ export const als = new AsyncLocalStorage<Client>()
  */
 export function createClientInstance(url?: string | URL): Client {
 	const parsedUrl = url ? new URL(url) : new URL('http://localhost/')
-	
+
 	return reactive({
 		url: {
 			href: parsedUrl.href,
@@ -20,7 +20,7 @@ export function createClientInstance(url?: string | URL): Client {
 			pathname: parsedUrl.pathname,
 			search: parsedUrl.search,
 			hash: parsedUrl.hash,
-			segments: parsedUrl.pathname.split('/').filter(s => s.length > 0),
+			segments: parsedUrl.pathname.split('/').filter((s) => s.length > 0),
 			query: Object.fromEntries(parsedUrl.searchParams.entries()),
 		},
 		viewport: { width: 1920, height: 1080 }, // Default SSR viewport
@@ -56,7 +56,7 @@ export function createClientProxy(): Client {
 			if (!store) {
 				throw new Error(
 					`Accessing client.${String(prop)} outside of a withSSR context. ` +
-					`Make sure you're using withSSR() or runWithClient() to establish a request context.`
+						`Make sure you're using withSSR() or runWithClient() to establish a request context.`
 				)
 			}
 			const value = Reflect.get(store, prop)
@@ -65,9 +65,7 @@ export function createClientProxy(): Client {
 		set(_, prop, value) {
 			const store = als.getStore()
 			if (!store) {
-				throw new Error(
-					`Setting client.${String(prop)} outside of a withSSR context.`
-				)
+				throw new Error(`Setting client.${String(prop)} outside of a withSSR context.`)
 			}
 			return Reflect.set(store, prop, value)
 		},
@@ -78,10 +76,7 @@ export function createClientProxy(): Client {
  * Runs a function within an SSR client context.
  * Creates an isolated client instance for the duration of the function.
  */
-export function runWithClient<T>(
-	fn: (client: Client) => T,
-	options?: { url?: string | URL }
-): T {
+export function runWithClient<T>(fn: (client: Client) => T, options?: { url?: string | URL }): T {
 	const clientInstance = createClientInstance(options?.url)
 	return als.run(clientInstance, () => fn(clientInstance))
 }

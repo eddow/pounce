@@ -1,3 +1,5 @@
+import { flavored } from 'mutts'
+
 /**
  * CSS template tag functions for inline CSS processing
  *
@@ -214,3 +216,23 @@ export function scss(strings: TemplateStringsArray, ...values: any[]): void {
 	}, '')
 	__injectCSS(cssText)
 }
+
+/**
+ * Component-specific style tag.
+ * Automatically wrapped in @layer pounce.components by the Vite plugin.
+ */
+export const componentStyle = flavored(css, {
+	css,
+	sass,
+	scss,
+})
+
+/**
+ * Base style tag for the UI library.
+ * Automatically wrapped in @layer pounce.base by the Vite plugin.
+ */
+export const baseStyle = flavored(css, {
+	css,
+	sass,
+	scss,
+})

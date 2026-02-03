@@ -2,19 +2,29 @@
 import { defineConfig } from 'vite'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'node:url'
-import dts from 'vite-plugin-dts'
+import { pounceCorePackage } from '@pounce/plugin/packages'
 
 const projectRootDir = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   plugins: [
-    dts({
-      insertTypesEntry: true,
-      compilerOptions: {
-        preserveSymlinks: false,
+    ...pounceCorePackage({
+      core: {
+        projectRoot: projectRootDir,
+        jsxRuntime: {
+          runtime: 'automatic',
+          importSource: '@pounce/core',
+        },
+      },
+      dts: {
+        insertTypesEntry: true,
+        compilerOptions: {
+          preserveSymlinks: false,
+        }
       }
-    })
+    }),
   ],
+  esbuild: false,
   build: {
     lib: {
       entry: {
@@ -29,16 +39,18 @@ export default defineConfig({
       external: [
         'mutts',
         '@pounce/core',
-        '#browser' // Internal alias, resolved by plugin? No, handled by Resolve?
-        // Actually, aliases are resolved by Vite during build. 
-        // We should NOT exclude #browser if it's internal source.
-        // It will be bundled into the output.
+        '@pounce/core/server',
+        'jsdom',
+        'arktype',
+        'node:async_hooks',
+        /^node:/,
       ]
     }
   },
   resolve: {
     alias: {
-      // mutts: resolve(projectRootDir, '../../../mutts/src'),
+      '@pounce/core/jsx-runtime': resolve(projectRootDir, '../core/src/runtime/jsx-runtime.ts'),
+      '@pounce/core/jsx-dev-runtime': resolve(projectRootDir, '../core/src/runtime/jsx-dev-runtime.ts'),
     }
   }
 })

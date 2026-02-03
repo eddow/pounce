@@ -5,7 +5,7 @@
 
 import type { Context, MiddlewareHandler } from 'hono'
 import { Hono } from 'hono'
-import { getSSRStyles } from '@pounce/kit/entry-dom'
+import { getSSRStyles } from '@pounce/kit/dom'
 import {
 	runMiddlewares,
 	enableSSR,

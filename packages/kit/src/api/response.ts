@@ -33,7 +33,7 @@ export class PounceResponse extends Response {
 	 */
 	override async json<T = any>(): Promise<T> {
 		if (this._jsonCache !== null) return this._jsonCache
-		
+
 		const buffer = await this._getBuffer()
 		const text = new TextDecoder().decode(buffer)
 		this._jsonCache = JSON.parse(text)
@@ -53,7 +53,7 @@ export class PounceResponse extends Response {
 	 */
 	override async text(): Promise<string> {
 		if (this._textCache !== null) return this._textCache
-		
+
 		const buffer = await this._getBuffer()
 		this._textCache = new TextDecoder().decode(buffer)
 		return this._textCache
@@ -84,28 +84,28 @@ export class PounceResponse extends Response {
 			statusText: this.statusText,
 			headers: this.headers,
 		})
-		
+
 		// Copy cache state
 		cloned._bufferCache = this._bufferCache
 		cloned._jsonCache = this._jsonCache
 		cloned._textCache = this._textCache
 		cloned._bodyRead = this._bodyRead
-		
+
 		return cloned
 	}
 
 	static from(response: Response): PounceResponse {
 		if (response instanceof PounceResponse) return response
-		
+
 		// If the body is already disturbed, we can't pass it to the constructor.
 		// We create a response with a null body but mark it as read.
 		const body = response.bodyUsed ? null : response.body
 		const res = new PounceResponse(body, response)
-		
+
 		if (response.bodyUsed) {
 			res._bodyRead = true
 		}
-		
+
 		return res
 	}
 }

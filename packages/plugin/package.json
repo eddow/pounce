@@ -1,0 +1,68 @@
+{
+  "name": "@pounce/plugin",
+  "version": "0.0.0",
+  "description": "Centralized plugin hub for Pounce build-time transformations",
+  "type": "module",
+  "exports": {
+    "./core": {
+      "types": "./src/core/index.ts",
+      "import": "./dist/core/index.js",
+      "default": "./dist/core/index.js"
+    },
+    "./ui": {
+      "types": "./src/ui/index.ts",
+      "import": "./dist/ui/index.js",
+      "default": "./dist/ui/index.js"
+    },
+    "./kit": {
+      "types": "./src/kit/index.ts",
+      "import": "./dist/kit/index.js",
+      "default": "./dist/kit/index.js"
+    },
+    "./configs": {
+      "types": "./src/configs/index.ts",
+      "import": "./dist/configs/index.js",
+      "default": "./dist/configs/index.js"
+    },
+    "./packages": {
+      "types": "./src/packages/index.ts",
+      "import": "./dist/packages/index.js",
+      "default": "./dist/packages/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:jsx-types": "tsx scripts/test-jsx-types.ts"
+  },
+  "keywords": [
+    "pounce",
+    "vite",
+    "plugin",
+    "babel",
+    "jsx",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/babel__core": "^7.20.5",
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.11",
+    "vite-plugin-dts": "^4.5.3",
+    "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "@babel/core": "^7.28.4",
+    "@babel/plugin-proposal-decorators": "^7.28.6",
+    "@babel/plugin-transform-react-jsx": "^7.25.9",
+    "@babel/plugin-transform-typescript": "^7.28.6",
+    "@babel/types": "^7.28.6"
+  },
+  "peerDependencies": {
+    "vite": "^7.0.0"
+  },
+  "packageManager": "pnpm@10.28.2"
+}

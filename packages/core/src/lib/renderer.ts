@@ -42,7 +42,7 @@ export type NodeDesc = Node | string | number
  * - A reactive function that returns intermediate values
  * - An array of children (from .map() operations)
  */
-export type Child = NodeDesc | (() => Child) | JSX.Element | Child[]
+export type Child = NodeDesc | (() => Child) | PounceElement | Child[]
 
 type ComponentNode = Node & {
 	[POUNCE_OWNER]?: ComponentInfo
@@ -70,12 +70,107 @@ function isSymbol(value: any): value is symbol {
 }
 
 export type Scope = Record<PropertyKey, any> & { component?: ComponentInfo }
-export type Component<P = {}> = (props: P, scope?: Scope) => JSX.Element
+// PounceElement class - encapsulates JSX element creation and rendering
+export class PounceElement {
+	// Core properties
+	tag?: string | ComponentFunction
+	produce: (scope?: Scope) => Node | readonly Node[]
+	
+	// Categories for conditional rendering and lifecycle
+	mount?: ((target: Node | readonly Node[]) => ScopedCallback)[]
+	condition?: () => any
+	else?: true
+	when?: Record<string, () => any>
+	if?: Record<string, () => any>
+	use?: Record<string, () => any>
+	
+	// Identity map for render caching
+	private static renderCache = new WeakMap<PounceElement, Node | readonly Node[]>()
+	
+	constructor(
+		produce: (scope?: Scope) => Node | readonly Node[],
+		info: {
+			tag?: string | ComponentFunction
+			mount?: ((target: Node | readonly Node[]) => ScopedCallback)[]
+			condition?: () => any
+			else?: true
+			when?: Record<string, () => any>
+			if?: Record<string, () => any>
+			use?: Record<string, () => any>
+		} = {}
+	) {
+		// Use unreactive to ensure the element instance itself is not tracked
+		this.produce = produce
+		this.tag = info.tag
+		this.mount = info.mount
+		this.condition = info.condition
+		this.else = info.else
+		this.when = info.when
+		this.if = info.if
+		this.use = info.use
+	}
+	
+	/**
+	 * Render the element - executes the produce function with caching
+	 */
+	render(scope: Scope = rootScope): Node | readonly Node[] {
+		// Check cache first
+		let partial = PounceElement.renderCache.get(this)
+		if (partial !== undefined) return partial
+		
+		// Execute produce function untracked to prevent unwanted reactivity
+		// TODO: We REALLY have to get rid of this untracked, effect legacy should be preserved - at minimum by error-catcher-component
+		partial = untracked(() => this.produce(scope))
+		PounceElement.renderCache.set(this, partial)
+		
+		if (!partial) throw new DynamicRenderingError('Renderer returned no content')
+		
+		const tagName = untracked(() => (typeof this.tag === 'string' ? this.tag : this.tag?.name) || 'anonymous')
+		
+		// getTarget matches types for single nodes vs fragments
+		const getTarget = () => (Array.isArray(partial) && partial.length === 1 ? partial[0] : partial!)
+		
+		// Process mount callbacks
+		if (this.mount) {
+			for (const mount of this.mount) {
+				const stop = effect.named(`mount#${tagName}`)(() => mount(getTarget()))
+				const anchor = untracked(getTarget)
+				if (anchor && typeof anchor === 'object') {
+					cleanedBy(anchor, stop)
+				}
+			}
+		}
+		
+		// Process use callbacks
+		if (this.use) {
+			for (const [key, value] of Object.entries(this.use) as [string, any]) {
+				const stop = effect.named(`use:${key}#${tagName}`)(() => {
+					if (typeof scope[key] !== 'function') throw new DynamicRenderingError(`${key} in scope is not a function`)
+					return scope[key](getTarget(), value(), scope)
+				})
+				const anchor = untracked(getTarget)
+				if (anchor && typeof anchor === 'object') {
+					cleanedBy(anchor, stop)
+				}
+			}
+		}
+		
+		return partial
+	}
+	
+	/**
+	 * Clear the render cache for this element
+	 */
+	clearCache(): void {
+		PounceElement.renderCache.delete(this)
+	}
+}
+
+export type Component<P = {}> = (props: P, scope?: Scope) => PounceElement
 export const rootScope: Scope = reactive(Object.create(null))
 
-// TODO: make an unreactive Element class who takes `produce` (our present element.render) and exposes `.render` (now a global function)
-function jsxEl(jsx: JSX.Element) {
-	return unreactive(jsx)
+function jsxEl(produce: (scope?: Scope) => Node | readonly Node[], info?: ConstructorParameters<typeof PounceElement>[1]): PounceElement {
+	return new PounceElement(produce, info)
 }
 
 function listen(
@@ -129,7 +224,7 @@ function checkComponentRebuild(componentCtor: Function) {
 }
 
 function forward(tag: string, children: readonly Child[], scope: Scope) {
-	return unreactive({ tag, render: () => processChildren(children, scope) })
+	return new PounceElement(() => processChildren(children, scope), { tag })
 }
 
 /**
@@ -219,9 +314,8 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 			elements: new Set<Node>(),
 		})
 		// Effect for styles - only updates style container
-		mountObject = jsxEl({
-			tag,
-			render(scope: Scope = rootScope) {
+		mountObject = jsxEl(
+			function componentRender(scope: Scope = rootScope) {
 				const parent = scope.component
 				const isRegistered = parent
 					? parent.children.has(info)
@@ -238,7 +332,7 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 				const childScope = extend(scope, { component: info })
 				info.scope = childScope
 
-				const rendered = project.array<null, JSX.Element>([null], function componentExecution() {
+				const rendered = project.array<null, PounceElement>([null], function componentExecution() {
 					checkComponentRebuild(componentCtor)
 					testing.renderingEvent?.('render component', componentCtor.name)
 					const givenProps = reactive(propsInto(regularProps, { children }))
@@ -249,9 +343,10 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 					if (info.parent) info.parent.children.delete(info)
 					else rootComponents.delete(info)
 				})
-				return processChildren(rendered, childScope, 'root')
+				return processChildren(rendered, childScope)
 			},
-		})
+			{ tag }
+		)
 	} else {
 		const element = document.createElement(tag)
 		let lastComponent: ComponentInfo | undefined
@@ -398,9 +493,8 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 			}
 
 		// Create plain HTML element - also return mount object for consistency
-		mountObject = jsxEl({
-			tag,
-			render(scope: Scope = rootScope) {
+		mountObject = jsxEl(
+			function elementRender(scope: Scope = rootScope) {
 				const componentToUse = scope.component
 				if (lastComponent !== componentToUse) {
 					if (lastComponent) lastComponent.elements.delete(element)
@@ -422,7 +516,8 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 				}
 				return element
 			},
-		})
+			{ tag }
+		)
 	}
 	return Object.defineProperties(mountObject, Object.getOwnPropertyDescriptors(collectedCategories))
 }
@@ -525,7 +620,7 @@ const intrinsicComponentAliases = extend(null, {
 		}
 		return forward('for', [compute as any] as any, scope)
 	},
-	fragment(props: { children: JSX.Element[] }, scope: Scope) {
+	fragment(props: { children: PounceElement[] }, scope: Scope) {
 		return forward('fragment', props.children, scope)
 	},
 })
@@ -575,41 +670,12 @@ export function bindChildren(parent: Node, newChildren: Node | readonly Node[] |
 		testing.renderingEvent?.(`reconcileChildren (+${added} -${removed})`, parent, newChildren)
 	})
 }
-const renderIdentityMap = new WeakMap<JSX.Element, Node | readonly Node[]>()
 
-export const render = (renderer: JSX.Element, scope: Scope) => {
-	let partial = renderIdentityMap.get(renderer)
-	if (partial !== undefined) return partial
-	partial = untracked(() => renderer.render(scope))
-	renderIdentityMap.set(renderer, partial)
-	if (!partial) throw new DynamicRenderingError('Renderer returned no content')
-
-	const tagName = untracked(() => (typeof renderer.tag === 'string' ? renderer.tag : renderer.tag?.name) || 'anonymous')
-	// getTarget matches types for single nodes vs fragments
-	const getTarget = () => (Array.isArray(partial) && partial.length === 1 ? partial[0] : partial)
-
-	if (renderer.mount) {
-		for (const mount of renderer.mount) {
-			const stop = effect.named(`mount#${tagName}`)(() => mount(getTarget()))
-			const anchor = untracked(getTarget)
-			if (anchor && typeof anchor === 'object') {
-				cleanedBy(anchor, stop)
-			}
-		}
-	}
-	if (renderer.use)
-		for (const [key, value] of Object.entries(renderer.use) as [string, any]) {
-			const stop = effect.named(`use:${key}#${tagName}`)(() => {
-				if (!isFunction(scope[key])) throw new DynamicRenderingError(`${key} in scope is not a function`)
-				return scope[key](getTarget(), value(), scope)
-			})
-			const anchor = untracked(getTarget)
-			if (anchor && typeof anchor === 'object') {
-				cleanedBy(anchor, stop)
-			}
-		}
-	return partial!
+export const render = (renderer: PounceElement, scope: Scope) => {
+	return renderer.render(scope)
 }
+
+const emptyChild = new PounceElement(() => [])
 
 /**
  * Process children arrays, handling various child types including:
@@ -621,23 +687,27 @@ export const render = (renderer: JSX.Element, scope: Scope) => {
  * Returns a flat array of DOM nodes suitable for replaceChildren()
  * 
  */
-export function processChildren(children: readonly Child[], scope: Scope, isRoot?: 'root'): readonly Node[] {
+export function processChildren(children: readonly Child[], scope: Scope): readonly Node[] {
 	/*
 	The function remembers all the layers of the processing : callbacks, meta-info (if/when/else) then rendering, then flattening the results - in each step, a reactive array is remembered.
 	Changing one element in one array will propagate the change along the reactive chain through all the downstream arrays.
 	*/
-	if (isRoot === 'root') console.log(`processing ${scope.component?.name} ${scope.component?.id}`)
 
 	const renderers = project.array<Child, JSX.Element>(children, ({ get }) => {
 		let child: Child = get()
 		while (isFunction(child)) child = (child as () => Child)()
-		return typeof child === 'string' || typeof child === 'number' ? jsxEl({ render: () => document.createTextNode(String(child)) }) : child as JSX.Element
+		if (child === undefined || child === null || child === (false as any)) return emptyChild
+		if (typeof child === 'string' || typeof child === 'number')
+			return new PounceElement(() => document.createTextNode(String(child)))
+		if (child instanceof Node)
+			return new PounceElement(() => child as Node)
+		return (child as JSX.Element) || emptyChild
 	})
 
 	const conditioned = scan(renderers, (acc: { ifOccurred: boolean, value?: JSX.Element }, child: JSX.Element) => {
 		if ('condition' in child || 'if' in child || 'when' in child || 'else' in child) {
 			if (child.else && acc.ifOccurred) return { ifOccurred: true }
-			if ('condition' in child && !child.condition()) return extend(acc, { value: undefined })
+			if ('condition' in child && child.condition && !child.condition()) return extend(acc, { value: undefined })
 			if (child.if)
 				for (const [key, value] of Object.entries(child.if) as [string, any])
 					if (scope[key] !== value()) return extend(acc, { value: undefined })

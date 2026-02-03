@@ -1,5 +1,12 @@
-export * from './logic'
+export type {
+	ClientRouteDefinition,
+	RouteAnalyzer,
+	RouterNotFound,
+	RouterProps,
+	RouterRender,
+	RouteSpecification,
+} from './components'
+export { A, Router } from './components'
+export type { AssertSchema, RouteDefinition } from './defs'
 export { defineRoute } from './defs'
-export type { RouteDefinition, AssertSchema } from './defs'
-export type { ClientRouteDefinition, RouteSpecification, RouterRender, RouterNotFound, RouterProps, RouteAnalyzer } from './components'
-export { Router, A } from './components'
+export * from './logic'

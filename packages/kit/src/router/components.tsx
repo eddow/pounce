@@ -1,11 +1,7 @@
+import { compose, copyObject } from '@pounce/core'
 import { effect, reactive } from 'mutts'
-import {
-	compose,
-	copyObject,
-} from '@pounce/core'
 import { client } from '../client/shared.js'
 import {
-
 	matchRoute as coreMatchRoute,
 	routeMatcher as coreRouteMatcher,
 	type ParsedPathSegment,
@@ -26,7 +22,7 @@ export type {
 	RouteWildcard,
 }
 export { buildRoute } from './logic.js'
-
+// TODO: test the router component (unittest)
 // Node/SSR shim for MouseEvent if likely missing
 type MouseEventShim = unknown
 type SafeMouseEvent = typeof globalThis extends { MouseEvent: any } ? MouseEvent : MouseEventShim
@@ -43,13 +39,15 @@ export type RouteSpecification<Definition extends ClientRouteDefinition> = {
 	readonly unusedPath: string
 }
 
-export interface RouterRender<Definition extends ClientRouteDefinition> {
-	(specification: RouteSpecification<Definition>, scope: Record<PropertyKey, unknown>): JSX.Element | JSX.Element[]
-}
+export type RouterRender<Definition extends ClientRouteDefinition> = (
+	specification: RouteSpecification<Definition>,
+	scope: Record<PropertyKey, unknown>
+) => JSX.Element | JSX.Element[]
 
-export interface RouterNotFound<Definition extends ClientRouteDefinition> {
-	(context: { url: string; routes: readonly Definition[] }, scope: Record<PropertyKey, unknown>): JSX.Element | JSX.Element[]
-}
+export type RouterNotFound<Definition extends ClientRouteDefinition> = (
+	context: { url: string; routes: readonly Definition[] },
+	scope: Record<PropertyKey, unknown>
+) => JSX.Element | JSX.Element[]
 
 export interface RouterProps<Definition extends ClientRouteDefinition> {
 	readonly routes: readonly Definition[]
@@ -57,9 +55,9 @@ export interface RouterProps<Definition extends ClientRouteDefinition> {
 	readonly url?: string
 }
 
-export interface RouteAnalyzer<Definition extends ClientRouteDefinition> {
-	(url: string): RouteSpecification<Definition> | null
-}
+export type RouteAnalyzer<Definition extends ClientRouteDefinition> = (
+	url: string
+) => RouteSpecification<Definition> | null
 
 // === MATCHER WRAPPERS ===
 
@@ -165,15 +163,12 @@ export const Router = <
 
 export function A(props: JSX.IntrinsicElements['a']) {
 	function handleClick(event: SafeMouseEvent) {
-		// @ts-ignore
 		props.onClick?.(event)
-		// @ts-ignore
 		if (event.defaultPrevented) {
 			return
 		}
 		const href = props.href
 		if (typeof href === 'string' && href.startsWith('/')) {
-			// @ts-ignore
 			event.preventDefault()
 			if (client.url.pathname !== href) {
 				client.navigate(href)
@@ -182,11 +177,8 @@ export function A(props: JSX.IntrinsicElements['a']) {
 	}
 
 	return (
-		// biome-ignore lint/a11y/noStaticElementInteractions: a has onclick
 		<a
 			{...props}
-			// biome-ignore lint/a11y/useValidAnchor: a has onclick
-			// @ts-ignore
 			onClick={handleClick}
 			aria-current={
 				props['aria-current'] ?? (client.url.pathname === props.href ? 'page' : undefined)

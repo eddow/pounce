@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom'
-import { als, bootstrap as bootstrapNode } from '../node/bootstrap'
-import { bindChildren, rootScope, type Scope } from './renderer'
+import { als, bootstrap as bootstrapNode } from './bootstrap.js'
+import { bindChildren, rootScope, type Scope } from '../lib/renderer.js'
 
 /**
  * Runs a function within an SSR DOM environment.
