@@ -6,7 +6,7 @@
  * modifying the array in child causes parent to re-render.
  */
 import { describe, it, expect, beforeEach } from 'vitest'
-import { reactive, trackEffect } from 'mutts'
+import { reactive, onEffectTrigger } from 'mutts'
 import { bindApp, h, type Scope } from '../../src/lib'
 
 describe('Effect during render bug', () => {
@@ -73,7 +73,7 @@ describe('Effect during render bug', () => {
 		expect(parentRenderCount.count).toBe(1) // Should still be 1
 	})
 
-	it('detects effect inside render with trackEffect', () => {
+	it('detects effect inside render with onEffectTrigger', () => {
 		const effectsDuringRender: string[] = []
 
 		const state = reactive({
@@ -81,17 +81,17 @@ describe('Effect during render bug', () => {
 		})
 
 		const TestComponent = () => {
-			trackEffect((_obj, evolution, prop) => {
+			onEffectTrigger((_obj, evolution, prop) => {
 				effectsDuringRender.push(`${String(prop)}: ${evolution}`)
 			})
 
-			// This reads state.count during render - should trigger trackEffect!
+			// This reads state.count during render - should trigger onEffectTrigger!
 			return <div>Count: {state.count}</div>
 		}
 
 		bindApp(<TestComponent />, container)
 
-		// If trackEffect caught the reactive read during render, it would have logged it
+		// If onEffectTrigger caught the reactive read during render, it would have logged it
 		console.log('Effects detected during render:', effectsDuringRender)
 	})
 })

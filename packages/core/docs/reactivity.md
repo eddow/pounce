@@ -139,7 +139,7 @@ function Counter() {
   })
   
   // Track all reactive changes
-  trackEffect((obj, evolution) => {
+  onEffectTrigger((obj, evolution) => {
     console.log('State changed:', obj, evolution)
   })
   
@@ -198,7 +198,7 @@ function Button(props: {
 2. **Use computed for derived values**: Don't store redundant data
 3. **Clean up effects**: Return cleanup functions to prevent memory leaks
 4. **Group related state**: Keep related data together in reactive objects
-5. **Use trackEffect for debugging**: Monitor all reactive changes during development
+5. **Use onEffectTrigger for debugging**: Monitor all reactive changes during development
 
 ## Performance Considerations
 

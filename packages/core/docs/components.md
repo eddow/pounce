@@ -160,13 +160,13 @@ function MyComponent() {
 
 ### Tracking Effects
 
-Use `trackEffect()` to monitor reactive changes:
+Use `onEffectTrigger()` to monitor reactive changes:
 
 ```tsx
-import { trackEffect } from 'mutts'
+import { onEffectTrigger } from 'mutts'
 
 function MyComponent() {
-  trackEffect((obj, evolution) => {
+  onEffectTrigger((obj, evolution) => {
     console.log('State changed:', obj, evolution)
   })
 

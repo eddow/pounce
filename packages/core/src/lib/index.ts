@@ -11,7 +11,7 @@ function isString(value: any): value is string {
 	return typeof value === 'string'
 }
 
-export { bindChildren, Fragment, h, type Scope, type Child, type Component }
+export { bindChildren, Fragment, h, rootScope, type Scope, type Child, type Component }
 
 export * from './utils'
 export * from './platform'

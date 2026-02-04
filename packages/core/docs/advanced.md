@@ -284,10 +284,10 @@ function MyComponent() {
 Enable debug mode to see reactive changes:
 
 ```tsx
-import { debug, trackEffect } from '@pounce/core'
+import { debug, onEffectTrigger } from '@pounce/core'
 
 function MyComponent() {
-  trackEffect((obj, evolution) => {
+  onEffectTrigger((obj, evolution) => {
     console.log('State changed:', obj, evolution)
   })
   

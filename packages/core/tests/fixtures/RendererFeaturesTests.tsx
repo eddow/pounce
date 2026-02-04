@@ -1,5 +1,5 @@
 import { reactive, effect } from 'mutts'
-import { Scope } from '../../src'
+import type { Scope } from '../../src'
 
 
 type Role = 'guest' | 'member' | 'admin'

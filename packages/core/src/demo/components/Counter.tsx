@@ -2,7 +2,7 @@
  * Counter Web Component using inline JSX templating (functional standard)
  */
 
-import { effect, trackEffect, watch } from 'mutts'
+import { effect, onEffectTrigger, watch } from 'mutts'
 import './Counter.scss'
 import { compose, type Scope } from '../../lib'
 
@@ -23,7 +23,7 @@ export default function CounterWebComponent(
 	},
 	scope: Scope
 ) {
-	trackEffect((obj, evolution) => {
+	onEffectTrigger((obj, evolution) => {
 		console.log(obj, evolution)
 	})
 	const state = compose(

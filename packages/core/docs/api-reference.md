@@ -82,9 +82,9 @@ Filters an array in-place.
 
 ## Debug Utilities
 
-Note: advanced debug helpers are internal; prefer `effect()` and `trackEffect()` in userland.
+Note: advanced debug helpers are internal; prefer `effect()` and `onEffectTrigger()` in userland.
 
-### `trackEffect(callback)`
+### `onEffectTrigger(callback)`
 
 Tracks all reactive changes in a component.
 
@@ -93,7 +93,7 @@ Tracks all reactive changes in a component.
 
 **Example:**
 ```tsx
-trackEffect((obj, evolution) => {
+onEffectTrigger((obj, evolution) => {
   console.log('State changed:', obj, evolution)
 })
 ```
@@ -328,13 +328,13 @@ watch(() => state.count, (newVal, oldVal) => {
 })
 ```
 
-### `trackEffect(callback)`
+### `onEffectTrigger(callback)`
 
 Tracks all reactive changes in the current context.
 
 **Example:**
 ```tsx
-trackEffect((obj, evolution) => {
+onEffectTrigger((obj, evolution) => {
   console.log('State changed:', obj, evolution)
 })
 ```

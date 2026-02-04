@@ -1,4 +1,4 @@
-import { effect, project, trackEffect } from 'mutts'
+import { effect, project, onEffectTrigger } from 'mutts'
 import { compose, h, type Scope } from '../../lib'
 
 export interface MiniCounterProps {
@@ -7,7 +7,7 @@ export interface MiniCounterProps {
 }
 
 export function MiniCounter(props: MiniCounterProps, scope: Scope) {
-	trackEffect((obj, evolution) => {
+	onEffectTrigger((obj, evolution) => {
 		console.log(obj, evolution)
 	})
 	const state = compose({ list: [] as string[], addedText: Date.now().toString() }, props)

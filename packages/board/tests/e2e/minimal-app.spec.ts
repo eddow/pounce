@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Minimal App Consumer', () => {
-	test.use({ baseURL: 'http://localhost:3000' })
+	test.use({ baseURL: 'http://127.0.0.1:5275' })
 
 	test('User profile shows middleware context and SSR data', async ({ page }) => {
 		page.on('console', (msg) => console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`))

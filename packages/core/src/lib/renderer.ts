@@ -10,7 +10,7 @@ import {
 	memoize,
 	project,
 	reactive,
-	trackEffect,
+	onEffectTrigger,
 	unreactive,
 	untracked,
 	unwrap,
@@ -114,16 +114,26 @@ export class PounceElement {
 	 * Render the element - executes the produce function with caching
 	 */
 	render(scope: Scope = rootScope): Node | readonly Node[] {
+		/* Note for agent - This function is full of comments who reflect a work in progress - if anything is changed, the comments should not be removed, old/new code should be indicated by a comment
+		Prefer commenting out to removing a line
+		 */
 		// Check cache first
 		let partial = PounceElement.renderCache.get(this)
-		if (partial !== undefined) return partial
-		
-		// Execute produce function untracked to prevent unwanted reactivity
-		// TODO: We REALLY have to get rid of this untracked, effect legacy should be preserved - at minimum by error-catcher-component
-		partial = untracked(() => this.produce(scope))
-		PounceElement.renderCache.set(this, partial)
-		
-		if (!partial) throw new DynamicRenderingError('Renderer returned no content')
+		//if (partial !== undefined) return partial
+		if(!partial) {
+			
+			// Execute produce function untracked to prevent unwanted reactivity
+			effect(({reaction}) => {
+				if(reaction) console.warn(`Component rebuild detected.
+It means the component definition refers a reactive value that has been modified, though the component has not been rebuilt as it is considered forbidden to avoid infinite events loops.`)
+				else partial = this.produce(scope)
+			})	// Is this working?
+			
+			//partial = untracked(() => this.produce(scope))
+			if (!partial) throw new DynamicRenderingError('Renderer returned no content')
+			PounceElement.renderCache.set(this, partial)
+
+		}
 		
 		const tagName = untracked(() => (typeof this.tag === 'string' ? this.tag : this.tag?.name) || 'anonymous')
 		
@@ -534,7 +544,7 @@ const intrinsicComponentAliases = extend(null, {
 		scope: Scope
 	) {
 		function compute(): Node[] {
-			trackEffect((obj, _evolution, prop) => {
+			onEffectTrigger((obj, _evolution, prop) => {
 				if (obj === props && prop !== 'tag') {
 					throw new DynamicRenderingError(
 						'Renderers effects are immutable. in <dynamic>, only a tag change can lead to a re-render'

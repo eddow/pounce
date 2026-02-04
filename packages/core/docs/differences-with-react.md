@@ -50,7 +50,7 @@ This guide highlights how Pounce‑TS (powered by the `mutts` reactivity engine)
 
 ### Lifecycle and Debugging
 - **Lifecycle via effects**: Use `effect()` inside components; return a cleanup to run on unmount reactivity.
-- **Debug utilities**: `namedEffect(name, fn)` and `trackEffect(cb)` help trace reactive changes during development.
+- **Debug utilities**: `namedEffect(name, fn)` and `onEffectTrigger(cb)` help trace reactive changes during development.
 
 ### App Mounting
 - **Mount without ReactDOM**: Use `bindApp(<App />, '#app')` to render into a container. No `createRoot` or portals.

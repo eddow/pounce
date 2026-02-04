@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const projectRootDir = decodeURIComponent(new URL('.', import.meta.url).pathname)
+const port = 5273
+
 export default defineConfig({
 	testDir: './tests',
 	testMatch: '**/*.test.ts',
@@ -10,7 +13,7 @@ export default defineConfig({
 	},
 	reporter: [['list'], ['html', { open: 'never' }]],
 	use: {
-		baseURL: 'http://127.0.0.1:5174',
+		baseURL: `http://127.0.0.1:${port}`,
 		headless: true,
 		trace: 'retain-on-failure',
 		// Enable memoization discrepancy check in the browser
@@ -28,10 +31,11 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: 'npm run dev -- --host=127.0.0.1 --port=5174',
-		port: 5174,
+		command: `npm run dev -- --host=127.0.0.1 --port=${port} --strictPort`,
+		cwd: projectRootDir,
+		port,
 		timeout: 120_000,
-		reuseExistingServer: true,
+		reuseExistingServer: false,
 	},
 })
 
