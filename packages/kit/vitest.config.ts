@@ -1,12 +1,13 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig, mergeConfig } from 'vitest/config'
+import { fileURLToPath } from 'node:url'
+import { createBaseConfig } from '../../test/vitest.config.base'
 
-export default defineConfig({
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
+
+const baseConfig = createBaseConfig(__dirname)
+
+export default mergeConfig(baseConfig, defineConfig({
   test: {
     environment: 'jsdom',
-    globals: true,
-    resolveSnapshotPath: (testPath, snapExtension) => testPath + snapExtension,
   },
-  resolve: {
-    conditions: ['browser', 'development'],
-  },
-})
+}))

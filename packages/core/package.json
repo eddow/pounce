@@ -30,45 +30,25 @@
       "node": "./dist/node.js",
       "default": "./dist/dom.js"
     },
-    "./dom": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/dom.js",
-      "default": "./dist/dom.js"
-    },
     "./node": {
       "types": "./dist/index.d.ts",
       "import": "./dist/node.js",
       "default": "./dist/node.js"
     },
-    "./runtime": {
+    "./dom": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
-    },
-    "./runtime/jsx-runtime": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "import": "./dist/dom.js",
+      "default": "./dist/dom.js"
     },
     "./jsx-runtime": {
       "types": "./dist/runtime/jsx-runtime.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "import": "./dist/jsx-runtime.js",
+      "default": "./dist/jsx-runtime.js"
     },
     "./jsx-dev-runtime": {
       "types": "./dist/runtime/jsx-dev-runtime.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
-    },
-    "./runtime/jsx-dev-runtime": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
-    },
-    "./server": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/node.js",
-      "default": "./dist/node.js"
+      "import": "./dist/jsx-dev-runtime.js",
+      "default": "./dist/jsx-dev-runtime.js"
     },
     "./src": "./src/index.ts",
     "./src/*": "./src/*"

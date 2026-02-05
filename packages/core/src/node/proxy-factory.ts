@@ -1,4 +1,4 @@
-import { als } from './bootstrap'
+import { als } from './server'
 
 /**
  * Creates a context-aware proxy that resolves properties from the JSDOM instance

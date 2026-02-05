@@ -164,7 +164,7 @@ export const Router = <
 export function A(props: JSX.IntrinsicElements['a']) {
 	function handleClick(event: SafeMouseEvent) {
 		props.onClick?.(event)
-		if (event.defaultPrevented) {
+		if (!event || event.defaultPrevented) {
 			return
 		}
 		const href = props.href

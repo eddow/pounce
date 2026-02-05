@@ -70,7 +70,6 @@ export interface WithOverlaysProps {
 
 /**
  * Generic Overlay Host Component.
- * Can be used globally for the whole app or locally for a specific sub-window.
  */
 export const WithOverlays = (props: WithOverlaysProps, scope: Scope) => {
 	// 1. Level Management (Nesting Coordination)
@@ -121,13 +120,51 @@ export const WithOverlays = (props: WithOverlaysProps, scope: Scope) => {
 	const getBackdropModes = () => props.backdropModes || ['modal', 'drawer-left', 'drawer-right']
 	const hasBackdrop = () => stack.some(e => getBackdropModes().includes(e.mode))
 
-	const handleKeyDown = (e: KeyboardEvent) => {
-		if (e.key === 'Escape' && stack.length > 0) {
+	const handleBackdropClick = (e: MouseEvent) => {
+		// Only close if the backdrop itself was clicked
+		if (e.target === e.currentTarget) {
 			const top = stack[stack.length - 1]
-			if (top) {
+			if (top && top.dismissible !== false) {
+				top.resolve(null)
+			}
+		}
+	}
+
+	const handleKeyDown = (e: KeyboardEvent) => {
+		if (stack.length === 0) return
+
+		const top = stack[stack.length - 1]
+
+		if (e.key === 'Escape') {
+			if (top && top.dismissible !== false) {
 				top.resolve(null)
 				e.stopPropagation()
 				e.preventDefault()
+			}
+		}
+
+		if (e.key === 'Tab') {
+			// Basic Focus Trap (can be improved with a dedicated lib if needed)
+			// For now, Pounce's light footprint favors simple logic
+			const host = document.getElementById(`pounce-overlay-manager-${overlayLevel}`)
+			if (!host) return
+
+			const focusables = host.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+			if (focusables.length === 0) return
+
+			const firstFocusable = focusables[0] as HTMLElement
+			const lastFocusable = focusables[focusables.length - 1] as HTMLElement
+
+			if (e.shiftKey) {
+				if (document.activeElement === firstFocusable) {
+					lastFocusable.focus()
+					e.preventDefault()
+				}
+			} else {
+				if (document.activeElement === lastFocusable) {
+					firstFocusable.focus()
+					e.preventDefault()
+				}
 			}
 		}
 	}
@@ -139,10 +176,29 @@ export const WithOverlays = (props: WithOverlaysProps, scope: Scope) => {
 
 		if (items.length === 0 && mode) return null
 
+		// Higher roles for accessibility
+		const isModalLayer = mode === 'modal' || (mode && mode.startsWith('drawer'))
+		const isToastLayer = mode === 'toast'
+
 		return (
-			<div class={['pounce-layer', mode ? `pounce-mode-${mode}` : 'pounce-flat']}>
+			<div
+				class={['pounce-layer', mode ? `pounce-mode-${mode}` : 'pounce-flat']}
+				role={isToastLayer ? 'log' : undefined}
+				aria-live={isToastLayer ? 'polite' : undefined}
+			>
 				<for each={items}>
-					{(entry: OverlayEntry) => <fragment>{entry.render(entry.resolve)}</fragment>}
+					{(entry: OverlayEntry) => (
+						<div
+							class="pounce-overlay-item"
+							role={isModalLayer ? 'dialog' : undefined}
+							aria-modal={isModalLayer ? 'true' : undefined}
+							aria-labelledby={entry.aria?.labelledby}
+							aria-describedby={entry.aria?.describedby}
+							aria-label={entry.aria?.label}
+						>
+							{entry.render(entry.resolve)}
+						</div>
+					)}
 				</for>
 			</div>
 		)
@@ -153,11 +209,16 @@ export const WithOverlays = (props: WithOverlaysProps, scope: Scope) => {
 			{props.children}
 			<div
 				class={['pounce-overlay-manager', props.fixed !== false ? 'pounce-fixed' : 'pounce-local']}
+				id={`pounce-overlay-manager-${overlayLevel}`}
 				style={`--pounce-overlay-z: ${zIndex()}`}
 				onKeydown={handleKeyDown}
 			>
-				{/* Orchestrated Backdrop */}
-				<div if={hasBackdrop()} class="pounce-backdrop" aria-hidden="true" />
+				<div
+					if={hasBackdrop()}
+					class="pounce-backdrop"
+					aria-hidden="true"
+					onClick={handleBackdropClick}
+				/>
 
 				<fragment if={props.layers && props.layers.length > 0}>
 					<for each={props.layers!}>

@@ -1,5 +1,5 @@
 # @pounce/ui LLM Cheat Sheet
-
+Read [pounce core' LLM](../core/LLM.md)
 ## Overview
 Framework-agnostic UI component library for Pounce applications. Evolved from `@pounce/pico` to support any CSS framework.
 

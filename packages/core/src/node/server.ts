@@ -1,14 +1,17 @@
 import { JSDOM } from 'jsdom'
-import { als, bootstrap as bootstrapNode } from './bootstrap.js'
-import { bindChildren, rootScope, type Scope } from '../lib/renderer.js'
+import { bindChildren, rootScope, type Scope } from '../lib/renderer'
+import { AsyncLocalStorage } from 'node:async_hooks'
 
+
+/**
+ * Global storage for the JSDOM instance associated with the current execution context (e.g., an SSR request).
+ */
+export const als = new AsyncLocalStorage<JSDOM>()
 /**
  * Runs a function within an SSR DOM environment.
  * Sets up global document, window, Node, etc.
  */
 export function withSSR<T>(fn: (dom: { document: Document; window: Window }) => T): T {
-	bootstrapNode()
-
 	const jsdom = new JSDOM(
 		'<!DOCTYPE html><html><body><div id="root"></div><div id="mini"></div><div id="app"></div><div id="tests"></div></body></html>',
 		{

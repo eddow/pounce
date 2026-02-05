@@ -1,3 +1,6 @@
+/**
+ * Test CSS injection functionality
+ */
 import { __injectCSS, getSSRStyles } from './css'
 
 // Mock the CSS module to access internal state if needed,

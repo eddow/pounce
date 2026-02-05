@@ -4,7 +4,7 @@ const projectRootDir = decodeURIComponent(new URL('.', import.meta.url).pathname
 const port = 5273
 
 export default defineConfig({
-	testDir: './tests',
+	testDir: './tests/e2e',
 	testMatch: '**/*.test.ts',
 
 	timeout: 30_000,

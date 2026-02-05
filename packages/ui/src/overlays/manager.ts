@@ -16,6 +16,14 @@ export interface OverlaySpec<T = any> {
 	mode: OverlayMode
 	/** Function that renders the overlay content. */
 	render: (close: (value: T) => void) => Child
+	/** Whether the overlay can be dismissed by backdrop click or Escape. Default depends on interactor. */
+	dismissible?: boolean
+	/** Optional A11y labels */
+	aria?: {
+		label?: string
+		labelledby?: string
+		describedby?: string
+	}
 	/** Optional data passed to the interactor. */
 	options?: any
 }

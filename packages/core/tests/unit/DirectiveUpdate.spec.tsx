@@ -1,13 +1,14 @@
+/**
+ * Test directive re-rendering behavior
+ */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { reactive } from 'mutts'
-import { bindApp, h } from '../../src/lib'
+import { bindApp, document } from '@pounce/core'
 
 describe('Directive Re-rendering', () => {
-	let document: Document
 	let container: HTMLElement
 
 	beforeEach(() => {
-		document = globalThis.document
 		document.body.innerHTML = '<div id="app"></div>'
 		container = document.getElementById('app') as HTMLElement
 	})

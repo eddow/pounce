@@ -14,6 +14,8 @@ componentStyle.sass`
     display: flex
     flex-direction: column
     border: 1px solid var(--pounce-border, #e5e7eb)
+    animation: pounce-dialog-in 0.2s ease-out
+    transform-origin: center center
 
     &.pounce-size-sm
         max-width: 24rem
@@ -45,6 +47,14 @@ componentStyle.sass`
         justify-content: flex-end
         gap: 0.75rem
         border-top: 1px solid var(--pounce-border, #e5e7eb)
+
+@keyframes pounce-dialog-in
+    from
+        opacity: 0
+        transform: scale(0.95) translateY(10px)
+    to
+        opacity: 1
+        transform: scale(1) translateY(0)
 `
 
 export interface DialogButton {
@@ -59,6 +69,7 @@ export interface DialogOptions {
 	message?: string | Child
 	size?: 'sm' | 'md' | 'lg'
 	buttons?: Record<string, string | DialogButton>
+	dismissible?: boolean
 }
 
 /**
@@ -70,13 +81,20 @@ export const Dialog = {
 	 */
 	show: (options: DialogOptions | string): OverlaySpec => {
 		const opts = typeof options === 'string' ? { message: options } : options
+		const titleId = `pounce-dialog-title-${Math.random().toString(36).substr(2, 5)}`
+		const descId = `pounce-dialog-desc-${Math.random().toString(36).substr(2, 5)}`
 
 		return {
 			mode: 'modal',
+			dismissible: opts.dismissible ?? true,
+			aria: {
+				labelledby: opts.title ? titleId : undefined,
+				describedby: opts.message ? descId : undefined
+			},
 			render: (close) => (
 				<div class={['pounce-dialog', opts.size ? `pounce-size-${opts.size}` : '']}>
 					<header if={opts.title}>
-						<h3>{opts.title}</h3>
+						<h3 id={titleId}>{opts.title}</h3>
 						<Button.contrast
 							el={{
 								class: 'pounce-dialog-close',
@@ -87,7 +105,7 @@ export const Dialog = {
 							✕
 						</Button.contrast>
 					</header>
-					<main>
+					<main id={descId}>
 						{typeof opts.message === 'string' ? <p>{opts.message}</p> : opts.message}
 					</main>
 					<footer if={opts.buttons}>
@@ -120,16 +138,6 @@ export const Dialog = {
 
 /**
  * Binds the dialog interactor to a specific overlay dispatcher.
- * This is primarily used by the Overlay system during scope injection to provide
- * the `dialog` helper into the component scope.
- * 
- * The resulting function can be used as `dialog(options)` or `dialog.confirm(options)`.
- * 
- * @example
- * ```tsx
- * const dialog = bindDialog(scope.overlay);
- * await dialog.confirm("Are you sure?");
- * ```
  */
 export function bindDialog(overlay: (spec: OverlaySpec) => Promise<any>) {
 	const fn = (options: DialogOptions | string) => overlay(Dialog.show(options))

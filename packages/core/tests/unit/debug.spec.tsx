@@ -1,7 +1,9 @@
+/**
+ * Test component association debug tools
+ */
 import { describe, test, expect } from 'vitest'
 import { reactive } from 'mutts'
-import { h } from '../../src/lib'
-import { getComponentInstance, getComponentHierarchy, rootComponents } from '../../src/lib/debug-helpers'
+import { getComponentInstance, getComponentHierarchy, rootComponents } from '@pounce/core'
 
 describe('Component association debug tools', () => {
 	test('should associate DOM elements with their owner component', () => {

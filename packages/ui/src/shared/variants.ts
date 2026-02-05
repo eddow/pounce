@@ -1,4 +1,5 @@
 import type { ComponentAdapter } from '../adapter/types'
+import { getGlobalVariants } from '../adapter/registry'
 
 export type Variant = string & {}
 
@@ -13,7 +14,10 @@ export const STANDARD_VARIANTS = [
 
 /**
  * Generates the CSS class for a given variant.
- * First checks the adapter mapping, then falls back to .pounce-variant-* convention.
+ * Resolution order:
+ * 1. Component-specific adapter mapping (most specific)
+ * 2. Global adapter variants (framework-wide)
+ * 3. Standard vanilla convention (.pounce-variant-*)
  */
 export function getVariantClass(
 	variant: string | undefined,
@@ -21,17 +25,23 @@ export function getVariantClass(
 ): string | undefined {
 	if (!variant) return undefined
 
-	// 1. Check adapter mapping
+	// 1. Check component-specific adapter mapping
 	if (adapter?.classes?.[variant]) {
 		return adapter.classes[variant]
 	}
 
-	// 2. Check Standard Vanilla
+	// 2. Check global adapter variants
+	const globalVariants = getGlobalVariants()
+	if (globalVariants?.[variant]) {
+		return globalVariants[variant]
+	}
+
+	// 3. Check Standard Vanilla
 	if (STANDARD_VARIANTS.includes(variant)) {
 		return `pounce-variant-${variant}`
 	}
 
-	// 3. Unknown variant: Fail in development
+	// 4. Unknown variant: Fail in development
 	if (process.env.NODE_ENV !== 'production') {
 		console.error(
 			`[pounce/ui] Unknown variant "${variant}". Ensure it is registered in the adapter or is a standard variant.`

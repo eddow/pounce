@@ -1,0 +1,44 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"baseUrl": "..",
+		"paths": {
+			"mutts": [
+				"../../../../../mutts/src/index.ts"
+			],
+			"mutts/*": [
+				"../../../../../mutts/src/*"
+			],
+			"npc-script": [
+				"../../../../../npcs/src/index.ts"
+			],
+			"npc-script/*": [
+				"../../../../../npcs/src/*"
+			],
+			"omni18n": [
+				"../../../../../omni18n/src/client.ts"
+			],
+			"pure-glyf": [
+				"../../../../../pure-glyf/src/index.ts"
+			],
+			"pure-glyf/*": [
+				"../../../../../pure-glyf/src/*"
+			],
+			"@pounce/core/jsx-runtime": [
+				"src/runtime/jsx-runtime.ts"
+			],
+			"@pounce/core/jsx-dev-runtime": [
+				"src/runtime/jsx-dev-runtime.ts"
+			],
+			"@pounce/core": [
+				"src/lib/index.ts",
+				"src/test/index.ts"
+			]
+		}
+	},
+	"include": [
+		"../../src/**/*",
+		"../**/*.ts",
+		"../**/*.tsx"
+	]
+}

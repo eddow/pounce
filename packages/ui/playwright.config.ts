@@ -15,7 +15,7 @@ function hasTestFiles(dir: URL): boolean {
         continue
       }
       if (!entry.isFile()) continue
-      if (/\.(spec|test)\.(ts|tsx|js|jsx)$/.test(String(entry.name))) return true
+      if (/\.test\.(ts|tsx)$/.test(String(entry.name))) return true
     }
   } catch {
     return false

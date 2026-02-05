@@ -1,3 +1,6 @@
+/**
+ * Test route parameter type inference
+ */
 import type { ExtractPathParams } from './inference'
 
 describe('Route Parameter Inference', () => {

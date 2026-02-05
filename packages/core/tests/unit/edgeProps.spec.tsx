@@ -1,5 +1,8 @@
+/**
+ * Test edge cases for property handling
+ */
 import { describe, test } from 'vitest'
-import { h } from '../../src/lib'
+import { h } from '@pounce/core'
 
 describe('edgeProps', () => {
     test('should explain why property set fails', () => {

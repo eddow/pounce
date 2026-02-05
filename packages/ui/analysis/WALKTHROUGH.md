@@ -477,23 +477,19 @@ Phase 0 - Claude Sonnet 4.5 - 2026-02-03 00:15
 
 ### Agent Log
 
-Group B4, B19, B20: Overlay System Migration - Antigravity - 2026-02-03 11:55
-- **Completed**: Implemented a unified Overlay system in `src/overlays/`.
-- **Infrastructure**:
-  - `src/overlays/manager.ts`: Reactive `overlayStack` and `pushOverlay` dispatcher.
-  - `src/overlays/with-overlays.tsx`: Generic host component providing `overlay` into scope.
-  - `src/overlays/standard-overlays.tsx`: "1-config" wrapper for easy app setup.
-- **Interactors & Bindings**:
-  - `src/overlays/dialog.tsx`: Implemented `Dialog.show()` and `bindDialog(overlay)` factory.
-  - `src/overlays/toast.tsx`: Implemented `Toast.show()` and `bindToast(overlay)` factory.
-- **Improved Scope API**:
-  - `WithOverlays` now populates the scope with fully-featured helpers.
-  - Users can now deconstruct `dialog` and `toast` from scope and use `dialog.confirm()` or `toast.success()` directly.
-- **Ergonomics**:
-  - Exported `dialog()`, `confirm()`, and `toast()` shortcuts that seek the reactive scope.
-- **Documentation**:
-  - Added `src/overlays/README.md` summarizing the architecture and future roadmap (Drawers, Popovers, etc.).
-- **Design Decision**: Moved from separate component hosts to a unified "Interaction Registry" pattern where `WithOverlays` manages all layers (Modal, Toast, Backdrop) in one coordinated system.
+Group B4, B19, B20: Overlay System Refinement - Antigravity - 2026-02-04 15:30
+- **Completed**: Refined the unified Overlay system with A11y, Focus Management, and UX polish.
+- **New Component**:
+  - `src/overlays/drawer.tsx`: Implemented `Drawer` interactor with `side` support ('left'|'right') and animations.
+- **A11y & Focus**:
+  - `WithOverlays`: Implemented a reactive **Focus Trap** and **Backdrop Click** dismissal logic. Added appropriate ARIA roles (`dialog`, `log`, `aria-modal`) to layers.
+  - `Dialog` & `Drawer`: Added automated `id` generation for `aria-labelledby` and `aria-describedby` linkage.
+- **UX & Polish**:
+  - `Dialog`: Added a scale/fade entrance animation.
+  - `Toast`: Fixed a potential memory leak by clearing `setTimeout` on manual dismissal; added A11y roles.
+  - `manager.ts`: Simplified to a pure type-provider; moved all logic into `WithOverlays` for true host-isolation.
+- **Integration**:
+  - `StandardOverlays`: Now binds `dialog`, `toast`, and `drawer` helpers to the scope automatically.
 
 Group B5 - Agent Cascade - 2026-02-03 01:56
 - **Completed**: Migrated DockView component from `@pounce/pico` to `@pounce/ui`

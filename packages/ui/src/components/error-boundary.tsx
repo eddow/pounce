@@ -1,21 +1,19 @@
-import { reactive } from 'mutts'
+import { onEffectThrow } from 'mutts'
+import { compose } from '@pounce/core'
 
 /**
  * ErrorBoundary - Catches and displays errors in component trees
- * 
+ *
+ * Uses mutts' onEffectThrow to properly catch errors in reactive effects.
+ * Errors in child components and effects propagate up and are caught by
+ * the error handler registered via onEffectThrow.
+ *
  * ⚠️ LIMITATIONS:
- * - Only catches synchronous errors during initial render
+ * - Catches errors in effects and component rendering
  * - Does NOT catch:
- *   - Async errors (promises, async/await)
- *   - Errors in effect() callbacks
- *   - Errors in event handlers
- *   - Errors in subsequent reactive updates
- * 
- * For production apps, consider:
- * - Adding global error handlers (window.onerror, window.onunhandledrejection)
- * - Using error logging services (Sentry, LogRocket, etc.)
- * - Wrapping async operations in try-catch
- * 
+ *   - Async errors in Promises (use .catch() on Promises)
+ *   - Errors in event handlers (use try-catch in handlers)
+ *
  * @example
  * <ErrorBoundary
  *   fallback={(error) => <div>Custom error: {error.message}</div>}
@@ -29,74 +27,36 @@ export interface ErrorBoundaryProps {
 	fallback?: (error: Error, errorInfo: { componentStack: string }) => JSX.Element
 	onError?: (error: Error, errorInfo: { componentStack: string }) => void
 }
-
+const defaultFallback = (error: Error) => (
+	<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
+		<h3>Something went wrong</h3>
+		<details>
+			<summary>Error details</summary>
+			<pre style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px;">
+				{error.stack}
+			</pre>
+		</details>
+	</div>
+)
 export const ErrorBoundary = (props: ErrorBoundaryProps) => {
-	const state = reactive({
-		hasError: false,
-		error: undefined as Error | undefined,
-		errorInfo: undefined as { componentStack: string } | undefined,
+	const state = compose({
+			error: undefined as Error | undefined,
+		},
+		props
+	)
+
+	// Register error handler in current effect context (component runs inside effect)
+	onEffectThrow((error: unknown) => {
+		state.error = error as Error
+		props.onError?.(error as Error, { componentStack: '' })
 	})
 
-	const content = () => {
-		if (state.hasError && state.error) {
-			if (props.fallback) {
-				return props.fallback(state.error, state.errorInfo || { componentStack: '' })
-			}
-			return (
-				<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
-					<h3>Something went wrong</h3>
-					<details>
-						<summary>Error details</summary>
-						<pre style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px;">
-							{state.error.stack}
-						</pre>
-					</details>
-				</div>
-			)
-		}
-
-		try {
-			return props.children
-		} catch (e) {
-			console.error('ErrorBoundary caught error:', e)
-			state.hasError = true
-			state.error = e as Error
-			if (props.onError) {
-				props.onError(e as Error, { componentStack: '' })
-			}
-			return null
-		}
-	}
-
-	return <div class="pounce-error-boundary">{content}</div>
-}
-
-export const ProductionErrorBoundary = (props: { 
-	children: JSX.Element | JSX.Element[]
-	onError?: (error: Error, errorInfo: { componentStack: string }) => void
-}) => {
-	const state = reactive({ hasError: false })
-
-	const content = () => {
-		if (state.hasError) {
-			return (
-				<div style="padding: 20px; text-align: center; color: #666;">
-					<h2>Something went wrong</h2>
-					<p>Please refresh the page and try again.</p>
-				</div>
-			)
-		}
-		try {
-			return props.children
-		} catch (e) {
-			console.error('ProductionErrorBoundary caught error:', e)
-			state.hasError = true
-			if (props.onError) {
-				props.onError(e as Error, { componentStack: '' })
-			}
-			return null
-		}
-	}
-
-	return <div class="pounce-error-boundary-prod">{content}</div>
+	return (
+		<div class="pounce-error-boundary">
+			<div if={state.error}>
+				{props.fallback ? props.fallback(state.error!, { componentStack: '' }) : defaultFallback(state.error!)}
+			</div>
+			<fragment else>{props.children}</fragment>
+		</div>
+	)
 }

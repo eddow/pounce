@@ -1,5 +1,8 @@
+/**
+ * Test props forwarding functionality
+ */
 import { reactive } from 'mutts'
-import { forwardProps } from '../../src/lib/index'
+import { forwardProps } from '@pounce/core'
 import { describe, test, expect } from 'vitest'
 
 describe('forwardProps', () => {

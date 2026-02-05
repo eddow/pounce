@@ -1,5 +1,7 @@
 # Pounce UI
 
+DEPRECATED/TAGGED FOR DELETION - The project remains for reference only!
+
 Minimal UI utilities built on PicoCSS and @pounce/core.
 
 ## Documentation

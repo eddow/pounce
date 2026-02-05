@@ -3,16 +3,12 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { reactive } from 'mutts'
-import { bindApp, h } from '../../src/lib'
-import { bootstrap } from '../../src/dom/bootstrap'
+import { bindApp, document } from '@pounce/core'
 
 describe('bindApp re-render bug', () => {
-	let document: Document
 	let container: HTMLElement
 
 	beforeEach(() => {
-		bootstrap()
-		document = globalThis.document
 		document.body.innerHTML = '<div id="app"></div>'
 		container = document.getElementById('app') as HTMLElement
 	})

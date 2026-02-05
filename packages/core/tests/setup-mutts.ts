@@ -1,32 +1,15 @@
-import { reactiveOptions } from 'mutts';
-import { bootstrap } from '../src/dom/bootstrap';
+/// <reference types="../src/types/jsx" />
+import '../src/node'
+import { Fragment, h } from '../src/lib/renderer'
+import '../../../tests/setup-common'
 
-bootstrap();
+type GlobalWithJsx = typeof globalThis & {
+	h: typeof h
+	Fragment: typeof Fragment
+}
 
-reactiveOptions.onMemoizationDiscrepancy = (cached, fresh, fn, args, cause) => {
-    const stringify = (val: any): string => {
-        if (typeof val === 'object' && val !== null && 'outerHTML' in val) return (val as any).outerHTML || `[Empty ${val.tagName || 'Node'}]`;
-        if (Array.isArray(val)) return `[${val.map((v) => stringify(v)).join(', ')}]`;
-        if (val && typeof val === 'object' && !val.toJSON && Object.getPrototypeOf(val) !== Object.prototype) return `[${val.constructor?.name || 'Object.create(null)'}]`;
-        try {
-            return JSON.stringify(val);
-        } catch {
-            return String(val);
-        }
-    };
+const g = globalThis as GlobalWithJsx
 
-    const cachedStr = stringify(cached);
-    const freshStr = stringify(fresh);
-
-    if (cachedStr === freshStr) return; // Ignore if content matches (especially for new DOM nodes with same content)
-
-    const fnName = fn.name || 'anonymous';
-    const error = new Error(`Memoization discrepancy detected in ${fnName}!\n
-Cached: ${cachedStr}\n
-Fresh:  ${freshStr}\n
-Args:   ${stringify(args)}\n
-Cause:  ${cause}`);
-    
-    console.error(error);
-    throw error;
-};
+// Make h and Fragment globally available for JSX
+g.h = h
+g.Fragment = Fragment

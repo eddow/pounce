@@ -1,7 +1,19 @@
-import { bootstrap } from './bootstrap.js'
+import { setPlatformAPIs } from '../shared'
 
-// Bootstrap the DOM environment immediately on import
-bootstrap()
+// Auto-execute bootstrap when this module is imported in a browser environment
+if (typeof window === 'undefined') throw new Error('window is undefined')
+
+setPlatformAPIs('DOM/Browser', {
+	window,
+	document,
+	Node,
+	HTMLElement,
+	Event,
+	CustomEvent,
+	Text,
+	DocumentFragment,
+	crypto,
+})
 
 // Re-export the core API
-export * from '../index.js'
+export * from '..'

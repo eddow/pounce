@@ -87,7 +87,7 @@ nav.pounce-menu-nav .pounce-menu-bar-mobile
 
 export interface MenuProps {
 	summary: JSX.Element | string
-	children: JSX.Element | JSX.Element[]
+	children: JSX.Element | JSX.Element[] | string
 	class?: string
 }
 
@@ -174,7 +174,7 @@ const MenuComponent = (props: MenuProps) => {
 					const targetAttr = link.getAttribute('target')
 					// Only close for internal navigation (not external links or anchors)
 					if (!targetAttr && href && !href.startsWith('#')) {
-						;(e.currentTarget as HTMLDetailsElement).removeAttribute('open')
+						; (e.currentTarget as HTMLDetailsElement).removeAttribute('open')
 					}
 				}
 			}}

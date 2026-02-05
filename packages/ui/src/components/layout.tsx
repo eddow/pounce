@@ -115,7 +115,7 @@ export const AppShell = (props: AppShellProps) => {
 
 	return (
 		<div class="pounce-app-shell">
-			<header this={state.headerEl} class="pounce-app-shell-header">
+			<header this={{ set: (v: any) => (state.headerEl = v) }} class="pounce-app-shell-header">
 				{props.header}
 			</header>
 			<main class="pounce-app-shell-main">{props.children}</main>

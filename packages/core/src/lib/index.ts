@@ -3,6 +3,11 @@ import { document } from '../shared'
 import { testing } from './debug'
 import { bindChildren, type Child, type Component, Fragment, h, render, rootScope, type Scope } from './renderer'
 
+// biome-ignore lint/suspicious/noExplicitAny: Centralized global JSX injection for the framework
+const g = globalThis as any
+g.h = h
+g.Fragment = Fragment
+
 function isFunction(value: any): value is Function {
 	return typeof value === 'function'
 }

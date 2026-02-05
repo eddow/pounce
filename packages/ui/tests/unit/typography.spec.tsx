@@ -1,6 +1,6 @@
 /// <reference path="../../node_modules/@pounce/core/src/types/jsx.d.ts" />
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp } from '@pounce/core'
+import { bindApp, document } from '@pounce/core'
 import { Heading, Text, Link } from '../../src/components/typography'
 
 describe('Heading', () => {

@@ -4,8 +4,8 @@ import type { NameSpacedProps } from '../lib/namespaced'
 import type { StyleInput } from '../lib/styles'
 
 declare global {
-	const h: (type: any, props?: any, ...children: any[]) => JSX.Element
-	const Fragment: (props: { children: any }) => any
+	var h: (type: any, props?: any, ...children: any[]) => JSX.Element
+	var Fragment: (props: any, scope?: any) => any
 	const window: never  // Prevent accidental window usage in SSR - import from @pounce/core instead
 	type ComponentFunction = (props: any, scope: Scope) => JSX.Element | null | undefined
 	namespace JSX {

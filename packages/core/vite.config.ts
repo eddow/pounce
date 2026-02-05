@@ -27,9 +27,9 @@ export default defineConfig({
 	resolve: {
 		conditions: ['browser', 'default', 'import'],
 		alias: {
-			'@pounce/runtime/jsx-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-runtime.ts'),
-			'@pounce/runtime/jsx-dev-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-dev-runtime.ts'),
-			'@pounce/runtime': resolvePath(projectRootDir, 'src/lib/index.ts'),
+			'@pounce/core/jsx-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-runtime.ts'),
+			'@pounce/core/jsx-dev-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-dev-runtime.ts'),
+			'@pounce/core': resolvePath(projectRootDir, 'src/lib/index.ts'),
 			'mutts': resolvePath(projectRootDir, '../../../mutts/src'),
 			'npc-script': resolvePath(projectRootDir, '../../../npcs/src'),
 			'omni18n': resolvePath(projectRootDir, '../../../omni18n/src'),
@@ -42,7 +42,7 @@ export default defineConfig({
 				projectRoot: projectRootDir,
 				jsxRuntime: {
 					runtime: 'automatic',
-					importSource: '@pounce/runtime',
+					importSource: '@pounce/core',
 				},
 			},
 			dts: {
@@ -72,6 +72,8 @@ export default defineConfig({
 				index: resolvePath(projectRootDir, 'src/index.ts'),
 				dom: resolvePath(projectRootDir, 'src/dom/index.ts'),
 				node: resolvePath(projectRootDir, 'src/node/index.ts'),
+				'jsx-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-runtime.ts'),
+				'jsx-dev-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-dev-runtime.ts'),
 			},
 			formats: ['es', 'cjs'],
 			fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'js' : 'cjs'}`,
@@ -87,8 +89,8 @@ export default defineConfig({
 	test: {
 		environment: 'jsdom',
 		setupFiles: ['./tests/setup-mutts.ts'],
-		include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx', 'tests/**/*.spec.ts', 'tests/**/*.spec.tsx'],
-
+		globals: true,
+		include: ['**/*.spec.{ts,tsx}'],
+		resolveSnapshotPath: (testPath, snapExtension) => testPath + snapExtension,
 	}
 })
-

@@ -45,6 +45,9 @@
 			"@pounce/core/*": [
 				"../core/dist/*"
 			],
+			"@pounce/core/test": [
+				"../core/src/test/dom.ts"
+			],
 			"@pounce/kit": [
 				"../kit/src/index.ts"
 			],

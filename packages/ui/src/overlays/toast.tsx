@@ -1,6 +1,6 @@
 import { type Child } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
-import { type OverlaySpec } from './manager'
+import { type OverlaySpec, type PushOverlayFunction } from './manager'
 import { variantClass } from '../shared/variants'
 
 componentStyle.sass`
@@ -66,17 +66,28 @@ export const Toast = {
         return {
             mode: 'toast',
             render: (close) => {
+                let timeoutId: any = null
+
                 // Auto-close after duration
                 if (duration > 0) {
-                    setTimeout(() => close(null), duration)
+                    timeoutId = setTimeout(() => close(null), duration)
+                }
+
+                // Proxy close to clear timeout
+                const safeClose = (val: any) => {
+                    if (timeoutId) clearTimeout(timeoutId)
+                    close(val)
                 }
 
                 return (
-                    <div class={['pounce-toast', variantClass(opts.variant)]}>
+                    <div
+                        class={['pounce-toast', variantClass(opts.variant)]}
+                        role={opts.variant === 'danger' ? 'alert' : 'status'}
+                    >
                         <div class="pounce-toast-content">
                             {opts.message}
                         </div>
-                        <button class="pounce-toast-close" onClick={() => close(null)}>
+                        <button class="pounce-toast-close" onClick={() => safeClose(null)}>
                             ✕
                         </button>
                     </div>
@@ -88,18 +99,8 @@ export const Toast = {
 
 /**
  * Binds the toast interactor to a specific overlay dispatcher.
- * This is primarily used by the Overlay system during scope injection to provide
- * the `toast` helper into the component scope.
- * 
- * The resulting function can be used as `toast(options)` or `toast.success(options)`.
- * 
- * @example
- * ```tsx
- * const toast = bindToast(scope.overlay);
- * toast.success("Saved successfully!");
- * ```
  */
-export function bindToast(overlay: (spec: OverlaySpec) => Promise<any>) {
+export function bindToast(overlay: PushOverlayFunction) {
     const fn = (options: ToastOptions | string) => overlay(Toast.show(options))
 
     fn.success = (msg: string | Child) => overlay(Toast.show({ message: msg, variant: 'success' }))

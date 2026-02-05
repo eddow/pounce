@@ -1,20 +1,14 @@
 /**
- * Test to reproduce the effect-during-render bug
- * 
- * The bug: When a parent component directly reads reactive state in template
- * (without a getter), and passes the same reactive array to child,
- * modifying the array in child causes parent to re-render.
+ * Test effect-during-render bug reproduction
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { reactive, onEffectTrigger } from 'mutts'
-import { bindApp, h, type Scope } from '../../src/lib'
+import { bindApp, type Scope, document } from '@pounce/core'
 
 describe('Effect during render bug', () => {
-	let document: Document
 	let container: HTMLElement
 
 	beforeEach(() => {
-		document = globalThis.document
 		document.body.innerHTML = '<div id="app"></div>'
 		container = document.getElementById('app') as HTMLElement
 	})

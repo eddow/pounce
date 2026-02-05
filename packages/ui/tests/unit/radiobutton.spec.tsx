@@ -1,7 +1,10 @@
+/**
+ * Test RadioButton component functionality
+ */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp } from '@pounce/core'
+import { bindApp, document } from '@pounce/core'
 import { RadioButton } from '../../src/components/radiobutton'
-import { setAdapter, __resetAdapter } from '../../src/adapter/registry'
+import { setAdapter, resetAdapter } from '../../src/adapter/registry'
 import { reactive } from 'mutts'
 
 describe('RadioButton', () => {
@@ -9,7 +12,7 @@ describe('RadioButton', () => {
 	let unmount: (() => void) | undefined
 
 	beforeEach(() => {
-		__resetAdapter()
+		resetAdapter()
 		container = document.createElement('div')
 		document.body.appendChild(container)
 	})

@@ -1,3 +1,26 @@
+
+/**
+ * Registry of all UI components exported by pounce/ui
+ * This ensures type safety for adapter component keys
+ */
+export type UiComponents = {
+	Button: any
+	Badge: any
+	Dialog: any
+	Dockview: any
+	ErrorBoundary: any
+	Layout: any
+	Menu: any
+	RadioButton: any
+	Toolbar: any
+	Typography: any
+	Heading: any
+	Text: any
+	Link: any
+}
+
+export type ComponentName = keyof UiComponents
+
 /**
  * Transition configuration for enter/exit animations
  */
@@ -28,7 +51,7 @@ export type ComponentParts<Props = any> = {
  * Configuration for a single component
  */
 export type ComponentAdapter<Props = any> = {
-	/** CSS class name overrides */
+	/** CSS class name overrides (additive to global variants) */
 	classes?: Partial<Record<string, string>>
 
 	/** Custom render structure (for complex DOM changes) */
@@ -51,8 +74,14 @@ export type ComponentAdapter<Props = any> = {
 }
 
 /**
- * Framework adapter registry
+ * Framework adapter registry with global variants and per-component adapters
  */
 export type FrameworkAdapter = {
-	[ComponentName: string]: ComponentAdapter
+	/** Global variant classes applied to all components */
+	variants?: Record<string, string>
+
+	/** Per-component adapters (additive to global variants) */
+	components?: {
+		[Name in keyof UiComponents]?: ComponentAdapter
+	}
 }

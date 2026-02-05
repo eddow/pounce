@@ -7,7 +7,6 @@ const projectRootDir = resolve(__dirname)
 export default defineConfig({
 	resolve: {
 		alias: {
-			'@pounce/board/adapters': resolve(__dirname, '../../../src/adapters/hono.ts'),
 			'@pounce/board/client': resolve(__dirname, '../../../src/client/index.ts'),
 			'@pounce/board/server': resolve(__dirname, '../../../src/server/index.ts'),
 			'@pounce/board': resolve(__dirname, '../../../src/client/index.ts'),
@@ -16,9 +15,6 @@ export default defineConfig({
 			'@pounce/core/server': resolve(__dirname, '../../../../core/src/lib/server.ts'),
 			'@pounce/core': resolve(__dirname, '../../../../core/src/lib/index.ts'),
 			'mutts': resolve(__dirname, '../../../../../../mutts/src/index.ts'),
-			'@pounce/runtime/jsx-runtime': resolve(__dirname, '../../../../core/src/runtime/jsx-runtime.ts'),
-			'@pounce/runtime/jsx-dev-runtime': resolve(__dirname, '../../../../core/src/runtime/jsx-dev-runtime.ts'),
-			'@pounce/runtime': resolve(__dirname, '../../../../core/src/lib/index.ts'),
 			'@pounce/kit': resolve(__dirname, '../../../../kit/src'),
 		},
 	},

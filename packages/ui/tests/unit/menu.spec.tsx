@@ -1,8 +1,10 @@
-/// <reference path="../../node_modules/@pounce/core/src/types/jsx.d.ts" />
+/**
+ * Test Menu component functionality
+ */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { bindApp } from '@pounce/core'
+import { bindApp, document } from '@pounce/core'
 import { Menu } from '../../src/components/menu'
-import { setAdapter, __resetAdapter } from '../../src/adapter/registry'
+import { setAdapter, resetAdapter } from '../../src/adapter/registry'
 
 describe('Menu', () => {
 	let container: HTMLElement
@@ -16,7 +18,7 @@ describe('Menu', () => {
 	afterEach(() => {
 		unmount?.()
 		container.remove()
-		__resetAdapter()
+		resetAdapter()
 	})
 
 	const render = (element: JSX.Element) => {
@@ -77,9 +79,11 @@ describe('Menu', () => {
 
 	it('respects adapter overrides for dropdown class', () => {
 		setAdapter({
-			Menu: {
-				classes: {
-					dropdown: 'custom-dropdown',
+			components: {
+				Menu: {
+					classes: {
+						dropdown: 'custom-dropdown',
+					},
 				},
 			},
 		})
@@ -102,7 +106,7 @@ describe('Menu.Bar', () => {
 	afterEach(() => {
 		unmount?.()
 		container.remove()
-		__resetAdapter()
+		resetAdapter()
 	})
 
 	const render = (element: JSX.Element) => {
@@ -137,11 +141,13 @@ describe('Menu.Bar', () => {
 
 	it('respects adapter overrides for bar classes', () => {
 		setAdapter({
-			Menu: {
-				classes: {
-					barMobile: 'custom-mobile',
-					barDesktop: 'custom-desktop',
-					dropdown: 'custom-dropdown',
+			components: {
+				Menu: {
+					classes: {
+						barMobile: 'custom-mobile',
+						barDesktop: 'custom-desktop',
+						dropdown: 'custom-dropdown',
+					},
 				},
 			},
 		})

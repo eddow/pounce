@@ -1,24 +1,27 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { setAdapter, getAdapter, __resetAdapter } from '../../src/adapter/registry'
+import { describe, beforeEach, it, expect } from 'vitest'
+import { setAdapter, getAdapter, resetAdapter } from '../../src/adapter/registry'
+import type { FrameworkAdapter } from '../../src/adapter/types'
 
 describe('Adapter Registry', () => {
   beforeEach(() => {
-    __resetAdapter()
+    resetAdapter()
   })
 
   it('sets and gets global adapter config', () => {
-    const mockAdapter = {
-      Button: { classes: { base: 'custom-btn' } }
+    const mockAdapter: FrameworkAdapter = {
+      components: {
+        Button: { classes: { base: 'custom-btn' } }
+      }
     }
     
     setAdapter(mockAdapter)
     
-    expect(getAdapter('Button')).toEqual(mockAdapter.Button)
+    expect(getAdapter('Button')).toEqual(mockAdapter.components!.Button)
   })
 
   it('merges multiple adapter updates', () => {
-    setAdapter({ Button: { classes: { base: 'btn' } } })
-    setAdapter({ Dialog: { transitions: { duration: 100 } } })
+    setAdapter({ components: { Button: { classes: { base: 'btn' } } } })
+    setAdapter({ components: { Dialog: { transitions: { duration: 100 } } } })
     
     expect(getAdapter('Button').classes?.base).toBe('btn')
     expect(getAdapter('Dialog').transitions?.duration).toBe(100)
@@ -28,13 +31,13 @@ describe('Adapter Registry', () => {
     getAdapter('Button')
     
     expect(() => {
-      setAdapter({ Button: {} })
+      setAdapter({ components: { Button: {} } })
     }).toThrow('[pounce/ui] setAdapter() must be called before component rendering.')
   })
 
   it('resets state between tests', () => {
-    setAdapter({ Button: { classes: { base: 'btn' } } })
-    __resetAdapter()
+    setAdapter({ components: { Button: { classes: { base: 'btn' } } } })
+    resetAdapter()
     expect(getAdapter('Button')).toEqual({})
   })
 })
