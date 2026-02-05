@@ -70,7 +70,6 @@
 		"mutts": "link:../../../mutts",
 		"@pounce/core": "workspace:*",
 		"@pounce/kit": "workspace:*",
-		"@pounce/pico": "workspace:*",
 		"arktype": "^2.1.0"
 	},
 	"devDependencies": {

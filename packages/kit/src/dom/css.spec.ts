@@ -78,7 +78,7 @@ describe('CSS Injection', () => {
 			// 2. We verify create element is NOT called
 
 			// Actually, let's use a real DOM mock if possible or just careful spying
-			// JSDOM is likely available given "@pounce/pico".
+			// JSDOM is available directly from "@pounce/core". `import { document, windows } from '@pounce/core'`
 
 			if (!originalDocument) return // Skip if no real DOM environment in test runner
 

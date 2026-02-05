@@ -36,12 +36,6 @@
 			"@pounce/core/*": [
 				"../core/dist/*"
 			],
-			"@pounce/pico": [
-				"../pico/dist/index.d.ts"
-			],
-			"@pounce/pico/*": [
-				"../pico/dist/*"
-			],
 			"@pounce/kit": [
 				"../kit/src/index.ts"
 			],

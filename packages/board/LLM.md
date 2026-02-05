@@ -34,7 +34,7 @@
   - **Client (first load)**: Reads from `<script id="pounce-data-{base64}">` tags
   - **Client (navigation)**: Standard fetch
 - **SSR ID Generation**: Deterministic base64-encoded path for hydration keys
-- **CSS Injection**: Automatically collects and injects styles from `@pounce/pico` (including `pure-glyf`)
+- **CSS Injection**: Automatically collects and injects styles from `@pounce/ui` (including `@pounce/ui`)
 - **Hydration**: Data injected via script tags, not global window object
 - **Synchronous Hydration**: `api().get()` returns a "Smart Promise" with a `.hydrated` property.
   ```tsx

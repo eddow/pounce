@@ -170,4 +170,4 @@ MIT
 
 # TODOs
 
-- cf `@pounce/pico/debug-actions` - pointer position tracking position text refreshing fails at a moment
+- cf `@pounce/ui` - ensure debug actions work correctly

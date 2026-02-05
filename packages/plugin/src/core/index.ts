@@ -55,7 +55,7 @@ function resolveTargetPath(
 ): string | null {
 	if (!filename) return null
 
-	// Default: import from the package (for external projects like @pounce/pico, browser-pounce)
+	// Default: import from the package (for external projects like @pounce/ui, browser-pounce)
 	if (!projectRoot) {
 		return '@pounce/core'
 	}

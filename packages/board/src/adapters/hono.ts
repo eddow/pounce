@@ -97,42 +97,11 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
 			enableSSR()
 			await next()
 
-// Handle SSR injection for HTML responses
+		// Handle SSR injection for HTML responses
 			const contentType = c.res.headers.get('Content-Type')
 			if (contentType && contentType.includes('text/html')) {
 				const html = await c.res.text()
 				const ssrData = getCollectedSSRResponses()
-				// Lazy-load @pounce/pico to avoid hard dependency if not used? 
-				// No, we added it as dependency. But we might want to check if it's available?
-				// For now, straightforward import is better. 
-                // Wait, I need to add the import at the top first.
-                // But replace_file_content targets specific lines. 
-                // I will assume the import is added in a separate call or I need to do it here.
-                // Since I cannot do two things easily in one replace block if they are far apart, 
-                // I will use multi_replace. 
-                // Ah, this tool call is a single replace. I will do the import in a follow up or fail and fix.
-                // Actually, I should use multi_replace for this file since I need to add import AND modify content.
-                // Abort this tool call and use multi_replace? 
-                // I'll stick to one change here and do another for import.
-                
-                // Let's rely on the module system finding `@pounce/pico`.
-                // I'll assume I can import it.
-                // Wait, if I change the logic to use `getSSRStyles` but I haven't imported it, it will fail.
-				// I'll do the logic change first, but commented out or with a TODO, then add import?
-                // No, that's bad.
-                
-                // I will CANCEL this tool call effectively by making no functional change or 
-                // I will use multi_replace_file_content in the NEXT turn. 
-                // Check "AllowMultiple" -> default is false.
-                // I'll just return the logic for now, but I know it's missing import.
-                // Actually, I can use `multi_replace_file_content` directly.
-                
-                // Let's pretend I'm swapping to multi_replace_file_content.
-                // But I'm already in tool usage.
-                
-                // I'll just write the code assuming `getSSRStyles` is available, 
-                // and then add the import in the next step. 
-                // TypeScript/Linter might complain but I can fix it.
                 
 				// Inject script tags into the HTML body
 				let finalHtml = injectApiResponses(html, ssrData)
@@ -144,8 +113,7 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
                         finalHtml = finalHtml.replace('</head>', `${styles}</head>`)
                     }
                 } catch (e) {
-                    // ignore if @pounce/pico is not available or fails
-                    // console.warn('Failed to inject @pounce/pico styles', e)
+                    // ignore if style injection fails
                 }
 
 				// Create new response with injected HTML

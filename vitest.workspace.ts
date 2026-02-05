@@ -6,5 +6,4 @@ export default defineWorkspace([
   'packages/ui',
   'packages/board',
   'packages/plugin',
-  'packages/pico',
 ])
