@@ -51,6 +51,7 @@ export const h = (
 	const categories: Record<PropertyKey, any> = {}
 	const node: Record<string, any> = {}
 
+	//#region Collect meta properties and categories
 	for (const [key, value] of Object.entries(props || {})) {
 		if (typeof key !== 'string') continue
 		switch (key) {
@@ -100,6 +101,7 @@ export const h = (
 	}
 
 	const collectedCategories = categories
+	//#endregion
 
 	if (typeof tag === 'object' && typeof tag.get === 'function') tag = tag.get()
 	const resolvedTag =
@@ -148,7 +150,7 @@ export const h = (
 				const rendered = project.array<null, PounceElement>([null], function componentExecution() {
 					checkComponentRebuild(componentCtor)
 					testing.renderingEvent?.('render component', componentCtor.name)
-					const givenProps = reactive(propsInto(props, { children }))
+					const givenProps = reactive(propsInto(props ?? {}, { children }))
 					const result = componentCtor(restructureProps(givenProps), childScope)
 					return result
 				})
@@ -162,7 +164,7 @@ export const h = (
 		)
 	} else {
 		const element = document.createElement(tag)
-		const varied = lift(() => applyVariants(props))
+		const varied = lift(() => applyVariants(props ?? {}))
 		let lastComponent: ComponentInfo | undefined
 		const projection = getActiveProjection()
 		if (projection) {
@@ -171,7 +173,7 @@ export const h = (
 		}
 		testing.renderingEvent?.('create element', tag, element)
 		if (tag === 'input') props.type ??= 'text'
-
+// TODO: `project` !
 		for (const [key, value] of Object.entries(varied)) {
 			if (key === 'children') continue
 			if (['if', 'else', 'use', 'this'].includes(key)) continue

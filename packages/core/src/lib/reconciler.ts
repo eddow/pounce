@@ -66,15 +66,16 @@ export function bindChildren(
  * Returns a flat array of DOM nodes suitable for replaceChildren()
  */
 export function processChildren(children: readonly Child[], scope: Scope): readonly Node[] {
-	const renderers = project.array<Child, PounceElement>(children, ({ get }) => {
+	const renderers = project.array<Child, PounceElement>(children, function processChild({ get }) {
 		let child: Child = get()
 		while (isFunction(child)) child = (child as () => Child)()
 		if (child === undefined || child === null || child === (false as any)) return emptyChild
 		if (isString(child) || isNumber(child))
-			return new PounceElement(() => document.createTextNode(String(child)))
-		if (child instanceof Node) return new PounceElement(() => child as Node)
+			return new PounceElement(function createTextNode() { return document.createTextNode(String(child)) })
+		if (child instanceof Node) 
+			return new PounceElement(function wrapNode() { return child as Node })
 		if (Array.isArray(child))
-			return new PounceElement((s) => processChildren(child as Child[], s || scope), {
+			return new PounceElement(function renderFragment(s) { return processChildren(child as Child[], s || scope) }, {
 				tag: 'fragment',
 			})
 		if (child instanceof PounceElement) return child
@@ -84,7 +85,7 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 
 	const conditioned = scan(
 		renderers,
-		(acc: { ifOccurred: boolean; value?: PounceElement }, child: PounceElement) => {
+		function processConditions(acc: { ifOccurred: boolean; value?: PounceElement }, child: PounceElement) {
 			if ('condition' in child || 'if' in child || 'when' in child || 'else' in child) {
 				if (child.else && acc.ifOccurred) return { ifOccurred: true }
 				if ('condition' in child && child.condition && !child.condition())
@@ -102,7 +103,7 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 		{ ifOccurred: false }
 	)
 
-	const rendered = project(conditioned, (access): Node | readonly Node[] | false | undefined => {
+	const rendered = project(conditioned, function renderChild(access): Node | readonly Node[] | false | undefined {
 		const accResult = access.value
 		if (!accResult || !accResult.value) return
 		const renderer = accResult.value as PounceElement
@@ -122,9 +123,9 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 		throw new DynamicRenderingError('Render should return Node-s')
 	})
 
-	const flattened = lift(() => {
+	const flattened = lift(function flattenNodes() {
 		const next: Node[] = []
-		const push = (item: any) => {
+		const push = function pushItem(item: any) {
 			if (Array.isArray(item)) {
 				for (const child of item) push(child)
 			} else if (item instanceof Node) {
@@ -135,7 +136,7 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 		for (const item of rendered) if (item) push(item)
 		return next
 	})
-	return cleanedBy(flattened, () => {
+	return cleanedBy(flattened, function performCleanup() {
 		conditioned[cleanup]()
 		rendered[cleanup]()
 		renderers[cleanup]()

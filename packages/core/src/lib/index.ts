@@ -4,6 +4,7 @@ import { testing } from './debug'
 import { rootScope, type Scope } from './pounce-element'
 import { bindChildren } from './reconciler'
 import { h, Fragment } from './jsx-factory'
+import { isFunction, isString } from './renderer-internal'
 
 export * from '../shared'
 export * from './debug'
@@ -31,13 +32,9 @@ const g = globalThis as any
 g.h = h
 g.Fragment = Fragment
 
-function isFunction(value: any): value is Function {
-	return typeof value === 'function'
-}
-
-function isString(value: any): value is string {
-	return typeof value === 'string'
-}
+/*export const render = (renderer: PounceElement, scope: Scope = rootScope) => {
+	return renderer.render(scope)
+}*/
 
 export function bindApp(
 	app: JSX.Element,

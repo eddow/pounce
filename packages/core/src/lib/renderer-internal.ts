@@ -76,12 +76,14 @@ export function setHtmlProperty(element: any, key: string, value: any) {
 			const current = (element as any)[normalizedKey]
 			if (typeof current === 'boolean') (element as any)[normalizedKey] = Boolean(value)
 			else (element as any)[normalizedKey] = value ?? ''
-		} else if (key in element) {
+			return
+		}
+		if (key in element) {
 			const current = (element as any)[key]
 			if (typeof current === 'boolean') (element as any)[key] = Boolean(value)
 			else (element as any)[key] = value ?? ''
+			return
 		}
-		return
 	} catch {
 		// Fallback to attribute assignment below
 	}

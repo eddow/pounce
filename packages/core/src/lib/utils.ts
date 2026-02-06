@@ -1,4 +1,4 @@
-import { memoize, reactive } from 'mutts'
+import { describe, memoize, project, reactive } from 'mutts'
 import { pounceOptions } from './debug'
 
 // Local implementations to avoid circular reference issues with mutts lazy-get
@@ -51,12 +51,12 @@ export function copyObject(into: Record<string, any>, from: Record<string, any>)
 	return Object.assign(into, from)
 }
 
-function readonlyProp(key: string, value: any) {
+function readonlyProp(key: PropertyKey, value: any) {
 	return () => {
 		if (pounceOptions.writeRoProps !== 'ignore') {
 			const msg = isFunction(value)
-				? `Property "${key}" has been given a computed value "${value}", but it is not a two-way binding`
-				: `Property "${key}" has been given the fixed value "${value}", but it is not a two-way binding`
+				? `Property "${String(key)}" has been given a computed value "${value}", but it is not a two-way binding`
+				: `Property "${String(key)}" has been given the fixed value "${value}", but it is not a two-way binding`
 			if (pounceOptions.writeRoProps === 'warn') console.warn(msg)
 			else if (pounceOptions.writeRoProps === 'error') throw new Error(msg)
 		}
@@ -67,39 +67,28 @@ export function propsInto<P extends Record<string, any>, S extends Record<string
 	props: PropsDesc<P>,
 	into: S = {} as S
 ): S & P {
-	for (const [key, value] of Object.entries(props || {})) {
-		// Check for 2-way binding object {get:, set:}
-		// Properties must be configurable as the proxy might return a reactive version of it
-		if (isObject(value) && value !== null && 'get' in value && 'set' in value) {
-			const binding = value as {
-				get: () => P[typeof key]
-				set: (value: P[typeof key]) => void
-			}
-			Object.defineProperty(into, key, {
-				get: memoize(binding.get),
-				set: (newValue) => binding.set(newValue),
+	const descriptors = project(props, ({key, value}): PropertyDescriptor => 
+		(isObject(value) && value !== null && 'get' in value && 'set' in value)
+			? {
 				enumerable: true,
 				configurable: true,
-			})
-		} else if (isFunction(value)) {
-			// One-way binding
-			Object.defineProperty(into, key, {
-				get: memoize(value),
+				...value
+			}
+		: isFunction(value)
+			? {
+				get: memoize(value as ()=>P[typeof key]),
 				set: readonlyProp(key, value),
 				enumerable: true,
 				configurable: true,
-			})
-		} else {
-			// Static value
-			Object.defineProperty(into, key, {
+			}
+		: {
 				get: () => value,
 				set: readonlyProp(key, value),
 				enumerable: true,
 				configurable: true,
-			})
-		}
-	}
-	return into as S & P
+			}
+	)
+	return describe(descriptors, into) as S & P
 }
 
 export const array = {

@@ -22,6 +22,7 @@ const asArray = (item: any): any[] => {
 	// We don't treat the case where classes are given as a record of boolean - here we just stack, the construction of a string[] will be done at the really end
 	return [item]
 }
+// TODO: variants don't go through `applyVariants` but through a `scan` or such
 /**
  * Applies one or more variants to HTML attributes
  * @param props - BaseHTMLAttributes to modify

@@ -1,4 +1,4 @@
-import { cleanedBy, effect, reactive, type ScopedCallback, untracked } from 'mutts'
+import { cleanedBy, effect, named, reactive, type ScopedCallback, untracked } from 'mutts'
 import { type ComponentInfo, POUNCE_OWNER } from './debug'
 
 export const rootScope: Scope = reactive(Object.create(null))
@@ -83,14 +83,16 @@ export class PounceElement {
 		//if (partial !== undefined) return partial
 		if (!partial) {
 			// Execute produce function untracked to prevent unwanted reactivity
-			effect(({ reaction }) => {
-				if (reaction) {
-					console.warn(`Component rebuild detected.
+			effect(named(
+				typeof this.tag === 'string' ? this.tag : this.tag?.name || 'anonymous',
+				({ reaction }) => {
+					if (reaction) {
+						console.warn(`Component rebuild detected.
 It means the component definition refers a reactive value that has been modified, though the component has not been rebuilt as it is considered forbidden to avoid infinite events loops.`)
-				} else {
-					partial = this.produce(scope)
-				}
-			})
+					} else {
+						partial = this.produce(scope)
+					}
+				}))
 
 			if (!partial) throw new DynamicRenderingError('Renderer returned no content')
 			PounceElement.renderCache.set(this, partial)

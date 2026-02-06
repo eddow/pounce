@@ -4,10 +4,10 @@
 		"baseUrl": "..",
 		"paths": {
 			"mutts": [
-				"../../../../../mutts/src/index.ts"
+				"../../../../../mutts"
 			],
 			"mutts/*": [
-				"../../../../../mutts/src/*"
+				"../../../../../mutts/*"
 			],
 			"@pounce/core/jsx-runtime": [
 				"src/runtime/jsx-runtime.ts"

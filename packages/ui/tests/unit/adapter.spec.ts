@@ -1,7 +1,6 @@
 import { describe, beforeEach, it, expect, vi } from 'vitest'
 import { setAdapter, getAdapter, getGlobalAdapter, resetAdapter } from '../../src/adapter/registry'
 import type { FrameworkAdapter } from '../../src/adapter/types'
-import { i } from 'mutts/types-Gfovy6ZR'
 
 describe('Adapter Registry', () => {
   beforeEach(() => {
