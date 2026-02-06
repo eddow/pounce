@@ -1,5 +1,3 @@
-
-
 const g = typeof globalThis !== 'undefined' ? globalThis : ({} as any)
 
 export let window: Window = g.window
@@ -15,27 +13,29 @@ export let crypto: Crypto = g.crypto
 /**
  * Sets the active window and derives all other DOM globals from it.
  * This is the primary entry point for environment binding.
- * 
+ *
  * In Node.js, the passed 'impl' should contain proxies for each property
  * to ensure context-aware resolution.
  */
-
 
 /**
  * Set platform APIs individually for more granular control.
  * Useful when you need to set up specific APIs without a full PlatformWindow.
  */
-export const setPlatformAPIs = (name: string, apis: {
-	window?: Window
-	document?: Document
-	Node?: typeof globalThis.Node
-	HTMLElement?: typeof globalThis.HTMLElement
-	Event?: typeof globalThis.Event
-	CustomEvent?: typeof globalThis.CustomEvent
-	Text?: typeof globalThis.Text
-	DocumentFragment?: typeof globalThis.DocumentFragment
-	crypto?: Crypto
-}) => {
+export const setPlatformAPIs = (
+	name: string,
+	apis: {
+		window?: Window
+		document?: Document
+		Node?: typeof globalThis.Node
+		HTMLElement?: typeof globalThis.HTMLElement
+		Event?: typeof globalThis.Event
+		CustomEvent?: typeof globalThis.CustomEvent
+		Text?: typeof globalThis.Text
+		DocumentFragment?: typeof globalThis.DocumentFragment
+		crypto?: Crypto
+	}
+) => {
 	entryPoint = name
 	console.log('Setting platform APIs for', name)
 	if (apis.window !== undefined) window = apis.window

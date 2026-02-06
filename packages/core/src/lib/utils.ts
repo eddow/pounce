@@ -52,11 +52,13 @@ export function copyObject(into: Record<string, any>, from: Record<string, any>)
 }
 
 function readonlyProp(key: string, value: any) {
-	return ()=> {
-		if(pounceOptions.writeRoProps !== 'ignore') {
-			const msg = isFunction(value) ? `Property "${key}" has been given a computed value "${value}", but it is not a two-way binding` : `Property "${key}" has been given the fixed value "${value}", but it is not a two-way binding`
-			if(pounceOptions.writeRoProps === 'warn') console.warn(msg)
-			else if(pounceOptions.writeRoProps === 'error') throw new Error(msg)
+	return () => {
+		if (pounceOptions.writeRoProps !== 'ignore') {
+			const msg = isFunction(value)
+				? `Property "${key}" has been given a computed value "${value}", but it is not a two-way binding`
+				: `Property "${key}" has been given the fixed value "${value}", but it is not a two-way binding`
+			if (pounceOptions.writeRoProps === 'warn') console.warn(msg)
+			else if (pounceOptions.writeRoProps === 'error') throw new Error(msg)
 		}
 	}
 }
@@ -164,7 +166,9 @@ export interface Compose {
 
 export const compose: Compose = (...args: readonly ComposeArgument[]): Record<string, any> => {
 	// Pre-process arguments to make plain objects reactive
-	const reactiveArgs = args.map((arg) => (isPlainObject(arg) ? reactive(arg) : isFunction(arg) ? memoize(arg) : arg))
+	const reactiveArgs = args.map((arg) =>
+		isPlainObject(arg) ? reactive(arg) : isFunction(arg) ? memoize(arg) : arg
+	)
 	return new Proxy(Object.create(args.find(isPlainObject) || {}), {
 		[Symbol.toStringTag]: 'Composition',
 		get(_, prop) {

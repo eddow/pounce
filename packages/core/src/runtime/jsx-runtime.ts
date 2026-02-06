@@ -1,4 +1,4 @@
-import { type Child, Fragment as FragmentImpl, h } from '../lib/renderer'
+import { type Child, Fragment as FragmentImpl, h } from '../lib'
 
 type Key = string | number | null
 

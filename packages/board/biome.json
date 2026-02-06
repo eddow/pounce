@@ -30,7 +30,7 @@
 					"fix": "safe"
 				},
 				"noParameterAssign": "off",
-				"useImportType": "off"
+				"useImportType": { "level": "warn", "fix": "safe" }
 			},
 			"suspicious": {
 				"noExplicitAny": "off",

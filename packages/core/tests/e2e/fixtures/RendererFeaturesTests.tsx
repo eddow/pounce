@@ -1,5 +1,5 @@
 import { reactive, effect } from 'mutts'
-import type { Scope } from '../../src'
+import type { Scope } from '@pounce/core'
 
 
 type Role = 'guest' | 'member' | 'admin'

@@ -47,6 +47,6 @@ export function createAlsProxy<T>(name: string): T {
 			}
 			const actualTarget = (store.window as any)[name]
 			return Reflect.construct(actualTarget, args)
-		}
+		},
 	})
 }

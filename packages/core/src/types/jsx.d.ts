@@ -1,5 +1,4 @@
-import type { PounceElement, Scope } from '../lib/renderer'
-import type { ScopedCallback } from 'mutts'
+import type { PounceElement, Scope } from '../lib'
 import type { NameSpacedProps } from '../lib/namespaced'
 import type { StyleInput } from '../lib/styles'
 import type { Variant } from '../lib/variants'
@@ -7,7 +6,7 @@ import type { Variant } from '../lib/variants'
 declare global {
 	var h: (type: any, props?: any, ...children: any[]) => JSX.Element
 	var Fragment: (props: any, scope?: any) => any
-	const window: never  // Prevent accidental window usage in SSR - import from @pounce/core instead
+	const window: never // Prevent accidental window usage in SSR - import from @pounce/core instead
 	type ComponentFunction = (props: any, scope: Scope) => JSX.Element | null | undefined
 	namespace JSX {
 		// biome-ignore lint/suspicious/noConfusingVoidType: Void ends up automatically
@@ -96,7 +95,8 @@ declare global {
 					use?: (target: N) => void
 					else?: true
 					when?: any
-			  } & {	// TODO: Try to un-any all these? (type inference somehow, especially update:)
+			  } & {
+					// TODO: Try to un-any all these? (type inference somehow, especially update:)
 					[K in `use:${string}`]: any
 			  } & {
 					[K in `if:${string}`]?: any

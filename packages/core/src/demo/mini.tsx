@@ -1,6 +1,5 @@
+import { bindApp, compose, type Scope } from '@pounce/core'
 import { effect, reactive } from 'mutts'
-import { bindApp, compose, type Scope } from '../lib'
-import '../dom/bootstrap'
 
 function isFunction(value: any): value is Function {
 	return typeof value === 'function'
@@ -74,10 +73,13 @@ function MiniCounter(props: { list?: string[]; addedText?: string }) {
 				<for each={state.list}>
 					{(item: string) => {
 						return (
-							<button class="remove" onClick={() => {
-								const idx = state.list.indexOf(item)
-								if (idx !== -1) state.list.splice(idx, 1)
-							}}>
+							<button
+								class="remove"
+								onClick={() => {
+									const idx = state.list.indexOf(item)
+									if (idx !== -1) state.list.splice(idx, 1)
+								}}
+							>
 								{item}
 							</button>
 						)

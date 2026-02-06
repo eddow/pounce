@@ -25,7 +25,7 @@
 					"fix": "safe"
 				},
 				"noParameterAssign": "off",
-				"useImportType": "off",
+				"useImportType": { "level": "warn", "fix": "safe" },
 				"useConst": {
 					"level": "info",
 					"fix": "none"

@@ -18,12 +18,10 @@ export type ClassInput = string | ClassInput[] | Record<string, boolean>
  * @returns A space-separated string of class names
  */
 export function classNames(input: ClassInput, classes: string[] = []): string {
-
 	if (isString(input)) {
 		classes.push(input)
 	} else if (Array.isArray(input)) {
-		for (const item of input)
-			classNames(item, classes)
+		for (const item of input) classNames(item, classes)
 	} else if (isObject(input) && input !== null) {
 		for (const [className, shouldInclude] of Object.entries(input)) {
 			if (shouldInclude) {

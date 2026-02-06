@@ -1,7 +1,30 @@
 import { effect, type ScopedCallback } from 'mutts'
 import { document } from '../shared'
 import { testing } from './debug'
-import { bindChildren, type Child, type Component, Fragment, h, render, rootScope, type Scope } from './renderer'
+import { rootScope, type Scope } from './pounce-element'
+import { bindChildren } from './reconciler'
+import { h, Fragment } from './jsx-factory'
+
+export * from '../shared'
+export * from './debug'
+export * from './jsx-factory'
+export * from './platform'
+export * from './pounce-element'
+export * from './reconciler'
+export {
+	applyStyleProperties,
+	checkComponentRebuild,
+	isFunction,
+	isNumber,
+	isObject,
+	isString,
+	isSymbol,
+	listen,
+	setHtmlProperty,
+	valuedAttributeGetter,
+} from './renderer-internal'
+export * from './utils'
+export * from './variants'
 
 // biome-ignore lint/suspicious/noExplicitAny: Centralized global JSX injection for the framework
 const g = globalThis as any
@@ -15,13 +38,6 @@ function isFunction(value: any): value is Function {
 function isString(value: any): value is string {
 	return typeof value === 'string'
 }
-
-export { bindChildren, Fragment, h, rootScope, type Scope, type Child, type Component }
-
-export * from './utils'
-export * from './platform'
-export * from '../shared'
-export * from './variants'
 
 export function bindApp(
 	app: JSX.Element,
@@ -40,7 +56,7 @@ export function bindApp(
 			return
 		}
 		testing.renderingEvent?.('bind app root', appElement)
-		stop = effect(() => bindChildren(appElement, render(app, scope)))
+		stop = effect(() => bindChildren(appElement, app.render(scope)))
 	}
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', actuallyBind)

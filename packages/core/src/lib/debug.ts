@@ -1,5 +1,6 @@
-import { effect, reactiveOptions, type EffectOptions } from 'mutts'
+import { type EffectOptions, effect, reactiveOptions } from 'mutts'
 import { window } from '../shared'
+
 export * from './debug-helpers'
 
 // ... (rest of imports)
@@ -98,4 +99,3 @@ try {
 } catch {
 	// Platform not yet bound, ignore
 }
-

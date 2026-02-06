@@ -3,7 +3,7 @@
  */
 import { describe, test, expect } from 'vitest'
 import { reactive } from 'mutts'
-import { getComponentInstance, getComponentHierarchy, rootComponents } from '@pounce/core'
+import { getComponentInstance, getComponentHierarchy, rootComponents, h } from '@pounce/core'
 
 describe('Component association debug tools', () => {
 	test('should associate DOM elements with their owner component', () => {
@@ -37,7 +37,7 @@ describe('Component association debug tools', () => {
 		const target = root.querySelector('#target') as HTMLElement
 
 		const hierarchy = getComponentHierarchy(target)
-		expect(hierarchy.map(h => h.name)).toEqual(['GrandChild', 'Child', 'Parent'])
+		expect(hierarchy.map((h: any) => h.name)).toEqual(['GrandChild', 'Child', 'Parent'])
 	})
 
 	test('should maintain association in reactive updates', async () => {
@@ -76,7 +76,7 @@ describe('Component association debug tools', () => {
 
 		for (const item of items) {
 			const hierarchy = getComponentHierarchy(item as HTMLElement)
-			expect(hierarchy.some(h => h.name === 'ListComponent')).toBe(true)
+			expect(hierarchy.some((h: any) => h.name === 'ListComponent')).toBe(true)
 		}
 
 		state.items.push('C')
@@ -95,6 +95,6 @@ describe('Component association debug tools', () => {
 		expect(rootComponents.size).toBe(initialSize + 1)
 
 		const infos = Array.from(rootComponents)
-		expect(infos.some(i => i.name === 'Root')).toBe(true)
+		expect(infos.some((i: any) => i.name === 'Root')).toBe(true)
 	})
 })

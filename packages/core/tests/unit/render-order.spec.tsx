@@ -12,16 +12,16 @@ describe('Effect topology and error propagation', () => {
 			logs.push(msg)
 			return msg
 		}
-		const X = ()=> <div>{log('X')}</div>
-		const Y: ComponentFunction = (props)=> <div>{log('Y1')}{props.children}{log('Y2')}</div>
-		const Z: ComponentFunction = (props)=> <div>{log('Z1')}{props.children}{log('Z2')}</div>
+		const X = () => <div>{log('X')}</div>
+		const Y: ComponentFunction = (props) => <div>{log('Y1')}{props.children}{log('Y2')}</div>
+		const Z: ComponentFunction = (props) => <div>{log('Z1')}{props.children}{log('Z2')}</div>
 		const total = <Z><Y><X /></Y></Z>
 		log('t1')
 		void total.render()
 		log('t2')
 		expect(logs).toEqual(['t1', 'Z1', 'Z2', 'Y1', 'Y2', 'X', 't2'])
 	})
-	
+
 	it('sibling effects (pounce-style) do NOT propagate errors', () => {
 		const state = reactive({ triggerError: false })
 		let parentCaught = false
@@ -30,8 +30,8 @@ describe('Effect topology and error propagation', () => {
 		// Simulate pounce rendering: component in one project.array, children in another
 		project.array([null], () => {
 			logs.push('parent-start')
-			
-			onEffectThrow((err) => {
+
+			onEffectThrow((_err) => {
 				parentCaught = true
 				logs.push('parent-caught')
 			})
@@ -72,8 +72,8 @@ describe('Effect topology and error propagation', () => {
 
 		effect(() => {
 			logs.push('parent-start')
-			
-			onEffectThrow((err) => {
+
+			onEffectThrow((_err) => {
 				parentCaught = true
 				logs.push('parent-caught')
 			})
@@ -104,12 +104,12 @@ describe('Effect topology and error propagation', () => {
 
 	it('demonstrates children getter evaluation timing', () => {
 		const logs: string[] = []
-		
+
 		const Child = () => {
 			logs.push('child-evaluated')
 			return <div>Child</div>
 		}
-		
+
 		const Parent: ComponentFunction = (props) => {
 			logs.push('parent-start')
 			// Accessing props.children triggers evaluation
@@ -117,12 +117,12 @@ describe('Effect topology and error propagation', () => {
 			logs.push('parent-after-children-access')
 			return <div>{children}</div>
 		}
-		
+
 		const tree = <Parent><Child /></Parent>
 		logs.push('before-render')
 		tree.render()
 		logs.push('after-render')
-		
+
 		// Children are evaluated when props.children is accessed in parent
 		expect(logs).toContain('parent-start')
 		expect(logs).toContain('child-evaluated')
@@ -137,7 +137,7 @@ describe('Effect topology and error propagation', () => {
 		// Simulate ErrorBoundary component
 		const ErrorBoundary: ComponentFunction = (props) => {
 			logs.push('boundary-start')
-			
+
 			onEffectThrow((err) => {
 				parentCaught = true
 				logs.push(`error: ${err.message}`)
@@ -145,7 +145,7 @@ describe('Effect topology and error propagation', () => {
 
 			void state.triggerError
 			logs.push('boundary-end')
-			
+
 			// Accessing props.children triggers processChildren which creates sibling effects
 			return <div>{props.children}</div>
 		}

@@ -1,6 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { h } from '../../lib'
-import { rootScope } from '../../lib/renderer'
+import { describe, expect, it } from 'vitest'
+import { h, rootScope } from '../../lib'
 import { MiniCounter } from './MiniCounter'
 
 describe('MiniCounter Component', () => {

@@ -26,12 +26,12 @@ export function getComponentInstance(element: Node): ComponentInfo | undefined {
 export function getComponentHierarchy(element: Node): ComponentInfo[] {
 	const hierarchy: ComponentInfo[] = []
 	let current = getComponentInstance(element)
-	
+
 	while (current) {
 		hierarchy.push(current)
 		current = current.parent
 	}
-	
+
 	return hierarchy
 }
 

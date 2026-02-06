@@ -1,6 +1,6 @@
+import { JSDOM } from 'jsdom'
 import { setPlatformAPIs } from '../shared'
 import { createAlsProxy } from './proxy-factory'
-import { JSDOM } from 'jsdom'
 
 /**
  * Bootstraps the platform for the Node.js/SSR environment.
@@ -21,7 +21,7 @@ if (typeof window !== 'undefined') {
 		DocumentFragment: globalThis.DocumentFragment,
 		crypto: globalThis.crypto,
 	})
-} else if(process.env.NODE_ENV === 'test') {
+} else if (process.env.NODE_ENV === 'test') {
 	// Test environment without Vitest DOM (e.g., core package's own tests)
 	// Set up JSDOM manually
 	const jsdom = new JSDOM(
@@ -60,8 +60,7 @@ if (typeof window !== 'undefined') {
 	})
 }
 
-
 // Re-export the core API
 export * from '..'
 // Also export the withSSR helper which is Node-specific
-export { withSSR, renderToString, renderToStringAsync } from './server'
+export { renderToString, renderToStringAsync, withSSR } from './server'

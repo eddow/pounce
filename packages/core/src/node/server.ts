@@ -1,7 +1,6 @@
-import { JSDOM } from 'jsdom'
-import { bindChildren, rootScope, type Scope } from '../lib/renderer'
 import { AsyncLocalStorage } from 'node:async_hooks'
-
+import { JSDOM } from 'jsdom'
+import { bindChildren, rootScope, type Scope } from '../lib'
 
 /**
  * Global storage for the JSDOM instance associated with the current execution context (e.g., an SSR request).

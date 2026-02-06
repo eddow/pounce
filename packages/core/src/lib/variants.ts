@@ -37,13 +37,13 @@ export function applyVariants(
 	delete result.variants
 	for (const variant of asArray(variants)) {
 		if (!variant) continue
-		
+
 		// Process classes
 		result.class = [...asArray(result.class), ...asArray(variant.classes)]
 		// type StyleInput = StyleRecord | string | ---> StyleInput[] <--- | null | undefined | false
 		result.style = [...asArray(result.style), ...asArray(variant.styles)]
 		Object.assign(result, variant.attributes)
 	}
-	
+
 	return result
 }
