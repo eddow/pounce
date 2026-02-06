@@ -69,7 +69,6 @@ export default defineConfig({
 	build: {
 		lib: {
 			entry: {
-				index: resolvePath(projectRootDir, 'src/index.ts'),
 				dom: resolvePath(projectRootDir, 'src/dom/index.ts'),
 				node: resolvePath(projectRootDir, 'src/node/index.ts'),
 				'jsx-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-runtime.ts'),

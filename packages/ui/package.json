@@ -28,11 +28,12 @@
 	},
 	"license": "MIT",
 	"devDependencies": {
-		"@pounce/plugin": "workspace:*",
 		"@axe-core/playwright": "^4.10.0",
 		"@biomejs/biome": "^2.2.7",
 		"@playwright/test": "^1.56.1",
+		"@pounce/plugin": "workspace:*",
 		"@types/node": "25.1.0",
+		"arktype": "^2.1.29",
 		"jsdom": "^27.4.0",
 		"sass": "^1.93.2",
 		"typescript": "5.9.3",
@@ -43,9 +44,8 @@
 	"dependencies": {
 		"@pounce/core": "workspace:*",
 		"@pounce/kit": "workspace:*",
-		"mutts": "link:../../../mutts",
 		"dockview-core": "^4.13.1",
-		"pure-glyf": "link:../../../pure-glyf"
+		"mutts": "link:../../../mutts"
 	},
 	"packageManager": "pnpm@10.28.2"
 }

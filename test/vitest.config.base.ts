@@ -12,11 +12,9 @@ export const createBaseConfig = (packageDir: string) => {
 				'npc-script': resolve(rootDir, '../../npcs/src/index.ts'),
 				'omni18n': resolve(rootDir, '../../omni18n/src/client.ts'),
 				'pure-glyf': resolve(rootDir, '../../pure-glyf/src/index.ts'),
-				'@pounce/core/jsx-runtime': resolve(rootDir, '../packages/core/dist/jsx-runtime.js'),
-				'@pounce/core/jsx-dev-runtime': resolve(rootDir, '../packages/core/dist/jsx-dev-runtime.js'),
-				'@pounce/core/server': resolve(rootDir, '../packages/core/src/node/index.ts'),
+				'@pounce/core/jsx-runtime': resolve(rootDir, '../packages/core/src/runtime/jsx-runtime.ts'),
+				'@pounce/core/jsx-dev-runtime': resolve(rootDir, '../packages/core/src/runtime/jsx-dev-runtime.ts'),
 				'@pounce/core/node': resolve(rootDir, '../packages/core/src/node/index.ts'),
-				'@pounce/core/dom': resolve(rootDir, '../packages/core/src/dom/index.ts'),
 				'@pounce/core': resolve(rootDir, '../packages/core/src/node/index.ts'),
 				'@pounce/kit': resolve(rootDir, '../packages/kit/src'),
 				'@pounce/ui': resolve(rootDir, '../packages/ui/src'),
@@ -25,27 +23,9 @@ export const createBaseConfig = (packageDir: string) => {
 			},
 		},
 		test: {
-			globals: true,
 			include: ['**/*.spec.{ts,tsx}'],
 			exclude: ['**/node_modules/**', '**/dist/**'],
 			resolveSnapshotPath: (testPath, snapExtension) => testPath + snapExtension,
-			coverage: {
-				provider: 'v8',
-				reporter: ['text', 'json', 'html'],
-				exclude: [
-					'node_modules/',
-					'tests/',
-					'**/*.d.ts',
-					'**/*.config.*',
-					'**/dist/',
-					'**/e2e/',
-				],
-			},
-			server: {
-				deps: {
-					inline: [/@pounce\//, 'mutts'],
-				},
-			},
 		},
 	})
 }

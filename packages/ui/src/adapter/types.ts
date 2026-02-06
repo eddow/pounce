@@ -1,22 +1,57 @@
 
 /**
- * Registry of all UI components exported by pounce/ui
+ * Base adaptation type - common fields for all components
+ */
+export type BaseAdaptation = {
+	/** CSS class name overrides */
+	classes?: Partial<Record<string, string>>
+
+	/** Custom render structure (for complex DOM changes) */
+	renderStructure?: (parts: ComponentParts<any>) => JSX.Element
+}
+
+/**
+ * Adaptation for components with icon support (Button, RadioButton)
+ */
+export type IconAdaptation = BaseAdaptation & {
+	/** Icon placement strategy */
+	iconPlacement?: 'start' | 'end'
+}
+
+/**
+ * Adaptation for components with transitions (Dialog, Toast, Drawer, Alert)
+ */
+export type TransitionAdaptation = BaseAdaptation & {
+	/** Transition class configuration */
+	transitions?: TransitionConfig
+}
+
+/**
+ * Adaptation for overlay components (Dialog, Toast, Drawer, Alert)
+ */
+export type OverlayAdaptation = TransitionAdaptation & {
+	/** Event target overrides (for delegation patterns) */
+	events?: Partial<Record<string, EventTarget>>
+}
+
+/**
+ * Registry of all UI components with their specific adaptation types
  * This ensures type safety for adapter component keys
  */
 export type UiComponents = {
-	Button: any
-	Badge: any
-	Dialog: any
-	Dockview: any
-	ErrorBoundary: any
-	Layout: any
-	Menu: any
-	RadioButton: any
-	Toolbar: any
-	Typography: any
-	Heading: any
-	Text: any
-	Link: any
+	Button: IconAdaptation
+	Badge: BaseAdaptation
+	Dialog: OverlayAdaptation
+	Dockview: BaseAdaptation
+	ErrorBoundary: BaseAdaptation
+	Layout: BaseAdaptation
+	Menu: BaseAdaptation
+	RadioButton: IconAdaptation
+	Toolbar: BaseAdaptation
+	Typography: BaseAdaptation
+	Heading: BaseAdaptation
+	Text: BaseAdaptation
+	Link: BaseAdaptation
 }
 
 export type ComponentName = keyof UiComponents
@@ -31,10 +66,6 @@ export type TransitionConfig = {
 	duration?: number
 }
 
-/**
- * Icon placement options
- */
-export type IconPlacement = 'start' | 'end' | 'both' | 'none'
 
 /**
  * Component parts for custom rendering
@@ -48,40 +79,25 @@ export type ComponentParts<Props = any> = {
 }
 
 /**
- * Configuration for a single component
+ * @deprecated Use component-specific adaptation types from UiComponents instead
  */
-export type ComponentAdapter<Props = any> = {
-	/** CSS class name overrides (additive to global variants) */
-	classes?: Partial<Record<string, string>>
-
-	/** Custom render structure (for complex DOM changes) */
-	renderStructure?: (parts: ComponentParts<Props>) => JSX.Element
-
-	/** Event target overrides (for delegation patterns) */
-	events?: Partial<Record<string, EventTarget>>
-
-	/** Transition class configuration */
-	transitions?: TransitionConfig
-
-	/** Icon placement strategy */
-	iconPlacement?: IconPlacement
-
-	/** Icon resolver function */
-	iconResolver?: (name: string, size?: string | number) => JSX.Element
-
-	/** Icon name overrides for component-specific icons */
-	icons?: Record<string, string>
-}
+export type ComponentAdapter = BaseAdaptation
 
 /**
- * Framework adapter registry with global variants and per-component adapters
+ * Framework adapter registry with global configuration and per-component adapters
  */
 export type FrameworkAdapter = {
+	/** Global icon factory - used by all components with icon support */
+	iconFactory?: (name: string, size?: string | number) => JSX.Element
+
 	/** Global variant classes applied to all components */
 	variants?: Record<string, string>
 
-	/** Per-component adapters (additive to global variants) */
+	/** Global transition defaults (can be overridden per-component) */
+	transitions?: TransitionConfig
+
+	/** Per-component adapters (typed to each component's needs) */
 	components?: {
-		[Name in keyof UiComponents]?: ComponentAdapter
+		[Name in keyof UiComponents]?: UiComponents[Name]
 	}
 }

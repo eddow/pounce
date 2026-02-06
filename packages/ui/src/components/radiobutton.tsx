@@ -2,6 +2,7 @@ import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
 import { asVariant, getVariantClass } from '../shared/variants'
+import { Icon } from './icon'
 
 // Default RadioButton Styles (SASS)
 componentStyle.sass`
@@ -79,15 +80,14 @@ const RadioButtonBase = (props: RadioButtonProps<any>) => {
 				if (!s.icon) return null
 
 				if (typeof s.icon === 'string') {
-					const resolver = adapter.iconResolver
 					return (
 						<span class="pounce-radiobutton-icon" aria-hidden="true">
-							{resolver ? resolver(s.icon) : s.icon}
+							<Icon name={s.icon} />
 						</span>
 					)
 				}
 
-				return <span class="pounce-radiobutton-icon">{s.icon}</span>
+				return <span class="pounce-radiobutton-icon" aria-hidden="true">{s.icon}</span>
 			},
 			get hasLabel() {
 				return !!s.children && (!Array.isArray(s.children) || s.children.some((e: any) => !!e))

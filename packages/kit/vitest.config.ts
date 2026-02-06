@@ -8,6 +8,7 @@ const baseConfig = createBaseConfig(__dirname)
 
 export default mergeConfig(baseConfig, defineConfig({
   test: {
+    name: 'kit',
     environment: 'jsdom',
   },
 }))

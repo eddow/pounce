@@ -1,5 +1,5 @@
 import { reactive } from 'mutts'
-import { forwardProps } from '../../src/lib/index'
+import { forwardProps } from '@pounce/core'
 
 console.log('ForwardPropsTests module evaluating')
 

@@ -1,43 +1,158 @@
 # @pounce/ui Variant Architecture
 
-This document describes the **Adapter-Driven Variant** architecture used in `@pounce/ui`. This design ensures that the core components remain framework-agnostic while allowing total flexibility for adapters (e.g., PicoCSS, Tailwind, Bootstrap).
+This document describes the **Two-Phase Variant System** used in `@pounce/ui`:
+1. **Core Infrastructure** (pounce/core): Low-level variant objects and application logic
+2. **UI Management** (pounce/ui): Variant registry, naming, and framework integration
 
-## 🎯 Design Goals
+## Variant System Architecture
 
-1.  **Semantic Contract**: Components care about *intent* (labels like `danger`, `contrast`), not *implementation* (class names).
-2.  **Zero hardcoding**: No fixed lists of variants in the core TypeScript logic.
-3.  **Convention-Based**: Default fallback to standard `.pounce-variant-*` classes for zero-config usage.
-4.  **Framework-Agnostic**: Adapters can map any semantic label to any number of framework-specific classes.
+The variant system supports two distinct usage patterns:
 
-## 🛠️ TypeScript Implementation
+### Core Elements (e.g., `<div>`, `<span>`)
+Core HTML elements use variant objects directly:
+```tsx
+// Direct variant object
+<div variants={{ classes: ['bg-blue', 'text-white'] }}>
 
-### 1. Semantic Labels
-In `@pounce/ui`, a "variant" is just a string. While we provide types for common variants to help with Intellisense, the system is open-ended.
-
-```typescript
-// src/shared/variants.ts
-export type Variant = (string & {}) // Open-ended string
+// Multiple variants
+<div variants={[
+  { classes: ['bg-blue'] },
+  { styles: { padding: '1rem' } },
+  { attributes: { 'aria-label': 'Blue box' } }
+]}>
 ```
 
-### 2. The Resolver
-The `getVariantClass` utility bridge the gap between intent and implementation.
+### UI Components (e.g., `<RadioButton>`)
+UI components from adapters use string-based variants:
+```tsx
+// String variant looks up in adapter registry
+<RadioButton variant="primary">
+<RadioButton variant="secondary">
+```
 
+## Core Variant System
+
+### Variant Interface
 ```typescript
-// src/shared/variants.ts
-export function getVariantClass(variant: string | undefined, adapter?: ComponentAdapter): string | undefined {
-    if (!variant) return undefined
-    
-    // 1. Check adapter mapping (Intent -> Framework Class)
-    if (adapter?.classes?.[variant]) {
-        return adapter.classes[variant]
-    }
-    
-    // 2. Default convention fallback
-    return `pounce-variant-${variant}`
+interface Variant {
+  /** CSS classes to add or conditionally include */
+  classes?: string[] | Record<string, boolean>
+  /** Inline styles to apply */
+  styles?: Record<string, string | number>
+  /** HTML attributes to set */
+  attributes?: Record<string, string | boolean | number>
 }
 ```
 
-### 3. Dynamic "Auto-Flavoring" (`asVariant`)
+### applyVariants Function
+The core function for applying variants to props:
+```typescript
+function applyVariants<T extends JSX.BaseHTMLAttributes<any>>(
+  props: T,
+  variants?: Variant | Variant[]
+): T
+```
+
+Key features:
+- **Simple**: Just accumulates classes and styles as arrays
+- **Reactive**: When used with `lift()`, variant changes automatically update the DOM
+- **Stacking**: Classes and styles stack in order - no premature processing
+- **Direct**: Attributes are applied directly to the element
+
+### Implementation Details
+
+#### Class Handling
+- Classes accumulate as arrays: `[...existing, ...variantClasses]`
+- Conditional objects stay as objects in the array: `['btn', { primary: true }]`
+- Final processing (filtering, string conversion) happens at render time
+
+#### Style Handling  
+- Styles accumulate as arrays like classes: `[...existing, ...variantStyles]`
+- Each style object is preserved separately in the array
+- Renderer merges them when applying to DOM
+
+#### Attribute Handling
+- Attributes are merged directly into the props object via `Object.assign()`
+- Later variants override earlier attributes
+- Removed from props before DOM rendering
+
+## Reactive Variants
+
+When used in the renderer, variants are applied reactively:
+```typescript
+const varied = lift(() => applyVariants(props))
+```
+
+This ensures that:
+- Variant changes trigger re-renders
+- Multiple variants can be combined efficiently
+- The DOM stays synchronized with variant state
+
+// Multiple string variants
+<RadioButton variants={["primary", "large"]}>
+```
+
+## Phase 1: Core Infrastructure (pounce/core)
+
+Core provides the building blocks but doesn't manage variants:
+
+### Variant Type
+```typescript
+interface Variant {
+  classes?: string[] | Record<string, boolean>
+  styles?: Record<string, string | number>
+  attributes?: Record<string, string | boolean | number>
+}
+```
+
+### applyVariants Function
+```typescript
+function applyVariants<T extends JSX.BaseHTMLAttributes<any>>(
+  props: T, 
+  variants?: Variant | Variant[]
+): T
+```
+
+Core simply:
+- Accepts `variants?: Variant | Variant[]` on any HTML element via JSX types
+- Provides `applyVariants` to stack variants into props
+- Stacks classes and styles as arrays (no premature processing)
+- Applies attributes directly to the element
+- Has no knowledge of variant names or registry
+
+## Phase 2: UI Management (pounce/ui)
+
+UI builds on core to provide a named variant system:
+
+### Variant Registry
+```typescript
+// UI maintains a registry of named variants
+const variantRegistry: Record<string, Variant> = {
+  primary: {
+    classes: ['pounce-variant-primary'],
+    styles: { backgroundColor: 'var(--pounce-primary)' }
+  },
+  danger: {
+    classes: ['pounce-variant-danger'],
+    attributes: { 'aria-label': 'Danger action' }
+  }
+}
+```
+
+### Adapter Integration
+Adapters can provide framework-specific variant definitions:
+```typescript
+setAdapter({
+  variants: {
+    primary: {
+      classes: ['pico-button-primary'], // Framework-specific classes
+      attributes: { role: 'button' }
+    }
+  }
+})
+```
+
+### Dynamic "Auto-Flavoring" (`asVariant`)
 Instead of hardcoding every variant as a flavor, components are wrapped in the `asVariant` proxy. This treats any property access as a potential variant.
 
 ```typescript
@@ -46,8 +161,8 @@ export function asVariant<T extends (props: any) => any>(component: T): T & Reco
 	return new Proxy(component, {
 		get(target, prop, receiver) {
 			if (typeof prop === 'string' && !(prop in target)) {
-				// Returns a new flavored function with { variant: prop } defaulted
-				return flavorOptions(receiver as any, { variant: prop })
+				// Returns a new flavored function with { variants: getVariant(prop) } defaulted
+				return flavorOptions(receiver as any, { variants: getVariantByName(prop) })
 			}
 			return Reflect.get(target, prop, receiver)
 		}
@@ -56,22 +171,37 @@ export function asVariant<T extends (props: any) => any>(component: T): T & Reco
 ```
 
 #### Why `asVariant`?
-- **Infinite Flexibility**: Any variant registered in an adapter is automatically available as a dot-property.
+- **Infinite Flexibility**: Any variant registered in the registry is automatically available as a dot-property.
 - **Asneap Code**: No need to update 20 component files when you add a new global variant.
 - **Zero Runtime Overhead**: The proxy only intercepts property access on the component object, not the render loop.
 
 Usage:
-- `<Button.primary>` -> Automatically applies `{ variant: 'primary' }`
-- `<Button.danger>` -> Automatically applies `{ variant: 'danger' }`
-- `<Button.ghost>` -> Works immediately if `ghost` is in CSS or Adapter.
+- `<Button.primary>` -> Automatically applies `{ variants: getVariantByName('primary') }`
+- `<Button.danger>` -> Automatically applies `{ variants: getVariantByName('danger') }`
+- `<Button.ghost>` -> Works immediately if `ghost` is in the registry.
 
-### 4. Validation & Errors
-In development mode, `getVariantClass` validates that the variant is either a **Standard Vanilla Variant** or **Registered in the Adapter**.
- If neither, it logs an error.
-
+### Validation & Errors
+In development mode, the UI package can validate variant names:
 ```typescript
-// [pounce/ui] Unknown variant "foo". Ensure it is registered...
+// [pounce/ui] Unknown variant "foo". Ensure it is registered in the variant registry.
 ```
+
+---
+
+## Migration from Old System
+
+The old system used string-based variants with `getVariantClass()`:
+```tsx
+// Old way
+<Button variant="primary">
+
+// New way
+<Button variants={getVariantByName('primary')}>
+// Or with asVariant:
+<Button.primary>
+```
+
+The new system is more powerful as it can apply styles and attributes, not just classes.
 
 ---
 

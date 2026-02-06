@@ -42,6 +42,62 @@ This document orchestrates the migration from `@pounce/pico` to `@pounce/ui`. Ta
 
 ---
 
+## Phase 3: Adapter System Verification (Post-Refactoring)
+**Recommended Agent**: **Claude Sonnet 4.5** or **SWE-1.5**  
+**Rationale**: Requires systematic verification of type safety and adapter integration across all components  
+**Owner**: _____________  
+**Status**: [ ]  
+**Dependencies**: A2 (Adapter refactoring complete)  
+**Estimated Time**: 3-4 hours  
+**Reference**: See [adapter-factoring.md](./adapter-factoring.md) for refactoring details
+
+**Context**: The adapter system was refactored to use component-specific typed adaptations instead of generic `any` types. A centralized `Icon` component was created with global `iconFactory`. All components need verification.
+
+**Tasks**:
+- [ ] **Verify Icon component integration** - Ensure Icon component is properly exported and documented
+- [ ] **Audit Button** - ✅ Already migrated to use centralized Icon component
+- [ ] **Audit RadioButton** - ✅ Already migrated to use centralized Icon component  
+- [ ] **Audit CheckButton** - Verify adapter types, check for iconResolver usage
+- [ ] **Audit Dialog** - Verify uses `OverlayAdaptation` type correctly
+- [ ] **Audit DockView** - Verify uses `BaseAdaptation` type, check icon handling
+- [ ] **Audit Menu** - Verify adapter integration, check for icon usage patterns
+- [ ] **Audit Toolbar** - Verify uses `BaseAdaptation` type correctly
+- [ ] **Audit ErrorBoundary** - Verify uses `BaseAdaptation` type correctly
+- [ ] **Audit Layout** - Verify uses `BaseAdaptation` type correctly
+- [ ] **Audit Typography** - Verify uses `BaseAdaptation` type correctly (Heading, Text, Link)
+- [ ] **Remove deprecated iconResolver** - Search codebase for any remaining `iconResolver` references
+- [ ] **Update adapter tests** - Ensure tests cover new typed system and iconFactory
+- [ ] **Type-check all components** - Run `pnpm type-check` to verify no type errors
+- [ ] **Document Icon usage** - Add examples to README showing how to configure iconFactory
+
+**Acceptance Criteria**:
+- [ ] All components use their specific adaptation types from `UiComponents`
+- [ ] No `iconResolver` references remain in codebase
+- [ ] Icon component is properly documented with usage examples
+- [ ] All adapter tests pass with new typed system
+- [ ] TypeScript compilation succeeds with no errors
+- [ ] Components that use icons (Button, RadioButton, etc.) work with global iconFactory
+
+**Files to Review**:
+```
+src/components/
+├── button.tsx          ✅ Migrated to Icon component
+├── radiobutton.tsx     ✅ Migrated to Icon component
+├── checkbutton.tsx     ⚠️ Needs verification
+├── dialog.tsx          ⚠️ Verify OverlayAdaptation usage
+├── dockview.tsx        ⚠️ Check icon handling
+├── menu.tsx            ⚠️ Check icon usage
+├── toolbar.tsx         ⚠️ Verify BaseAdaptation
+├── error-boundary.tsx  ⚠️ Verify BaseAdaptation
+├── layout.tsx          ⚠️ Verify BaseAdaptation
+└── typography.tsx      ⚠️ Verify BaseAdaptation
+```
+
+**New Component**:
+- `src/components/icon.tsx` - Centralized Icon component using global iconFactory
+
+---
+
 ## 🔀 Parallel Work Groups
 
 Once Phase 0 is complete, these groups can work **concurrently**.
@@ -206,7 +262,22 @@ Each component migration is **independent** and can be done in parallel.
 - [✅] Verify SSR safety (no client-only DOM manipulation)
 - [✅] Implement Functional Interactor pattern (.show())
 
-
+**TODO - Documentation & Testing Review**:
+- [ ] **Unit Tests**: Create `tests/unit/dialog.spec.tsx` - test Dialog.show(), bindDialog(), confirm() helper, size variants, button configuration
+- [ ] **Unit Tests**: Create `tests/unit/toast.spec.tsx` - test Toast.show(), bindToast(), auto-dismiss, variant shortcuts (success/error/warn/info)
+- [ ] **Unit Tests**: Create `tests/unit/drawer.spec.tsx` - test Drawer.show(), bindDrawer(), side variants (left/right), dismissible behavior
+- [ ] **Unit Tests**: Create `tests/unit/overlay-manager.spec.tsx` - test pushOverlay(), overlay stacking, promise resolution, cleanup
+- [ ] **Unit Tests**: Create `tests/unit/with-overlays.spec.tsx` - test scope injection, layer rendering, backdrop logic, focus trap, escape key handling
+- [ ] **Integration Tests**: Test nested overlays (windowed modals), z-index coordination, maxOverlayLevel tracking
+- [ ] **A11y Tests**: Verify ARIA roles (dialog, log, aria-modal), aria-labelledby/describedby linkage, focus trap behavior
+- [ ] **Documentation**: Verify `src/overlays/README.md` matches implementation (especially new features: nesting, z-index, escape key, focus trap)
+- [ ] **Documentation**: Add usage examples to main README.md showing StandardOverlays setup and scope usage
+- [ ] **Documentation**: Document the "Windowed Modals" pattern (local overlay managers with `fixed={false}`)
+- [ ] **Export Verification**: Confirm all overlay exports in `src/overlays/index.ts` are properly re-exported from main `src/index.ts`
+- [ ] **Type Safety**: Verify PushOverlayFunction type is exported and documented for custom interactor development
+- [ ] **Animation Tests**: Test entrance/exit animations for Dialog (scale/fade), Toast (slide-in), Drawer (slide from side)
+- [ ] **Memory Leak Check**: Verify setTimeout cleanup in Toast, event listener cleanup in WithOverlays
+- [ ] **SSR Tests**: Verify overlay system works in SSR context (no window/document access during render)
 
 ---
 
@@ -276,7 +347,6 @@ Components to migrate:
 - [ ] Status (Badge, Chip, Pill)
 - [ ] Icon
 - [ ] Stars
-- [ ] **Do not migrate yet - wait for further analyses**
 - [✅] Alert
 - [✅] Toast
 

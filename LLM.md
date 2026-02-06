@@ -10,3 +10,4 @@
    - Check `tsconfig.json` paths point to `dist/` not `dist/src/`
    - Test directories need their own `tsconfig.json` extending the main one (they're excluded by default)
    - See `packages/plugin/sandbox/application.md` for detailed investigation
+4. Project state: The project is not even alpha, the only consumers are the test: Backward compatibility is *never* an issue

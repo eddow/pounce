@@ -1,27 +1,28 @@
 import {
-	scan,
+	cleanedBy,
+	effect,
+	lift,
+	reactive,
+	unreactive,
+	unwrap,
 	atomic,
 	biDi,
-	cleanedBy,
 	cleanup,
-	effect,
 	getActiveProjection,
 	isNonReactive,
 	memoize,
-	project,
-	reactive,
 	onEffectTrigger,
-	unreactive,
+	scan,
+	ScopedCallback,
+	project,
 	untracked,
-	unwrap,
-	lift,
-	type ScopedCallback,
 } from 'mutts'
-import { namedEffect, nf, pounceOptions, testing, POUNCE_OWNER, rootComponents, type ComponentInfo } from './debug'
+import { namedEffect, pounceOptions, testing, POUNCE_OWNER, rootComponents, type ComponentInfo, nf } from './debug'
 import { crypto, document, Node } from '../shared'
 import { restructureProps } from './namespaced'
 import { type ClassInput, classNames, type StyleInput, styles } from './styles'
 import { extend, forwardProps, isElement, propsInto } from './utils'
+import { applyVariants } from './variants'
 
 export class DynamicRenderingError extends Error {
 	constructor(message: string) {
@@ -293,8 +294,8 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 		}
 	}
 
-	const regularProps = node
 	const collectedCategories = categories
+	
 	let mountObject: any
 	if (typeof tag === 'object' && typeof tag.get === 'function') tag = tag.get()
 	const resolvedTag =
@@ -317,7 +318,7 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 			id: (typeof crypto !== 'undefined' && crypto?.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2),
 			name: componentCtor.name,
 			ctor: componentCtor,
-			props: regularProps,
+			props,
 			scope: undefined, // Set during render
 			parent: parentComponent,
 			children: new Set<ComponentInfo>(),
@@ -345,7 +346,7 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 				const rendered = project.array<null, PounceElement>([null], function componentExecution() {
 					checkComponentRebuild(componentCtor)
 					testing.renderingEvent?.('render component', componentCtor.name)
-					const givenProps = reactive(propsInto(regularProps, { children }))
+					const givenProps = reactive(propsInto(props, { children }))
 					const result = componentCtor(restructureProps(givenProps), childScope)
 					return result
 				})
@@ -359,6 +360,7 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 		)
 	} else {
 		const element = document.createElement(tag)
+		const varied = lift(() => applyVariants(props))
 		let lastComponent: ComponentInfo | undefined
 		const projection = getActiveProjection()
 		if (projection) {
@@ -399,108 +401,96 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 			testing.renderingEvent?.('assign style', element, computedStyles)
 			Object.assign(element.style, computedStyles)
 		}
-		if (props)
-			for (const [key, value] of Object.entries(props)) {
-				if (key === 'children') continue
-				if (['if', 'else', 'use', 'this'].includes(key)) continue
-				// Also skip namespaced attributes like use:xxx, if:xxx
-				if (key.includes(':')) {
-					const prefix = key.split(':')[0]
-					if (['use', 'if', 'when', 'update'].includes(prefix)) continue
-				}
+		for (const [key, value] of Object.entries(varied)) {
+			if (key === 'children') continue
+			if (['if', 'else', 'use', 'this'].includes(key)) continue
+			// Also skip namespaced attributes like use:xxx, if:xxx
+			if (key.includes(':')) {
+				const prefix = key.split(':')[0]
+				if (['use', 'if', 'when', 'update'].includes(prefix)) continue
+			}
 
-				const runCleanup: (() => void)[] = []
+			const runCleanup: (() => void)[] = []
 
-				if (typeof key !== 'string') continue
+			if (typeof key !== 'string') continue
 
-				if (/^on[A-Z]/.test(key)) {
-					const eventType = key.slice(2).toLowerCase()
-					const stop = namedEffect(`event:${key}`, () => {
-						const handlerCandidate = value.get ? value.get() : value()
-						if (handlerCandidate === undefined) return
-						const registeredEvent = atomic(handlerCandidate)
-						return listen(element, eventType, registeredEvent)
-					})
-					cleanedBy(element, stop)
-					continue
+			if (/^on[A-Z]/.test(key)) {
+				const eventType = key.slice(2).toLowerCase()
+				const stop = namedEffect(`event:${key}`, () => {
+					const handlerCandidate = value.get ? value.get() : value()
+					if (handlerCandidate === undefined) return
+					const registeredEvent = atomic(handlerCandidate)
+					return listen(element, eventType, registeredEvent)
+				})
+				cleanedBy(element, stop)
+				continue
+			}
+			if (key === 'class') {
+				const getter = valuedAttributeGetter(value)
+				const stop = effect(function classNameEffect() {
+					const nextClassName = classNames(getter() as ClassInput)
+					testing.renderingEvent?.('set className', element, nextClassName)
+					element.className = nextClassName
+				})
+				cleanedBy(element, stop)
+				continue
+			}
+			if (key === 'style') {
+				const getter = valuedAttributeGetter(value)
+				const stop = effect(function styleEffect() {
+					const computedStyles = styles(getter() as StyleInput)
+					applyStyleProperties(computedStyles)
+				})
+				cleanedBy(element, stop)
+				continue
+			}
+			if (isObject(value) && value !== null && 'get' in value && 'set' in value) {
+				const binding = {
+					get: nf(`get ${tag}:${key}`, value.get as () => unknown),
+					set: nf(`set ${tag}:${key}`, value.set as (v: unknown) => void),
 				}
-				if (key === 'class') {
-					const getter = valuedAttributeGetter(value)
-					const stop = effect(function classNameEffect() {
-						const nextClassName = classNames(getter() as ClassInput)
-						testing.renderingEvent?.('set className', element, nextClassName)
-						element.className = nextClassName
-					})
-					cleanedBy(element, stop)
-					continue
-				}
-				if (key === 'style') {
-					const getter = valuedAttributeGetter(value)
-					const stop = effect(function styleEffect() {
-						const computedStyles = styles(getter() as StyleInput)
-						applyStyleProperties(computedStyles)
-					})
-					cleanedBy(element, stop)
-					continue
-				}
-				if (isObject(value) && value !== null && 'get' in value && 'set' in value) {
-					const binding = {
-						get: nf(`get ${tag}:${key}`, value.get as () => unknown),
-						set: nf(`set ${tag}:${key}`, value.set as (v: unknown) => void),
+				const provide = biDi((v) => setHtmlProperty(key, v), binding)
+				// ... (keep existing input logic if possible, or simplified)
+				// User asked to instrument suspect effects.
+				// Let's just instrument the generic prop one below first as it's more likely.
+				// But I need to match the block correctly.
+				// I will leave this block alone for now to avoid mess, targeting the prop block.
+				
+				if (tag === 'input') {
+					switch (element.type) {
+						case 'checkbox':
+						case 'radio':
+							if (key === 'checked')
+								runCleanup.push(listen(element, 'input', () => provide(element.checked)))
+							break
+						case 'number':
+						case 'range':
+							if (key === 'value')
+								runCleanup.push(listen(element, 'input', () => provide(Number(element.value))))
+							break
+						default:
+							if (key === 'value')
+								runCleanup.push(listen(element, 'input', () => provide(element.value)))
+							break
 					}
-					const provide = biDi((v) => setHtmlProperty(key, v), binding)
-                    // ... (keep existing input logic if possible, or simplified)
-                    // User asked to instrument suspect effects.
-                    // Let's just instrument the generic prop one below first as it's more likely.
-                    // But I need to match the block correctly.
-                    // I will leave this block alone for now to avoid mess, targeting the prop block.
-                    
-					if (tag === 'input') {
-						switch (element.type) {
-							case 'checkbox':
-							case 'radio':
-								if (key === 'checked')
-									runCleanup.push(listen(element, 'input', () => provide(element.checked)))
-								break
-							case 'number':
-							case 'range':
-								if (key === 'value')
-									runCleanup.push(listen(element, 'input', () => provide(Number(element.value))))
-								break
-							default:
-								if (key === 'value')
-									runCleanup.push(listen(element, 'input', () => provide(element.value)))
-								break
-						}
-					}
-					cleanedBy(element, () => {
-						setHtmlProperty(key, undefined)
-						for (const stop of runCleanup) stop()
-					})
-					continue
 				}
-				if (isFunction(value)) {
-					cleanedBy(element, namedEffect(`prop:${key}`, () => {
-						setHtmlProperty(key, nf(`${tag}:${key}`, value)())
-					}))
-					continue
-				}
-				if (key === 'innerHTML') {
-					if (value !== undefined) {
-						const htmlValue = String(value)
-						testing.renderingEvent?.('set innerHTML', element, htmlValue)
-						element.innerHTML = htmlValue
-					}
-					cleanedBy(element, () => {
-						element.innerHTML = ''
-					})
-					continue
-				}
-				setHtmlProperty(key, value)
 				cleanedBy(element, () => {
 					setHtmlProperty(key, undefined)
+					for (const stop of runCleanup) stop()
 				})
+				continue
 			}
+			if (isFunction(value)) {
+				cleanedBy(element, namedEffect(`prop:${key}`, () => {
+					setHtmlProperty(key, nf(`${tag}:${key}`, value)())
+				}))
+				continue
+			}
+			setHtmlProperty(key, value)
+			cleanedBy(element, () => {
+				setHtmlProperty(key, undefined)
+			})
+		}
 
 		// Create plain HTML element - also return mount object for consistency
 		mountObject = jsxEl(
@@ -519,7 +509,7 @@ export const h = (tag: any, props: Record<string, any> = {}, ...children: Child[
 					}
 				}
 				// Render children
-				if (children && children.length > 0 && !regularProps?.innerHTML) {
+				if (children && children.length > 0) {
 					// Process new children
 					const processedChildren = processChildren(children, scope)
 					cleanedBy(element, bindChildren(element, processedChildren))
@@ -755,7 +745,7 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 
 		for (const item of rendered) if (item) push(item)
 		return next
-	}) as unknown as readonly Node[]
+	})
 	return cleanedBy(flattened, () => {
 		conditioned[cleanup]()
 		rendered[cleanup]()

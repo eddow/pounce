@@ -12,25 +12,10 @@
 		"baseUrl": ".",
 		"paths": {
 			"mutts": [
-				"../../../mutts/dist/index.d.ts"
+				"../../../mutts/src/index.ts"
 			],
 			"mutts/*": [
-				"../../../mutts/dist/*"
-			],
-			"npc-script": [
-				"../../../npcs/dist/index.d.ts"
-			],
-			"npc-script/*": [
-				"../../../npcs/dist/*"
-			],
-			"omni18n": [
-				"../../../omni18n/src/client.ts"
-			],
-			"pure-glyf": [
-				"../../../pure-glyf/dist/index.d.ts"
-			],
-			"pure-glyf/*": [
-				"../../../pure-glyf/dist/*"
+				"../../../mutts/src/*"
 			],
 			"@pounce/core/jsx-runtime": [
 				"src/runtime/jsx-runtime.ts"
@@ -39,8 +24,8 @@
 				"src/runtime/jsx-dev-runtime.ts"
 			],
 			"@pounce/core": [
-				"src/lib/index.ts",
-				"./dist/index.d.ts"
+				"src/lib/node/index.ts",
+				"src/lib/dom/index.ts"
 			]
 		},
 		"allowImportingTsExtensions": true,

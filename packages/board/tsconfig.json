@@ -51,12 +51,6 @@
 			"mutts/*": [
 				"../../../mutts/dist/*"
 			],
-			"npc-script": [
-				"../../../npcs/dist/index.d.ts"
-			],
-			"omni18n": [
-				"../../../omni18n/src/client.ts"
-			]
 		}
 	},
 	"include": [

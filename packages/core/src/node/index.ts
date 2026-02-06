@@ -3,25 +3,14 @@ import { createAlsProxy } from './proxy-factory'
 import { JSDOM } from 'jsdom'
 
 /**
- * Checks if we're running in Vitest with a DOM environment provided.
- */
-function isVitestWithDOM(): boolean {
-	return (
-		typeof globalThis.window !== 'undefined' &&
-		typeof globalThis.document !== 'undefined' &&
-		(process.env.VITEST === 'true' || typeof (globalThis as any).__vitest_worker__ !== 'undefined')
-	)
-}
-
-/**
  * Bootstraps the platform for the Node.js/SSR environment.
  * Redirects platform calls into context-aware proxies for request isolation.
  * In Vitest environments with DOM, uses the provided DOM directly.
  */
 
 // If Vitest provided a DOM environment, use it directly (no ALS proxies needed)
-if (isVitestWithDOM()) {
-	setPlatformAPIs('Node for Vitest with DOM environment', {
+if (typeof window !== 'undefined') {
+	setPlatformAPIs('Test/DOM', {
 		window: globalThis.window,
 		document: globalThis.document,
 		Node: globalThis.Node,
@@ -32,7 +21,6 @@ if (isVitestWithDOM()) {
 		DocumentFragment: globalThis.DocumentFragment,
 		crypto: globalThis.crypto,
 	})
-	console.log()
 } else if(process.env.NODE_ENV === 'test') {
 	// Test environment without Vitest DOM (e.g., core package's own tests)
 	// Set up JSDOM manually
@@ -44,21 +32,22 @@ if (isVitestWithDOM()) {
 		}
 	)
 	const { window } = jsdom
-	
-	setPlatformAPIs('Node for test environment (manual JSDOM)', {
-		window: window as any,
-		document: window.document as any,
-		Node: window.Node as any,
-		HTMLElement: window.HTMLElement as any,
-		Event: window.Event as any,
-		CustomEvent: window.CustomEvent as any,
-		Text: window.Text as any,
-		DocumentFragment: window.DocumentFragment as any,
-		crypto: window.crypto as any,
-	})
+	const config = {
+		window: window as unknown as Window,
+		document: window.document,
+		Node: window.Node,
+		HTMLElement: window.HTMLElement,
+		Event: window.Event,
+		CustomEvent: window.CustomEvent,
+		Text: window.Text,
+		DocumentFragment: window.DocumentFragment,
+		crypto: window.crypto,
+	}
+	Object.assign(globalThis, config)
+	setPlatformAPIs('Test/Node', config)
 } else {
 	// Otherwise, set up ALS proxies for SSR with request isolation
-	setPlatformAPIs('Node for SSR', {
+	setPlatformAPIs('Node/SSR', {
 		window: createAlsProxy<Window>('window'),
 		document: createAlsProxy<Document>('document'),
 		Node: createAlsProxy<typeof Node>('Node'),

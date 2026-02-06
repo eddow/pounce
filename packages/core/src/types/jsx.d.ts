@@ -2,6 +2,7 @@ import type { PounceElement, Scope } from '../lib/renderer'
 import type { ScopedCallback } from 'mutts'
 import type { NameSpacedProps } from '../lib/namespaced'
 import type { StyleInput } from '../lib/styles'
+import type { Variant } from '../lib/variants'
 
 declare global {
 	var h: (type: any, props?: any, ...children: any[]) => JSX.Element
@@ -33,6 +34,8 @@ declare global {
 			MouseReactiveHTMLAttributes & {
 				children?: Children
 				autoFocus?: boolean
+				// Variant support
+				variants?: Variant | Variant[]
 				// Additional common non-mouse events
 				onFocus?: (event: FocusEvent) => void
 				onBlur?: (event: FocusEvent) => void

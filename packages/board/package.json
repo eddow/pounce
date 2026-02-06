@@ -76,13 +76,13 @@
 		"@pounce/plugin": "workspace:*",
 		"@babel/core": "^7.28.4",
 		"@types/babel__core": "^7.20.5",
-		"@biomejs/biome": "^2.0.6",
-		"@playwright/test": "^1.49.1",
+		"@biomejs/biome": "^2.2.7",
+		"@playwright/test": "^1.56.1",
 		"@types/node": "^22.10.5",
-		"@vitest/coverage-v8": "^2.1.8",
+		"@vitest/coverage-v8": "^4.0.18",
 		"jsdom": "^27.4.0",
-		"typescript": "^5.7.2",
-		"vite": "^6.0.7",
+		"typescript": "^5.9.3",
+		"vite": "^7.3.1",
 		"vitest": "^4.0.18"
 	},
 	"files": [

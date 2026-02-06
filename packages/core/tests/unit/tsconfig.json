@@ -9,21 +9,6 @@
 			"mutts/*": [
 				"../../../../../mutts/src/*"
 			],
-			"npc-script": [
-				"../../../../../npcs/src/index.ts"
-			],
-			"npc-script/*": [
-				"../../../../../npcs/src/*"
-			],
-			"omni18n": [
-				"../../../../../omni18n/src/client.ts"
-			],
-			"pure-glyf": [
-				"../../../../../pure-glyf/src/index.ts"
-			],
-			"pure-glyf/*": [
-				"../../../../../pure-glyf/src/*"
-			],
 			"@pounce/core/jsx-runtime": [
 				"src/runtime/jsx-runtime.ts"
 			],
@@ -31,8 +16,7 @@
 				"src/runtime/jsx-dev-runtime.ts"
 			],
 			"@pounce/core": [
-				"src/lib/index.ts",
-				"src/test/index.ts"
+				"src/lib/node/index.ts",
 			]
 		}
 	},

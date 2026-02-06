@@ -1,17 +1,17 @@
 import { defineConfig, mergeConfig } from 'vitest/config'
-import { dirname, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createBaseConfig } from '../../test/vitest.config.base'
 
-const projectRootDir = dirname(fileURLToPath(import.meta.url))
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
-const baseConfig = createBaseConfig(projectRootDir)
+const baseConfig = createBaseConfig(__dirname)
 
 export default mergeConfig(baseConfig, defineConfig({
+  test: {
+    name: 'core',
+    environment: 'jsdom',
+  },
   resolve: {
     conditions: ['browser', 'development', 'import', 'default'],
-  },
-  test: {
-    environment: 'jsdom'
   },
 }))

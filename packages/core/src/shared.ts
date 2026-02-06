@@ -49,4 +49,4 @@ export const setPlatformAPIs = (name: string, apis: {
 	if (apis.crypto !== undefined) crypto = apis.crypto
 }
 
-export let entryPoint = 'Non-initialized EntryPoint'
+export let entryPoint = 'non-initialized'

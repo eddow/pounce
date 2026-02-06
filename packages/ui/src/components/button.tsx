@@ -2,6 +2,7 @@ import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
 import { asVariant, getVariantClass } from '../shared/variants'
+import { Icon } from './icon'
 
 // Default Button Styles (SASS)
 componentStyle.sass`
@@ -76,17 +77,15 @@ const ButtonBase = (props: ButtonProps) => {
 			get iconElement() {
 				if (!s.icon) return null
 
-				// If icon is a string, use adapter's resolver or fallback to simple span
 				if (typeof s.icon === 'string') {
-					const resolver = adapter.iconResolver
 					return (
 						<span class="pounce-button-icon" aria-hidden="true">
-							{resolver ? resolver(s.icon) : s.icon}
+							<Icon name={s.icon} />
 						</span>
 					)
 				}
 
-				return <span class="pounce-button-icon">{s.icon}</span>
+				return <span class="pounce-button-icon" aria-hidden="true">{s.icon}</span>
 			},
 			get hasLabel() {
 				return !!s.children && (!Array.isArray(s.children) || s.children.some((e: any) => !!e))

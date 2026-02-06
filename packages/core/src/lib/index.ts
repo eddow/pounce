@@ -21,6 +21,7 @@ export { bindChildren, Fragment, h, rootScope, type Scope, type Child, type Comp
 export * from './utils'
 export * from './platform'
 export * from '../shared'
+export * from './variants'
 
 export function bindApp(
 	app: JSX.Element,

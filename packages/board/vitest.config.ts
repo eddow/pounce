@@ -1,10 +1,14 @@
-import { defineConfig, mergeConfig } from "vitest/config";
-import { createBaseConfig } from '../../test/vitest.config.base';
+import { defineConfig, mergeConfig } from 'vitest/config'
+import { fileURLToPath } from 'node:url'
+import { createBaseConfig } from '../../test/vitest.config.base'
 
-const baseConfig = createBaseConfig(__dirname);
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
+
+const baseConfig = createBaseConfig(__dirname)
 
 export default mergeConfig(baseConfig, defineConfig({
   test: {
-    environment: "node",
+    name: 'board',
+    environment: 'node',
   },
-}));
+}))
