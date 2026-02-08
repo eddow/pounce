@@ -1,11 +1,10 @@
-import { cleanedBy, cleanup, effect, lift, project, type ScopedCallback, scan, unwrap } from 'mutts'
+import { cleanedBy, cleanup, effect, lift, project, type ScopedCallback, scan, tag, unwrap } from 'mutts'
 import { document, Node } from '../shared'
 import { testing } from './debug'
-import { type Child, DynamicRenderingError, PounceElement, type Scope } from './pounce-element'
-import { isFunction, isNumber, isString } from './renderer-internal'
+import { type Child, DynamicRenderingError, PounceElement, type Scope, emptyChild } from './pounce-element'
+import { isNumber, isString } from './renderer-internal'
 import { extend, isElement } from './utils'
-
-const emptyChild = new PounceElement(() => [])
+import { ReactiveProp } from './jsx-factory'
 
 export function bindChildren(
 	parent: Node,
@@ -66,9 +65,8 @@ export function bindChildren(
  * Returns a flat array of DOM nodes suitable for replaceChildren()
  */
 export function processChildren(children: readonly Child[], scope: Scope): readonly Node[] {
-	const renderers = project.array<Child, PounceElement>(children, function processChild({ get }) {
-		let child: Child = get()
-		while (isFunction(child)) child = (child as () => Child)()
+	const renderers = tag('reconciler::renderers', project.array<Child, PounceElement>(children, function processChild({ value: child }) {
+		while (child instanceof ReactiveProp) child = child.get()
 		if (child === undefined || child === null || child === (false as any)) return emptyChild
 		if (isString(child) || isNumber(child))
 			return new PounceElement(function createTextNode() { return document.createTextNode(String(child)) })
@@ -81,9 +79,9 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 		if (child instanceof PounceElement) return child
 		if (child && typeof (child as any).render === 'function') return child as PounceElement
 		return emptyChild
-	})
+	}))
 
-	const conditioned = scan(
+	const conditioned = tag('reconciler::conditioned', scan(
 		renderers,
 		function processConditions(acc: { ifOccurred: boolean; value?: PounceElement }, child: PounceElement) {
 			if ('condition' in child || 'if' in child || 'when' in child || 'else' in child) {
@@ -101,9 +99,9 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 			return extend(acc, { value: child })
 		},
 		{ ifOccurred: false }
-	)
+	))
 
-	const rendered = project(conditioned, function renderChild(access): Node | readonly Node[] | false | undefined {
+	const rendered = tag('reconciler::rendered', project(conditioned, function renderChild(access): Node | readonly Node[] | false | undefined {
 		const accResult = access.value
 		if (!accResult || !accResult.value) return
 		const renderer = accResult.value as PounceElement
@@ -121,9 +119,9 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 		}
 		if (typeof Node !== 'undefined' && nodes instanceof Node) return unwrap(nodes)
 		throw new DynamicRenderingError('Render should return Node-s')
-	})
+	}))
 
-	const flattened = lift(function flattenNodes() {
+	const flattened = tag('reconciler::flattened', lift(function flattenNodes() {
 		const next: Node[] = []
 		const push = function pushItem(item: any) {
 			if (Array.isArray(item)) {
@@ -135,7 +133,7 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 
 		for (const item of rendered) if (item) push(item)
 		return next
-	})
+	}))
 	return cleanedBy(flattened, function performCleanup() {
 		conditioned[cleanup]()
 		rendered[cleanup]()

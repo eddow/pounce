@@ -11,7 +11,7 @@ export function MiniCounter(props: MiniCounterProps, scope: Scope) {
 		console.log(obj, evolution)
 	})
 	const state = compose({ list: [] as string[], addedText: Date.now().toString() }, props)
-	console.log('🎯 Mini counter component mounted!', { scope: scope })
+	console.log('🎯 Mini counter component mounted!')
 	effect(() => {
 		return () => {
 			console.log('🎯 Counter component unmounted!', { finalList: state.list.join(', ') })

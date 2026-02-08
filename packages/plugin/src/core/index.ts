@@ -140,6 +140,7 @@ export function pounceBabelPlugin({
 		if (usesForwardProps || forceForwardProps) {
 			ensureImport('forwardProps')
 		}
+		ensureImport('r')
 	}
 
 	function isExpressionOrSpread(
@@ -206,7 +207,9 @@ export function pounceBabelPlugin({
 								[], // No args
 								expression // Body is `this.counter`
 							)
-							path.node.children[index] = t.jsxExpressionContainer(arrowFunction)
+							path.node.children[index] = t.jsxExpressionContainer(
+								t.callExpression(t.identifier('r'), [arrowFunction])
+							)
 						}
 					}
 				}
@@ -254,10 +257,7 @@ export function pounceBabelPlugin({
 									}
 									if (getterExpr && setterExpr) {
 										const getter = t.arrowFunctionExpression([], getterExpr)
-										const bindingObject = t.objectExpression([
-											t.objectProperty(t.identifier('get'), getter),
-											t.objectProperty(t.identifier('set'), setterExpr),
-										])
+										const bindingObject = t.callExpression(t.identifier('r'), [getter, setterExpr])
 										baseAttr.value = t.jsxExpressionContainer(bindingObject)
 										// remove update:attr
 										attrs.splice(i, 1)
@@ -278,24 +278,9 @@ export function pounceBabelPlugin({
 							if (t.isJSXExpressionContainer(attr.value)) {
 								const expression = attr.value.expression
 								if (!t.isJSXEmptyExpression(expression)) {
-									// Skip if already a binding object (from update: pass)
-									if (t.isObjectExpression(expression)) {
-										const hasGet = expression.properties.some(
-											(prop: t.ObjectProperty | t.SpreadElement | t.ObjectMethod) =>
-												t.isObjectProperty(prop) &&
-												t.isIdentifier(prop.key) &&
-												prop.key.name === 'get'
-										)
-										const hasSet = expression.properties.some(
-											(prop: t.ObjectProperty | t.SpreadElement | t.ObjectMethod) =>
-												t.isObjectProperty(prop) &&
-												t.isIdentifier(prop.key) &&
-												prop.key.name === 'set'
-										)
-										if (hasGet && hasSet) {
-											// Already a binding object, skip transformation
-											continue
-										}
+									// Skip if already wrapped by r() (from update: pass)
+									if (t.isCallExpression(expression) && t.isIdentifier(expression.callee, { name: 'r' })) {
+										continue
 									}
 									// Check if this is a simple property access for 2-way binding
 									// Handle type assertions: `xxx as Type` or `xxx.yyy as Type`
@@ -314,9 +299,8 @@ export function pounceBabelPlugin({
 											[t.identifier('v')],
 											t.assignmentExpression('=', innerExpression as t.LVal, t.identifier('v'))
 										)
-										const bindingObject = t.objectExpression([
-											t.objectProperty(t.identifier('set'), setter),
-										])
+										const dummyGetter = t.arrowFunctionExpression([], t.identifier('undefined'))
+										const bindingObject = t.callExpression(t.identifier('r'), [dummyGetter, setter])
 										attr.value = t.jsxExpressionContainer(bindingObject)
 									} else if (t.isMemberExpression(innerExpression)) {
 										// Auto-detect 2-way binding: transform `{this.count}`, `{state.count}`, or `{state['count']}` to `{{get: () => this.count, set: (val) => this.count = val}}`
@@ -326,15 +310,14 @@ export function pounceBabelPlugin({
 											[t.identifier('val')],
 											t.assignmentExpression('=', innerExpression, t.identifier('val'))
 										)
-										const bindingObject = t.objectExpression([
-											t.objectProperty(t.identifier('get'), getter),
-											t.objectProperty(t.identifier('set'), setter),
-										])
+										const bindingObject = t.callExpression(t.identifier('r'), [getter, setter])
 										attr.value = t.jsxExpressionContainer(bindingObject)
 									} else {
 										// One-way binding: rewrite `prop={this.counter}` into `prop={() => this.counter}`
 										const arrowFunction = t.arrowFunctionExpression([], expression)
-										attr.value = t.jsxExpressionContainer(arrowFunction)
+										attr.value = t.jsxExpressionContainer(
+											t.callExpression(t.identifier('r'), [arrowFunction])
+										)
 									}
 								}
 							}

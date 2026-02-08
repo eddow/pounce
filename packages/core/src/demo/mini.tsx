@@ -124,4 +124,6 @@ const MicroApp = () => (
 )*/
 
 // Initialize the app using the automated bindApp helper
-bindApp(<App />, '#mini')
+export function initMini() {
+	bindApp(<App />, '#mini')
+}

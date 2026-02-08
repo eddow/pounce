@@ -27,6 +27,7 @@ export {
 export * from './utils'
 export * from './variants'
 
+
 // biome-ignore lint/suspicious/noExplicitAny: Centralized global JSX injection for the framework
 const g = globalThis as any
 g.h = h

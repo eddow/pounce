@@ -189,7 +189,16 @@ export const h = (
 			if (/^on[A-Z]/.test(key)) {
 				const eventType = key.slice(2).toLowerCase()
 				const stop = namedEffect(`event:${key}`, () => {
-					const handlerCandidate = value.get ? value.get() : value()
+					/*
+					 * Event handlers can be:
+					 * 1. ReactiveProp: value.get() returns the handler
+					 * 2. Static function: value is the handler
+					 */
+					const handlerCandidate =
+						value instanceof ReactiveProp
+							? value.get()
+							: value
+
 					if (handlerCandidate === undefined) return
 					const registeredEvent = atomic(handlerCandidate)
 					return listen(element, eventType, registeredEvent)
@@ -216,46 +225,46 @@ export const h = (
 				cleanedBy(element, stop)
 				continue
 			}
-			if (isObject(value) && value !== null && 'get' in value && 'set' in value) {
-				const binding = {
-					get: nf(`get ${tag}:${key}`, value.get as () => unknown),
-					set: nf(`set ${tag}:${key}`, value.set as (v: unknown) => void),
-				}
-				const provide = biDi((v) => setHtmlProperty(element, key, v), binding)
-
-				if (tag === 'input') {
-					switch ((element as any).type) {
-						case 'checkbox':
-						case 'radio':
-							if (key === 'checked')
-								runCleanup.push(listen(element, 'input', () => provide((element as any).checked)))
-							break
-						case 'number':
-						case 'range':
-							if (key === 'value')
-								runCleanup.push(
-									listen(element, 'input', () => provide(Number((element as any).value)))
-								)
-							break
-						default:
-							if (key === 'value')
-								runCleanup.push(listen(element, 'input', () => provide((element as any).value)))
-							break
+			if (value instanceof ReactiveProp) {
+				if (value.set) {
+					const binding = {
+						get: nf(`get ${tag}:${key}`, value.get as () => unknown),
+						set: nf(`set ${tag}:${key}`, value.set as (v: unknown) => void),
 					}
-				}
-				cleanedBy(element, () => {
-					setHtmlProperty(element, key, undefined)
-					for (const stop of runCleanup) stop()
-				})
-				continue
-			}
-			if (isFunction(value)) {
-				cleanedBy(
-					element,
-					namedEffect(`prop:${key}`, () => {
-						setHtmlProperty(element, key, nf(`${tag}:${key}`, value)())
+					const provide = biDi((v) => setHtmlProperty(element, key, v), binding)
+
+					if (tag === 'input') {
+						switch ((element as any).type) {
+							case 'checkbox':
+							case 'radio':
+								if (key === 'checked')
+									runCleanup.push(listen(element, 'input', () => provide((element as any).checked)))
+								break
+							case 'number':
+							case 'range':
+								if (key === 'value')
+									runCleanup.push(
+										listen(element, 'input', () => provide(Number((element as any).value)))
+									)
+								break
+							default:
+								if (key === 'value')
+									runCleanup.push(listen(element, 'input', () => provide((element as any).value)))
+								break
+						}
+					}
+					cleanedBy(element, () => {
+						setHtmlProperty(element, key, undefined)
+						for (const stop of runCleanup) stop()
 					})
-				)
+				} else {
+					cleanedBy(
+						element,
+						namedEffect(`prop:${key}`, () => {
+							setHtmlProperty(element, key, nf(`${tag}:${key}`, value.get)())
+						})
+					)
+				}
 				continue
 			}
 			setHtmlProperty(element, key, value)
@@ -291,7 +300,7 @@ export const h = (
 	return Object.defineProperties(mountObject, Object.getOwnPropertyDescriptors(collectedCategories))
 }
 
-export const intrinsicComponentAliases = extend(null, {
+export const intrinsicComponentAliases: Record<string, Function> = extend(null, {
 	scope(props: { children?: any; [key: string]: any }, scope: Scope) {
 		effect(function scopeEffect() {
 			for (const [key, value] of Object.entries(props)) if (key !== 'children') scope[key] = value
@@ -305,21 +314,22 @@ export const intrinsicComponentAliases = extend(null, {
 		},
 		scope: Scope
 	) {
-		const body = Array.isArray(props.children) ? props.children[0] : props.children
-		const cb = body() as (item: T, oldItem?: any) => any
+		let body = Array.isArray(props.children) ? props.children[0] : props.children
+		if (body instanceof ReactiveProp) body = body.get()
+		const cb = body as (item: T, oldItem?: Child) => Child
 		const memoized = memoize(cb as (item: T & object) => any)
 		const compute = () => {
 			const each = (props as any).each as readonly T[] | undefined
-			if (!each) return [] as readonly any[]
+			if (!each) return [] as any[]
 			return isNonReactive(each)
-				? (each.map((item: T) => cb(item)) as readonly any[])
+				? (each.map((item: T) => cb(item)) as any[])
 				: (project(each, ({ value: item, old }) => {
 						return isObject(item) || isSymbol(item) || isFunction(item)
 							? memoized(item as T & object)
 							: cb(item, old as any | undefined)
-					}) as readonly any[])
+					}) as any[])
 		}
-		return new PounceElement(() => processChildren([compute as any], scope), { tag: 'for' })
+		return new PounceElement(() => processChildren([r(compute) as Child], scope), { tag: 'dynamic' })
 	},
 	dynamic(props: { tag: any; children?: any } & Record<string, any>, scope: Scope) {
 		function compute(): any[] {
@@ -333,13 +343,8 @@ export const intrinsicComponentAliases = extend(null, {
 			// Resolve the tag identity to track changes.
 			let tagValue = isFunction(props.tag) && props.tag.length === 0 ? props.tag() : props.tag
 
-			if (
-				isObject(tagValue) &&
-				tagValue !== null &&
-				'get' in tagValue &&
-				isFunction((tagValue as any).get)
-			)
-				tagValue = (tagValue as any).get()
+			if (tagValue instanceof ReactiveProp)
+				tagValue = tagValue.get()
 
 			const childrenValue = isFunction(props.children) ? props.children() : props.children
 			const childArray: any[] = Array.isArray(childrenValue)
@@ -388,3 +393,12 @@ export const intrinsicComponentAliases = extend(null, {
 })
 
 export const Fragment = intrinsicComponentAliases.fragment
+
+export class ReactiveProp<T> {
+	constructor(
+		public get: () => T,
+		public set?: (v: T) => void
+	) {}
+}
+
+export const r = <T>(get: () => T, set?: (v: T) => void) => new ReactiveProp(get, set)

@@ -1,4 +1,5 @@
 import { pounceOptions, testing } from './debug'
+import { ReactiveProp } from './jsx-factory'
 
 export function isFunction(value: any): value is Function {
 	return typeof value === 'function'
@@ -35,9 +36,9 @@ export function listen(
 }
 
 export function valuedAttributeGetter(to: any) {
-	if (to === true) return () => undefined
+	if (to instanceof ReactiveProp) return to.get
+	if (to === true) return () => true
 	if (isFunction(to)) return to as (...args: any[]) => unknown
-	if (isObject(to) && 'get' in to) return (to as { get: () => unknown }).get
 	return () => to
 }
 

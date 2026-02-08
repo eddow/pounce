@@ -35,7 +35,7 @@ export default defineConfig({
 		cwd: projectRootDir,
 		port,
 		timeout: 120_000,
-		reuseExistingServer: false,
+		reuseExistingServer: true,
 	},
 })
 

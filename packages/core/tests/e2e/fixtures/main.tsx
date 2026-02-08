@@ -16,21 +16,6 @@ declare global {
 
 // Capture rendering events for test assertions
 const renderingEventLog: Array<{ event: string; args: any[]; timestamp: number }> = []
-window.__pounceEvents = {
-	renderingEvents: renderingEventLog,
-	reset() {
-		renderingEventLog.length = 0
-	},
-}
-
-// Override the testing.renderingEvent to capture events
-const originalRenderingEvent = testing.renderingEvent
-testing.renderingEvent = (event: string, ...args: any[]) => {
-	renderingEventLog.push({ event, args, timestamp: Date.now() })
-	if (originalRenderingEvent) {
-		originalRenderingEvent(event, ...args)
-	}
-}
 
 // Router based on URL hash
 const getHash = () => window.location.hash.slice(1) // Remove leading #
@@ -66,8 +51,6 @@ async function loadFixtureFixture() {
 			console.log('Loading Manual DynamicTests')
 			return { default: DynamicTests }
 		}
-
-		console.log('Available fixtures:', Object.keys(fixtures))
 
 		const loader = fixtures[`./${hash}Tests.tsx`]
 		window.__fixturesList = Object.keys(fixtures)
@@ -122,8 +105,26 @@ const TestRouter = () => {
 }
 
 // Load fixture when hash changes
-window.addEventListener('hashchange', loadFixtureFixture)
-loadFixtureFixture()
+export function initTests() {
+	window.__pounceEvents = {
+		renderingEvents: renderingEventLog,
+		reset() {
+			renderingEventLog.length = 0
+		},
+	}
 
-bindApp(<TestRouter />, '#tests')
+	// Override the testing.renderingEvent to capture events
+	const originalRenderingEvent = testing.renderingEvent
+	testing.renderingEvent = (event: string, ...args: any[]) => {
+		renderingEventLog.push({ event, args, timestamp: Date.now() })
+		if (originalRenderingEvent) {
+			originalRenderingEvent(event, ...args)
+		}
+	}
+
+	window.addEventListener('hashchange', loadFixtureFixture)
+	loadFixtureFixture()
+
+	bindApp(<TestRouter />, '#tests')
+}
 

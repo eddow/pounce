@@ -43,7 +43,18 @@ if (typeof window !== 'undefined') {
 		DocumentFragment: window.DocumentFragment,
 		crypto: window.crypto,
 	}
-	Object.assign(globalThis, config)
+	
+	// Safely assign properties, skipping read-only ones like crypto in newer Node versions
+	for (const [key, value] of Object.entries(config)) {
+		try {
+			if (key in globalThis) continue
+			// @ts-ignore
+			globalThis[key] = value
+		} catch (e) {
+			// Ignore assignment errors for read-only properties
+		}
+	}
+
 	setPlatformAPIs('Test/Node', config)
 } else {
 	// Otherwise, set up ALS proxies for SSR with request isolation

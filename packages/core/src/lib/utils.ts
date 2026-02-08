@@ -40,10 +40,7 @@ type PropsDesc<P extends Record<string, any>> = {
 	[K in keyof P]:
 		| P[K]
 		| (() => P[K])
-		| {
-				get: () => P[K]
-				set: (value: P[K]) => void
-		  }
+		| ReactiveProp<P[K]>
 }
 
 export function copyObject(into: Record<string, any>, from: Record<string, any>) {
@@ -68,11 +65,12 @@ export function propsInto<P extends Record<string, any>, S extends Record<string
 	into: S = {} as S
 ): S & P {
 	const descriptors = project(props, ({key, value}): PropertyDescriptor => 
-		(isObject(value) && value !== null && 'get' in value && 'set' in value)
+		(value instanceof ReactiveProp)
 			? {
+				get: value.get,
+				set: value.set || readonlyProp(key, value),
 				enumerable: true,
-				configurable: true,
-				...value
+				configurable: true
 			}
 		: isFunction(value)
 			? {
@@ -222,6 +220,9 @@ export const compose: Compose = (...args: readonly ComposeArgument[]): Record<st
 	} as ProxyHandler<any>)
 }
 
+import { ReactiveProp } from './jsx-factory'
+export { r } from './jsx-factory'
+
 /**
  * Extracts property descriptors from an object to allow forwarding reactive bindings.
  * This is crucial when spreading props that contain getters/setters, as standard spread
@@ -237,10 +238,10 @@ export function forwardProps(props: any): any {
 			get(target, prop) {
 				const desc = Object.getOwnPropertyDescriptor(target, prop)
 				if (desc && (desc.get || desc.set)) {
-					return {
-						get: () => (target as any)[prop],
-						set: (v: any) => ((target as any)[prop] = v),
-					}
+					return new ReactiveProp(
+						() => (target as any)[prop],
+						(v: any) => ((target as any)[prop] = v)
+					)
 				}
 				return (target as any)[prop]
 			},

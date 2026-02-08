@@ -1,5 +1,6 @@
 import { cleanedBy, effect, named, reactive, type ScopedCallback, untracked } from 'mutts'
 import { type ComponentInfo, POUNCE_OWNER } from './debug'
+import { ReactiveProp } from './jsx-factory'
 
 export const rootScope: Scope = reactive(Object.create(null))
 
@@ -22,7 +23,7 @@ export type NodeDesc = Node | string | number
  * - A reactive function that returns intermediate values
  * - An array of children (from .map() operations)
  */
-export type Child = NodeDesc | (() => Child) | PounceElement | Child[]
+export type Child = NodeDesc | ReactiveProp<Child> | PounceElement | Child[]
 
 export type ComponentNode = Node & {
 	[POUNCE_OWNER]?: ComponentInfo
@@ -80,7 +81,7 @@ export class PounceElement {
 	render(scope: Scope = rootScope): Node | readonly Node[] {
 		// Check cache first
 		let partial = PounceElement.renderCache.get(this)
-		//if (partial !== undefined) return partial
+		if (partial !== undefined) return partial
 		if (!partial) {
 			// Execute produce function untracked to prevent unwanted reactivity
 			effect(named(
@@ -143,3 +144,4 @@ It means the component definition refers a reactive value that has been modified
 }
 
 export type Component<P = {}> = (props: P, scope?: Scope) => PounceElement
+export const emptyChild = new PounceElement(() => [])

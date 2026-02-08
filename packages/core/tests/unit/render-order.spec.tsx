@@ -154,6 +154,8 @@ describe('Effect topology and error propagation', () => {
 		const ThrowingChild = () => {
 			logs.push('child-start')
 			if (state.triggerError) {
+				// @ts-ignore
+				__MUTTS_DEVTOOLS__.nodeLineage('throw')
 				throw new Error('Child error')
 			}
 			logs.push('child-end')

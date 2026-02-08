@@ -10,7 +10,7 @@
     "type-check": "tsc --noEmit",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "vitest run",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --forbid-only",
     "test:ui": "playwright test --ui",
     "biome": "biome check --write src"
   },

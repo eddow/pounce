@@ -11,12 +11,6 @@
 		"moduleResolution": "bundler",
 		"baseUrl": ".",
 		"paths": {
-			"mutts": [
-				"../../../mutts"
-			],
-			"mutts/*": [
-				"../../../mutts/*"
-			],
 			"@pounce/core/jsx-runtime": [
 				"src/runtime/jsx-runtime.ts"
 			],
@@ -50,7 +44,7 @@
 	"include": [
 		"src/**/*",
 		"tests/**/*.ts",
-		"tests/**/*.tsx",
+		"tests/**/*.tsx"
 	],
 	"exclude": [
 		"../../../mutts/**/*"

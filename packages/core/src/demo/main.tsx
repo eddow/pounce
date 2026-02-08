@@ -22,7 +22,6 @@ const refs = reactive({
 	counter: undefined as Node | readonly Node[] | undefined,
 	todos: undefined as Node | readonly Node[] | undefined,
 })
-console.log('refs', refs)
 const App = () => (
 	<>
 		<div>
@@ -97,4 +96,6 @@ const App = () => (
 )
 
 // Initialize the app using the automated bindApp helper
-bindApp(<App />, '#app')
+export function initDemo() {
+	bindApp(<App />, '#app')
+}
