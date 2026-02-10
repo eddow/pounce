@@ -58,6 +58,13 @@ Framework-agnostic UI component library for Pounce applications. Evolved from `@
 | Toolbar | `toolbar.tsx` | `Toolbar` |
 | Menu | `menu.tsx` | `Menu` |
 
+### Display & Theming
+| Component | File | Notes |
+|-----------|------|-------|
+| DisplayProvider | `display/display-context.tsx` | Scope-based theme/dir/locale, nestable, `data-theme` on own element |
+| ThemeToggle | `display/theme-toggle.tsx` | Split-button UX: quick toggle + dropdown with auto/dark/light |
+| useDisplayContext | `display/display-context.tsx` | `useDisplayContext(scope)` → `DisplayContext` (falls back to system defaults) |
+
 ### Overlays & Error Handling
 | Component | File | Adapter Key |
 |-----------|------|-------------|
@@ -87,14 +94,20 @@ Framework-agnostic UI component library for Pounce applications. Evolved from `@
 - `./analysis/WALKTHROUGH.md` — Master task list and migration status
 
 ## Upcoming
-- **DisplayProvider** — scope-based theme/direction/locale with `data-theme` on own element, `'auto'` resolution, nested re-entrance. See `TODO.md` and `analysis/display-context-architecture.md`.
-- **ThemeToggle** — split-button UX, reads/writes via `useDisplayContext()`
 - **Form validation & loading** — `loading` prop (Button), `valid` prop (form controls), `aria-busy`/`aria-invalid`. Big TODO, needs design pass.
-- **Future components** — Card (`<article>`), Progress (`<progress>`), Accordion (`<details name>`)
 
 ## Known Issues
 - ~~`this=` ref pattern~~ — ✅ Confirmed working by Corrie. Real build blocker was stale `variantClass` import in `badge.ts` — fixed.
 - ButtonGroup global keydown handler is over-broad (matches any `[role="group"]`) — compys to narrow
 
 ## Status
-🚧 Under development — all components migrated (31/37 WALKTHROUGH tasks complete), adapter system operational, `@pounce/adapter-pico` functional, not yet production-ready.
+🚧 Under development — all components migrated (35.5/39 WALKTHROUGH tasks complete), adapter system operational, `@pounce/adapter-pico` functional, not yet production-ready.
+
+## DisplayContext Architecture
+- **Kit provides**: `client.prefersDark()`, `client.direction`, `client.language` — raw system values
+- **UI provides**: `DisplayProvider` component reads kit values as root defaults, manages `auto` resolution chain
+- **Scope key**: `scope.display` — set by `DisplayProvider`, read by `useDisplayContext(scope)`
+- **Icon integration**: `Icon` component reads `DisplayContext` from scope, passes to `iconFactory`
+- **Kit/intl hook**: `setLocaleResolver()` can be wired to read `scope.display.locale`
+- **Nesting**: child providers inherit from parent, override only specified axes
+- **DOM**: `<div class="pounce-display-provider" data-theme dir lang>` with `display: contents`

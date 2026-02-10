@@ -1,5 +1,5 @@
 import { bindApp } from '@pounce/core'
-import { setAdapter } from '@pounce/ui'
+import { setAdapter } from '../../../ui/src'
 import { picoAdapter } from '../src'
 import '@picocss/pico/css/pico.min.css'
 import '../src/pico-bridge.sass'

@@ -587,6 +587,53 @@ Disclosure component using `<details>`/`<summary>` with exclusive-open groups.
 
 ---
 
+## Group I: Display Context
+
+### I1: DisplayProvider + useDisplayContext
+**Owner**: **compys**
+**Status**: [✅ Complete]
+**Dependencies**: Group B complete, @pounce/kit client values
+**Estimated Time**: 2-3 hours
+
+Scope-based display context provider for theme, direction, and locale.
+
+**Tasks**:
+- [✅] Create `src/display/display-context.tsx` — `DisplayProvider` component + `useDisplayContext(scope)`
+- [✅] Evolve `DisplayContext` type in `adapter/types.ts` (add `themeSetting`, `setTheme`, `locale` required)
+- [✅] Scope-based injection via `scope.display`
+- [✅] Nestable: child providers inherit from parent, override only specified axes
+- [✅] `auto` resolution: parent → kit system values (`client.prefersDark()`, `client.direction`, `client.language`)
+- [✅] DOM: `<div class="pounce-display-provider" data-theme dir lang>` with `display: contents`
+- [✅] Unit tests: 10/10 passing
+
+### I2: ThemeToggle
+**Owner**: **compys**
+**Status**: [✅ Complete]
+**Dependencies**: I1
+**Estimated Time**: 1-2 hours
+
+Split-button UX for theme switching.
+
+**Tasks**:
+- [✅] Create `src/display/theme-toggle.tsx` — main toggle (dark↔light) + dropdown (auto/dark/light + custom)
+- [✅] 4 visual states with auto badge, accessible aria-labels
+- [✅] `simple` prop hides dropdown, customizable icons/labels/themes
+- [✅] Unit tests: 11/11 passing
+
+### I3: Integration
+**Owner**: **compys**
+**Status**: [✅ Complete]
+**Dependencies**: I1, I2
+
+- [✅] Wire `Icon` component to read `DisplayContext` from scope → passes to `iconFactory`
+- [✅] Export `DisplayProvider`, `ThemeToggle`, `useDisplayContext`, `defaultDisplayContext` from `src/index.ts`
+- [✅] Demo app: `/theme` route with nested contexts (dark override, RTL, locale), `ThemeToggle` in header
+- [✅] Demo app wrapped in `DisplayProvider` at root
+- [✅] README documentation with prop tables, examples (nesting, persistence, useDisplayContext)
+- [✅] Zero regressions (21 new tests, all pre-existing failures unchanged)
+
+---
+
 ## Agent Log
 
 E2 Vanilla Demo & Adapter - over-layed - 2026-02-09 22:20
@@ -602,7 +649,7 @@ E2 Vanilla Demo & Adapter - over-layed - 2026-02-09 22:20
 ## Progress
 
 | Group | Tasks | Complete |
-|-------|-------|----------|
+|-------|-------|---------|
 | Phase 0 | 7 | 7 |
 | Group A | 2 | 2 |
 | Group B | 20 | 20 |
@@ -611,16 +658,19 @@ E2 Vanilla Demo & Adapter - over-layed - 2026-02-09 22:20
 | Group E | 2 | 0.5 |
 | Group F | 2 | 0 |
 | Group H | 3 | 3 |
-| **Total** | **39** | **35.5** |
+| Group I | 3 | 3 |
+| **Total** | **42** | **38.5** |
 
 ### Build blocker — resolved
 - `badge.ts` imported removed `variantClass()` → fixed to use `getVariantTrait()` + direct Trait property access
 - `this=` JSX attribute confirmed working by Corrie (was never broken)
 - UI dist rebuild unblocked
 
-### Agent status (2026-02-09)
-- **compys** — Group B complete + Group H complete (Card, Progress, Accordion). 5 review action items from B still pending.
-- **pico-tee** — `@pounce/adapter-pico` feature-complete. 26 components, 15 bridge sections, 48/48 tests. Tooltip directive, Group H adapted. Review items done.
-- **over-layed** — E2 vanilla adapter + demo done (reviewed, 5 action items). PicoCSS example app unblocked (adapter + UI dist ready).
-- **kitty** — `@pounce/kit/intl` shipped + full docs pass. 86/86 tests, zero DTS errors. Available.
+### Agent status (2026-02-10)
+- **compys** — Group B + H + I complete. DisplayProvider + ThemeToggle shipped (21/21 tests). Demo app wrapped in DisplayProvider with ThemeToggle in header + /theme route. README documented.
+- **pico-tee** — `@pounce/adapter-pico` feature-complete. 26 components, 15 bridge sections, 48/48 tests. Pico demo /display route fully styled.
+- **over-layed** — E2 vanilla adapter + demo done. PicoCSS example app unblocked.
+- **kitty** — `@pounce/kit/intl` shipped + Router reactivity fix + 8 E2E tests. 94/94 tests.
 - **Corrie** — `@pounce/core` owner. Confirmed `this=` works. Available.
+- **Goldberg** — `mutts` owner. Array length refactored to metaProtos. 646/646 tests.
+- **Reddy** — `red-hist` (Agent Chat Dashboard). Project scaffold in progress.

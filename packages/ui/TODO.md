@@ -98,7 +98,9 @@ const glyfAdapter = {
 
 This is an **icon-library concern**, not a core UI concern. Each icon library adapter can implement mirroring as needed.
 
-## DisplayProvider Hierarchy
+## DisplayProvider Hierarchy — ✅ Implemented
+
+> **Status**: Shipped in `src/display/display-context.tsx` + `src/display/theme-toggle.tsx`. 21/21 tests. See README.md for API docs.
 
 ### Root vs Nested Providers
 
@@ -154,7 +156,7 @@ type DisplayContext = {
 
 Components always read `theme` (resolved). The toggle reads `themeSetting` to know if it's `auto` and writes via `setTheme`.
 
-## ThemeToggle Component
+## ThemeToggle Component — ✅ Implemented
 
 ### Design
 
@@ -216,11 +218,11 @@ const App = () => {
 }
 ```
 
-### Implementation Order
+### Implementation Order — ✅ All Done
 
-1. `DisplayProvider` + `useDisplayContext()` — foundation (depends on `@pounce/kit` system values)
-2. `ThemeToggle` — consumer of the context
-3. Tests for both
+1. ~~`DisplayProvider` + `useDisplayContext()` — foundation~~ ✅ 10/10 tests
+2. ~~`ThemeToggle` — consumer of the context~~ ✅ 11/11 tests
+3. ~~Tests for both~~ ✅ 21/21 total
 
 ## Pico Native Features — Leverage Analysis
 

@@ -1,11 +1,12 @@
 import type { Scope } from '@pounce/core'
 import { A, Router, type RouteWildcard } from '@pounce/kit/dom'
-import { AppShell, ErrorBoundary, StandardOverlays } from '../src'
+import { AppShell, Container, DisplayProvider, ErrorBoundary, Heading, Inline, Link, StandardOverlays, Text, ThemeToggle, Toolbar } from '../src'
 import { badge, intersect, pointer, resize, scroll } from '../src/directives'
 import DisplayRoute from './routes/display'
 import FormsRoute from './routes/forms'
 import OverlaysRoute from './routes/overlays'
 import LayoutRoute from './routes/layout'
+import ThemeRoute from './routes/theme'
 
 export type DemoSection = {
 	readonly path: RouteWildcard
@@ -18,6 +19,7 @@ export const baseRoutes: DemoSection[] = [
 	{ path: '/forms', label: 'Forms', view: FormsRoute },
 	{ path: '/overlays', label: 'Overlays', view: OverlaysRoute },
 	{ path: '/layout', label: 'Layout', view: LayoutRoute },
+	{ path: '/theme', label: 'Theme', view: ThemeRoute },
 ]
 
 export type DemoAppOptions = {
@@ -58,39 +60,42 @@ export function DemoApp(options: DemoAppOptions) {
 		scope.pointer = pointer
 		scope.badge = badge
 		return (
-			<StandardOverlays>
-				<AppShell
-					header={
-						<header style="background: var(--pounce-bg, #fff); border-bottom: 1px solid var(--pounce-border, rgba(0,0,0,0.1)); padding: 0 1rem;">
-							<nav style="max-width: 960px; margin: 0 auto; display: flex; align-items: center; gap: 1.5rem; height: 3.5rem;">
-								<strong style="font-size: 1.1rem;">{options.title}</strong>
-								<div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-									<for each={sections}>
-										{(section: DemoSection) => (
-											<A
-												href={section.path}
-												style="text-decoration: none; color: var(--pounce-primary, #3b82f6); font-size: 0.9rem; font-weight: 500;"
-											>
-												{section.label}
-											</A>
-										)}
-									</for>
-								</div>
-							</nav>
-						</header>
-					}
-				>
-					<main style="max-width: 960px; margin: 0 auto; padding: 1rem;">
-						<ErrorBoundary fallback={(error) => (
-							<div style="padding: 1rem; background: #fef2f2; border: 1px solid var(--pounce-danger); border-radius: 0.5rem; color: var(--pounce-danger);">
-								<strong>Error:</strong> {error.message}
-							</div>
-						)}>
-							<Router routes={sections} notFound={renderNotFound} />
-						</ErrorBoundary>
-					</main>
-				</AppShell>
-			</StandardOverlays>
+			<DisplayProvider>
+				<StandardOverlays>
+					<AppShell
+						header={
+							<header>
+								<Container>
+									<Toolbar>
+										<Heading level={5}>{options.title}</Heading>
+										<Toolbar.Spacer />
+										<Inline gap="sm" wrap>
+											<for each={sections}>
+												{(section: DemoSection) => (
+													<Link href={section.path} underline={false}>
+														{section.label}
+													</Link>
+												)}
+											</for>
+											<ThemeToggle simple />
+										</Inline>
+									</Toolbar>
+								</Container>
+							</header>
+						}
+					>
+						<Container tag="main" style="padding: 1rem 0;">
+							<ErrorBoundary fallback={(error) => (
+								<Text variant="danger">
+									<strong>Error:</strong> {error.message}
+								</Text>
+							)}>
+								<Router routes={sections} notFound={renderNotFound} />
+							</ErrorBoundary>
+						</Container>
+					</AppShell>
+				</StandardOverlays>
+			</DisplayProvider>
 		)
 	}
 }

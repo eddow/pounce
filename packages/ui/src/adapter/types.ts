@@ -1,18 +1,21 @@
 import { Trait } from "@pounce/core"
 
 /**
- * Display context - presentation concerns available from scope
- * Separate from adapter (styling) concerns
+ * Display context - presentation concerns available from scope.
+ * Separate from adapter (styling) concerns.
+ * Provided by DisplayProvider, read via useDisplayContext().
  */
 export type DisplayContext = {
-	/** Current theme (light, dark, or custom) */
+	/** Resolved theme (never 'auto' — always the concrete value) */
 	theme: string
-	
-	/** Text direction (ltr or rtl) */
+	/** Raw theme setting ('auto' | 'light' | 'dark' | custom) */
+	themeSetting: string
+	/** Resolved text direction */
 	direction: 'ltr' | 'rtl'
-	
-	/** Current locale (for i18n, Intl formatting) */
-	locale?: string
+	/** Resolved locale */
+	locale: string
+	/** Update theme setting for this provider */
+	setTheme: (theme: string) => void
 }
 
 /**

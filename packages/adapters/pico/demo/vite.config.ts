@@ -18,5 +18,9 @@ export default defineConfig({
 	],
 	server: {
 		port: 5276,
+		fs: {
+			// Allow access to the ownk workspace root (includes mutts + pounce)
+			allow: [resolve(import.meta.dirname, '../../../../..')],
+		},
 	},
 })

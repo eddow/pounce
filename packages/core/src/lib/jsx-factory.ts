@@ -167,7 +167,8 @@ export const h = (
 		const projection = getActiveProjection()
 		if (projection) {
 			;(element as ComponentNode).__mutts_projection__ = projection
-			element.setAttribute('data-mutts-path', `${projection.depth}:${projection.key ?? '?'}`)
+			if (projection.depth > 0)
+				element.setAttribute('data-mutts-path', `${projection.depth}:${projection.key ?? '?'}`)
 		}
 		testing.renderingEvent?.('create element', tag, element)
 		if (tag === 'input') node.type ??= 'text'

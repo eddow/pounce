@@ -193,8 +193,84 @@ button.pounce-checkbutton:not(.pounce-checkbutton-checked):hover
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--pico-primary, var(--pounce-primary)) 30%, transparent)
 
 // =============================================================================
-// 5. Tokens (Badge / Pill / Chip) — Pico color integration
+// 5. Tokens (Badge / Pill / Chip) — base styles + Pico color integration
 // =============================================================================
+
+// Base token styles — replicated here because componentStyle injects into
+// @layer pounce.components which Pico's unlayered styles override.
+.pounce-badge,
+.pounce-chip,
+.pounce-pill
+  --pounce-token-bg: var(--pounce-bg-muted, rgba(0, 0, 0, 0.08))
+  --pounce-token-color: var(--pounce-fg, inherit)
+  --pounce-token-border: transparent
+  display: inline-flex
+  align-items: center
+  gap: 0.35rem
+  font-weight: 600
+  line-height: 1
+  white-space: nowrap
+  text-decoration: none
+  background-color: var(--pounce-token-bg)
+  color: var(--pounce-token-color)
+  border-radius: 999px
+
+.pounce-token-icon,
+.pounce-token-label
+  display: inline-flex
+  align-items: center
+
+.pounce-badge
+  font-size: 0.7rem
+  text-transform: uppercase
+  letter-spacing: 0.05em
+  padding: 0.25rem 0.6rem
+
+.pounce-pill
+  font-size: 0.85rem
+  padding: 0.35rem 0.75rem
+
+.pounce-chip
+  font-size: 0.85rem
+  padding: 0.35rem 0.65rem
+  border: 1px solid var(--pounce-token-border)
+  cursor: pointer
+  transition: filter 0.15s ease
+  box-shadow: none
+  appearance: none
+
+  &:hover
+    filter: brightness(0.95)
+
+  &:active
+    filter: brightness(0.9)
+
+  &:focus-visible
+    outline: 2px solid var(--pico-primary-focus, currentColor)
+    outline-offset: 2px
+
+// Override Pico's [role=group] { width: 100%; margin-bottom; display: inline-flex }
+// which breaks dismissible chips that use <div role="group">
+.pounce-chip[role="group"]
+  width: auto
+  margin-bottom: 0
+
+.pounce-chip-dismiss
+  margin-left: 0.25rem
+  padding: 0
+  border: none
+  background: transparent
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+  width: 1.25rem
+  height: 1.25rem
+  color: inherit
+  cursor: pointer
+
+  &:hover
+    opacity: 0.7
 
 // Map token background/color to Pico palette per variant
 .pounce-badge[data-variant="primary"],
@@ -241,20 +317,79 @@ button.pounce-checkbutton:not(.pounce-checkbutton-checked):hover
   color: var(--pico-primary, var(--pounce-primary, #f59e0b))
 
 // =============================================================================
-// 7. Typography — Pico variable integration
+// 7. Typography — Pico variable integration + variant colors
 // =============================================================================
 
 .pounce-heading
   color: var(--pico-color, inherit)
 
+.pounce-heading[data-variant="primary"]
+  color: var(--pico-primary, inherit)
+
+.pounce-heading[data-variant="secondary"]
+  color: var(--pico-secondary, var(--pounce-muted-border-color))
+
+.pounce-heading[data-variant="contrast"]
+  color: var(--pico-contrast, inherit)
+
+.pounce-heading[data-variant="success"]
+  color: var(--pounce-success, inherit)
+
+.pounce-heading[data-variant="warning"]
+  color: var(--pounce-warning, inherit)
+
+.pounce-heading[data-variant="danger"]
+  color: var(--pounce-danger, inherit)
+
 .pounce-text
   color: var(--pico-color, inherit)
+
+.pounce-text[data-variant="primary"]
+  color: var(--pico-color, inherit)
+
+.pounce-text[data-variant="secondary"]
+  color: var(--pico-secondary, var(--pounce-muted-border-color))
+
+.pounce-text[data-variant="contrast"]
+  color: var(--pico-contrast, inherit)
+
+.pounce-text[data-variant="success"]
+  color: var(--pounce-success, inherit)
+
+.pounce-text[data-variant="warning"]
+  color: var(--pounce-warning, inherit)
+
+.pounce-text[data-variant="danger"]
+  color: var(--pounce-danger, inherit)
 
 .pounce-text-muted
   color: var(--pico-muted-color, var(--pounce-muted-color, rgba(0, 0, 0, 0.6)))
 
 .pounce-link
   color: var(--pico-primary, inherit)
+  font-weight: 600
+
+a.pounce-link-no-underline,
+.pounce-link-no-underline
+  text-decoration: none
+
+.pounce-link[data-variant="primary"]
+  color: var(--pico-primary, inherit)
+
+.pounce-link[data-variant="secondary"]
+  color: var(--pico-secondary, inherit)
+
+.pounce-link[data-variant="contrast"]
+  color: var(--pico-contrast, inherit)
+
+.pounce-link[data-variant="success"]
+  color: var(--pounce-success, inherit)
+
+.pounce-link[data-variant="warning"]
+  color: var(--pounce-warning, inherit)
+
+.pounce-link[data-variant="danger"]
+  color: var(--pounce-danger, inherit)
 
 // =============================================================================
 // 8. Toast variant border colors with Pico integration
@@ -380,11 +515,49 @@ button.pounce-checkbutton:not(.pounce-checkbutton-checked):hover
   --pounce-contrast: var(--pico-contrast)
 
 // =============================================================================
-// 14. Nav — Pico native <nav> integration
+// 14. Layout — base styles that Pico's unlayered CSS overrides from @layer
 // =============================================================================
 
-// Pico styles <nav> with horizontal <ul> distribution.
-// Ensure pounce menu bar inherits Pico's nav layout when inside <nav>.
+// Toolbar: Pico doesn't target [role=toolbar] but the layered componentStyle
+// loses to Pico's resets on generic elements.
+.pounce-toolbar
+  display: flex
+  align-items: center
+  gap: 0.5rem
+  padding: 0.25rem
+
+  // Reset Pico heading margins inside toolbar
+  h1, h2, h3, h4, h5, h6,
+  .pounce-heading
+    margin: 0
+    white-space: nowrap
+
+.pounce-toolbar-horizontal
+  flex-direction: row
+
+.pounce-toolbar-spacer
+  display: inline-block
+  flex: 1
+  min-width: 1px
+
+// Inline / Stack: ensure flex layout survives Pico
+.pounce-inline
+  display: flex
+  align-items: center
+  flex-wrap: wrap
+
+.pounce-stack
+  display: flex
+  flex-direction: column
+
+// AppShell header
+.pounce-app-shell-header
+  position: sticky
+  top: 0
+  z-index: var(--pounce-app-shell-z, 100)
+  background: var(--pounce-app-shell-bg, var(--pounce-bg, var(--pico-background-color)))
+
+// Nav — Pico native <nav> integration
 nav .pounce-menu-bar-desktop
   list-style: none
   padding: 0

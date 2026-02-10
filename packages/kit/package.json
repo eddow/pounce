@@ -27,6 +27,7 @@
 	"scripts": {
 		"build": "vite build",
 		"test": "vitest run",
+		"test:e2e": "playwright test",
 		"biome": "biome check --write src"
 	},
 	"dependencies": {
@@ -35,8 +36,9 @@
 		"mutts": "link:../../../mutts"
 	},
 	"devDependencies": {
-		"@pounce/plugin": "workspace:*",
 		"@biomejs/biome": "^2.3.13",
+		"@playwright/test": "^1.58.1",
+		"@pounce/plugin": "workspace:*",
 		"@types/node": "25.1.0",
 		"jsdom": "^27.4.0",
 		"rollup": "4.57.1",

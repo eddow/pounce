@@ -574,6 +574,115 @@ Anchor element with variant styling and underline control. Uses kit's `<A>` for 
 
 ---
 
+## Display Context
+
+Scope-based theming, direction, and locale — nestable, reactive, and separate from the adapter system.
+
+### DisplayProvider
+
+Sets `data-theme`, `dir`, and `lang` on its own DOM element. Supports nesting: child providers inherit from parent, overriding only specified axes. All axes default to `'auto'` (inherit from parent, or system defaults at root).
+
+```tsx
+import { DisplayProvider, ThemeToggle, Button } from '@pounce/ui'
+
+const App = () => (
+  <DisplayProvider>
+    <ThemeToggle />
+    <Button>Themed Button</Button>
+  </DisplayProvider>
+)
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `theme` | `string \| 'auto'` | `'auto'` | Theme setting. `'auto'` inherits from parent or OS preference. |
+| `direction` | `'ltr' \| 'rtl' \| 'auto'` | `'auto'` | Text direction. `'auto'` inherits from parent or document. |
+| `locale` | `string \| 'auto'` | `'auto'` | Locale. `'auto'` inherits from parent or browser language. |
+| `onThemeChange` | `(theme: string) => void` | — | Called when theme setting changes (for persistence). |
+
+**CSS classes**: `.pounce-display-provider` (uses `display: contents` — zero layout impact)  
+**DOM attributes**: `data-theme`, `dir`, `lang` — set on the wrapper element, CSS cascades naturally.
+
+#### Nested Contexts
+
+```tsx
+<DisplayProvider theme="light" direction="ltr">
+  <h1>English Interface</h1>
+
+  {/* Arabic section inside English UI */}
+  <DisplayProvider direction="rtl" locale="ar-SA">
+    <h2>محتوى عربي</h2>
+    <Button>زر عربي</Button>
+  </DisplayProvider>
+
+  <Button>Back to English</Button>
+</DisplayProvider>
+```
+
+#### With Persistence
+
+```tsx
+import { stored } from '@pounce/kit'
+
+const App = () => {
+  const prefs = stored({ theme: 'auto' })
+  return (
+    <DisplayProvider theme={prefs.theme} onThemeChange={(t) => prefs.theme = t}>
+      <ThemeToggle />
+    </DisplayProvider>
+  )
+}
+```
+
+#### useDisplayContext
+
+Read the current display context from scope. Falls back to system defaults if no `DisplayProvider` is present.
+
+```tsx
+import { useDisplayContext } from '@pounce/ui'
+import type { Scope } from '@pounce/core'
+
+function MyComponent(_props: {}, scope: Scope) {
+  const display = useDisplayContext(scope)
+  // display.theme, display.direction, display.locale, display.themeSetting, display.setTheme
+}
+```
+
+---
+
+### ThemeToggle
+
+Split-button UX for theme switching. Main button toggles dark↔light, dropdown arrow opens menu with auto/dark/light options.
+
+```tsx
+import { ThemeToggle } from '@pounce/ui'
+
+<ThemeToggle />              {/* Full: toggle + dropdown */}
+<ThemeToggle simple />        {/* Simple: toggle only, no auto option */}
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `icons` | `Record<string, JSX.Element \| string>` | `{ light: 'sun', dark: 'moon' }` | Custom icons per theme |
+| `labels` | `Record<string, string>` | `{ light: 'Light', dark: 'Dark' }` | Custom labels per theme |
+| `autoLabel` | `string` | `'Auto'` | Label for the auto option |
+| `simple` | `boolean` | `false` | Hide dropdown (simple toggle only) |
+| `themes` | `string[]` | — | Additional themes beyond dark/light |
+| `el` | `JSX.GlobalHTMLAttributes` | — | Pass-through HTML attributes |
+
+**4 visual states**:
+
+| Setting | Resolved | Icon | Label |
+|---------|----------|------|-------|
+| `'dark'` | dark | moon | "Dark" |
+| `'light'` | light | sun | "Light" |
+| `'auto'` | dark | moon + A badge | "Auto (Dark)" |
+| `'auto'` | light | sun + A badge | "Auto (Light)" |
+
+**CSS classes**: `.pounce-theme-toggle`, `.pounce-theme-toggle-main`, `.pounce-theme-toggle-dropdown`, `.pounce-theme-toggle-menu`, `.pounce-theme-toggle-option`, `.pounce-theme-toggle-auto-badge`
+
+---
+
 ## Adapter System
 
 ```tsx

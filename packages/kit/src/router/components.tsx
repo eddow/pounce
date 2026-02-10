@@ -1,5 +1,5 @@
-import { compose, copyObject, r } from '@pounce/core'
-import { effect, reactive } from 'mutts'
+import { compose, PounceElement } from '@pounce/core'
+import { lift } from 'mutts'
 import { client } from '../client/shared.js'
 import {
 	matchRoute as coreMatchRoute,
@@ -119,50 +119,56 @@ export const Router = <
 		props
 	)
 	const matcher = routeMatcher(state.routes)
-	const current = reactive({ view: null as JSX.Element | JSX.Element[] | null })
-	let oldMatch: RouteSpecification<Definition> | null = null
 
-	effect(() => {
+	const rendered = lift(function routerCompute() {
 		try {
 			const match = matcher(state.url)
 			if (match && (match.unusedPath === '' || match.unusedPath === '/')) {
-				if (oldMatch?.definition !== match.definition) {
-					try {
-						current.view = match.definition.view(match, scope)
-						oldMatch = match
-					} catch (err) {
-						console.error('Router view error:', err)
-						current.view = (
-							<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
-								<h2 style="margin-top: 0">Something went wrong</h2>
-								<p>Error loading route.</p>
-								<details>
-									<summary>Error details</summary>
-									<pre style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px; margin-top: 10px;">
-										{err instanceof Error ? err.stack : String(err)}
-									</pre>
-								</details>
-							</div>
-						)
-						oldMatch = match
-					}
-				} else copyObject(oldMatch, match)
-			} else {
-				current.view = state.notFound({ routes: state.routes, url: state.url }, scope)
-				oldMatch = null
+				try {
+					const view = match.definition.view(match, scope)
+					const els = Array.isArray(view) ? view : [view]
+					return els.flatMap((el) =>
+						typeof el === 'object' && el !== null && 'render' in el
+							? (el as { render(s?: any): Node | readonly Node[] }).render(scope)
+							: []
+					)
+				} catch (err) {
+					console.error('Router view error:', err)
+					const fallback = (
+						<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
+							<h2 style="margin-top: 0">Something went wrong</h2>
+							<p>Error loading route.</p>
+							<details>
+								<summary>Error details</summary>
+								<pre style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px; margin-top: 10px;">
+									{err instanceof Error ? err.stack : String(err)}
+								</pre>
+							</details>
+						</div>
+					) as unknown as { render(s?: any): Node | readonly Node[] }
+					return fallback.render(scope)
+				}
 			}
+			const nf = state.notFound({ routes: state.routes, url: state.url }, scope)
+			const nfEls = Array.isArray(nf) ? nf : [nf]
+			return nfEls.flatMap((el) =>
+				typeof el === 'object' && el !== null && 'render' in el
+					? (el as { render(s?: any): Node | readonly Node[] }).render(scope)
+					: []
+			)
 		} catch (err) {
 			console.error('Router matching error:', err)
-			current.view = (
+			const fallback = (
 				<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
 					<h2>Something went wrong</h2>
 					<p>Router error.</p>
 				</div>
-			)
+			) as unknown as { render(s?: any): Node | readonly Node[] }
+			return fallback.render(scope)
 		}
 	})
 
-	return <>{r(() => current.view)}</>
+	return new PounceElement(() => rendered, { tag: 'Router' })
 }
 
 /**
