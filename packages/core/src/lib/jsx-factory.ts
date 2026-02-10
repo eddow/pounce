@@ -1,4 +1,5 @@
 import {
+	attend,
 	atomic,
 	biDi,
 	cleanedBy,
@@ -13,7 +14,7 @@ import {
 	unreactive,
 } from 'mutts'
 import { crypto, document } from '../shared'
-import { type ComponentInfo, namedEffect, nf, POUNCE_OWNER, rootComponents, testing } from './debug'
+import { type ComponentInfo, nf, POUNCE_OWNER, rootComponents, testing } from './debug'
 import { restructureProps } from './namespaced'
 import {
 	type Child,
@@ -37,8 +38,8 @@ import {
 	valuedAttributeGetter,
 } from './renderer-internal'
 import { type ClassInput, classNames, type StyleInput, styles } from './styles'
-import { extend, forwardProps, propsInto } from './utils'
-import { applyVariants } from './variants'
+import { asArray, buildTraitChain } from './traits'
+import { allPrototypeKeys, extend, forwardProps, propsInto } from './utils'
 
 /**
  * Custom h() function for JSX rendering - returns a PounceElement
@@ -147,24 +148,21 @@ export const h = (
 				const childScope = extend(scope || rootScope, { component: info })
 				info.scope = childScope
 
-				const rendered = project.array<null, PounceElement>([null], function componentExecution() {
-					checkComponentRebuild(componentCtor)
-					testing.renderingEvent?.('render component', componentCtor.name)
-					const givenProps = reactive(propsInto(props ?? {}, { children }))
-					const result = componentCtor(restructureProps(givenProps), childScope)
-					return result
-				})
-				cleanedBy(rendered, () => {
+				checkComponentRebuild(componentCtor)
+				testing.renderingEvent?.('render component', componentCtor.name)
+				const givenProps = reactive(propsInto(props ?? {}, { children }))
+				const result = componentCtor(restructureProps(givenProps), childScope)
+				const processed = processChildren([result], childScope)
+				cleanedBy(processed, () => {
 					if (info.parent) info.parent.children.delete(info)
 					else rootComponents.delete(info)
 				})
-				return processChildren(rendered, childScope)
+				return processed
 			},
 			{ tag }
 		)
 	} else {
 		const element = document.createElement(tag)
-		const varied = lift(() => applyVariants(props ?? {}))
 		let lastComponent: ComponentInfo | undefined
 		const projection = getActiveProjection()
 		if (projection) {
@@ -172,106 +170,127 @@ export const h = (
 			element.setAttribute('data-mutts-path', `${projection.depth}:${projection.key ?? '?'}`)
 		}
 		testing.renderingEvent?.('create element', tag, element)
-		if (tag === 'input') props.type ??= 'text'
-// TODO: `project` !
-		for (const [key, value] of Object.entries(varied)) {
-			if (key === 'children') continue
-			if (['if', 'else', 'use', 'this'].includes(key)) continue
-			if (key.includes(':')) {
-				const prefix = key.split(':')[0]
-				if (['use', 'if', 'when', 'update'].includes(prefix)) continue
-			}
+		if (tag === 'input') node.type ??= 'text'
 
-			const runCleanup: (() => void)[] = []
+		// Step 1: separate event handlers (values) from other props (potential getters)
+		// propsInto treats functions as getters — event handlers must bypass it
+		const { traits: rawTraits, children: _nodeChildren, ...rest } = node
+		const events: Record<string, unknown> = {}
+		const htmlNode: Record<string, unknown> = {}
+		for (const key of Object.keys(rest)) {
+			if (typeof key === 'string' && /^on[A-Z]/.test(key)) events[key] = rest[key]
+			else htmlNode[key] = rest[key]
+		}
+		const htmlAttrs = propsInto(htmlNode)
 
-			if (typeof key !== 'string') continue
+		// Step 2: extend — trait prototype chain
+		const resolvedTraits = rawTraits instanceof ReactiveProp ? rawTraits.get() : rawTraits
+		const { chain: traitChain, classes: traitClasses, styles: traitStyles } =
+			buildTraitChain(resolvedTraits)
+		const composed = traitChain ? extend(traitChain, htmlAttrs) : htmlAttrs
 
-			if (/^on[A-Z]/.test(key)) {
-				const eventType = key.slice(2).toLowerCase()
-				const stop = namedEffect(`event:${key}`, () => {
-					/*
-					 * Event handlers can be:
-					 * 1. ReactiveProp: value.get() returns the handler
-					 * 2. Static function: value is the handler
-					 */
-					const handlerCandidate =
-						value instanceof ReactiveProp
-							? value.get()
-							: value
-
-					if (handlerCandidate === undefined) return
-					const registeredEvent = atomic(handlerCandidate)
-					return listen(element, eventType, registeredEvent)
-				})
-				cleanedBy(element, stop)
-				continue
-			}
-			if (key === 'class') {
-				const getter = valuedAttributeGetter(value)
-				const stop = effect(function classNameEffect() {
-					const nextClassName = classNames(getter() as ClassInput)
-					testing.renderingEvent?.('set className', element, nextClassName)
-					element.className = nextClassName
-				})
-				cleanedBy(element, stop)
-				continue
-			}
-			if (key === 'style') {
-				const getter = valuedAttributeGetter(value)
-				const stop = effect(function styleEffect() {
-					const computedStyles = styles(getter() as StyleInput)
-					applyStyleProperties(element as HTMLElement, computedStyles)
-				})
-				cleanedBy(element, stop)
-				continue
-			}
-			if (value instanceof ReactiveProp) {
-				if (value.set) {
-					const binding = {
-						get: nf(`get ${tag}:${key}`, value.get as () => unknown),
-						set: nf(`set ${tag}:${key}`, value.set as (v: unknown) => void),
-					}
-					const provide = biDi((v) => setHtmlProperty(element, key, v), binding)
-
-					if (tag === 'input') {
-						switch ((element as any).type) {
-							case 'checkbox':
-							case 'radio':
-								if (key === 'checked')
-									runCleanup.push(listen(element, 'input', () => provide((element as any).checked)))
-								break
-							case 'number':
-							case 'range':
-								if (key === 'value')
-									runCleanup.push(
-										listen(element, 'input', () => provide(Number((element as any).value)))
-									)
-								break
-							default:
-								if (key === 'value')
-									runCleanup.push(listen(element, 'input', () => provide((element as any).value)))
-								break
-						}
-					}
-					cleanedBy(element, () => {
-						setHtmlProperty(element, key, undefined)
-						for (const stop of runCleanup) stop()
-					})
-				} else {
-					cleanedBy(
-						element,
-						namedEffect(`prop:${key}`, () => {
-							setHtmlProperty(element, key, nf(`${tag}:${key}`, value.get)())
-						})
-					)
-				}
-				continue
-			}
-			setHtmlProperty(element, key, value)
-			cleanedBy(element, () => {
-				setHtmlProperty(element, key, undefined)
+		// Accumulated class/style getters that merge trait contributions with props
+		// Capture original descriptors before overwriting to avoid self-referencing recursion
+		const origClass = Object.getOwnPropertyDescriptor(composed, 'class')
+		const origStyle = Object.getOwnPropertyDescriptor(composed, 'style')
+		if (traitClasses.length > 0 || origClass) {
+			const getBaseClass = origClass?.get ?? (() => undefined)
+			Object.defineProperty(composed, 'class', {
+				get: () => [...traitClasses, ...asArray(getBaseClass())],
+				enumerable: true,
+				configurable: true,
 			})
 		}
+		if (traitStyles.length > 0 || origStyle) {
+			const getBaseStyle = origStyle?.get ?? (() => undefined)
+			Object.defineProperty(composed, 'style', {
+				get: () => [...traitStyles, ...asArray(getBaseStyle())],
+				enumerable: true,
+				configurable: true,
+			})
+		}
+
+		// Step 3: attend — per-key reactive DOM binding
+		const eventKeys = Object.keys(events)
+		cleanedBy(
+			element,
+			attend(
+				() => {
+					const keys = new Set(allPrototypeKeys(composed))
+					for (const k of eventKeys) keys.add(k)
+					return keys
+				},
+				(key: string) => {
+					if (/^on[A-Z]/.test(key)) {
+						const eventType = key.slice(2).toLowerCase()
+						return effect(function eventEffect() {
+							// Read raw value (not through propsInto getter) to avoid calling
+							// function-valued handlers. Fall back to composed for trait events.
+							const rawValue = events[key] ?? composed[key]
+							const handler =
+								rawValue instanceof ReactiveProp ? rawValue.get() : rawValue
+							if (handler === undefined) return
+							return listen(element, eventType, atomic(handler))
+						})
+					}
+
+					if (key === 'class') {
+						return effect(function classNameEffect() {
+							const nextClassName = classNames(composed.class as ClassInput)
+							testing.renderingEvent?.('set className', element, nextClassName)
+							element.className = nextClassName
+						})
+					}
+
+					if (key === 'style') {
+						return effect(function styleEffect() {
+							applyStyleProperties(
+								element as HTMLElement,
+								styles(composed.style as StyleInput)
+							)
+						})
+					}
+
+					// BiDi binding only for ReactiveProp with explicit .set (L-value bindings)
+					const rawValue = htmlNode[key]
+					if (rawValue instanceof ReactiveProp && rawValue.set) {
+						const binding = {
+							get: nf(`get ${tag}:${key}`, rawValue.get as () => unknown),
+							set: nf(`set ${tag}:${key}`, rawValue.set as (v: unknown) => void),
+						}
+						const provide = biDi((v) => setHtmlProperty(element, key, v), binding)
+
+						if (tag === 'input') {
+							const input = element as HTMLInputElement
+							switch (input.type) {
+								case 'checkbox':
+								case 'radio':
+									if (key === 'checked')
+										listen(element, 'input', () => provide(input.checked))
+									break
+								case 'number':
+								case 'range':
+									if (key === 'value')
+										listen(element, 'input', () => provide(Number(input.value)))
+									break
+								default:
+									if (key === 'value')
+										listen(element, 'input', () => provide(input.value))
+									break
+							}
+						}
+						// No cleanup needed — cleanedBy disposes the reactive scope,
+						// and DOM listeners die with the element
+						return
+					}
+
+					// One-way reactive or static prop
+					return effect(function propEffect() {
+						setHtmlProperty(element, key, composed[key])
+					})
+				}
+			)
+		)
 
 		mountObject = new PounceElement(
 			function elementRender(scope: Scope = rootScope) {

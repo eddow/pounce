@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config'
-import { dirname, resolve as resolvePath } from 'node:path'
+import { existsSync, writeFileSync } from 'node:fs'
+import { dirname, join, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { pounceCorePackage } from '@pounce/plugin/packages'
 
@@ -49,15 +50,16 @@ export default defineConfig({
 				rollupTypes: false,
 				copyDtsFiles: true,
 				include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.d.ts'],
-				beforeWriteFile: (filePath, content) => {
-					// Inject JSX types reference into main index.d.ts
-					if (filePath.endsWith('dist/index.d.ts')) {
-						const reference = '/// <reference path="./types/jsx.d.ts" />\n'
-						if (!content.includes(reference)) {
-							return { filePath, content: reference + content }
-						}
+				afterBuild() {
+					// Generate dist/index.d.ts — the build has dom/node entries but no index entry,
+					// yet package.json exports and downstream tsconfigs reference dist/index.d.ts
+					const indexDts = join(projectRootDir, 'dist', 'index.d.ts')
+					if (!existsSync(indexDts)) {
+						writeFileSync(
+							indexDts,
+							'/// <reference path="./src/types/jsx.d.ts" />\nexport * from \'./src/dom/index\'\nexport type { JSX } from \'./src/types/jsx\'\n'
+						)
 					}
-					return { filePath, content }
 				}
 			}
 		}),

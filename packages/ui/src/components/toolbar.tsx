@@ -93,7 +93,7 @@ componentStyle.sass`
 export type ToolbarProps = {
 	children?: JSX.Children
 	class?: string | string[]
-	style?: JSX.CSSProperties
+	style?: string | Record<string, string | number | null | undefined | false>
 	orientation?: 'horizontal' | 'vertical'
 }
 

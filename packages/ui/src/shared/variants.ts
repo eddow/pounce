@@ -1,50 +1,42 @@
-import type { ComponentAdapter } from '../adapter/types'
 import { getGlobalVariants } from '../adapter/registry'
+import type { Trait } from '@pounce/core'
 
 export type Variant = string & {}
 
-export const STANDARD_VARIANTS = [
-	'primary',
-	'secondary',
-	'contrast',
-	'danger',
-	'success',
-	'warning',
-]
-
 /**
- * Generates the CSS class for a given variant.
- * Resolution order:
- * 1. Component-specific adapter mapping (most specific)
- * 2. Global adapter variants (framework-wide)
- * 3. Standard vanilla convention (.pounce-variant-*)
+ * Gets the Trait object for a given variant name from the adapter.
+ * 
+ * Variants are named traits defined in the adapter's central dictionary.
+ * The UI package provides no default variants - all variants must come from the adapter.
+ * 
+ * @param variant - Variant name to look up
+ * @returns Trait object from adapter.variants, or undefined if not found
+ * 
+ * @example
+ * // Adapter defines variants
+ * setAdapter({
+ *   variants: {
+ *     danger: { classes: ['btn-danger'], attributes: { 'aria-live': 'polite' } }
+ *   }
+ * })
+ * 
+ * // Component uses variant
+ * <Button.danger>  // Looks up adapter.variants['danger']
+ * <Button variant="danger">  // Same thing
  */
-export function getVariantClass(
-	variant: string | undefined,
-	adapter?: ComponentAdapter
-): string | undefined {
+export function getVariantTrait(variant: string | undefined): Trait | undefined {
 	if (!variant) return undefined
 
-	// 1. Check component-specific adapter mapping
-	if (adapter?.classes?.[variant]) {
-		return adapter.classes[variant]
-	}
-
-	// 2. Check global adapter variants
+	// Look up variant from adapter's central dictionary
 	const globalVariants = getGlobalVariants()
 	if (globalVariants?.[variant]) {
 		return globalVariants[variant]
 	}
 
-	// 3. Check Standard Vanilla
-	if (STANDARD_VARIANTS.includes(variant)) {
-		return `pounce-variant-${variant}`
-	}
-
-	// 4. Unknown variant: Fail in development
+	// Variant not found in adapter - warn in development
 	if (process.env.NODE_ENV !== 'production') {
-		console.error(
-			`[pounce/ui] Unknown variant "${variant}". Ensure it is registered in the adapter or is a standard variant.`
+		console.warn(
+			`[pounce/ui] Variant "${variant}" not found in adapter. Define it in setAdapter({ variants: { ${variant}: {...} } })`
 		)
 	}
 
@@ -75,9 +67,3 @@ export function asVariant<T extends (props: any) => any>(component: T): T & Reco
 	}) as any
 }
 
-/**
- * Shorthand for getVariantClass without an adapter.
- */
-export function variantClass(variant: string | undefined): string | undefined {
-	return getVariantClass(variant)
-}

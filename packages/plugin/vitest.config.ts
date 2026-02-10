@@ -1,14 +1,10 @@
-import { defineConfig, mergeConfig } from 'vitest/config'
-import { fileURLToPath } from 'node:url'
-import { createBaseConfig } from '../../test/vitest.config.base'
+import { defineConfig } from 'vitest/config'
 
-const __dirname = fileURLToPath(new URL('.', import.meta.url))
-
-const baseConfig = createBaseConfig(__dirname)
-
-export default mergeConfig(baseConfig, defineConfig({
+export default defineConfig({
   test: {
     name: 'plugin',
     environment: 'node',
+    include: ['**/*.spec.{ts,tsx}'],
+    exclude: ['**/node_modules/**', '**/dist/**'],
   },
-}))
+})

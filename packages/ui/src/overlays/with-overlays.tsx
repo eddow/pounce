@@ -1,7 +1,9 @@
-import { type Child, type Scope } from '@pounce/core'
+import { type Scope } from '@pounce/core'
 import { reactive } from 'mutts'
 import { type OverlayEntry, type PushOverlayFunction } from './manager'
 import { componentStyle } from '@pounce/kit/dom'
+import { getTransitionConfig, applyTransition } from '../shared/transitions'
+import type { ComponentName } from '../adapter/types'
 
 componentStyle.sass`
 .pounce-overlay-manager
@@ -20,7 +22,7 @@ componentStyle.sass`
         background: var(--pounce-backdrop, rgba(0, 0, 0, 0.4))
         pointer-events: auto
         backdrop-filter: blur(2px)
-        transition: opacity 0.2s ease
+        transition: opacity var(--pounce-transition-duration, 0.3s) ease
 
     .pounce-layer
         position: absolute
@@ -47,10 +49,49 @@ componentStyle.sass`
 
         > *
             pointer-events: auto
+
+    .pounce-overlay-item
+        &.pounce-closing
+            .pounce-dialog
+                animation: pounce-dialog-out var(--pounce-transition-duration, 0.3s) ease-out forwards
+            .pounce-drawer
+                animation: pounce-drawer-out-left var(--pounce-transition-duration, 0.3s) ease-out forwards
+                &.pounce-drawer-right
+                    animation-name: pounce-drawer-out-right
+            .pounce-toast
+                animation: pounce-toast-out var(--pounce-transition-duration, 0.3s) ease-out forwards
+
+@keyframes pounce-dialog-out
+    from
+        opacity: 1
+        transform: scale(1) translateY(0)
+    to
+        opacity: 0
+        transform: scale(0.95) translateY(10px)
+
+@keyframes pounce-drawer-out-left
+    from
+        transform: translateX(0)
+    to
+        transform: translateX(-100%)
+
+@keyframes pounce-drawer-out-right
+    from
+        transform: translateX(0)
+    to
+        transform: translateX(100%)
+
+@keyframes pounce-toast-out
+    from
+        transform: translateX(0)
+        opacity: 1
+    to
+        transform: translateX(100%)
+        opacity: 0
 `
 
 export interface WithOverlaysProps {
-	children?: Child
+	children?: JSX.Children
 	/** 
 	 * Names of layers to create. 
 	 * If provided, overlays with matching 'mode' will render in their layer.
@@ -66,6 +107,17 @@ export interface WithOverlaysProps {
 	fixed?: boolean
 	/** Optional extension helpers to bind to the scope */
 	extend?: Record<string, (push: PushOverlayFunction) => (options: any) => Promise<any>>
+}
+
+const MODE_COMPONENT_MAP: Record<string, ComponentName> = {
+	modal: 'Dialog',
+	toast: 'Toast',
+	'drawer-left': 'Drawer',
+	'drawer-right': 'Drawer'
+}
+
+function modeToComponent(mode: string): ComponentName | undefined {
+	return MODE_COMPONENT_MAP[mode]
 }
 
 /**
@@ -88,16 +140,34 @@ export const WithOverlays = (props: WithOverlaysProps, scope: Scope) => {
 
 	// 2. Local Stack & Logic
 	const stack = reactive<OverlayEntry[]>([])
+	const overlayElements = new Map<string, HTMLElement>()
 
 	const push: PushOverlayFunction = (spec) => {
 		return new Promise((resolve) => {
 			const entry: OverlayEntry = {
 				...spec,
 				id: spec.id || Math.random().toString(36).substring(2, 9),
+				closing: false,
 				resolve: (value) => {
 					const index = stack.findIndex((e) => e.id === entry.id)
 					if (index !== -1) {
-						stack.splice(index, 1)
+						entry.closing = true
+						const component = modeToComponent(entry.mode)
+						const config = getTransitionConfig(component)
+						const el = overlayElements.get(entry.id)
+						if (el) {
+							applyTransition(el, 'exit', config, () => {
+								const idx = stack.findIndex((e) => e.id === entry.id)
+								if (idx !== -1) stack.splice(idx, 1)
+								overlayElements.delete(entry.id)
+							})
+						} else {
+							const duration = config.duration ?? 300
+							setTimeout(() => {
+								const idx = stack.findIndex((e) => e.id === entry.id)
+								if (idx !== -1) stack.splice(idx, 1)
+							}, duration)
+						}
 					}
 					resolve(value)
 				},
@@ -169,40 +239,90 @@ export const WithOverlays = (props: WithOverlaysProps, scope: Scope) => {
 		}
 	}
 
-	const renderLayer = (mode?: string) => {
-		const items = mode
-			? stack.filter(e => e.mode === mode)
-			: stack
+	const applyAutoFocus = (container: HTMLElement, strategy: boolean | string) => {
+		if (strategy === true) {
+			// Smart default: first focusable element
+			const focusable = container.querySelector(
+				'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+			)
+			if (focusable) {
+				(focusable as HTMLElement).focus()
+			} else {
+				container.tabIndex = -1
+				container.focus()
+			}
+		} else if (strategy === 'container') {
+			container.tabIndex = -1
+			container.focus()
+		} else if (strategy === 'first-button') {
+			const btn = container.querySelector('button')
+			if (btn) (btn as HTMLElement).focus()
+		} else if (strategy === 'first-input') {
+			const input = container.querySelector('input, textarea, select')
+			if (input) (input as HTMLElement).focus()
+		} else if (typeof strategy === 'string') {
+			// Treat as CSS selector
+			const target = container.querySelector(strategy)
+			if (target) (target as HTMLElement).focus()
+		}
+	}
 
-		if (items.length === 0 && mode) return null
+	const isModalMode = (mode: string) => mode === 'modal' || mode.startsWith('drawer')
 
-		// Higher roles for accessibility
-		const isModalLayer = mode === 'modal' || (mode && mode.startsWith('drawer'))
-		const isToastLayer = mode === 'toast'
+	const renderOverlayItem = (entry: OverlayEntry, modal: boolean) => (
+		<div
+			class={['pounce-overlay-item', entry.closing ? 'pounce-closing' : '']}
+			role={modal ? 'dialog' : undefined}
+			aria-modal={modal ? 'true' : undefined}
+			aria-labelledby={entry.aria?.labelledby}
+			aria-describedby={entry.aria?.describedby}
+			aria-label={entry.aria?.label}
+			use={(el: HTMLDivElement) => {
+				overlayElements.set(entry.id, el)
+				if (!entry.closing) {
+					const autoFocus = entry.autoFocus ?? modal
+					if (autoFocus) {
+						requestAnimationFrame(() => {
+							applyAutoFocus(el, autoFocus)
+						})
+					}
+				}
+			}}
+		>
+			{entry.render(entry.resolve)}
+		</div>
+	)
 
+	const layerItems = (mode: string) => stack.filter(e => e.mode === mode)
+
+	const renderLayer = (mode: string) => {
+		const modal = isModalMode(mode)
+		const toast = mode === 'toast'
 		return (
 			<div
-				class={['pounce-layer', mode ? `pounce-mode-${mode}` : 'pounce-flat']}
-				role={isToastLayer ? 'log' : undefined}
-				aria-live={isToastLayer ? 'polite' : undefined}
+				class={['pounce-layer', `pounce-mode-${mode}`]}
+				role={toast ? 'log' : undefined}
+				aria-live={toast ? 'polite' : undefined}
 			>
-				<for each={items}>
-					{(entry: OverlayEntry) => (
-						<div
-							class="pounce-overlay-item"
-							role={isModalLayer ? 'dialog' : undefined}
-							aria-modal={isModalLayer ? 'true' : undefined}
-							aria-labelledby={entry.aria?.labelledby}
-							aria-describedby={entry.aria?.describedby}
-							aria-label={entry.aria?.label}
-						>
-							{entry.render(entry.resolve)}
-						</div>
-					)}
+				<for each={layerItems(mode)}>
+					{(entry: OverlayEntry) => renderOverlayItem(entry, modal)}
 				</for>
 			</div>
 		)
 	}
+
+	const layers = props.layers && props.layers.length > 0
+		? props.layers.map(renderLayer)
+		: null
+	const flat = !layers
+		? (
+			<div class="pounce-layer pounce-flat">
+				<for each={stack}>
+					{(entry: OverlayEntry) => renderOverlayItem(entry, isModalMode(entry.mode))}
+				</for>
+			</div>
+		)
+		: null
 
 	return (
 		<fragment>
@@ -216,18 +336,10 @@ export const WithOverlays = (props: WithOverlaysProps, scope: Scope) => {
 				<div
 					if={hasBackdrop()}
 					class="pounce-backdrop"
-					aria-hidden="true"
 					onClick={handleBackdropClick}
 				/>
-
-				<fragment if={props.layers && props.layers.length > 0}>
-					<for each={props.layers!}>
-						{(mode: string) => renderLayer(mode)}
-					</for>
-				</fragment>
-				<fragment else>
-					{renderLayer()}
-				</fragment>
+				{layers}
+				{flat}
 			</div>
 		</fragment>
 	)

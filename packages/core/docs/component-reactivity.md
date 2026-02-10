@@ -1,41 +1,61 @@
 # Component Reactivity Rules
 
-## 🚫 Important: Components Should Never Re-render
+## The Rebuild Fence: a Feature, Not a Bug
 
-In Pounce, components follow a **render-once** philosophy. A component function should execute exactly once during mounting, and never again. Any reactive behavior should be handled through effects, not through re-rendering.
+Pounce component constructors run **exactly once**. This is enforced by a **rebuild fence** — a deliberate protective mechanism that prevents the component body from re-executing when reactive state changes. If the constructor accidentally reads reactive state directly, the fence catches it and emits a warning instead of silently re-rendering the entire component.
 
-## Why This Matters
+This is a **design feature**, not a limitation. Here's why:
 
-Traditional frameworks like React re-render entire component trees when state changes. Pounce takes a different approach:
+### Why components must not re-render
 
-1. **Render Once**: Components render once and create a DOM structure
-2. **Reactive Updates**: Individual parts of the DOM update through fine-grained reactivity
-3. **Effects for Logic**: Any reactive logic should be wrapped in `effect(() => ...)`
+Traditional frameworks like React re-render entire component subtrees when state changes. This is inherently expensive: every re-render recreates JSX, re-evaluates conditionals, re-allocates closures, and triggers reconciliation. Pounce avoids this entirely through **fine-grained reactivity**:
 
-## Common Traps to Avoid
+1. **Render once**: The constructor runs once, creates DOM structure and sets up reactive bindings
+2. **Reactive attributes**: The Babel plugin wraps JSX attribute values in `r(() => expr)`, so individual attributes update independently when their dependencies change
+3. **Virtual attributes & elements**: `if={}`, `when={}` (virtual attributes on any element) and `<for>` (a virtual element) handle conditional rendering and lists reactively — no need for JS `if` statements or `.map()` in the constructor body
+4. **Effects for logic**: Any imperative reactive logic uses `effect(() => ...)` inside the constructor
 
-### ❌ Wrong: Creating Reactive Dependencies During Render
+Re-running the entire constructor would destroy and recreate all of this, losing DOM state, breaking effect lifecycles, and wasting performance. The rebuild fence prevents this.
 
-```typescript
-// BAD: This creates reactive dependencies during render
-export function BadComponent(props: { count: number }) {
-  // This will cause the component to re-render when count changes
+### What triggers the fence
+
+If the constructor body reads a reactive property as a bare statement (e.g. `state.count` or `props.value * 2` outside of a JSX attribute or an effect), the constructor creates a dependency on that property. When the property changes, the render effect tries to re-execute, and the fence blocks it with a `console.warn`:
+
+```
+Component rebuild detected.
+It means the component definition refers a reactive value that has been modified,
+though the component has not been rebuilt as it is considered forbidden to avoid
+infinite events loops.
+```
+
+### Common traps and fixes
+
+#### ❌ Wrong: Bare reactive read in the constructor
+
+```tsx
+function BadComponent(props: { count: number }) {
+  // Reads props.count in the constructor body — triggers the fence on change
   const doubled = props.count * 2
-  
   return <div>{doubled}</div>
 }
 ```
 
-### ✅ Correct: Using Effects for Reactivity
+#### ✅ Correct: Let the Babel plugin handle it
 
-```typescript
-import { effect } from 'mutts'
+```tsx
+function GoodComponent(props: { count: number }) {
+  // {props.count * 2} is in a JSX attribute — the plugin wraps it in r()
+  // It updates independently without re-running the constructor
+  return <div>{props.count * 2}</div>
+}
+```
 
-export function GoodComponent(props: { count: number }) {
-  // Component renders once with initial value
+#### ✅ Correct: Use an effect for imperative logic
+
+```tsx
+function GoodComponent(props: { count: number }) {
   const countElement = <div>0</div>
   
-  // Use effect to handle reactive updates
   effect(() => {
     countElement.textContent = String(props.count * 2)
   })
@@ -44,19 +64,97 @@ export function GoodComponent(props: { count: number }) {
 }
 ```
 
-## Error Messages
+#### ❌ Wrong: JS conditional in the constructor
 
-If you accidentally create reactive dependencies during component rendering, you'll see:
-
+```tsx
+function BadComponent(props: { loggedIn: boolean }) {
+  // Bare reactive read — fence blocks re-evaluation
+  if (props.loggedIn) return <Dashboard />
+  return <Login />
+}
 ```
-Error: Component rendering detected reactive changes. Components should render only once.
-See: https://github.com/eddow/pounce/tree/master/packages/core/docs/component-reactivity.md
 
-To fix this:
-1. Move reactive logic into effect(() => ...)
-2. Use untracked() for non-reactive computations
-3. Ensure component functions don't depend on changing state
+#### ✅ Correct: Use the `if` directive
+
+```tsx
+function GoodComponent(props: { loggedIn: boolean }) {
+  return <>
+    <Dashboard if={props.loggedIn} />
+    <Login if={!props.loggedIn} />
+  </>
+}
 ```
+
+## JSX Extensions: Virtual Attributes & Virtual Elements
+
+Pounce extends JSX with two categories of non-standard constructs, both processed at compile time by the Babel plugin and at runtime by the reconciler.
+
+### Virtual Attributes (Directives)
+
+Virtual attributes are available on **any** element or component. They are not rendered to the DOM — the framework intercepts them during reconciliation.
+
+| Attribute | Purpose | Example |
+|-----------|---------|---------|
+| `if={expr}` | Conditional rendering — element exists only when truthy | `<Panel if={isOpen} />` |
+| `else` | Renders when the preceding `if` was falsy | `<Fallback else />` |
+| `if:name={value}` | Scope-based condition — renders when `scope[name] === value` | `<Admin if:role={'admin'} />` |
+| `when:name={arg}` | Scope-based predicate — renders when `scope[name](arg)` is truthy | `<Route when:match={'/home'} />` |
+| `use={fn}` | Mount hook — called once with the rendered target | `<div use={(el) => el.focus()} />` |
+| `use:name={value}` | Scoped mixin — calls `scope[name](target, value, scope)` | `<div use:resize={callback} />` |
+| `update:name={fn}` | Two-way binding callback for scoped mixins | `<input update:value={(v) => state.val = v} />` |
+| `this={ref}` | Captures a reference to the rendered DOM node(s) | `<input this={refs.input} />` |
+
+**Key point**: `if`, `else`, `when` are reactive — the Babel plugin wraps their values in `r()`, so the element appears/disappears automatically when dependencies change. No re-render of the parent component occurs.
+
+```tsx
+// Conditional rendering — reactive, no rebuild
+<Dashboard if={user.loggedIn} />
+<LoginForm else />
+
+// Scope-based conditions
+<AdminPanel if:role={'admin'} />
+<UserPanel else />
+```
+
+### Virtual Elements
+
+Virtual elements are custom JSX tags that don't produce DOM elements. They are framework primitives for structural patterns.
+
+| Element | Purpose | Example |
+|---------|---------|---------|
+| `<for each={array}>{(item) => <Item />}</for>` | Reactive list rendering | See below |
+| `<fragment>...</fragment>` | Groups children without a DOM wrapper | `<fragment if={cond}>...</fragment>` |
+| `<scope key={value}>...</scope>` | Creates a child scope with injected properties | `<scope role="admin">...</scope>` |
+| `<dynamic tag={tagOrComponent}>...</dynamic>` | Renders a variable tag or component | `<dynamic tag={props.as ?? 'div'} />` |
+
+**`<for>`** is the idiomatic way to render reactive lists. It uses `project.array` from mutts under the hood, so items are added/removed/reordered efficiently without re-rendering the entire list:
+
+```tsx
+<ul>
+  <for each={state.todos}>
+    {(todo: Todo) => <li>{todo.text}</li>}
+  </for>
+</ul>
+```
+
+**`<fragment>`** is useful for grouping elements under a single `if`/`else` condition:
+
+```tsx
+<fragment if={state.loading}>
+  <Spinner />
+  <p>Loading...</p>
+</fragment>
+<fragment else>
+  <Content />
+</fragment>
+```
+
+### Why the distinction matters
+
+- **Virtual attributes** modify *any* existing element's behavior — they are orthogonal to what the element is.
+- **Virtual elements** *are* the element — they define structural rendering patterns that have no DOM counterpart.
+
+A `<div if={cond}>` is still a `<div>` that conditionally exists. A `<for>` is not a DOM element at all — it's a reactive list projection.
 
 ## Best Practices
 

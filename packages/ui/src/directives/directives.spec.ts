@@ -3,7 +3,8 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { document } from '@pounce/core'
-import { resetAdapter } from '../../src/adapter/registry'
+import { setAdapter, resetAdapter } from '../../src/adapter/registry'
+import { vanillaAdapter } from '../../src/adapter/vanilla'
 import { pointer, type PointerState } from '../../src/directives/pointer'
 import { resize } from '../../src/directives/resize'
 import { scroll } from '../../src/directives/scroll'
@@ -207,6 +208,7 @@ describe('Directives', () => {
     let cleanup: (() => void) | undefined
 
     beforeEach(() => {
+      setAdapter(vanillaAdapter)
       element = document.createElement('button')
       document.body.appendChild(element)
     })
@@ -214,6 +216,7 @@ describe('Directives', () => {
     afterEach(() => {
       cleanup?.()
       element.remove()
+      resetAdapter()
     })
 
     it('should add badge with string value', () => {

@@ -43,29 +43,24 @@ This document specifies the JavaScript/TypeScript architecture for `@pounce/ui`,
 ```typescript
 // @pounce/ui/src/adapter/types.ts
 
-/**
- * Configuration for a single component
- */
-export type ComponentAdapter<Props = any> = {
-  /** CSS class name overrides */
+// Component-specific adaptation types
+export type BaseAdaptation = {
   classes?: Partial<Record<string, string>>
-  
-  /** Custom render structure (for complex DOM changes) */
-  renderStructure?: (parts: ComponentParts<Props>) => JSX.Element
-  
-  /** Event target overrides (for delegation patterns) */
-  events?: Partial<Record<string, EventTarget>>
-  
-  /** Transition class configuration */
-  transitions?: TransitionConfig
-  
-  /** Icon placement strategy */
-  iconPlacement?: IconPlacement
+  renderStructure?: (parts: ComponentParts, context: DisplayContext) => JSX.Element
 }
 
-/**
- * Transition configuration for enter/exit animations
- */
+export type IconAdaptation = BaseAdaptation & {
+  iconPlacement?: 'start' | 'end'
+}
+
+export type TransitionAdaptation = BaseAdaptation & {
+  transitions?: TransitionConfig
+}
+
+export type OverlayAdaptation = TransitionAdaptation & {
+  events?: Partial<Record<string, EventTarget>>
+}
+
 export type TransitionConfig = {
   enterClass?: string
   exitClass?: string
@@ -73,14 +68,6 @@ export type TransitionConfig = {
   duration?: number
 }
 
-/**
- * Icon placement options
- */
-export type IconPlacement = 'start' | 'end' | 'both' | 'none'
-
-/**
- * Component parts for custom rendering
- */
 export type ComponentParts<Props = any> = {
   props: Props
   state: any
@@ -89,17 +76,27 @@ export type ComponentParts<Props = any> = {
   [key: string]: any
 }
 
-/**
- * Framework adapter registry
- */
-export type FrameworkAdapter = {
-  [ComponentName: string]: ComponentAdapter
+// Typed component registry
+export type UiComponents = {
+  Button: IconAdaptation
+  RadioButton: IconAdaptation
+  Dialog: OverlayAdaptation
+  Toast: OverlayAdaptation
+  Drawer: OverlayAdaptation
+  // ... all components with specific adaptation types
 }
 
-/**
- * Icon resolver function
- */
-export type IconResolver = (name: string, size?: string | number) => JSX.Element
+export type ComponentName = keyof UiComponents
+
+// Global adapter with composable concerns
+export type FrameworkAdapter = {
+  iconFactory?: (name: string, size: string | number | undefined, context: DisplayContext) => JSX.Element
+  variants?: Record<string, Trait>  // Trait from @pounce/core
+  transitions?: TransitionConfig
+  components?: {
+    [Name in keyof UiComponents]?: UiComponents[Name]
+  }
+}
 ```
 
 ### Adapter Registry
@@ -107,43 +104,44 @@ export type IconResolver = (name: string, size?: string | number) => JSX.Element
 ```typescript
 // @pounce/ui/src/adapter/registry.ts
 
-let currentAdapter: FrameworkAdapter = {}
+let currentAdapter: Partial<FrameworkAdapter> = {}
 let isRendering = false
 
 /**
- * Set the framework adapter configuration
+ * Set/merge adapter configuration (composable — call multiple times)
  * Must be called before any component renders (SSR safety)
- * 
- * @throws Error if called after rendering has started
  */
-export function setAdapter(adapter: FrameworkAdapter): void {
+export function setAdapter(adapter: Partial<FrameworkAdapter>): void {
   if (isRendering) {
-    throw new Error(
-      '[pounce/ui] setAdapter() must be called before component rendering. ' +
-      'Import and configure adapter in your app entry point.'
-    )
+    throw new Error('[pounce/ui] setAdapter() must be called before component rendering.')
   }
-  currentAdapter = { ...currentAdapter, ...adapter }
+  currentAdapter = {
+    ...currentAdapter,
+    ...adapter,
+    // Deep merge for variants and components (accumulative)
+    variants: adapter.variants
+      ? { ...currentAdapter.variants, ...adapter.variants }
+      : currentAdapter.variants,
+    components: adapter.components
+      ? { ...currentAdapter.components, ...adapter.components }
+      : currentAdapter.components
+  }
 }
 
-/**
- * Get adapter configuration for a component
- * Marks rendering as started (for SSR safety check)
- */
-export function getAdapter<T extends keyof FrameworkAdapter>(
-  component: T
-): ComponentAdapter {
+/** Get typed adapter for a specific component */
+export function getAdapter<T extends ComponentName>(component: T): UiComponents[T] {
   isRendering = true
-  return currentAdapter[component] || {}
+  return (currentAdapter.components?.[component] || {}) as UiComponents[T]
 }
 
-/**
- * Reset adapter state (for testing only)
- * @internal
- */
-export function __resetAdapter(): void {
-  currentAdapter = {}
-  isRendering = false
+/** Get global adapter concerns (icons, variants, transitions) */
+export function getGlobalAdapter(): Pick<FrameworkAdapter, 'iconFactory' | 'variants' | 'transitions'> {
+  isRendering = true
+  return {
+    iconFactory: currentAdapter.iconFactory,
+    variants: currentAdapter.variants,
+    transitions: currentAdapter.transitions
+  }
 }
 ```
 
@@ -215,145 +213,57 @@ export const componentStyle = layer('pounce.components')
 
 ```typescript
 // @pounce/ui/src/components/button.tsx
-import { compose } from 'mutts'
-import { componentStyle } from '../styles'
-import { getAdapter } from '../adapter'
+import { compose } from '@pounce/core'
+import { componentStyle } from '@pounce/kit/dom'
+import { getAdapter } from '../adapter/registry'
+import { Icon } from './icon'
+import { asVariant, getVariantTrait } from '../shared/variants'
 
-// Inject component styles (runs once per module)
 componentStyle`
-  .pounce-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: var(--pounce-primary);
-    color: white;
-    border: none;
-    border-radius: var(--pounce-border-radius);
-    cursor: pointer;
-    
-    &:hover {
-      filter: brightness(0.9);
-    }
-    
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
-  
-  .pounce-button-icon {
-    display: inline-flex;
-    align-items: center;
-  }
+  .pounce-button { /* ... base styles using --pounce-* variables */ }
 `
 
 export type ButtonProps = {
   variant?: string
   icon?: string | JSX.Element
-  iconPosition?: 'start' | 'end'
   disabled?: boolean
-  onClick?: (e: MouseEvent) => void
-  ariaLabel?: string
   tag?: 'button' | 'a' | 'div' | 'span'
   el?: JSX.HTMLAttributes<any>
   children?: JSX.Children
 }
 
-export const Button = (props: ButtonProps) => {
-  // Get adapter configuration
+const ButtonBase = (props: ButtonProps) => {
   const adapter = getAdapter('Button')
-  
-  // Compose reactive state with defaults
-  const state = compose(
-    {
-      variant: 'primary' as const,
-      iconPosition: 'start' as const,
-      disabled: false,
-      onClick: () => {},
-      ariaLabel: undefined as string | undefined,
-      tag: 'button' as const,
-    },
+
+  const s = compose(
+    { variant: undefined as string | undefined, disabled: false, tag: 'button' as const },
     props,
-    (state) => ({
-      // Computed: icon element
+    (s) => ({
+      get baseTrait() {
+        return adapter.classes?.base ? { classes: [adapter.classes.base] } : undefined
+      },
+      get variantTrait() {
+        return getVariantTrait(s.variant)
+      },
+      get allTraits() {
+        return [this.baseTrait, this.variantTrait].filter((t): t is Trait => !!t)
+      },
       get iconElement() {
-        if (!state.icon) return null
-        
-        // String icon: use adapter's icon resolver or default
-        if (typeof state.icon === 'string') {
-          const resolver = adapter.iconResolver || defaultIconResolver
-          return <span class="pounce-button-icon" aria-hidden>{resolver(state.icon)}</span>
-        }
-        
-        // JSX icon: use directly
-        return <span class="pounce-button-icon" aria-hidden>{state.icon}</span>
-      },
-      
-      // Computed: has text label
-      get hasLabel() {
-        return !!state.children && (!Array.isArray(state.children) || state.children.some(e => !!e))
-      },
-      
-      // Computed: icon-only button
-      get isIconOnly() {
-        return !!state.icon && !this.hasLabel
-      },
-      
-      // Computed: CSS classes (with adapter overrides and vanilla fallbacks)
-      get classes() {
-        const base = adapter.classes?.base || 'pounce-button'
-        const variant = getVariantClass(state.variant, adapter)
-        const iconOnly = state.isIconOnly ? (adapter.classes?.iconOnly || 'pounce-button-icon-only') : undefined
-        
-        return [base, variant, iconOnly, state.el?.class].filter(Boolean)
+        if (!s.icon) return null
+        return typeof s.icon === 'string' ? <Icon name={s.icon} /> : s.icon
       }
     })
   )
-  
-  // If adapter provides custom structure, use it
-  if (adapter.renderStructure) {
-    return adapter.renderStructure({
-      props,
-      state,
-      children: state.children,
-      ariaProps: {
-        'aria-label': state.isIconOnly ? (state.ariaLabel || 'Action') : state.ariaLabel,
-        'aria-disabled': state.disabled || undefined
-      }
-    })
-  }
-  
-  // Default structure
+
   return (
-    <dynamic
-      tag={state.tag}
-      {...state.el}
-      onClick={state.onClick}
-      disabled={state.disabled}
-      aria-label={state.isIconOnly ? (state.ariaLabel ?? state.el?.['aria-label'] ?? 'Action') : (state.ariaLabel ?? state.el?.['aria-label'])}
-      class={state.classes}
-    >
-      <span if={state.iconPosition === 'start'} class="pounce-button-icon-wrapper">
-        {state.iconElement}
-      </span>
-      <fragment>
-        <span if={state.hasLabel} class="pounce-button-label">
-          {state.children}
-        </span>
-        <fragment else>{state.children}</fragment>
-      </fragment>
-      <span if={state.iconPosition === 'end'} class="pounce-button-icon-wrapper">
-        {state.iconElement}
-      </span>
+    <dynamic tag={s.tag} traits={s.allTraits} disabled={s.disabled} {...s.el}>
+      {s.iconElement}
+      {s.children}
     </dynamic>
   )
 }
 
-/**
- * Framework-agnostic Button component with dynamic variant support.
- * Usage: <Button.primary>, <Button.danger>, or <Button variant="custom">
- */
+// Wrap with asVariant for dot-syntax: <Button.danger>, <Button.primary>
 export const Button = asVariant(ButtonBase)
 ```
 
@@ -456,43 +366,53 @@ export const Dialog = (props: DialogProps) => {
 }
 ```
 
-## � Variant Pattern (asVariant)
+## Variant Pattern (asVariant + getVariantTrait)
 
-To keep components **asneap** and framework-agnostic, we avoid hardcoding variant names. Instead, we use the `asVariant` proxy helper.
+To keep components **asneap** and framework-agnostic, we avoid hardcoding variant names. Instead, we use the `asVariant` proxy helper and `getVariantTrait` lookup.
 
 ### Dynamic Auto-Flavoring
 `asVariant` wraps a component in a `Proxy` that treats any property access as a **variant flavor**.
 
 ```typescript
 // src/shared/variants.ts
-export function asVariant<T>(component: T): T & Record<string, T> {
+export function asVariant<T extends (props: any) => any>(component: T): T & Record<string, T> {
   return new Proxy(component, {
     get(target, prop, receiver) {
       if (typeof prop === 'string' && !(prop in target)) {
-        return flavorOptions(receiver as any, { variant: prop })
+        return new Proxy(target, {
+          apply(target, thisArg, args: any[]) {
+            const [props, ...rest] = args
+            const mergedProps = props && typeof props === 'object'
+              ? { variant: prop, ...props }
+              : { variant: prop }
+            return target.apply(thisArg, [mergedProps, ...rest] as any)
+          }
+        })
       }
       return Reflect.get(target, prop, receiver)
-    }
-  })
+    },
+  }) as any
 }
 ```
 
 ### Usage
 This allows a fluent, descriptive API that is zero-config:
-- `<Button.primary>` -> `{ variant: 'primary' }`
-- `<Button.danger>` -> `{ variant: 'danger' }`
-- `<Button.anything>` -> `{ variant: 'anything' }`
+- `<Button.primary>` → `{ variant: 'primary' }`
+- `<Button.danger>` → `{ variant: 'danger' }`
+- `<Button.anything>` → `{ variant: 'anything' }`
 
-### Validation Logic
-The `getVariantClass` utility (used inside components) handles the mapping and validation:
+### Variant Resolution
+The `getVariantTrait` utility (used inside components) handles the lookup:
 
-1. **Adapter Registry**: Checks if the active adapter has a mapping for the variant.
-2. **Standard Fallback**: Checks if the variant is in the `STANDARD_VARIANTS` list (primary, danger, etc.).
-3. **Development Warning**: Logs an error if a variant is neither registered nor standard, to prevent "mystery classes".
+1. **Adapter Registry**: Looks up `adapter.variants[name]` for a `Trait` object.
+2. **No fallback**: If the adapter doesn't define the variant, returns `undefined`.
+3. **Development Warning**: Logs a `console.warn` if a variant is not found in the adapter.
+
+Components apply the returned `Trait` via the `traits` prop on DOM elements.
 
 ---
 
-## �🌓 Shared State: ui.theme
+## Shared State: ui.theme
 
 ### Theme State Management
 
@@ -746,45 +666,42 @@ export const ResponsiveNav = () => {
 }
 ```
 
-## 🎨 Icon Resolution
+## Icon System
 
-### Default Icon Resolver
+### Centralized Icon Component
 
-```typescript
-// @pounce/ui/src/shared/icons.ts
-import { Icon } from 'pure-glyf'
-
-/**
- * Default icon resolver using pure-glyf
- */
-export const defaultIconResolver = (name: string, size: string | number = 18): JSX.Element => {
-  return <Icon icon={name} size={size} />
-}
-```
-
-### Adapter Icon Resolver
+Icons are resolved via a global `iconFactory` in the adapter, not per-component.
 
 ```typescript
-// @pounce/ui-lucide (hypothetical adapter)
-import * as LucideIcons from 'lucide-react'
-import { setAdapter } from '@pounce/ui/adapter'
+// src/components/icon.tsx
+import { getGlobalAdapter } from '../adapter/registry'
 
-const lucideIconResolver = (name: string, size: string | number = 18): JSX.Element => {
-  const IconComponent = LucideIcons[name]
-  if (!IconComponent) {
-    console.warn(`[pounce/ui-lucide] Icon "${name}" not found`)
-    return <span>?</span>
+export const Icon = (props: { name: string, size?: string | number }) => {
+  const globalAdapter = getGlobalAdapter()
+  if (globalAdapter.iconFactory) {
+    return globalAdapter.iconFactory(props.name, props.size, useDisplayContext())
   }
-  return <IconComponent size={size} />
+  return <span class="pounce-icon">{props.name}</span>
+}
+```
+
+### Adapter Icon Configuration
+
+```typescript
+// @pounce/adapter-icons-glyf
+import { Icon as GlyfIcon } from 'pure-glyf'
+
+export const glyfIcons = {
+  iconFactory: (name: string, size: string | number = 18) => (
+    <GlyfIcon icon={name} size={size} />
+  )
 }
 
-setAdapter({
-  Button: {
-    iconResolver: lucideIconResolver
-  },
-  // ... other components
-})
+// Usage:
+setAdapter(glyfIcons)
 ```
+
+Components use `<Icon name="check" />` internally. The adapter determines how icons render.
 
 ## 🧪 Testing Patterns
 

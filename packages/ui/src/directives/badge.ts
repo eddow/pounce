@@ -1,6 +1,6 @@
 import { bindApp, h, Fragment } from '@pounce/core'
 import type { Variant } from '../shared/variants'
-import { variantClass } from '../shared/variants'
+import { getVariantTrait } from '../shared/variants'
 
 export type BadgePosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
 
@@ -45,8 +45,21 @@ export function badge(target: Node | Node[], input: BadgeInput) {
 		}
 	}
 	if (variant) {
-		const vClass = variantClass(variant)
-		if (vClass) badgeElement.classList.add(vClass)
+		const trait = getVariantTrait(variant)
+		if (trait?.classes) {
+			if (Array.isArray(trait.classes)) {
+				for (const cls of trait.classes) {
+					if (cls) badgeElement.classList.add(cls)
+				}
+			} else {
+				for (const [cls, enabled] of Object.entries(trait.classes)) {
+					if (enabled && cls) badgeElement.classList.add(cls)
+				}
+			}
+		}
+		if (trait?.attributes) {
+			for (const [k, v] of Object.entries(trait.attributes)) badgeElement.setAttribute(k, String(v))
+		}
 	}
 
 	badgeElement.setAttribute('aria-hidden', 'true')

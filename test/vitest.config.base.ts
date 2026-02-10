@@ -1,11 +1,22 @@
 import { defineConfig } from 'vitest/config'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { pounceCorePlugin } from '@pounce/plugin/configs'
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url))
 
 export const createBaseConfig = (packageDir: string) => {
 	return defineConfig({
+		plugins: [
+			pounceCorePlugin({
+				projectRoot: packageDir,
+				jsxRuntime: {
+					runtime: 'automatic',
+					importSource: '@pounce/core',
+				},
+			}),
+		],
+		esbuild: false,
 		resolve: {
 			alias: {
 				'mutts': resolve(rootDir, '../../mutts/src/index.ts'),

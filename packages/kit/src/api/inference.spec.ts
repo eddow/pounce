@@ -1,6 +1,7 @@
 /**
  * Test route parameter type inference
  */
+import { describe, expectTypeOf, it } from 'vitest'
 import type { ExtractPathParams } from './inference'
 
 describe('Route Parameter Inference', () => {

@@ -65,7 +65,7 @@ describe('Directive Re-rendering', () => {
 		expect(document.getElementById('child')?.getAttribute('data-calls')).toBe('1')
 	})
 
-	it('should re-call directive when component re-renders (new JSX element)', () => {
+	it('should NOT re-render component on bare reactive read (rebuild fence)', () => {
 		let callCount = 0
 		const state = reactive({ trigger: 0 })
 
@@ -77,7 +77,7 @@ describe('Directive Re-rendering', () => {
 		const scope = reactive({ myDir })
 
 		const Child = () => {
-			state.trigger // track
+			state.trigger // bare reactive read — rebuild fence should prevent re-rendering
 			return <div use:myDir />
 		}
 
@@ -87,9 +87,7 @@ describe('Directive Re-rendering', () => {
 		expect(callCount).toBe(1)
 
 		state.trigger++
-		// Child re-renders, returns a NEW div JSX element.
-		// Old div is removed, new div is added.
-		// Since it's a new JSX element, it's a cache miss in render().
-		expect(callCount).toBe(2)
+		// Rebuild fence prevents re-rendering: directive is NOT re-called
+		expect(callCount).toBe(1)
 	})
 })

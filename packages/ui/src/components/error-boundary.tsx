@@ -1,18 +1,18 @@
-import { onEffectThrow } from 'mutts'
-import { compose } from '@pounce/core'
+import { onEffectThrow, reactive } from 'mutts'
+import { bindChildren } from '@pounce/core'
 
 /**
  * ErrorBoundary - Catches and displays errors in component trees
  *
- * Uses mutts' onEffectThrow to properly catch errors in reactive effects.
- * Errors in child components and effects propagate up and are caught by
- * the error handler registered via onEffectThrow.
+ * Architecture: An inner `ErrorReceiver` component wraps the children and
+ * registers `onEffectThrow` to catch errors from child rendering/effects.
+ * When an error is caught, it updates shared reactive state. The boundary's
+ * `use=` mount callback reactively renders either the receiver or a fallback
+ * based on that state — decoupled from the boundary's own `produce`.
  *
  * ⚠️ LIMITATIONS:
- * - Catches errors in effects and component rendering
- * - Does NOT catch:
- *   - Async errors in Promises (use .catch() on Promises)
- *   - Errors in event handlers (use try-catch in handlers)
+ * - Does NOT catch async errors in Promises (use `.catch()`)
+ * - Does NOT catch errors in event handlers (use try-catch in handlers)
  *
  * @example
  * <ErrorBoundary
@@ -27,6 +27,7 @@ export interface ErrorBoundaryProps {
 	fallback?: (error: Error, errorInfo: { componentStack: string }) => JSX.Element
 	onError?: (error: Error, errorInfo: { componentStack: string }) => void
 }
+
 const defaultFallback = (error: Error) => (
 	<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
 		<h3>Something went wrong</h3>
@@ -38,25 +39,76 @@ const defaultFallback = (error: Error) => (
 		</details>
 	</div>
 )
-export const ErrorBoundary = (props: ErrorBoundaryProps) => {
-	const state = compose({
-			error: undefined as Error | undefined,
-		},
-		props
-	)
 
-	// Register error handler in current effect context (component runs inside effect)
-	onEffectThrow((error: unknown) => {
-		state.error = error as Error
-		props.onError?.(error as Error, { componentStack: '' })
+interface ReceiverProps {
+	children: JSX.Element | JSX.Element[]
+	state: { error: undefined | Error }
+	onError?: (error: Error, errorInfo: { componentStack: string }) => void
+}
+
+const ErrorReceiver = (props: ReceiverProps) => {
+	onEffectThrow((thrown: unknown) => {
+		const error = thrown instanceof Error ? thrown : new Error(String(thrown))
+		if (error.name === 'DynamicRenderingError') return
+		if (!props.state.error) {
+			props.state.error = error
+			props.onError?.(error, { componentStack: '' })
+		}
 	})
+	return <span style="display:contents">{props.children}</span>
+}
 
-	return (
-		<div class="pounce-error-boundary">
-			<div if={state.error}>
-				{props.fallback ? props.fallback(state.error!, { componentStack: '' }) : defaultFallback(state.error!)}
-			</div>
-			<fragment else>{props.children}</fragment>
-		</div>
-	)
+export const ErrorBoundary = (props: ErrorBoundaryProps) => {
+	const state = reactive({ error: undefined as Error | undefined })
+
+	const mount = (container: Node) => {
+		const el = container as HTMLElement
+
+		if (!state.error) {
+			const receiver = <ErrorReceiver state={state} onError={props.onError}>{props.children}</ErrorReceiver>
+			try {
+				return bindChildren(el, receiver.render())
+			} catch {
+				// DynamicRenderingError — ErrorReceiver's onEffectThrow already set state.error
+			}
+		}
+
+		if (state.error) {
+			const fallbackJsx = props.fallback
+				? props.fallback(state.error, { componentStack: '' })
+				: defaultFallback(state.error)
+			return bindChildren(el, fallbackJsx.render())
+		}
+	}
+
+	return <div class="pounce-error-boundary" use={mount} />
+}
+
+export const ProductionErrorBoundary = (props: { children: JSX.Element | JSX.Element[] }) => {
+	const state = reactive({ error: undefined as Error | undefined })
+
+	const mount = (container: Node) => {
+		const el = container as HTMLElement
+
+		if (!state.error) {
+			const receiver = <ErrorReceiver state={state}>{props.children}</ErrorReceiver>
+			try {
+				return bindChildren(el, receiver.render())
+			} catch {
+				// DynamicRenderingError — ErrorReceiver's onEffectThrow already set state.error
+			}
+		}
+
+		if (state.error) {
+			const fallbackJsx = (
+				<div style="padding: 20px; text-align: center; color: #666;">
+					<h2>Something went wrong</h2>
+					<p>Please refresh the page and try again.</p>
+				</div>
+			)
+			return bindChildren(el, fallbackJsx.render())
+		}
+	}
+
+	return <div class="pounce-error-boundary-prod" use={mount} />
 }

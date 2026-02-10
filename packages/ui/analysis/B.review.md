@@ -324,65 +324,42 @@ Per WALKTHROUGH agent log (2026-02-03 11:48):
 
 ---
 
-### 5. ErrorBoundary Component (B10) ⭐⭐⭐⭐☆
+### 5. ErrorBoundary Component (B10) ⭐⭐⭐⭐⭐
 
-**File**: `src/components/error-boundary.tsx` (71 lines)  
+**File**: `src/components/error-boundary.tsx` (~114 lines)  
+**Test**: `src/components/error-boundary.spec.tsx` (~159 lines)  
 **Components**: `ErrorBoundary`, `ProductionErrorBoundary`  
-**Owner**: Cascade  
-**Status**: ✅ Complete with critical fixes and documentation
+**Owner**: compys  
+**Status**: ✅ Complete — rewritten with ErrorReceiver pattern
 
-#### Strengths
+#### Architecture: ErrorReceiver Pattern
 
-**Dual Variants** (Lines 10, 48)
+The original try-catch approach was replaced with an inner **ErrorReceiver** component pattern that decouples error catching from the boundary's own rendering:
+
+1. **ErrorReceiver** — inner component with `onEffectThrow` that catches child errors and reports to shared reactive `state.error`
+2. **ErrorBoundary** — renders a stable `<div>` with `use=` mount callback. Mount imperatively renders either the ErrorReceiver (wrapping children) or the fallback via `bindChildren`.
+3. **ProductionErrorBoundary** — same pattern, simpler fallback.
+
 ```typescript
-export const ErrorBoundary = (props: ErrorBoundaryProps) => {
-	// Development-friendly with stack traces
-}
-
-export const ProductionErrorBoundary = (props: { children: JSX.Element | JSX.Element[] }) => {
-	// User-friendly minimal error UI
+// ErrorReceiver catches child errors via onEffectThrow
+const ErrorReceiver = (props, scope) => {
+  onEffectThrow((error) => {
+    state.error = error
+    props.onError?.(error)
+  })
+  return props.children
 }
 ```
-✅ Separate dev/prod error UIs  
-✅ Production variant hides technical details
 
-**Callback Support** (Lines 6-7)
-```typescript
-fallback?: (error: Error, errorInfo: { componentStack: string }) => JSX.Element
-onError?: (error: Error, errorInfo: { componentStack: string }) => void
-```
-✅ Allows custom error handling  
-✅ Supports error logging services
+#### Key Discoveries (by compys)
 
-#### Critical Fixes Applied
-
-🟢 **FIXED: onError Callback Invocation**
-
-Per WALKTHROUGH agent log (2026-02-03 11:48):
-- ✅ Fixed `onError` callback invocation - now properly called when errors are caught
-- ✅ Added `onError` prop to ProductionErrorBoundary for consistency
-
-🟢 **DOCUMENTED: Limitations**
-
-Per WALKTHROUGH agent log (2026-02-03 11:48):
-- ✅ Added comprehensive documentation about limitations (async errors, effects, event handlers)
-- ✅ Documented workarounds for production apps (global error handlers, error logging services)
-
-#### Known Limitations
-
-⚠️ **Try-Catch Pattern Limitations** (Documented)
-
-The try-catch approach only catches **synchronous render errors** during initial render. It **does not catch**:
-- Async errors (promises, async/await)
-- Errors in `effect()` callbacks
-- Errors in event handlers
-- Errors in subsequent reactive updates
-
-**Status**: Documented limitation - users should use global error handlers for production apps
+- Pico's `{content}` pattern (function reference as JSX child) is broken — babel wraps as `r(() => content)` returning the function object. Use `{content()}` instead.
+- `onEffectThrow` in a component body catches child errors, but the `DynamicRenderingError` from the child's `PounceElement.render` escapes and breaks the boundary's own produce. The ErrorReceiver pattern decouples this.
+- `PounceElement.render` was NOT modified — the fix is purely at the component level.
 
 #### Test Results
 
-⚠️ Tests failing due to reactive system error handling (documented limitation)
+✅ Tests passing — good coverage for various error scenarios and custom fallbacks
 
 ---
 
@@ -633,10 +610,9 @@ const MyComponent = (props, { dialog, toast }) => {
 | Issue | Component | Status | Resolution |
 |-------|-----------|--------|------------|
 | Memory leak in AppShell | Layout | ✅ FIXED | Cleanup function added to scroll listener |
-| Variant handling inconsistency | Typography | ✅ FIXED | Now uses `getVariantClass()` |
+| Variant handling inconsistency | Typography | ✅ FIXED | Now uses `getVariantTrait()` (Trait-based) |
 | Missing adapter support | Typography | ✅ FIXED | Adapter integration added |
-| onError callback not invoked | ErrorBoundary | ✅ FIXED | Callback now properly called |
-| ErrorBoundary limitations | ErrorBoundary | ✅ DOCUMENTED | Comprehensive docs added |
+| ErrorBoundary error catching | ErrorBoundary | ✅ REWRITTEN | ErrorReceiver pattern (by compys) |
 | trapTab not implemented | Toolbar | ✅ DOCUMENTED | Marked as TODO, not blocking |
 
 **All critical issues resolved** ✅

@@ -1,7 +1,7 @@
 import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
-import { asVariant, getVariantClass } from '../shared/variants'
+import { asVariant, getVariantTrait } from '../shared/variants'
 import { Icon } from './icon'
 
 // Default Button Styles (SASS)
@@ -93,14 +93,18 @@ const ButtonBase = (props: ButtonProps) => {
 			get isIconOnly() {
 				return !!s.icon && !this.hasLabel
 			},
-			get classes() {
-				const base = adapter.classes?.base || 'pounce-button'
-				const variant = getVariantClass(s.variant, adapter)
-				const iconOnly = this.isIconOnly
-					? adapter.classes?.iconOnly || 'pounce-button-icon-only'
-					: undefined
-
-				return [base, variant, iconOnly, s.el?.class].filter(Boolean)
+			get baseTrait() {
+				const classes = [
+					adapter.classes?.base || 'pounce-button',
+					this.isIconOnly ? (adapter.classes?.iconOnly || 'pounce-button-icon-only') : null
+				].filter((c): c is string => !!c)
+				return { classes }
+			},
+			get variantTrait() {
+				return getVariantTrait(s.variant)
+			},
+			get allTraits() {
+				return [this.baseTrait, this.variantTrait].filter((t): t is import('@pounce/core').Trait => !!t)
 			},
 		})
 	)
@@ -117,13 +121,14 @@ const ButtonBase = (props: ButtonProps) => {
 					: (state.ariaLabel ?? state.el?.['aria-label']),
 				'aria-disabled': state.disabled || undefined,
 			},
-		})
+		}, {} as any) // TODO: Pass DisplayContext
 	}
 
 	return (
 		<dynamic
 			tag={state.tag}
 			{...state.el}
+			traits={state.allTraits}
 			onClick={state.onClick}
 			disabled={state.disabled}
 			aria-label={
@@ -131,7 +136,6 @@ const ButtonBase = (props: ButtonProps) => {
 					? (state.ariaLabel ?? state.el?.['aria-label'] ?? 'Action')
 					: (state.ariaLabel ?? state.el?.['aria-label'])
 			}
-			class={state.classes}
 		>
 			<span if={state.iconPosition === 'start'} class="pounce-button-icon-wrapper">
 				{state.iconElement}

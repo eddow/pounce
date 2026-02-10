@@ -26,16 +26,16 @@ import { setAdapter } from '@pounce/ui'
 
 setAdapter({
   variants: {
-    primary: 'my-primary-class',
-    danger: 'my-danger-class'
+    primary: { classes: ['my-primary-class'] },
+    danger: { classes: ['my-danger-class'] }
   },
+  iconFactory: (name) => <MyIcon name={name} />,
   components: {
     Button: {
       classes: {
         base: 'custom-button',
         iconOnly: 'custom-icon-btn'
-      },
-      iconResolver: (name) => <MyIcon name={name} />
+      }
     }
   }
 })
@@ -51,29 +51,28 @@ const baseClass = adapter.classes?.base || 'pounce-button'
 const icon = adapter.iconResolver?.(iconName) || iconName
 ```
 
-**Variant Resolution** (3-tier fallback):
-1. Component-specific adapter classes (`adapter.classes?.[variant]`)
-2. Global adapter variants (`getGlobalVariants()?.[variant]`)
-3. Standard vanilla conventions (`pounce-variant-${variant}`)
+**Variant Resolution**:
+1. `getVariantTrait(name)` looks up `adapter.variants[name]` for a `Trait` object
+2. Returns `undefined` if not found (no fallback)
+3. Dev warning if variant is missing from adapter
 
 ### 1.3 Current Type System
 
 ```typescript
+// OLD (before refactoring):
 export type UiComponents = {
   Button: any        // ❌ No type safety
   Badge: any
-  Dockview: any
   // ... all components use `any`
 }
 
-export type ComponentAdapter<Props = any> = {
-  classes?: Partial<Record<string, string>>
-  renderStructure?: (parts: ComponentParts<Props>) => JSX.Element
-  events?: Partial<Record<string, EventTarget>>
-  transitions?: TransitionConfig
-  iconPlacement?: IconPlacement
-  iconResolver?: (name: string, size?: string | number) => JSX.Element
-  icons?: Record<string, string>
+// NEW (after Phase 1):
+export type UiComponents = {
+  Button: IconAdaptation
+  RadioButton: IconAdaptation
+  Dialog: OverlayAdaptation
+  Toast: OverlayAdaptation
+  // ... each component has a specific adaptation type
 }
 ```
 
@@ -833,60 +832,28 @@ Components with minimal adaptation needs:
 
 ## Appendix B: Example Adapter Configurations
 
-### Pure-glyf Adapter
+### Pure-glyf Icon Adapter
 
 ```typescript
 import { Icon as GlyfIcon } from 'pure-glyf'
-import { setAdapter } from '@pounce/ui'
 
-setAdapter({
-  iconFactory: (name, size = 18) => (
-    <GlyfIcon icon={name} size={size} />
-  ),
-  variants: {
-    primary: 'pounce-variant-primary',
-    danger: 'pounce-variant-danger'
-  }
-})
+export const glyfIcons = {
+  iconFactory: (name: string, size: string | number | undefined, context: DisplayContext) => (
+    <GlyfIcon icon={name} size={size ?? 18} />
+  )
+}
 ```
 
-### Lucide Adapter
+### PicoCSS + Icons (variadic composition)
 
 ```typescript
-import * as LucideIcons from 'lucide-react'
 import { setAdapter } from '@pounce/ui'
+import { picoAdapter } from '@pounce/adapter-pico'
+import '@pounce/adapter-pico/css'
+import { glyfIcons } from '@pounce/adapter-icons-glyf'
 
-setAdapter({
-  iconFactory: (name, size = 18) => {
-    const IconComponent = LucideIcons[name]
-    if (!IconComponent) {
-      console.warn(`Icon "${name}" not found in Lucide`)
-      return <span>{name}</span>
-    }
-    return <IconComponent size={size} />
-  }
-})
-```
-
-### PicoCSS Adapter
-
-```typescript
-import '@picocss/pico/css/pico.min.css'
-import { setAdapter } from '@pounce/ui'
-
-setAdapter({
-  variants: {
-    primary: 'pico-button-primary',
-    secondary: 'pico-button-secondary'
-  },
-  components: {
-    Button: {
-      classes: {
-        base: 'pico-button'
-      }
-    }
-  }
-})
+// Single call, merges left-to-right
+setAdapter(picoAdapter, glyfIcons)
 ```
 
 ---
@@ -920,22 +887,17 @@ Icons and framework styling are **orthogonal concerns**. Users might want:
 - `pico + heroicon` OR `pico + pureglyf`
 - `tailwind + heroicon` OR `tailwind + lucide`
 
-**Solution**: `setAdapter()` accepts `Partial<FrameworkAdapter>` and merges configurations.
+**Solution**: Variadic `setAdapter()` accepts multiple `Partial<FrameworkAdapter>` and merges left-to-right.
 
 ```typescript
-// Separate concerns via composition
-setAdapter(picoAdapter)      // Framework styling
-setAdapter(glyfAdapter)      // Icon library
-setAdapter(customAdapter)    // Custom overrides
-
-// Or inline
-setAdapter({ iconFactory: (name) => <MyIcon name={name} /> })
+// Single variadic call
+setAdapter(picoAdapter, glyfIcons, customOverrides)
 ```
 
 This enables ecosystem packages:
-- `@pounce/ui-pico` - Framework adapter
-- `@pounce/ui-icons-glyf` - Icon adapter  
-- `@pounce/ui-icons-heroicon` - Icon adapter
+- `@pounce/adapter-pico` — Framework adapter (✅ implemented)
+- `@pounce/adapter-icons-glyf` — Icon adapter  
+- `@pounce/adapter-icons-heroicon` — Icon adapter
 
 **Changes Made**:
 - ✅ Added `iconFactory` to `FrameworkAdapter` (global configuration)
@@ -960,24 +922,34 @@ This enables ecosystem packages:
 
 **Tests**: New tests added for iconFactory, getGlobalAdapter, typed adapters
 
-### 🔄 Phase 3: Component Cleanup (PENDING)
+### ✅ Phase 3: Component Cleanup (COMPLETE)
 
-**Remaining Work**:
-- Remove any remaining `iconResolver` references from other components
-- Audit all components for adapter usage consistency
-- Verify all components use their typed adaptation interfaces
+**Completed**: 2026-02-09
 
-### 🔄 Phase 4: Documentation (PENDING)
+**Changes Made**:
+- ✅ All components migrated to Trait-based variants (`getVariantTrait` + `traits` prop)
+- ✅ All components use centralized `<Icon>` component
+- ✅ `setAdapter()` updated to variadic (`...adapters: Partial<FrameworkAdapter>[]`)
+- ✅ Group B components fully implemented (ButtonGroup, MultiSelect, ComboBox, Forms, InfiniteScroll, Status, Stars, CheckButton, ErrorBoundary rewrite)
+- ✅ `@pounce/adapter-pico` — first adapter, fully functional
+- ✅ Dialog close button uses `<Icon name="close" />` instead of hardcoded ✕
+- ✅ Menu.Bar uses `<Icon>` for menu icon
 
-**Remaining Work**:
-- Update main README with Icon component usage examples
-- Document iconFactory configuration
-- Create migration examples for icon libraries (pure-glyf, Lucide)
-- Update component API documentation
+### 🔄 Phase 4: Remaining Work
+
+**In Progress / Designed**:
+- `DisplayProvider` + `useDisplayContext()` — designed, not yet implemented
+- `ThemeToggle` component — designed, depends on DisplayProvider
+- Form validation states (`aria-invalid`, `aria-busy`, `loading` prop) — TODO, needs design pass
+- Card, Progress, Accordion — future components
+
+**Documentation**:
+- ✅ README rewritten with full component docs (compys)
+- ✅ Analysis docs updated for Trait-based variants and variadic setAdapter
+- ✅ Adapter packaging model documented
 
 ---
 
-**Document Version**: 2.0  
-**Last Updated**: 2026-02-06  
-**Author**: Cascade  
-**Status**: Phase 1 & 2 Complete - Ready for Phase 3
+**Document Version**: 3.0  
+**Last Updated**: 2026-02-09  
+**Status**: Phase 1–3 Complete — Phase 4 in progress

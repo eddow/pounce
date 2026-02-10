@@ -58,10 +58,12 @@ describe('Toolbar', () => {
 
 	it('respects adapter overrides for root class', () => {
 		setAdapter({
-			Toolbar: {
-				classes: {
-					root: 'custom-toolbar-root',
-					orientation: (dir) => `custom-toolbar-${dir}`,
+			components: {
+				Toolbar: {
+					classes: {
+						root: 'custom-toolbar-root',
+						orientation: (dir: 'horizontal' | 'vertical') => `custom-toolbar-${dir}`,
+					},
 				},
 			},
 		})
@@ -120,10 +122,12 @@ describe('Toolbar.Spacer', () => {
 
 	it('respects adapter overrides for spacer classes', () => {
 		setAdapter({
-			Toolbar: {
-				classes: {
-					spacer: 'custom-spacer',
-					spacerVisible: 'custom-spacer-visible',
+			components: {
+				Toolbar: {
+					classes: {
+						spacer: 'custom-spacer',
+						spacerVisible: 'custom-spacer-visible',
+					},
 				},
 			},
 		})

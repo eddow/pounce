@@ -31,7 +31,7 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: `npm run dev -- --host=127.0.0.1 --port=${port} --strictPort`,
+		command: `pnpm exec vite --host=127.0.0.1 --port=${port} --strictPort`,
 		cwd: projectRootDir,
 		port,
 		timeout: 120_000,

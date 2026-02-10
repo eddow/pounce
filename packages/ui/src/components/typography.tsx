@@ -1,8 +1,9 @@
 import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { A } from '@pounce/kit'
+import type { Trait } from '@pounce/core'
 import type { Variant } from '../shared/variants'
-import { getVariantClass } from '../shared/variants'
+import { getVariantTrait } from '../shared/variants'
 import { getAdapter } from '../adapter/registry'
 
 componentStyle.sass`
@@ -134,10 +135,9 @@ componentStyle.sass`
 
 type HeadingAlign = 'start' | 'center' | 'end'
 
-function toneForVariant(variant?: Variant, adapter?: any): string {
-	if (!variant) return 'primary'
-	const resolvedClass = getVariantClass(variant, adapter)
-	return resolvedClass ? resolvedClass.replace('pounce-variant-', '') : variant
+function variantFallbackClass(prefix: string, variant?: Variant): string | undefined {
+	if (!variant) return `${prefix}-primary`
+	return `${prefix}-${variant}`
 }
 
 export type HeadingProps = {
@@ -167,14 +167,18 @@ export const Heading = (props: HeadingProps) => {
 		}
 	})
 
+	const trait = getVariantTrait(state.variant)
+	const allTraits: Trait[] = trait ? [trait] : []
+
 	return (
 		<dynamic
 			tag={state.tag}
 			{...state.el}
+			traits={allTraits}
 			class={[
 				adapter?.classes?.base ?? 'pounce-heading',
 				`pounce-heading-level-${state.level}`,
-				`pounce-heading-variant-${toneForVariant(state.variant, adapter)}`,
+				trait ? undefined : variantFallbackClass('pounce-heading-variant', state.variant),
 				state.align ? `pounce-heading-align-${state.align}` : undefined,
 				state.el?.class,
 			]}
@@ -202,14 +206,18 @@ export const Text = (props: TextProps) => {
 		props
 	)
 
+	const trait = getVariantTrait(state.variant)
+	const allTraits: Trait[] = trait ? [trait] : []
+
 	return (
 		<dynamic
 			tag={state.tag}
 			{...state.el}
+			traits={allTraits}
 			class={[
 				adapter?.classes?.base ?? 'pounce-text',
 				`pounce-text-${state.size}`,
-				`pounce-text-variant-${toneForVariant(state.variant, adapter)}`,
+				trait ? undefined : variantFallbackClass('pounce-text-variant', state.variant),
 				state.muted ? 'pounce-text-muted' : undefined,
 				state.el?.class,
 			]}
@@ -228,12 +236,16 @@ export const Link = (props: LinkProps) => {
 	const adapter = getAdapter('Link')
 	const state = compose({ variant: 'primary', underline: true }, props)
 
+	const trait = getVariantTrait(state.variant)
+	const allTraits: Trait[] = trait ? [trait] : []
+
 	return (
 		<A
 			{...state}
+			traits={allTraits}
 			class={[
 				adapter?.classes?.base ?? 'pounce-link',
-				`pounce-link-variant-${toneForVariant(state.variant, adapter)}`,
+				trait ? undefined : variantFallbackClass('pounce-link-variant', state.variant),
 				state.underline ? undefined : 'pounce-link-no-underline',
 				state.class,
 			]}

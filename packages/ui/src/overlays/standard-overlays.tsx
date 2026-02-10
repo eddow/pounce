@@ -1,11 +1,10 @@
-import { type Child } from '@pounce/core'
 import { WithOverlays } from './with-overlays'
 import { bindDialog } from './dialog'
 import { bindToast } from './toast'
 import { bindDrawer } from './drawer'
 
 export interface StandardOverlaysProps {
-	children?: Child
+	children?: JSX.Children
 }
 
 /**
@@ -15,7 +14,7 @@ export interface StandardOverlaysProps {
 export const StandardOverlays = (props: StandardOverlaysProps) => {
 	return (
 		<WithOverlays
-			layers={['modal', 'drawer-left', 'drawer-right', 'toast', 'popover', 'hint']}
+			layers={['modal', 'drawer-left', 'drawer-right', 'toast']}
 			extend={{
 				dialog: (push) => bindDialog(push),
 				toast: (push) => bindToast(push),

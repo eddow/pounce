@@ -6,7 +6,7 @@ export interface MiniCounterProps {
 	addedText?: string
 }
 
-export function MiniCounter(props: MiniCounterProps, scope: Scope) {
+export function MiniCounter(props: MiniCounterProps) {
 	onEffectTrigger((obj, evolution) => {
 		console.log(obj, evolution)
 	})

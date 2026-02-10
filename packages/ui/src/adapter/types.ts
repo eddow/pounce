@@ -1,3 +1,19 @@
+import { Trait } from "@pounce/core"
+
+/**
+ * Display context - presentation concerns available from scope
+ * Separate from adapter (styling) concerns
+ */
+export type DisplayContext = {
+	/** Current theme (light, dark, or custom) */
+	theme: string
+	
+	/** Text direction (ltr or rtl) */
+	direction: 'ltr' | 'rtl'
+	
+	/** Current locale (for i18n, Intl formatting) */
+	locale?: string
+}
 
 /**
  * Base adaptation type - common fields for all components
@@ -7,7 +23,7 @@ export type BaseAdaptation = {
 	classes?: Partial<Record<string, string>>
 
 	/** Custom render structure (for complex DOM changes) */
-	renderStructure?: (parts: ComponentParts<any>) => JSX.Element
+	renderStructure?: (parts: ComponentParts<any>, context: DisplayContext) => JSX.Element
 }
 
 /**
@@ -27,6 +43,20 @@ export type TransitionAdaptation = BaseAdaptation & {
 }
 
 /**
+ * Adaptation for Toolbar — orientation class is a function of direction
+ */
+export type ToolbarAdaptation = {
+	classes?: {
+		[key: string]: string | ((dir: 'horizontal' | 'vertical') => string) | undefined
+		root?: string
+		spacer?: string
+		spacerVisible?: string
+		orientation?: (dir: 'horizontal' | 'vertical') => string
+	}
+	renderStructure?: BaseAdaptation['renderStructure']
+}
+
+/**
  * Adaptation for overlay components (Dialog, Toast, Drawer, Alert)
  */
 export type OverlayAdaptation = TransitionAdaptation & {
@@ -39,19 +69,36 @@ export type OverlayAdaptation = TransitionAdaptation & {
  * This ensures type safety for adapter component keys
  */
 export type UiComponents = {
-	Button: IconAdaptation
+	Accordion: BaseAdaptation
 	Badge: BaseAdaptation
+	Button: IconAdaptation
+	ButtonGroup: BaseAdaptation
+	Card: BaseAdaptation
+	CheckButton: IconAdaptation
+	Checkbox: BaseAdaptation
+	Chip: BaseAdaptation
+	Combobox: BaseAdaptation
 	Dialog: OverlayAdaptation
 	Dockview: BaseAdaptation
+	Drawer: OverlayAdaptation
 	ErrorBoundary: BaseAdaptation
-	Layout: BaseAdaptation
-	Menu: BaseAdaptation
-	RadioButton: IconAdaptation
-	Toolbar: BaseAdaptation
-	Typography: BaseAdaptation
 	Heading: BaseAdaptation
-	Text: BaseAdaptation
+	InfiniteScroll: BaseAdaptation
+	Layout: BaseAdaptation
 	Link: BaseAdaptation
+	Menu: BaseAdaptation
+	Multiselect: BaseAdaptation
+	Pill: BaseAdaptation
+	Progress: BaseAdaptation
+	Radio: BaseAdaptation
+	RadioButton: IconAdaptation
+	Select: BaseAdaptation
+	Stars: BaseAdaptation
+	Switch: BaseAdaptation
+	Text: BaseAdaptation
+	Toast: OverlayAdaptation
+	Toolbar: ToolbarAdaptation
+	Typography: BaseAdaptation
 }
 
 export type ComponentName = keyof UiComponents
@@ -85,13 +132,26 @@ export type ComponentAdapter = BaseAdaptation
 
 /**
  * Framework adapter registry with global configuration and per-component adapters
+ * 
+ * Supports composable adapters - multiple setAdapter() calls merge configurations.
+ * Each adapter can fulfill one or more orthogonal concerns:
+ * - Icons: Icon rendering system
+ * - Variants: Styling + A11y (will use trait system)
+ * - Components: Per-component structure + classes
+ * - Transitions: Animation system
+ * 
+ * Note: Display concerns (theme, direction, locale) are handled separately via
+ * DisplayContext (scope-based), not adapters. See display-context.tsx.
  */
 export type FrameworkAdapter = {
-	/** Global icon factory - used by all components with icon support */
-	iconFactory?: (name: string, size?: string | number) => JSX.Element
+	/** 
+	 * Global icon factory - used by all components with icon support
+	 * Receives display context for theme-aware, direction-aware icons
+	 */
+	iconFactory?: (name: string, size: string | number | undefined, context: DisplayContext) => JSX.Element
 
-	/** Global variant classes applied to all components */
-	variants?: Record<string, string>
+	/** Global variant traits (classes + ARIA roles) */
+	variants?: Record<string, Trait>
 
 	/** Global transition defaults (can be overridden per-component) */
 	transitions?: TransitionConfig

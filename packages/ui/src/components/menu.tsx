@@ -1,4 +1,4 @@
-import { effect, reactive } from 'mutts'
+import { reactive } from 'mutts'
 import { componentStyle } from '@pounce/kit/dom'
 import { A } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
@@ -220,13 +220,11 @@ const MenuBar = (props: MenuBarProps) => {
 	const mobileClass = adapter?.classes?.barMobile ?? 'pounce-menu-bar-mobile'
 	const desktopClass = adapter?.classes?.barDesktop ?? 'pounce-menu-bar-desktop'
 	const dropdownClass = adapter?.classes?.dropdown ?? 'dropdown'
-	const menuIcon = adapter?.icons?.menu ?? 'tabler-outline-menu'
-
 	return (
 		<Toolbar>
 			<div class={mobileClass}>
 				<MenuComponent
-					summary={<Button icon={menuIcon} ariaLabel="Open navigation" />}
+					summary={<Button icon="menu" ariaLabel="Open navigation" />}
 					class={dropdownClass}
 				>
 					<MenuList items={props.items} />

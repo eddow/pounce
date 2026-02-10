@@ -88,6 +88,31 @@ test.describe('Renderer features', () => {
 		await expect(page.locator('[data-testid="mixin-updates"]')).toHaveText('2')
 	})
 
+	test('`if` with reactive array derived function inside fragment (overlay pattern)', async ({ page }) => {
+		const backdrop = page.locator('[data-testid="overlay-backdrop"]')
+		const layer = page.locator('[data-testid="overlay-layer"]')
+		const count = page.locator('[data-testid="overlay-count"]')
+
+		// Initially: no backdrop, layer present, count 0
+		await expect(backdrop).toHaveCount(0)
+		await expect(layer).toHaveText('layer')
+		await expect(count).toHaveText('0')
+
+		// Push modal → backdrop appears
+		await page.click('[data-action="overlay-push-modal"]')
+		await expect(backdrop).toHaveCount(1)
+		await expect(count).toHaveText('1')
+
+		// Pop → backdrop removed
+		await page.click('[data-action="overlay-pop"]')
+		await expect(backdrop).toHaveCount(0)
+		await expect(count).toHaveText('0')
+
+		// Push again → backdrop reappears
+		await page.click('[data-action="overlay-push-modal"]')
+		await expect(backdrop).toHaveCount(1)
+	})
+
 	test('`for` directive reuses instances and cleans up removed items', async ({ page }) => {
 		const firstItem = page.locator('[data-testid="list-item"]').first()
 		await expect(firstItem.locator('.label')).toHaveText('Alpha')

@@ -208,6 +208,32 @@ function NamespacedOptionalDemo(props: { config?: { heading?: string; count?: nu
 	)
 }
 
+function OverlayIfDemo() {
+	const stack = reactive<{ mode: string }[]>([])
+	const hasBackdrop = () => stack.some(e => ['modal', 'drawer-left', 'drawer-right'].includes(e.mode))
+
+	return (
+		<fragment>
+			<div data-testid="overlay-children">children</div>
+			<div data-testid="overlay-manager" style="position:relative;width:200px;height:200px;">
+				<div
+					if={hasBackdrop()}
+					data-testid="overlay-backdrop"
+					style="position:absolute;inset:0;background:rgba(0,0,0,0.4);"
+				/>
+				<div data-testid="overlay-layer">layer</div>
+			</div>
+			<button data-action="overlay-push-modal" onClick={() => stack.push({ mode: 'modal' })}>
+				Push Modal
+			</button>
+			<button data-action="overlay-pop" onClick={() => stack.splice(0, 1)}>
+				Pop
+			</button>
+			<span data-testid="overlay-count">{stack.length}</span>
+		</fragment>
+	)
+}
+
 function ForListDemo(_: any, scope: Scope) {
 	scope.trackListItem = (target: Node | Node[], value: { id: number; label: string }) => {
 		const node = Array.isArray(target) ? target[0] : target
@@ -271,6 +297,7 @@ const RendererFeaturesFixture = () => (
 			<DynamicDemo />
 			<IfDemo />
 			<UseDemo />
+			<OverlayIfDemo />
 			<ForListDemo />
 			<NamespacedOptionalDemo
 				config:heading="Namespaced Optional Demo"

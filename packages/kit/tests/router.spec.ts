@@ -1,6 +1,7 @@
 /**
  * Test routing logic and functionality
  */
+import { describe, expect, test } from 'vitest'
 import { buildRoute, matchRoute, routeMatcher } from '../src/router/logic.js'
 
 describe('matchRoute', () => {

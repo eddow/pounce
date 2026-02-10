@@ -13,6 +13,7 @@
 	},
 	"scripts": {
 		"dev": "vite dev",
+		"demo": "vite dev --config demo/vite.config.ts",
 		"build": "npm run build:js && npm run build:css",
 		"build:js": "vite build",
 		"build:css": "npm run build:css:light && npm run build:css:dark",

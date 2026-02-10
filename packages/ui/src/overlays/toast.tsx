@@ -1,7 +1,12 @@
-import { type Child } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { type OverlaySpec, type PushOverlayFunction } from './manager'
-import { variantClass } from '../shared/variants'
+import { getVariantTrait } from '../shared/variants'
+
+declare module './manager' {
+	interface OverlayHelpers {
+		toast: ReturnType<typeof bindToast>
+	}
+}
 
 componentStyle.sass`
 .pounce-toast
@@ -17,13 +22,13 @@ componentStyle.sass`
     border-left: 4px solid var(--pounce-secondary, #6b7280)
     animation: pounce-toast-in 0.3s ease-out
 
-    &.pounce-variant-success
+    &[data-variant="success"]
         border-left-color: var(--pounce-success, #10b981)
-    &.pounce-variant-danger
+    &[data-variant="danger"]
         border-left-color: var(--pounce-danger, #ef4444)
-    &.pounce-variant-warning
+    &[data-variant="warning"]
         border-left-color: var(--pounce-warning, #f59e0b)
-    &.pounce-variant-primary
+    &[data-variant="primary"]
         border-left-color: var(--pounce-primary, #3b82f6)
 
     .pounce-toast-content
@@ -50,7 +55,7 @@ componentStyle.sass`
 `
 
 export interface ToastOptions {
-    message: string | Child
+    message: JSX.Children
     variant?: 'success' | 'danger' | 'warning' | 'primary' | 'secondary'
     duration?: number
 }
@@ -81,7 +86,8 @@ export const Toast = {
 
                 return (
                     <div
-                        class={['pounce-toast', variantClass(opts.variant)]}
+                        class="pounce-toast"
+                        traits={getVariantTrait(opts.variant)}
                         role={opts.variant === 'danger' ? 'alert' : 'status'}
                     >
                         <div class="pounce-toast-content">
@@ -103,10 +109,10 @@ export const Toast = {
 export function bindToast(overlay: PushOverlayFunction) {
     const fn = (options: ToastOptions | string) => overlay(Toast.show(options))
 
-    fn.success = (msg: string | Child) => overlay(Toast.show({ message: msg, variant: 'success' }))
-    fn.error = (msg: string | Child) => overlay(Toast.show({ message: msg, variant: 'danger' }))
-    fn.warn = (msg: string | Child) => overlay(Toast.show({ message: msg, variant: 'warning' }))
-    fn.info = (msg: string | Child) => overlay(Toast.show({ message: msg, variant: 'primary' }))
+    fn.success = (msg: JSX.Children) => overlay(Toast.show({ message: msg, variant: 'success' }))
+    fn.error = (msg: JSX.Children) => overlay(Toast.show({ message: msg, variant: 'danger' }))
+    fn.warn = (msg: JSX.Children) => overlay(Toast.show({ message: msg, variant: 'warning' }))
+    fn.info = (msg: JSX.Children) => overlay(Toast.show({ message: msg, variant: 'primary' }))
 
     return fn
 }

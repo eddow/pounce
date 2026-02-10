@@ -1,13 +1,6 @@
 import { type } from 'arktype'
 import type { FrameworkAdapter } from './types'
 
-const TransitionConfigSchema = type({
-	'enterClass?': 'string',
-	'exitClass?': 'string',
-	'activeClass?': 'string',
-	'duration?': 'number'
-})
-
 const BaseAdaptationSchema = type({
 	'classes?': 'object',
 	'renderStructure?': 'Function'
@@ -17,12 +10,6 @@ const IconAdaptationSchema = type({
 	'classes?': 'object',
 	'renderStructure?': 'Function',
 	'iconPlacement?': '"start" | "end"'
-})
-
-const TransitionAdaptationSchema = type({
-	'classes?': 'object',
-	'renderStructure?': 'Function',
-	'transitions?': 'object'
 })
 
 const OverlayAdaptationSchema = type({

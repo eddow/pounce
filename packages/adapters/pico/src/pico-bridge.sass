@@ -1,0 +1,416 @@
+// PicoCSS Bridge for @pounce/ui
+// Remaps --pounce-* CSS variables to --pico-* equivalents
+// so that @pounce/ui components inherit PicoCSS theming.
+
+// =============================================================================
+// 1. Variable Bridge: --pounce-* → --pico-*
+// =============================================================================
+
+:root
+  // Core colors
+  --pounce-primary: var(--pico-primary)
+  --pounce-secondary: var(--pico-secondary)
+  --pounce-contrast: var(--pico-contrast)
+
+  // Semantic colors (Pico has no built-in equivalents — keep pounce defaults)
+  --pounce-success: #15803d
+  --pounce-warning: #f59e0b
+  --pounce-danger: #b91c1c
+
+  // Layout
+  --pounce-spacing: var(--pico-spacing)
+  --pounce-border-radius: var(--pico-border-radius)
+  --pounce-form-height: var(--pico-form-element-height, 2.5rem)
+
+  // Backgrounds & borders
+  --pounce-bg: var(--pico-background-color)
+  --pounce-card-bg: var(--pico-card-background-color)
+  --pounce-fg: var(--pico-color)
+  --pounce-border: var(--pico-muted-border-color)
+  --pounce-muted: var(--pico-muted-color)
+  --pounce-muted-border: var(--pico-muted-border-color)
+
+  // Inverse (for badges, toasts, etc.)
+  --pounce-fg-inverse: var(--pico-color-inverse, #fff)
+
+  // Semantic variant backgrounds (for custom variant CSS below)
+  --pounce-success-bg: var(--pounce-success)
+  --pounce-success-border: var(--pounce-success)
+  --pounce-success-fg: #ffffff
+  --pounce-warning-bg: var(--pounce-warning)
+  --pounce-warning-border: var(--pounce-warning)
+  --pounce-warning-fg: #000000
+  --pounce-danger-bg: var(--pounce-danger)
+  --pounce-danger-border: var(--pounce-danger)
+  --pounce-danger-fg: #ffffff
+
+// =============================================================================
+// 2. Custom Semantic Variant Styles
+//    PicoCSS has no danger/success/warning — we extend its design language.
+// =============================================================================
+
+// --- Danger ---
+button.pounce-pico-danger,
+input[type='submit'].pounce-pico-danger,
+[role='button'].pounce-pico-danger
+  --pico-background-color: var(--pounce-danger-bg)
+  --pico-border-color: var(--pounce-danger-border)
+  --pico-color: var(--pounce-danger-fg)
+  background-color: var(--pounce-danger-bg)
+  border-color: var(--pounce-danger-border)
+  color: var(--pounce-danger-fg)
+
+  &:hover
+    filter: brightness(0.92)
+
+  &:active, &:focus
+    filter: brightness(0.85)
+
+// --- Success ---
+button.pounce-pico-success,
+input[type='submit'].pounce-pico-success,
+[role='button'].pounce-pico-success
+  --pico-background-color: var(--pounce-success-bg)
+  --pico-border-color: var(--pounce-success-border)
+  --pico-color: var(--pounce-success-fg)
+  background-color: var(--pounce-success-bg)
+  border-color: var(--pounce-success-border)
+  color: var(--pounce-success-fg)
+
+  &:hover
+    filter: brightness(0.92)
+
+  &:active, &:focus
+    filter: brightness(0.85)
+
+// --- Warning ---
+button.pounce-pico-warning,
+input[type='submit'].pounce-pico-warning,
+[role='button'].pounce-pico-warning
+  --pico-background-color: var(--pounce-warning-bg)
+  --pico-border-color: var(--pounce-warning-border)
+  --pico-color: var(--pounce-warning-fg)
+  background-color: var(--pounce-warning-bg)
+  border-color: var(--pounce-warning-border)
+  color: var(--pounce-warning-fg)
+
+  &:hover
+    filter: brightness(0.92)
+
+  &:active, &:focus
+    filter: brightness(0.85)
+
+// =============================================================================
+// 3. Toggle Buttons — checked states with Pico colors
+// =============================================================================
+
+// RadioButton
+button.pounce-radiobutton.pounce-radiobutton-checked
+  background-color: color-mix(in srgb, var(--pico-primary, #3b82f6) 20%, transparent)
+  border-color: var(--pico-primary)
+  color: var(--pico-contrast)
+
+button.pounce-radiobutton.pounce-radiobutton-checked.pounce-pico-success
+  background-color: color-mix(in srgb, var(--pounce-success) 20%, transparent)
+
+button.pounce-radiobutton.pounce-radiobutton-checked.pounce-pico-warning
+  background-color: color-mix(in srgb, var(--pounce-warning) 20%, transparent)
+
+button.pounce-radiobutton.pounce-radiobutton-checked.pounce-pico-danger
+  background-color: color-mix(in srgb, var(--pounce-danger) 20%, transparent)
+
+button.pounce-radiobutton.pounce-radiobutton-checked.secondary
+  background-color: color-mix(in srgb, var(--pico-secondary, #64748b) 20%, transparent)
+
+button.pounce-radiobutton.pounce-radiobutton-checked.contrast
+  background-color: color-mix(in srgb, var(--pico-contrast, #0f172a) 20%, transparent)
+
+button.pounce-radiobutton:not(.pounce-radiobutton-checked):hover
+  background-color: var(--pico-card-background-color, rgba(0, 0, 0, 0.05))
+
+// CheckButton
+button.pounce-checkbutton.pounce-checkbutton-checked
+  background-color: color-mix(in srgb, var(--pico-primary, #3b82f6) 20%, transparent)
+  border-color: var(--pico-primary)
+
+button.pounce-checkbutton.pounce-checkbutton-checked.pounce-pico-success
+  background-color: color-mix(in srgb, var(--pounce-success) 20%, transparent)
+  border-color: var(--pounce-success)
+
+button.pounce-checkbutton.pounce-checkbutton-checked.pounce-pico-warning
+  background-color: color-mix(in srgb, var(--pounce-warning) 20%, transparent)
+  border-color: var(--pounce-warning)
+
+button.pounce-checkbutton.pounce-checkbutton-checked.pounce-pico-danger
+  background-color: color-mix(in srgb, var(--pounce-danger) 20%, transparent)
+  border-color: var(--pounce-danger)
+
+button.pounce-checkbutton:not(.pounce-checkbutton-checked)
+  border-color: var(--pico-muted-border-color, rgba(0, 0, 0, 0.2))
+
+button.pounce-checkbutton:not(.pounce-checkbutton-checked):hover
+  background-color: var(--pico-card-background-color, rgba(0, 0, 0, 0.05))
+
+// =============================================================================
+// 4. Form Controls — Pico accent integration
+// =============================================================================
+
+// Map pounce control accent to Pico primary for native inputs
+.pounce-control .pounce-control-input
+  accent-color: var(--pico-primary, var(--pounce-primary))
+
+.pounce-control-primary .pounce-control-input
+  accent-color: var(--pico-primary, var(--pounce-primary))
+
+.pounce-control-secondary .pounce-control-input
+  accent-color: var(--pico-secondary, var(--pounce-secondary))
+
+.pounce-control-success .pounce-control-input
+  accent-color: var(--pounce-success)
+
+.pounce-control-warning .pounce-control-input
+  accent-color: var(--pounce-warning)
+
+.pounce-control-danger .pounce-control-input
+  accent-color: var(--pounce-danger)
+
+// Switch track uses Pico colors
+.pounce-switch-input:checked
+  background-color: var(--pico-primary, var(--pounce-primary))
+
+.pounce-control-success .pounce-switch-input:checked
+  background-color: var(--pounce-success)
+
+.pounce-control-warning .pounce-switch-input:checked
+  background-color: var(--pounce-warning)
+
+.pounce-control-danger .pounce-switch-input:checked
+  background-color: var(--pounce-danger)
+
+// Select uses Pico border and focus ring
+.pounce-select:focus-visible
+  border-color: var(--pico-primary, var(--pounce-primary))
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pico-primary, var(--pounce-primary)) 30%, transparent)
+
+// =============================================================================
+// 5. Tokens (Badge / Pill / Chip) — Pico color integration
+// =============================================================================
+
+// Map token background/color to Pico palette per variant
+.pounce-badge[data-variant="primary"],
+.pounce-pill[data-variant="primary"],
+.pounce-chip[data-variant="primary"]
+  --pounce-token-bg: color-mix(in srgb, var(--pico-primary) 15%, transparent)
+  --pounce-token-color: var(--pico-primary)
+
+.pounce-badge[data-variant="secondary"],
+.pounce-pill[data-variant="secondary"],
+.pounce-chip[data-variant="secondary"]
+  --pounce-token-bg: color-mix(in srgb, var(--pico-secondary) 15%, transparent)
+  --pounce-token-color: var(--pico-secondary)
+
+.pounce-badge[data-variant="contrast"],
+.pounce-pill[data-variant="contrast"],
+.pounce-chip[data-variant="contrast"]
+  --pounce-token-bg: var(--pico-contrast)
+  --pounce-token-color: var(--pounce-fg-inverse, #fff)
+
+.pounce-badge[data-variant="danger"],
+.pounce-pill[data-variant="danger"],
+.pounce-chip[data-variant="danger"]
+  --pounce-token-bg: color-mix(in srgb, var(--pounce-danger) 15%, transparent)
+  --pounce-token-color: var(--pounce-danger)
+
+.pounce-badge[data-variant="success"],
+.pounce-pill[data-variant="success"],
+.pounce-chip[data-variant="success"]
+  --pounce-token-bg: color-mix(in srgb, var(--pounce-success) 15%, transparent)
+  --pounce-token-color: var(--pounce-success)
+
+.pounce-badge[data-variant="warning"],
+.pounce-pill[data-variant="warning"],
+.pounce-chip[data-variant="warning"]
+  --pounce-token-bg: color-mix(in srgb, var(--pounce-warning) 15%, transparent)
+  --pounce-token-color: var(--pounce-warning)
+
+// =============================================================================
+// 6. Stars — Pico primary for filled stars
+// =============================================================================
+
+.pounce-stars-item.pounce-before
+  color: var(--pico-primary, var(--pounce-primary, #f59e0b))
+
+// =============================================================================
+// 7. Typography — Pico variable integration
+// =============================================================================
+
+.pounce-heading
+  color: var(--pico-color, inherit)
+
+.pounce-text
+  color: var(--pico-color, inherit)
+
+.pounce-text-muted
+  color: var(--pico-muted-color, var(--pounce-muted-color, rgba(0, 0, 0, 0.6)))
+
+.pounce-link
+  color: var(--pico-primary, inherit)
+
+// =============================================================================
+// 8. Toast variant border colors with Pico integration
+// =============================================================================
+
+.pounce-toast[data-variant="success"]
+  border-left-color: var(--pounce-success)
+
+.pounce-toast[data-variant="danger"]
+  border-left-color: var(--pounce-danger)
+
+.pounce-toast[data-variant="warning"]
+  border-left-color: var(--pounce-warning)
+
+.pounce-toast[data-variant="primary"]
+  border-left-color: var(--pico-primary)
+
+.pounce-toast[data-variant="secondary"]
+  border-left-color: var(--pico-secondary)
+
+// =============================================================================
+// 9. ButtonGroup — Pico native role="group" integration
+// =============================================================================
+
+// Pico v2 styles [role="group"] with connected borders and :has()-based focus.
+// Map pounce-buttongroup to leverage this natively.
+.pounce-buttongroup-horizontal
+  display: inline-flex
+
+  > button:not(:first-child):not(:last-child)
+    border-radius: 0
+
+  > button:first-child
+    border-top-right-radius: 0
+    border-bottom-right-radius: 0
+
+  > button:last-child
+    border-top-left-radius: 0
+    border-bottom-left-radius: 0
+
+  > button + button
+    margin-left: -1px
+
+.pounce-buttongroup-vertical
+  display: inline-flex
+  flex-direction: column
+
+  > button:not(:first-child):not(:last-child)
+    border-radius: 0
+
+  > button:first-child
+    border-bottom-left-radius: 0
+    border-bottom-right-radius: 0
+
+  > button:last-child
+    border-top-left-radius: 0
+    border-top-right-radius: 0
+
+  > button + button
+    margin-top: -1px
+
+.pounce-buttongroup button:focus-visible
+  outline-color: var(--pico-primary, var(--pounce-primary))
+  z-index: 1
+
+// =============================================================================
+// 10. Card — Pico native <article> styling
+// =============================================================================
+
+// Pico styles <article> as a card natively. We just ensure pounce variables
+// map to Pico's card variables for consistent theming.
+.pounce-card
+  --pounce-card-bg: var(--pico-card-background-color, var(--pounce-bg))
+  --pounce-card-border: var(--pico-card-border-color, var(--pounce-border))
+  --pounce-card-color: var(--pico-color, inherit)
+
+// =============================================================================
+// 11. Progress — Pico native <progress> styling
+// =============================================================================
+
+// Pico styles <progress> natively. Map pounce fill color to Pico primary.
+.pounce-progress
+  --pounce-progress-fill: var(--pico-primary, var(--pounce-primary))
+  --pounce-progress-bg: var(--pico-progress-background-color, var(--pounce-bg-muted, rgba(0, 0, 0, 0.1)))
+
+// Variant-coloured progress bars
+.pounce-progress[data-variant="success"]
+  --pounce-progress-fill: var(--pounce-success)
+
+.pounce-progress[data-variant="danger"]
+  --pounce-progress-fill: var(--pounce-danger)
+
+.pounce-progress[data-variant="warning"]
+  --pounce-progress-fill: var(--pounce-warning)
+
+.pounce-progress[data-variant="secondary"]
+  --pounce-progress-fill: var(--pico-secondary, var(--pounce-secondary))
+
+// =============================================================================
+// 12. Accordion — Pico native <details>/<summary> styling
+// =============================================================================
+
+// Pico styles <details>/<summary> natively. Map pounce variables to Pico.
+.pounce-accordion
+  --pounce-accordion-border: var(--pico-card-border-color, var(--pounce-border))
+  --pounce-accordion-header-bg: transparent
+  --pounce-accordion-header-hover: var(--pico-card-background-color, rgba(0, 0, 0, 0.03))
+
+// =============================================================================
+// 13. data-theme scoping — Pico native dark/light per-element
+// =============================================================================
+
+// Pico assigns CSS variables per [data-theme] on any element.
+// Ensure pounce bridge variables re-resolve inside nested themes.
+[data-theme="dark"], [data-theme="light"]
+  --pounce-bg: var(--pico-background-color)
+  --pounce-fg: var(--pico-color)
+  --pounce-card-bg: var(--pico-card-background-color)
+  --pounce-border: var(--pico-muted-border-color)
+  --pounce-muted: var(--pico-muted-color)
+  --pounce-primary: var(--pico-primary)
+  --pounce-secondary: var(--pico-secondary)
+  --pounce-contrast: var(--pico-contrast)
+
+// =============================================================================
+// 14. Nav — Pico native <nav> integration
+// =============================================================================
+
+// Pico styles <nav> with horizontal <ul> distribution.
+// Ensure pounce menu bar inherits Pico's nav layout when inside <nav>.
+nav .pounce-menu-bar-desktop
+  list-style: none
+  padding: 0
+  margin: 0
+
+// =============================================================================
+// 15. Transition classes
+// =============================================================================
+
+.pounce-pico-enter
+  animation: pounce-pico-fade-in 0.2s ease-out
+
+.pounce-pico-exit
+  animation: pounce-pico-fade-out 0.2s ease-in
+
+.pounce-pico-active
+  transition: all 0.2s ease
+
+@keyframes pounce-pico-fade-in
+  from
+    opacity: 0
+  to
+    opacity: 1
+
+@keyframes pounce-pico-fade-out
+  from
+    opacity: 1
+  to
+    opacity: 0

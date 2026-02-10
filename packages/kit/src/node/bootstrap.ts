@@ -31,6 +31,7 @@ export function createClientInstance(url?: string | URL): Client {
 		online: true,
 		language: 'en-US',
 		timezone: 'UTC',
+		direction: 'ltr',
 		navigate: () => {
 			throw new Error('client.navigate() is not available in SSR context')
 		},

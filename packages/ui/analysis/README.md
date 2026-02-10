@@ -63,12 +63,12 @@ Components currently rely on PicoCSS CSS variables:
 ├── Works standalone (no adapter required)
 └── No framework dependencies
 
-@pounce/ui-pico (PicoCSS adapter - optional)
+@pounce/adapter-pico (PicoCSS adapter - optional)
 ├── Maps --pounce-* → --pico-* variables
 ├── Imports @picocss/pico
 └── Provides PicoCSS theme integration
 
-@pounce/ui-tailwind (Tailwind adapter - optional)
+@pounce/adapter-tailwind (Tailwind adapter - optional)
 ├── Tailwind utility class mappings
 ├── Tailwind plugin for component styles
 └── Configuration presets
@@ -142,7 +142,7 @@ The `--pounce-*` variables are defined in the core package with sensible default
 
 ### Phase 3: Adapter Packages
 
-**@pounce/ui-pico** (PicoCSS Integration):
+**@pounce/adapter-pico** (PicoCSS Integration):
 ```css
 :root {
   --pounce-primary: var(--pico-primary);
@@ -152,12 +152,12 @@ The `--pounce-*` variables are defined in the core package with sensible default
 }
 ```
 
-**@pounce/ui-tailwind** (Tailwind Integration):
+**@pounce/adapter-tailwind** (Tailwind Integration):
 ```javascript
 // tailwind.config.js plugin
 module.exports = {
   plugins: [
-    require('@pounce/ui-tailwind')({
+    require('@pounce/adapter-tailwind')({
       // Maps Tailwind theme to --pounce-* variables
     })
   ]

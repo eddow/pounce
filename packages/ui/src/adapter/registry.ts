@@ -1,21 +1,29 @@
 import type { ComponentName, FrameworkAdapter, UiComponents } from './types'
+import type { Trait } from '@pounce/core'
 import { validateAdapter } from './validation'
 
 let currentAdapter: FrameworkAdapter = { components: {} }
 let isRendering = false
 
-export function setAdapter(adapter: Partial<FrameworkAdapter>): void {
+export function setAdapter(...adapters: Partial<FrameworkAdapter>[]): void {
 	if (isRendering) {
 		throw new Error('[pounce/ui] setAdapter() must be called before component rendering.')
 	}
 	
-	validateAdapter(adapter)
-	
-	currentAdapter = {
-		iconFactory: adapter.iconFactory || currentAdapter.iconFactory,
-		variants: { ...currentAdapter.variants, ...adapter.variants },
-		transitions: adapter.transitions || currentAdapter.transitions,
-		components: { ...currentAdapter.components, ...adapter.components }
+	for (const adapter of adapters) {
+		validateAdapter(adapter)
+		
+		currentAdapter = {
+			...currentAdapter,
+			...adapter,
+			// Deep merge for variants and components (accumulative)
+			variants: adapter.variants 
+				? { ...currentAdapter.variants, ...adapter.variants }
+				: currentAdapter.variants,
+			components: adapter.components
+				? { ...currentAdapter.components, ...adapter.components }
+				: currentAdapter.components
+		}
 	}
 }
 
@@ -33,7 +41,7 @@ export function getGlobalAdapter(): Pick<FrameworkAdapter, 'iconFactory' | 'vari
 	}
 }
 
-export function getGlobalVariants(): Record<string, string> | undefined {
+export function getGlobalVariants(): Record<string, Trait> | undefined {
 	return currentAdapter.variants
 }
 

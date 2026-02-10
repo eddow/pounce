@@ -6,6 +6,46 @@ import { bindChildren } from './reconciler'
 import { h, Fragment } from './jsx-factory'
 import { isFunction, isString } from './renderer-internal'
 
+// Singleton verification — detects dual-module hazard (e.g. bundled + external copies)
+const GLOBAL_POUNCE_KEY = '__POUNCE_CORE_INSTANCE__'
+const globalScope = (
+	typeof globalThis !== 'undefined'
+		? globalThis
+		: typeof window !== 'undefined'
+			? window
+			: typeof global !== 'undefined'
+				? global
+				: false
+) as any
+if (globalScope) {
+	let source = '@pounce/core'
+	try {
+		if (typeof __filename !== 'undefined') source = __filename
+		else {
+			const viteEval = eval
+			const meta = viteEval('import.meta')
+			if (meta?.url) source = meta.url
+		}
+	} catch {
+		// Fallback
+	}
+
+	const currentSourceInfo = { version: '1.0.0', source, timestamp: Date.now() }
+
+	if (globalScope[GLOBAL_POUNCE_KEY]) {
+		const existing = globalScope[GLOBAL_POUNCE_KEY]
+		throw new Error(
+			`[Pounce] Multiple instances of @pounce/core detected!\n` +
+				`Existing: ${JSON.stringify(existing, null, 2)}\n` +
+				`New: ${JSON.stringify(currentSourceInfo, null, 2)}\n` +
+				`This causes instanceof checks to fail (e.g. ReactiveProp). ` +
+				`Ensure @pounce/core is fully externalized in library builds ` +
+				`(including /jsx-runtime and /jsx-dev-runtime subpaths).`
+		)
+	}
+	globalScope[GLOBAL_POUNCE_KEY] = currentSourceInfo
+}
+
 export * from '../shared'
 export * from './debug'
 export * from './jsx-factory'
@@ -25,7 +65,7 @@ export {
 	valuedAttributeGetter,
 } from './renderer-internal'
 export * from './utils'
-export * from './variants'
+export * from './traits'
 
 
 // biome-ignore lint/suspicious/noExplicitAny: Centralized global JSX injection for the framework

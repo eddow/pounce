@@ -1,6 +1,11 @@
-import { type Child } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { type OverlaySpec, type PushOverlayFunction } from './manager'
+
+declare module './manager' {
+	interface OverlayHelpers {
+		drawer: ReturnType<typeof bindDrawer>
+	}
+}
 
 componentStyle.sass`
 .pounce-drawer
@@ -61,8 +66,9 @@ componentStyle.sass`
 `
 
 export interface DrawerOptions {
-	title?: string | Child
-	children: Child
+	title?: JSX.Children
+	children: JSX.Children
+	footer?: JSX.Children
 	side?: 'left' | 'right'
 	dismissible?: boolean
 }
@@ -78,24 +84,26 @@ export const Drawer = {
 		return {
 			mode: `drawer-${side}`,
 			dismissible: options.dismissible ?? true,
+			autoFocus: true,
 			aria: {
 				labelledby: options.title ? titleId : undefined
 			},
 			render: (close) => {
 				return (
 					<div class={['pounce-drawer', `pounce-drawer-${side}`]}>
-						<if when={options.title}>
-							<div class="pounce-drawer-header">
-								<h2 class="pounce-drawer-title" id={titleId}>
-									{options.title}
-								</h2>
-								<button class="pounce-drawer-close" onClick={() => close(null)}>
-									✕
-								</button>
-							</div>
-						</if>
+						<div class="pounce-drawer-header" if={options.title}>
+							<h2 class="pounce-drawer-title" id={titleId}>
+								{options.title}
+							</h2>
+							<button class="pounce-drawer-close" onClick={() => close(null)}>
+								✕
+							</button>
+						</div>
 						<div class="pounce-drawer-body">
 							{options.children}
+						</div>
+						<div class="pounce-drawer-footer" if={options.footer}>
+							{options.footer}
 						</div>
 					</div>
 				)

@@ -4,6 +4,7 @@ import type {
 	ClientHistoryState,
 	ClientUrl,
 	ClientViewport,
+	Direction,
 	NavigateOptions,
 } from '../client/types.js'
 
@@ -30,6 +31,7 @@ if (typeof window !== 'undefined') {
 	client.online = getInitialOnlineState()
 	client.language = getInitialLanguage()
 	client.timezone = getInitialTimezone()
+	client.direction = getInitialDirection()
 }
 
 // --- API Overrides ---
@@ -123,6 +125,12 @@ function initializeClientListeners(): void {
 	addWindowListener('online', syncOnline)
 	addWindowListener('offline', syncOnline)
 	addWindowListener('languagechange', syncLanguage)
+
+	const dirObserver = new MutationObserver(() => {
+		client.direction = getInitialDirection()
+	})
+	dirObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['dir'] })
+	cleanupFns.push(() => dirObserver.disconnect())
 }
 
 function synchronizeUrl(): void {
@@ -194,6 +202,10 @@ function getInitialOnlineState(): boolean {
 
 function getInitialLanguage(): string {
 	return navigator.language ?? 'en-US'
+}
+
+function getInitialDirection(): Direction {
+	return (document.documentElement.dir as Direction) || 'ltr'
 }
 
 function getInitialTimezone(): string {

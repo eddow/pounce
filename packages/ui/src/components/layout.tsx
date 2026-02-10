@@ -1,6 +1,7 @@
 import { effect, reactive } from 'mutts'
 import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
+import { getAdapter } from '../adapter/registry'
 
 componentStyle.sass`
 .pounce-stack
@@ -80,10 +81,11 @@ export type ContainerProps = JSX.IntrinsicElements['div'] & {
 }
 
 export const Container = (props: ContainerProps) => {
+	const adapter = getAdapter('Layout')
 	const state = compose({ tag: 'div' }, props)
 
 	return (
-		<dynamic class={[state.fluid ? 'container-fluid' : 'container', state.class]} {...state}>
+		<dynamic class={[state.fluid ? (adapter.classes?.containerFluid || 'container-fluid') : (adapter.classes?.container || 'container'), state.class]} {...state}>
 			{state.children}
 		</dynamic>
 	)
@@ -115,7 +117,7 @@ export const AppShell = (props: AppShellProps) => {
 
 	return (
 		<div class="pounce-app-shell">
-			<header this={{ set: (v: any) => (state.headerEl = v) }} class="pounce-app-shell-header">
+			<header this={state.headerEl} class="pounce-app-shell-header">
 				{props.header}
 			</header>
 			<main class="pounce-app-shell-main">{props.children}</main>
@@ -130,12 +132,13 @@ export type StackProps = JSX.IntrinsicElements['div'] & {
 }
 
 export const Stack = (props: StackProps) => {
+	const adapter = getAdapter('Layout')
 	const state = compose({ gap: 'md' }, props)
 
 	return (
 		<div
 			{...state}
-			class={['pounce-stack', state.class]}
+			class={[adapter.classes?.base || 'pounce-stack', state.class]}
 			style={[
 				state.style,
 				state.gap ? { gap: spacingValue(state.gap) } : undefined,
@@ -157,12 +160,13 @@ export type InlineProps = JSX.IntrinsicElements['div'] & {
 }
 
 export const Inline = (props: InlineProps) => {
+	const adapter = getAdapter('Layout')
 	const state = compose({ gap: 'sm', align: 'center' as keyof typeof alignItemsMap }, props)
 
 	return (
 		<div
 			{...state}
-			class={['pounce-inline', state.scrollable ? 'pounce-inline--scrollable' : undefined, state.class]}
+			class={[adapter.classes?.inline || 'pounce-inline', state.scrollable ? 'pounce-inline--scrollable' : undefined, state.class]}
 			style={[
 				state.style,
 				state.gap ? { gap: spacingValue(state.gap) } : undefined,
@@ -185,6 +189,7 @@ export type GridProps = JSX.IntrinsicElements['div'] & {
 }
 
 export const Grid = (props: GridProps) => {
+	const adapter = getAdapter('Layout')
 	function template(columns?: number | string, minItemWidth?: string) {
 		if (columns !== undefined && columns !== null && columns !== '')
 			return typeof columns === 'number' ? `repeat(${columns}, minmax(0, 1fr))` : columns
@@ -196,7 +201,7 @@ export const Grid = (props: GridProps) => {
 	return (
 		<div
 			{...state}
-			class={['pounce-grid', state.class]}
+			class={[adapter.classes?.grid || 'pounce-grid', state.class]}
 			style={[
 				state.style,
 				state.gap ? { gap: spacingValue(state.gap) } : undefined,

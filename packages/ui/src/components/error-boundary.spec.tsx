@@ -1,23 +1,24 @@
-/// <reference path="../../node_modules/@pounce/core/src/types/jsx.d.ts" />
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { reset } from 'mutts'
 import { bindApp, document } from '@pounce/core'
-import { ErrorBoundary } from '../../src/components/error-boundary'
+import { ErrorBoundary, ProductionErrorBoundary } from '../../src/components/error-boundary'
 
-describe.skip('ErrorBoundary', () => {
+describe('ErrorBoundary', () => {
 	let container: HTMLElement
 	let unmount: (() => void) | undefined
-	let consoleErrorSpy: any
 
 	beforeEach(() => {
 		container = document.createElement('div')
 		document.body.appendChild(container)
-		consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+		vi.spyOn(console, 'warn').mockImplementation(() => {})
+		vi.spyOn(console, 'error').mockImplementation(() => {})
 	})
 
 	afterEach(() => {
 		unmount?.()
 		container.remove()
-		consoleErrorSpy.mockRestore()
+		reset()
+		vi.restoreAllMocks()
 	})
 
 	const render = (element: JSX.Element) => {
@@ -30,16 +31,15 @@ describe.skip('ErrorBoundary', () => {
 				<div class="test-content">Working content</div>
 			</ErrorBoundary>
 		)
-		
+
 		const boundary = container.querySelector('.pounce-error-boundary')
 		expect(boundary).toBeTruthy()
 		expect(boundary?.querySelector('.test-content')).toBeTruthy()
 		expect(boundary?.textContent).toContain('Working content')
 	})
 
-	it('renders default error UI when error occurs', () => {
+	it('renders default error UI when child throws', () => {
 		const ThrowError = () => {
-			console.log('Test error')
 			throw new Error('Test error')
 		}
 
@@ -88,7 +88,9 @@ describe.skip('ErrorBoundary', () => {
 			</ErrorBoundary>
 		)
 
-		expect(consoleErrorSpy).toHaveBeenCalled()
+		expect(onError).toHaveBeenCalledOnce()
+		expect(onError.mock.calls[0][0]).toBeInstanceOf(Error)
+		expect(onError.mock.calls[0][0].message).toBe('Callback test')
 	})
 
 	it('handles multiple children', () => {
@@ -102,5 +104,55 @@ describe.skip('ErrorBoundary', () => {
 		const boundary = container.querySelector('.pounce-error-boundary')
 		expect(boundary?.textContent).toContain('Child 1')
 		expect(boundary?.textContent).toContain('Child 2')
+	})
+})
+
+
+describe('ProductionErrorBoundary', () => {
+	let container: HTMLElement
+	let unmount: (() => void) | undefined
+
+	beforeEach(() => {
+		container = document.createElement('div')
+		document.body.appendChild(container)
+		vi.spyOn(console, 'warn').mockImplementation(() => {})
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+	})
+
+	afterEach(() => {
+		unmount?.()
+		container.remove()
+		reset()
+		vi.restoreAllMocks()
+	})
+
+	const render = (element: JSX.Element) => {
+		unmount = bindApp(element, container)
+	}
+
+	it('renders children when no error occurs', () => {
+		render(
+			<ProductionErrorBoundary>
+				<div class="prod-content">OK</div>
+			</ProductionErrorBoundary>
+		)
+
+		const boundary = container.querySelector('.pounce-error-boundary-prod')
+		expect(boundary).toBeTruthy()
+		expect(boundary?.querySelector('.prod-content')).toBeTruthy()
+	})
+
+	it('renders generic error message when child throws', () => {
+		const ThrowError = () => { throw new Error('boom') }
+
+		render(
+			<ProductionErrorBoundary>
+				<ThrowError />
+			</ProductionErrorBoundary>
+		)
+
+		const boundary = container.querySelector('.pounce-error-boundary-prod')
+		expect(boundary?.textContent).toContain('Something went wrong')
+		expect(boundary?.textContent).toContain('refresh the page')
 	})
 })

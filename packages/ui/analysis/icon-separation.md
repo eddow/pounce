@@ -16,7 +16,7 @@ However, these are **orthogonal concerns**:
 // Icons are part of the adapter
 setAdapter({
   iconFactory: (name) => <GlyfIcon name={name} />,
-  variants: { primary: 'pico-primary' },
+  variants: { primary: { classes: ['pico-primary'] } },
   components: { Button: { classes: { base: 'pico-btn' } } }
 })
 ```
@@ -38,7 +38,7 @@ setIcons((name) => <GlyfIcon name={name} />)
 
 // Configure framework adapter
 setAdapter({
-  variants: { primary: 'pico-primary' },
+  variants: { primary: { classes: ['pico-primary'] } },
   components: { Button: { classes: { base: 'pico-btn' } } }
 })
 ```
@@ -64,12 +64,12 @@ setAdapter({
 
 // Framework adapter
 setAdapter({
-  variants: { primary: 'pico-primary' },
+  variants: { primary: { classes: ['pico-primary'] } },
   components: { Button: { classes: { base: 'pico-btn' } } }
 })
 
 // Or compose them
-const picoAdapter = { variants: {...}, components: {...} }
+const picoAdapter = { variants: { primary: { classes: ['pico-primary'] } }, components: {...} }
 const glyfAdapter = { iconFactory: (name) => <GlyfIcon name={name} /> }
 
 setAdapter(picoAdapter)
@@ -136,9 +136,9 @@ setAdapter({ ...picoAdapter, ...glyfAdapter })
 2. **Simple API**: Still just `setAdapter()`, but accepts `Partial<FrameworkAdapter>`
 3. **Flexible**: Users can compose however they want
 4. **Package ecosystem**: Enables packages like:
-   - `@pounce/ui-pico` - Framework adapter
-   - `@pounce/ui-icons-glyf` - Icon adapter
-   - `@pounce/ui-icons-heroicon` - Icon adapter
+   - `@pounce/adapter-pico` - Framework adapter
+   - `@pounce/adapter-icons-glyf` - Icon adapter
+   - `@pounce/adapter-icons-heroicon` - Icon adapter
    - Users mix and match: `setAdapter(picoAdapter); setAdapter(glyfAdapter)`
 
 **Implementation Changes**:
@@ -150,8 +150,8 @@ setAdapter({ ...picoAdapter, ...glyfAdapter })
 ```typescript
 // types.ts
 export type FrameworkAdapter = {
-  iconFactory?: (name: string, size?: string | number) => JSX.Element
-  variants?: Record<string, string>
+  iconFactory?: (name: string, size: string | number | undefined, context: DisplayContext) => JSX.Element
+  variants?: Record<string, Trait>
   transitions?: TransitionConfig
   components?: {
     [Name in keyof UiComponents]?: UiComponents[Name]
@@ -169,8 +169,8 @@ export function setAdapter(adapter: FrameworkAdapter): void {
 ```typescript
 // User code
 import { setAdapter } from '@pounce/ui'
-import { picoAdapter } from '@pounce/ui-pico'
-import { glyfIcons } from '@pounce/ui-icons-glyf'
+import { picoAdapter } from '@pounce/adapter-pico'
+import { glyfIcons } from '@pounce/adapter-icons-glyf'
 
 // Compose adapters
 setAdapter(picoAdapter)

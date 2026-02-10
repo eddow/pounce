@@ -1,7 +1,14 @@
-import { type Child } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { Button } from '../components/button'
+import { Icon } from '../components/icon'
 import { type OverlaySpec } from './manager'
+import { getVariantTrait } from '../shared/variants'
+
+declare module './manager' {
+	interface OverlayHelpers {
+		dialog: ReturnType<typeof bindDialog>
+	}
+}
 
 componentStyle.sass`
 .pounce-dialog
@@ -65,11 +72,12 @@ export interface DialogButton {
 }
 
 export interface DialogOptions {
-	title?: string | Child
-	message?: string | Child
+	title?: JSX.Children
+	message?: JSX.Children
 	size?: 'sm' | 'md' | 'lg'
 	buttons?: Record<string, string | DialogButton>
 	dismissible?: boolean
+	variant?: string
 }
 
 /**
@@ -87,12 +95,16 @@ export const Dialog = {
 		return {
 			mode: 'modal',
 			dismissible: opts.dismissible ?? true,
+			autoFocus: true,
 			aria: {
 				labelledby: opts.title ? titleId : undefined,
 				describedby: opts.message ? descId : undefined
 			},
 			render: (close) => (
-				<div class={['pounce-dialog', opts.size ? `pounce-size-${opts.size}` : '']}>
+				<div 
+					class={['pounce-dialog', opts.size ? `pounce-size-${opts.size}` : '']}
+					traits={getVariantTrait(opts.variant)}
+				>
 					<header if={opts.title}>
 						<h3 id={titleId}>{opts.title}</h3>
 						<Button.contrast
@@ -101,8 +113,9 @@ export const Dialog = {
 								style: 'padding: 0.25rem; min-width: auto; height: auto;'
 							}}
 							onClick={() => close(null)}
+							ariaLabel="Close"
 						>
-							✕
+							<Icon name="close" />
 						</Button.contrast>
 					</header>
 					<main id={descId}>

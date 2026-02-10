@@ -2,6 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { bindApp, document } from '@pounce/core'
 import { Heading, Text, Link } from '../../src/components/typography'
+import { installTestAdapter, resetAdapter } from '../test-adapter'
 
 describe('Heading', () => {
 	let container: HTMLElement
@@ -15,6 +16,8 @@ describe('Heading', () => {
 	afterEach(() => {
 		unmount?.()
 		container.remove()
+		document.body.innerHTML = ''
+		resetAdapter()
 	})
 
 	const render = (element: JSX.Element) => {
@@ -86,6 +89,29 @@ describe('Heading', () => {
 		const heading = container.querySelector('.pounce-heading')
 		expect(heading?.classList.contains('pounce-heading-level-6')).toBe(true)
 	})
+
+	it('uses adapter class override', () => {
+		installTestAdapter()
+		render(<Heading>Adapted</Heading>)
+		const heading = container.querySelector('.test-heading')
+		expect(heading).toBeTruthy()
+		expect(heading?.tagName).toBe('H2')
+	})
+
+	it('applies variant trait from adapter', () => {
+		installTestAdapter()
+		render(<Heading variant="success">Success</Heading>)
+		const heading = container.querySelector('.test-heading')
+		expect(heading).toBeTruthy()
+		expect(heading?.getAttribute('data-variant')).toBe('success')
+		expect(heading?.classList.contains('test-success')).toBe(true)
+	})
+
+	it('uses fallback variant class when no adapter', () => {
+		render(<Heading variant="danger">Danger</Heading>)
+		const heading = container.querySelector('.pounce-heading')
+		expect(heading?.classList.contains('pounce-heading-variant-danger')).toBe(true)
+	})
 })
 
 describe('Text', () => {
@@ -100,6 +126,8 @@ describe('Text', () => {
 	afterEach(() => {
 		unmount?.()
 		container.remove()
+		document.body.innerHTML = ''
+		resetAdapter()
 	})
 
 	const render = (element: JSX.Element) => {
@@ -155,6 +183,21 @@ describe('Text', () => {
 		const text = container.querySelector('.pounce-text')
 		expect(text?.classList.contains('custom-text')).toBe(true)
 	})
+
+	it('uses adapter class override', () => {
+		installTestAdapter()
+		render(<Text>Adapted</Text>)
+		const text = container.querySelector('.test-text')
+		expect(text).toBeTruthy()
+	})
+
+	it('applies variant trait from adapter', () => {
+		installTestAdapter()
+		render(<Text variant="danger">Error</Text>)
+		const text = container.querySelector('.test-text')
+		expect(text?.getAttribute('data-variant')).toBe('danger')
+		expect(text?.classList.contains('test-danger')).toBe(true)
+	})
 })
 
 describe('Link', () => {
@@ -169,6 +212,8 @@ describe('Link', () => {
 	afterEach(() => {
 		unmount?.()
 		container.remove()
+		document.body.innerHTML = ''
+		resetAdapter()
 	})
 
 	const render = (element: JSX.Element) => {
@@ -218,5 +263,20 @@ describe('Link', () => {
 		render(<Link href="/test" class="custom-link">Custom</Link>)
 		const link = container.querySelector('.pounce-link')
 		expect(link?.classList.contains('custom-link')).toBe(true)
+	})
+
+	it('uses adapter class override', () => {
+		installTestAdapter()
+		render(<Link href="/test">Adapted</Link>)
+		const link = container.querySelector('.test-link')
+		expect(link).toBeTruthy()
+	})
+
+	it('applies variant trait from adapter', () => {
+		installTestAdapter()
+		render(<Link href="/test" variant="warning">Warning</Link>)
+		const link = container.querySelector('.test-link')
+		expect(link?.getAttribute('data-variant')).toBe('warning')
+		expect(link?.classList.contains('test-warning')).toBe(true)
 	})
 })

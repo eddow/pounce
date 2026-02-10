@@ -1,4 +1,7 @@
 import { getGlobalAdapter } from '../adapter/registry'
+import type { DisplayContext } from '../adapter/types'
+
+const defaultDisplayContext: DisplayContext = { theme: 'light', direction: 'ltr' }
 
 export type IconProps = {
 	name: string
@@ -23,7 +26,7 @@ export const Icon = (props: IconProps) => {
 	const globalAdapter = getGlobalAdapter()
 	
 	if (globalAdapter.iconFactory) {
-		return globalAdapter.iconFactory(props.name, props.size)
+		return globalAdapter.iconFactory(props.name, props.size, defaultDisplayContext)
 	}
 	
 	return (

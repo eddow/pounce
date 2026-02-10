@@ -26,11 +26,13 @@ export default defineConfig({
   ],
   esbuild: false,
   build: {
+    sourcemap: true,
     lib: {
       entry: {
         index: resolve(projectRootDir, 'src/index.ts'),
         dom: resolve(projectRootDir, 'src/dom/index.ts'),
         node: resolve(projectRootDir, 'src/node/index.ts'),
+        intl: resolve(projectRootDir, 'src/intl/index.ts'),
       },
       formats: ['es', 'cjs'],
       fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'js' : 'cjs'}`,
@@ -38,8 +40,7 @@ export default defineConfig({
     rollupOptions: {
       external: [
         'mutts',
-        '@pounce/core',
-        '@pounce/core/server',
+        /^@pounce\/core/,
         'jsdom',
         'arktype',
         'node:async_hooks',
@@ -47,10 +48,4 @@ export default defineConfig({
       ]
     }
   },
-  resolve: {
-    alias: {
-      '@pounce/core/jsx-runtime': resolve(projectRootDir, '../core/src/runtime/jsx-runtime.ts'),
-      '@pounce/core/jsx-dev-runtime': resolve(projectRootDir, '../core/src/runtime/jsx-dev-runtime.ts'),
-    }
-  }
 })

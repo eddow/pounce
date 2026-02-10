@@ -10,6 +10,7 @@ export interface DtsConfigOptions {
 	include?: string[]
 	compilerOptions?: DtsPluginOptions['compilerOptions']
 	beforeWriteFile?: DtsPluginOptions['beforeWriteFile']
+	afterBuild?: DtsPluginOptions['afterBuild']
 }
 
 export function createStandardDtsPlugin(options: DtsConfigOptions = {}) {
@@ -23,6 +24,7 @@ export function createStandardDtsPlugin(options: DtsConfigOptions = {}) {
 			...options.compilerOptions,
 		},
 		beforeWriteFile: options.beforeWriteFile,
+		afterBuild: options.afterBuild,
 	})
 }
 

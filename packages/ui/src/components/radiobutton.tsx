@@ -1,7 +1,7 @@
 import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
-import { asVariant, getVariantClass } from '../shared/variants'
+import { asVariant, getVariantTrait } from '../shared/variants'
 import { Icon } from './icon'
 
 // Default RadioButton Styles (SASS)
@@ -95,15 +95,19 @@ const RadioButtonBase = (props: RadioButtonProps<any>) => {
 			get isIconOnly() {
 				return !!s.icon && !this.hasLabel
 			},
-			get classes() {
-				const base = adapter.classes?.base || 'pounce-radiobutton'
-				const variant = getVariantClass(s.variant, adapter)
-				const checked = this.checked ? (adapter.classes?.checked || 'pounce-radiobutton-checked') : undefined
-				const iconOnly = this.isIconOnly
-					? adapter.classes?.iconOnly || 'pounce-radiobutton-icon-only'
-					: undefined
-
-				return [base, variant, checked, iconOnly, s.el?.class].filter(Boolean)
+			get baseTrait() {
+				const classes = [
+					adapter.classes?.base || 'pounce-radiobutton',
+					this.checked ? (adapter.classes?.checked || 'pounce-radiobutton-checked') : null,
+					this.isIconOnly ? (adapter.classes?.iconOnly || 'pounce-radiobutton-icon-only') : null
+				].filter((c): c is string => !!c)
+				return { classes }
+			},
+			get variantTrait() {
+				return getVariantTrait(s.variant)
+			},
+			get allTraits() {
+				return [this.baseTrait, this.variantTrait].filter((t): t is import('@pounce/core').Trait => !!t)
 			},
 		})
 	)
@@ -126,7 +130,7 @@ const RadioButtonBase = (props: RadioButtonProps<any>) => {
 					: state.ariaLabel,
 				'aria-disabled': state.disabled || undefined,
 			},
-		})
+		}, {} as any) // TODO: Pass DisplayContext
 	}
 
 	return (
@@ -134,6 +138,7 @@ const RadioButtonBase = (props: RadioButtonProps<any>) => {
 			{...state.el}
 			type="button"
 			role="radio"
+			traits={state.allTraits}
 			aria-checked={`${state.checked}`}
 			aria-label={
 				state.isIconOnly
@@ -141,7 +146,6 @@ const RadioButtonBase = (props: RadioButtonProps<any>) => {
 					: (state.ariaLabel ?? state.el?.['aria-label'])
 			}
 			disabled={state.disabled}
-			class={state.classes}
 			onClick={handleClick}
 		>
 			<span if={state.iconPosition === 'start'} class="pounce-radiobutton-icon-wrapper">

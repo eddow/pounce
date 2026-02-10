@@ -1,6 +1,7 @@
 /**
  * Test localStorage storage functionality
  */
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { stored } from './storage'
 
 // Mock localStorage

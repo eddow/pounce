@@ -3,18 +3,19 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { bindApp, document, type Scope } from '@pounce/core'
-import { reactive } from 'mutts'
 import { WithOverlays } from '../../src/overlays/with-overlays'
 import { StandardOverlays } from '../../src/overlays/standard-overlays'
 import { Dialog } from '../../src/overlays/dialog'
 import { Drawer } from '../../src/overlays/drawer'
 import { Toast } from '../../src/overlays/toast'
+import { installTestAdapter, resetAdapter } from '../test-adapter'
 
 describe('Overlays System', () => {
 	let container: HTMLElement
 	let unmount: (() => void) | undefined
 
 	beforeEach(() => {
+		installTestAdapter()
 		container = document.createElement('div')
 		document.body.appendChild(container)
 	})
@@ -23,15 +24,18 @@ describe('Overlays System', () => {
 		if (unmount) unmount()
 		container.remove()
 		document.body.innerHTML = ''
+		resetAdapter()
 	})
 
 	const render = (element: JSX.Element) => {
 		unmount = bindApp(element, container)
 	}
 
+	const tick = () => new Promise(r => setTimeout(r, 0))
+
 	it('StandardOverlays injects dialog and toast into scope', async () => {
 		let capturedScope: Scope | undefined
-		const App = (props: any, scope: Scope) => {
+		const App = (_props: any, scope: Scope) => {
 			capturedScope = scope
 			return <div>App</div>
 		}
@@ -51,7 +55,7 @@ describe('Overlays System', () => {
 	describe('WithOverlays Interaction', () => {
 		it('renders overlays when pushed', async () => {
 			let push: any
-			const App = (props: any, scope: Scope) => {
+			const App = (_props: any, scope: Scope) => {
 				push = scope.overlay
 				return <div>App</div>
 			}
@@ -63,6 +67,7 @@ describe('Overlays System', () => {
 			)
 
 			push(Dialog.show('Hello'))
+			await tick()
 
 			const dialog = document.querySelector('.pounce-dialog')
 			expect(dialog).toBeTruthy()
@@ -70,8 +75,9 @@ describe('Overlays System', () => {
 		})
 
 		it('dismisses overlay on backdrop click if dismissible', async () => {
+			vi.useFakeTimers()
 			let push: any
-			const App = (props: any, scope: Scope) => {
+			const App = (_props: any, scope: Scope) => {
 				push = scope.overlay
 				return <div>App</div>
 			}
@@ -91,12 +97,15 @@ describe('Overlays System', () => {
 
 			const result = await promise
 			expect(result).toBe(null)
+			// Advance past transition fallback timeout (duration * 1.5)
+			vi.advanceTimersByTime(500)
 			expect(document.querySelector('.pounce-dialog')).toBeFalsy()
+			vi.useRealTimers()
 		})
 
 		it('does NOT dismiss overlay on backdrop click if NOT dismissible', async () => {
 			let push: any
-			const App = (props: any, scope: Scope) => {
+			const App = (_props: any, scope: Scope) => {
 				push = scope.overlay
 				return <div>App</div>
 			}
@@ -108,6 +117,7 @@ describe('Overlays System', () => {
 			)
 
 			push(Dialog.show({ message: 'Hello', dismissible: false }))
+			await tick()
 
 			const backdrop = document.querySelector('.pounce-backdrop') as HTMLElement
 			backdrop.click()
@@ -117,7 +127,7 @@ describe('Overlays System', () => {
 
 		it('handles Escape key orchestration', async () => {
 			let push: any
-			const App = (props: any, scope: Scope) => {
+			const App = (_props: any, scope: Scope) => {
 				push = scope.overlay
 				return <div>App</div>
 			}
@@ -143,12 +153,12 @@ describe('Overlays System', () => {
 			let level1: number | undefined
 			let level2: number | undefined
 
-			const Inner = (props: any, scope: Scope) => {
+			const Inner = (_props: any, scope: Scope) => {
 				level2 = scope.overlayLevel
 				return <div>Inner</div>
 			}
 
-			const App = (props: any, scope: Scope) => {
+			const App = (_props: any, scope: Scope) => {
 				level1 = scope.overlayLevel
 				return (
 					<WithOverlays fixed={false}>
@@ -167,15 +177,17 @@ describe('Overlays System', () => {
 			expect(level2).toBe(2)
 
 			const managers = document.querySelectorAll('.pounce-overlay-manager')
-			expect((managers[0] as HTMLElement).style.getPropertyValue('--pounce-overlay-z')).toBe('11000')
-			expect((managers[1] as HTMLElement).style.getPropertyValue('--pounce-overlay-z')).toBe('12000')
+			expect(managers.length).toBe(2)
+			// Inner (level 2) renders first in DOM: fragment outputs children before overlay-manager div
+			expect(managers[0].id).toBe('pounce-overlay-manager-2')
+			expect(managers[1].id).toBe('pounce-overlay-manager-1')
 		})
 	})
 
-	describe('Focus Management', () => {
-		it('traps focus with Tab key', async () => {
+	describe('Toast', () => {
+		it('renders toast with message', async () => {
 			let push: any
-			const App = (props: any, scope: Scope) => {
+			const App = (_props: any, scope: Scope) => {
 				push = scope.overlay
 				return <div>App</div>
 			}
@@ -186,24 +198,176 @@ describe('Overlays System', () => {
 				</WithOverlays>
 			)
 
-			push(Dialog.show({
-				message: 'Test',
-				buttons: {
-					btn1: 'Button 1',
-					btn2: 'Button 2'
-				}
-			}))
+			push(Toast.show('Notification'))
+			await tick()
 
-			const buttons = document.querySelectorAll('button')
-			const btn1 = buttons[0] // Close button
-			const btn2 = buttons[1] // OK button (actually cancel/ok depending on dialog.confirm but here it is 'OK')
-
-			// Note: Dialog with no buttons provided defaults to OK button.
-			// The close button '✕' is always there if title is provided. 
-			// Let's use a plain dialog with buttons to be sure.
+			const toast = document.querySelector('.pounce-toast')
+			expect(toast).toBeTruthy()
+			expect(toast?.textContent).toContain('Notification')
 		})
 
-		// Focus trap is hard to test in JSDOM because document.activeElement 
-		// behavior might be limited, but we can verify preventDefault and focus() calls.
+		it('applies variant trait from adapter', async () => {
+			let push: any
+			const App = (_props: any, scope: Scope) => {
+				push = scope.overlay
+				return <div>App</div>
+			}
+
+			render(
+				<WithOverlays>
+					<App />
+				</WithOverlays>
+			)
+
+			push(Toast.show({ message: 'Success!', variant: 'success' }))
+			await tick()
+
+			const toast = document.querySelector('.pounce-toast')
+			expect(toast).toBeTruthy()
+			expect(toast?.getAttribute('data-variant')).toBe('success')
+		})
+	})
+
+	describe('Drawer', () => {
+		it('renders drawer with title and body', async () => {
+			let push: any
+			const App = (_props: any, scope: Scope) => {
+				push = scope.overlay
+				return <div>App</div>
+			}
+
+			render(
+				<WithOverlays>
+					<App />
+				</WithOverlays>
+			)
+
+			push(Drawer.show({ title: 'Settings', children: <p>Content</p> }))
+			await tick()
+
+			const drawer = document.querySelector('.pounce-drawer')
+			expect(drawer).toBeTruthy()
+			expect(drawer?.textContent).toContain('Settings')
+			expect(drawer?.textContent).toContain('Content')
+		})
+
+		it('renders drawer-right with correct class', async () => {
+			let push: any
+			const App = (_props: any, scope: Scope) => {
+				push = scope.overlay
+				return <div>App</div>
+			}
+
+			render(
+				<WithOverlays>
+					<App />
+				</WithOverlays>
+			)
+
+			push(Drawer.show({ children: <p>Right</p>, side: 'right' }))
+			await tick()
+
+			const drawer = document.querySelector('.pounce-drawer-right')
+			expect(drawer).toBeTruthy()
+		})
+
+		it('conditionally renders footer', async () => {
+			let push: any
+			const App = (_props: any, scope: Scope) => {
+				push = scope.overlay
+				return <div>App</div>
+			}
+
+			render(
+				<WithOverlays>
+					<App />
+				</WithOverlays>
+			)
+
+			push(Drawer.show({ children: <p>Body</p>, footer: <button>Save</button> }))
+			await tick()
+
+			const footer = document.querySelector('.pounce-drawer-footer')
+			expect(footer).toBeTruthy()
+			expect(footer?.textContent).toContain('Save')
+		})
+	})
+
+	describe('Layered Rendering', () => {
+		it('renders overlays in correct layers with StandardOverlays', async () => {
+			let push: any
+			const App = (_props: any, scope: Scope) => {
+				push = scope.overlay
+				return <div>App</div>
+			}
+
+			render(
+				<StandardOverlays>
+					<App />
+				</StandardOverlays>
+			)
+
+			push(Dialog.show('Modal'))
+			push(Toast.show('Toast'))
+			await tick()
+
+			const modalLayer = document.querySelector('.pounce-mode-modal')
+			const toastLayer = document.querySelector('.pounce-mode-toast')
+			expect(modalLayer).toBeTruthy()
+			expect(toastLayer).toBeTruthy()
+			expect(modalLayer?.querySelector('.pounce-dialog')).toBeTruthy()
+			expect(toastLayer?.querySelector('.pounce-toast')).toBeTruthy()
+		})
+	})
+
+	describe('Dialog Features', () => {
+		it('resolves with button key when clicked', async () => {
+			let push: any
+			const App = (_props: any, scope: Scope) => {
+				push = scope.overlay
+				return <div>App</div>
+			}
+
+			render(
+				<WithOverlays>
+					<App />
+				</WithOverlays>
+			)
+
+			const promise = push(Dialog.show({
+				message: 'Confirm?',
+				buttons: { cancel: 'Cancel', ok: 'OK' }
+			}))
+			await tick()
+
+			// Find the OK button and click it
+			const buttons = document.querySelectorAll('.pounce-dialog footer button')
+			const okButton = Array.from(buttons).find(b => b.textContent?.includes('OK'))
+			expect(okButton).toBeTruthy()
+			;(okButton as HTMLElement).click()
+
+			const result = await promise
+			expect(result).toBe('ok')
+		})
+
+		it('applies size class', async () => {
+			let push: any
+			const App = (_props: any, scope: Scope) => {
+				push = scope.overlay
+				return <div>App</div>
+			}
+
+			render(
+				<WithOverlays>
+					<App />
+				</WithOverlays>
+			)
+
+			push(Dialog.show({ message: 'Small', size: 'sm' }))
+			await tick()
+
+			const dialog = document.querySelector('.pounce-dialog.pounce-size-sm')
+			expect(dialog).toBeTruthy()
+		})
 	})
 })

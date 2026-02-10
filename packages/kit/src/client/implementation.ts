@@ -36,6 +36,7 @@ const state = reactive<MutableClient>({
 	online: true,
 	language: 'en-US',
 	timezone: 'UTC',
+	direction: 'ltr',
 	// Default methods throw
 	navigate: implementationDependent('Client.navigate'),
 	replace: implementationDependent('Client.replace'),

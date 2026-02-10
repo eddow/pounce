@@ -17,6 +17,11 @@
 			"types": "./dist/index.d.ts",
 			"import": "./dist/node.js",
 			"default": "./dist/node.js"
+		},
+		"./intl": {
+			"types": "./dist/intl.d.ts",
+			"import": "./dist/intl.js",
+			"default": "./dist/intl.js"
 		}
 	},
 	"scripts": {

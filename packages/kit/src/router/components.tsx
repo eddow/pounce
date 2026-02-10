@@ -1,4 +1,4 @@
-import { compose, copyObject } from '@pounce/core'
+import { compose, copyObject, r } from '@pounce/core'
 import { effect, reactive } from 'mutts'
 import { client } from '../client/shared.js'
 import {
@@ -29,38 +29,45 @@ type SafeMouseEvent = typeof globalThis extends { MouseEvent: any } ? MouseEvent
 
 // === ROUTER TYPES ===
 
+/** Minimal route definition for client-side routing. */
 export interface ClientRouteDefinition {
 	readonly path: RouteWildcard
 }
 
+/** Result of a successful route match — passed to the route's `view` function. */
 export type RouteSpecification<Definition extends ClientRouteDefinition> = {
 	readonly definition: Definition
 	readonly params: RouteParams
 	readonly unusedPath: string
 }
 
+/** View function signature: receives the matched route spec and scope, returns JSX. */
 export type RouterRender<Definition extends ClientRouteDefinition> = (
 	specification: RouteSpecification<Definition>,
 	scope: Record<PropertyKey, unknown>
 ) => JSX.Element | JSX.Element[]
 
+/** Fallback renderer when no route matches. */
 export type RouterNotFound<Definition extends ClientRouteDefinition> = (
 	context: { url: string; routes: readonly Definition[] },
 	scope: Record<PropertyKey, unknown>
 ) => JSX.Element | JSX.Element[]
 
+/** Props for the `<Router>` component. */
 export interface RouterProps<Definition extends ClientRouteDefinition> {
 	readonly routes: readonly Definition[]
 	readonly notFound: RouterNotFound<Definition>
 	readonly url?: string
 }
 
+/** Pre-compiled route matcher function. */
 export type RouteAnalyzer<Definition extends ClientRouteDefinition> = (
 	url: string
 ) => RouteSpecification<Definition> | null
 
 // === MATCHER WRAPPERS ===
 
+/** Match a URL against client route definitions. Wrapper around core `matchRoute`. */
 export function matchRoute<Definition extends ClientRouteDefinition>(
 	road: string,
 	definitions: readonly Definition[]
@@ -74,6 +81,7 @@ export function matchRoute<Definition extends ClientRouteDefinition>(
 	}
 }
 
+/** Create a reusable route matcher for client route definitions. */
 export function routeMatcher<Definition extends ClientRouteDefinition>(
 	routes: readonly Definition[]
 ): RouteAnalyzer<Definition> {
@@ -91,6 +99,11 @@ export function routeMatcher<Definition extends ClientRouteDefinition>(
 
 // === COMPONENTS ===
 
+/**
+ * Reactive router component.
+ * Matches `client.url.pathname` against route definitions and renders the matching view.
+ * Re-renders automatically when the URL changes.
+ */
 export const Router = <
 	Definition extends ClientRouteDefinition & { readonly view: RouterRender<Definition> },
 >(
@@ -106,17 +119,8 @@ export const Router = <
 		props
 	)
 	const matcher = routeMatcher(state.routes)
-	const result: JSX.Element[] = reactive([])
+	const current = reactive({ view: null as JSX.Element | JSX.Element[] | null })
 	let oldMatch: RouteSpecification<Definition> | null = null
-
-	function setResult(els: JSX.Element | JSX.Element[]) {
-		result.length = 0
-		if (Array.isArray(els)) {
-			result.push(...els)
-		} else {
-			result.push(els)
-		}
-	}
 
 	effect(() => {
 		try {
@@ -124,11 +128,11 @@ export const Router = <
 			if (match && (match.unusedPath === '' || match.unusedPath === '/')) {
 				if (oldMatch?.definition !== match.definition) {
 					try {
-						setResult(match.definition.view(match, scope))
+						current.view = match.definition.view(match, scope)
 						oldMatch = match
 					} catch (err) {
 						console.error('Router view error:', err)
-						setResult(
+						current.view = (
 							<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
 								<h2 style="margin-top: 0">Something went wrong</h2>
 								<p>Error loading route.</p>
@@ -144,12 +148,12 @@ export const Router = <
 					}
 				} else copyObject(oldMatch, match)
 			} else {
-				setResult(state.notFound({ routes: state.routes, url: state.url }, scope))
+				current.view = state.notFound({ routes: state.routes, url: state.url }, scope)
 				oldMatch = null
 			}
 		} catch (err) {
 			console.error('Router matching error:', err)
-			setResult(
+			current.view = (
 				<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
 					<h2>Something went wrong</h2>
 					<p>Router error.</p>
@@ -158,9 +162,14 @@ export const Router = <
 		}
 	})
 
-	return <>{() => result}</>
+	return <>{r(() => current.view)}</>
 }
 
+/**
+ * Client-side navigation link.
+ * Intercepts clicks on internal hrefs (starting with `/`) and uses `client.navigate()`.
+ * Automatically sets `aria-current="page"` when href matches current pathname.
+ */
 export function A(props: JSX.IntrinsicElements['a']) {
 	function handleClick(event: SafeMouseEvent) {
 		props.onClick?.(event)

@@ -77,6 +77,11 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
 > Avoid `onChange` handlers for inputs. Use two-way binding with mutable state.
 > *   **Pattern**: Pass a mutable state slice to the component, and let the component mutate it directly.
 
+### 6. Element Lifecycle & Cleanup
+`h()` uses `cleanedBy(element, attend(...))` to tie the reactive bindings to the element's lifecycle. When the element is removed, all inner effects (`attend`, `biDi`, `effect`) are disposed automatically. **No DOM cleanup is needed** — there is no point resetting attributes, styles, or removing event listeners on an element that is being removed. DOM listeners die with the element.
+
+See `mutts/LLM.md` § "Cleanup Semantics" for the general principle.
+
 ## 🚫 PROHIBITED: `Array.map()` for Rendering Lists
 
 **DO NOT** use `.map()` to render lists of components in JSX.
@@ -111,3 +116,25 @@ import { project } from 'mutts';
 
 See `mutts/LLM.md` for a deeper conceptual explanation of the "Assembly Line vs. Dedicated Worker" model.
 
+### 7. Component Constructor: Static, Run-Once
+
+Component constructors run **once** inside `PounceElement.render`'s effect. A **rebuild fence** prevents re-execution: if the constructor accidentally reads reactive state directly, it warns and does NOT re-render. All reactivity comes from:
+- JSX attributes wrapped by the babel plugin (`r()`)
+- Explicit `effect()`, `attend()`, `lift()`, `project()` inside the body
+- JSX directives (`if={}`, `when={}`, `use:name={}`)
+
+Bare reactive reads in the constructor body (e.g. `state.x` as a statement) are caught by the fence. Use `if={}` attributes for conditional rendering, NOT JS `if` statements.
+
+### 8. Error Boundaries
+
+`onEffectThrow(handler)` in a component constructor registers on the component's render effect. Child component errors propagate up the effect parent chain and are caught by the boundary. The boundary fires `handler` but does NOT provide fallback content — the child's `PounceElement.render` still throws `DynamicRenderingError` if no content was produced.
+
+### 9. Vitest Uses Babel Plugin
+
+The vitest base config (`test/vitest.config.base.ts`) includes `pounceCorePlugin` so tests undergo the same babel transform as production code. Tests should NOT manually wrap JSX attributes in `r()` — the plugin handles this. `esbuild` is disabled in test config to avoid double-transformation.
+
+### 10. Dual-Module Hazard — Library Build Externals
+
+`@pounce/core` uses `instanceof ReactiveProp` in critical paths (`propsInto`, `valuedAttributeGetter`, event handlers, reconciler). If a library build (e.g. `@pounce/kit`) aliases `@pounce/core/jsx-runtime` to **source** but externalizes `@pounce/core`, the built dist will bundle a **second copy** of `ReactiveProp` — breaking all `instanceof` checks at runtime (manifests as `[object Object]` in DOM attributes).
+
+**Rule**: Library builds that externalize `@pounce/core` MUST externalize ALL subpaths: use `/^@pounce\/core/` regex, never list individual subpaths. A singleton guard in `src/lib/index.ts` throws if two instances load.

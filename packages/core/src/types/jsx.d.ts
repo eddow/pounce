@@ -1,7 +1,7 @@
 import type { PounceElement, Scope } from '../lib'
 import type { NameSpacedProps } from '../lib/namespaced'
 import type { StyleInput } from '../lib/styles'
-import type { Variant } from '../lib/variants'
+import type { Trait } from '../lib/traits'
 
 declare global {
 	var h: (type: any, props?: any, ...children: any[]) => JSX.Element
@@ -33,8 +33,8 @@ declare global {
 			MouseReactiveHTMLAttributes & {
 				children?: Children
 				autoFocus?: boolean
-				// Variant support
-				variants?: Variant | Variant[]
+				// Trait support
+				traits?: Trait | Trait[]
 				// Additional common non-mouse events
 				onFocus?: (event: FocusEvent) => void
 				onBlur?: (event: FocusEvent) => void

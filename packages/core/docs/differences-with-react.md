@@ -21,6 +21,16 @@ This guide highlights how Pounce‑TS (powered by the `mutts` reactivity engine)
 - **Class vs className**: Use `class` (not `className`). You can pass strings, arrays, or objects; reactive forms are supported.
 - **Style**: You can pass strings or objects; reactive style functions are supported and applied directly to DOM.
 
+### The Rebuild Fence (No Component Re-rendering)
+
+In React, changing state triggers a re-render of the component and its subtree. In Pounce, **component constructors run exactly once** — this is enforced by a **rebuild fence**. If a constructor accidentally reads reactive state directly, the fence blocks re-execution and warns. This is a deliberate design choice, not a limitation:
+
+- React re-renders are expensive (VDOM diffing, reconciliation). Pounce avoids them entirely.
+- All reactivity is fine-grained: JSX attributes update individually via the Babel plugin (`r()` wrappers), directives (`if={}`, `<for>`) handle conditional rendering, and `effect()` handles imperative logic.
+- JS `if` statements, ternaries, and `.map()` in the constructor body are **not reactive** — use `if={}` attributes and `<for>` instead.
+
+See [Component Reactivity Rules](./component-reactivity.md) for detailed examples.
+
 ### Control Flow and Lists
 - **Built‑in condition attributes**: Instead of ternaries in JSX, use:
   - `if={boolean}`

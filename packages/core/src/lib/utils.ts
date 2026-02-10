@@ -1,5 +1,6 @@
 import { describe, memoize, project, reactive } from 'mutts'
 import { pounceOptions } from './debug'
+import type { Trait } from './traits'
 
 // Local implementations to avoid circular reference issues with mutts lazy-get
 function isFunction(value: any): value is Function {
@@ -87,6 +88,46 @@ export function propsInto<P extends Record<string, any>, S extends Record<string
 			}
 	)
 	return describe(descriptors, into) as S & P
+}
+
+export function allPrototypeKeys(obj: object): Iterable<string> {
+	const keys = new Set<string>()
+	let current: object | null = obj
+	while (current && current !== Object.prototype) {
+		for (const key of Reflect.ownKeys(current)) {
+			if (typeof key === 'string') keys.add(key)
+		}
+		current = Object.getPrototypeOf(current)
+	}
+	return keys
+}
+
+function traitWarning(key: string) {
+	return () => {
+		if (pounceOptions.writeRoProps !== 'ignore') {
+			const msg = `Trait attribute "${key}" is read-only`
+			if (pounceOptions.writeRoProps === 'warn') console.warn(msg)
+			else if (pounceOptions.writeRoProps === 'error') throw new Error(msg)
+		}
+	}
+}
+
+export function traitLayer(
+	base: Record<string, any> | null,
+	trait: Trait
+): Record<string, any> {
+	const descriptors: Record<string, PropertyDescriptor> = {}
+	if (trait.attributes) {
+		for (const [key, value] of Object.entries(trait.attributes)) {
+			descriptors[key] = {
+				get: () => value,
+				set: traitWarning(key),
+				enumerable: true,
+				configurable: true,
+			}
+		}
+	}
+	return reactive(Object.create(base, descriptors))
 }
 
 export const array = {

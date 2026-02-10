@@ -1,30 +1,10 @@
 import { defineConfig, devices } from '@playwright/test'
-import { readdirSync } from 'fs'
 
 declare const process: { env: { CI?: string } }
 
 const isCI = Boolean(process.env.CI)
 const projectRootDir = decodeURIComponent(new URL('.', import.meta.url).pathname)
 const port = 5274
-
-function hasTestFiles(dir: URL): boolean {
-  try {
-    for (const entry of readdirSync(dir.pathname, { withFileTypes: true })) {
-      if (entry.isDirectory()) {
-        if (hasTestFiles(new URL(`${entry.name}/`, dir))) return true
-        continue
-      }
-      if (!entry.isFile()) continue
-      if (/\.test\.(ts|tsx)$/.test(String(entry.name))) return true
-    }
-  } catch {
-    return false
-  }
-
-  return false
-}
-
-const hasE2eTests = hasTestFiles(new URL('./tests/e2e/', import.meta.url))
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -49,15 +29,11 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     },
   ],
-  ...(hasE2eTests
-    ? {
-    	webServer: {
-    		command: `npm run dev -- --host=127.0.0.1 --port=${port} --strictPort`,
-    		cwd: projectRootDir,
-    		port,
-    		timeout: 120_000,
-    		reuseExistingServer: false,
-    	},
-    }
-    : {}),
+  webServer: {
+    command: `node_modules/.bin/vite --host=127.0.0.1 --port=${port} --strictPort`,
+    cwd: projectRootDir,
+    port,
+    timeout: 120_000,
+    reuseExistingServer: true,
+  },
 })
