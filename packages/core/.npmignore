@@ -1,0 +1,21 @@
+# Test and demo files
+**/*.spec.*
+**/*.test.*
+src/demo/
+src/entry.ts
+dist/src/demo/
+dist/src/entry.d.ts
+
+# Build config
+*.config.ts
+*.config.js
+biome.json
+tsconfig*.json
+index.html
+favicon.ico
+
+# Dev tooling
+sandbox/
+playwright-report/
+test-results/
+playwright.config.ts

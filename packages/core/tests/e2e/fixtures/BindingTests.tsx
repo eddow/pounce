@@ -2,6 +2,8 @@ import { reactive } from 'mutts'
 
 const state = reactive({
 	value: 'initial',
+	textareaValue: 'initial textarea',
+	selectValue: 'b',
 })
 
 const fixtureControls = {
@@ -11,8 +13,16 @@ const fixtureControls = {
 	getValue() {
 		return state.value
 	},
+	getTextareaValue() {
+		return state.textareaValue
+	},
+	getSelectValue() {
+		return state.selectValue
+	},
 	reset() {
 		state.value = 'initial'
+		state.textareaValue = 'initial textarea'
+		state.selectValue = 'b'
 	},
 }
 
@@ -48,6 +58,26 @@ const BindingFixtureApp = () => (
 				<div>
 					<label>Input 2:</label>
 					<input type="text" data-testid="input2" value={state.value} style="margin-left: 10px; padding: 5px;" />
+				</div>
+				<div>
+					<label>Textarea:</label>
+					<textarea data-testid="textarea1" value={state.textareaValue} rows={3} style="margin-left: 10px; padding: 5px;" />
+				</div>
+				<div>
+					<label>Textarea display:</label>
+					<span data-testid="textarea-display">{state.textareaValue}</span>
+				</div>
+				<div>
+					<label>Select:</label>
+					<select data-testid="select1" value={state.selectValue} style="margin-left: 10px; padding: 5px;">
+						<option value="a">Option A</option>
+						<option value="b">Option B</option>
+						<option value="c">Option C</option>
+					</select>
+				</div>
+				<div>
+					<label>Select display:</label>
+					<span data-testid="select-display">{state.selectValue}</span>
 				</div>
 			</div>
 		</section>

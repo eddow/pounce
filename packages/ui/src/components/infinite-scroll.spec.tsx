@@ -54,17 +54,15 @@ describe('InfiniteScroll', () => {
 		expect(content).toBeTruthy()
 	})
 
-	it('renders nested content and offset wrappers', () => {
+	it('content height reflects fixed itemHeight × count', () => {
 		render(
 			<InfiniteScroll items={['a', 'b', 'c']} itemHeight={40}>
 				{(item: string) => <div>{item}</div>}
 			</InfiniteScroll>
 		)
-		const scroll = container.querySelector('.test-infinite')
-		const content = scroll?.querySelector('.test-infinite-content')
+		const content = container.querySelector('.test-infinite-content') as HTMLElement
 		expect(content).toBeTruthy()
-		// Content wrapper contains an offset div for virtualization
-		expect(content?.children.length).toBeGreaterThanOrEqual(1)
+		expect(content.style.height).toBe('120px')
 	})
 
 	it('passes el props through', () => {
@@ -75,5 +73,41 @@ describe('InfiniteScroll', () => {
 		)
 		const scroll = container.querySelector('#my-scroll')
 		expect(scroll).toBeTruthy()
+	})
+
+	it('accepts function itemHeight (variable mode)', () => {
+		render(
+			<InfiniteScroll items={['short', 'tall']} itemHeight={() => 60}>
+				{(item: string) => <div>{item}</div>}
+			</InfiniteScroll>
+		)
+		const scroll = container.querySelector('.test-infinite')
+		expect(scroll).toBeTruthy()
+	})
+
+	it('content height reflects variable-height estimates', () => {
+		render(
+			<InfiniteScroll items={['a', 'b', 'c']} itemHeight={() => 100} estimatedItemHeight={100}>
+				{(item: string) => <div>{item}</div>}
+			</InfiniteScroll>
+		)
+		const content = container.querySelector('.test-infinite-content') as HTMLElement
+		expect(content).toBeTruthy()
+		// 3 items × 100px estimate = 300px
+		expect(content.style.height).toBe('300px')
+	})
+
+	it('content height uses estimator function per item', () => {
+		const items = ['short', 'tall', 'short']
+		const heights = (item: string) => item === 'tall' ? 200 : 50
+		render(
+			<InfiniteScroll items={items} itemHeight={heights}>
+				{(item: string) => <div>{item}</div>}
+			</InfiniteScroll>
+		)
+		const content = container.querySelector('.test-infinite-content') as HTMLElement
+		expect(content).toBeTruthy()
+		// 50 + 200 + 50 = 300
+		expect(content.style.height).toBe('300px')
 	})
 })

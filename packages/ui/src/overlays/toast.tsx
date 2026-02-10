@@ -1,6 +1,7 @@
 import { componentStyle } from '@pounce/kit/dom'
 import { type OverlaySpec, type PushOverlayFunction } from './manager'
 import { getVariantTrait } from '../shared/variants'
+import { getAdapter } from '../adapter/registry'
 
 declare module './manager' {
 	interface OverlayHelpers {
@@ -71,6 +72,7 @@ export const Toast = {
         return {
             mode: 'toast',
             render: (close) => {
+                const adapter = getAdapter('Toast')
                 let timeoutId: any = null
 
                 // Auto-close after duration
@@ -86,7 +88,7 @@ export const Toast = {
 
                 return (
                     <div
-                        class="pounce-toast"
+                        class={adapter.classes?.base || 'pounce-toast'}
                         traits={getVariantTrait(opts.variant)}
                         role={opts.variant === 'danger' ? 'alert' : 'status'}
                     >

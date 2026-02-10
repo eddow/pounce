@@ -1,6 +1,7 @@
 import { compose, PounceElement } from '@pounce/core'
 import { lift } from 'mutts'
 import { client } from '../client/shared.js'
+import { perf } from '../perf.js'
 import {
 	matchRoute as coreMatchRoute,
 	routeMatcher as coreRouteMatcher,
@@ -22,7 +23,6 @@ export type {
 	RouteWildcard,
 }
 export { buildRoute } from './logic.js'
-// TODO: test the router component (unittest)
 // Node/SSR shim for MouseEvent if likely missing
 type MouseEventShim = unknown
 type SafeMouseEvent = typeof globalThis extends { MouseEvent: any } ? MouseEvent : MouseEventShim
@@ -57,7 +57,6 @@ export type RouterNotFound<Definition extends ClientRouteDefinition> = (
 export interface RouterProps<Definition extends ClientRouteDefinition> {
 	readonly routes: readonly Definition[]
 	readonly notFound: RouterNotFound<Definition>
-	readonly url?: string
 }
 
 /** Pre-compiled route matcher function. */
@@ -120,21 +119,31 @@ export const Router = <
 	)
 	const matcher = routeMatcher(state.routes)
 
+	function renderElements(jsx: JSX.Element | JSX.Element[]): Node[] {
+		const els = Array.isArray(jsx) ? jsx : [jsx]
+		return els.flatMap((el) => {
+			if (!(el instanceof PounceElement)) return []
+			const nodes = el.render(scope)
+			return Array.isArray(nodes) ? Array.from(nodes) : [nodes]
+		})
+	}
+
 	const rendered = lift(function routerCompute() {
 		try {
+			perf?.mark('route:match:start')
 			const match = matcher(state.url)
+			perf?.mark('route:match:end')
+			perf?.measure('route:match', 'route:match:start', 'route:match:end')
 			if (match && (match.unusedPath === '' || match.unusedPath === '/')) {
 				try {
-					const view = match.definition.view(match, scope)
-					const els = Array.isArray(view) ? view : [view]
-					return els.flatMap((el) =>
-						typeof el === 'object' && el !== null && 'render' in el
-							? (el as { render(s?: any): Node | readonly Node[] }).render(scope)
-							: []
-					)
+					perf?.mark('route:render:start')
+					const output = renderElements(match.definition.view(match, scope))
+					perf?.mark('route:render:end')
+					perf?.measure('route:render', 'route:render:start', 'route:render:end')
+					return output
 				} catch (err) {
 					console.error('Router view error:', err)
-					const fallback = (
+					return renderElements(
 						<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
 							<h2 style="margin-top: 0">Something went wrong</h2>
 							<p>Error loading route.</p>
@@ -145,26 +154,22 @@ export const Router = <
 								</pre>
 							</details>
 						</div>
-					) as unknown as { render(s?: any): Node | readonly Node[] }
-					return fallback.render(scope)
+					)
 				}
 			}
-			const nf = state.notFound({ routes: state.routes, url: state.url }, scope)
-			const nfEls = Array.isArray(nf) ? nf : [nf]
-			return nfEls.flatMap((el) =>
-				typeof el === 'object' && el !== null && 'render' in el
-					? (el as { render(s?: any): Node | readonly Node[] }).render(scope)
-					: []
-			)
+			perf?.mark('route:not-found:start')
+			const output = renderElements(state.notFound({ routes: state.routes, url: state.url }, scope))
+			perf?.mark('route:not-found:end')
+			perf?.measure('route:not-found', 'route:not-found:start', 'route:not-found:end')
+			return output
 		} catch (err) {
 			console.error('Router matching error:', err)
-			const fallback = (
+			return renderElements(
 				<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
 					<h2>Something went wrong</h2>
 					<p>Router error.</p>
 				</div>
-			) as unknown as { render(s?: any): Node | readonly Node[] }
-			return fallback.render(scope)
+			)
 		}
 	})
 
@@ -186,7 +191,10 @@ export function A(props: JSX.IntrinsicElements['a']) {
 		if (typeof href === 'string' && href.startsWith('/')) {
 			event.preventDefault()
 			if (client.url.pathname !== href) {
+				perf?.mark('route:click:start')
 				client.navigate(href)
+				perf?.mark('route:click:end')
+				perf?.measure('route:click', 'route:click:start', 'route:click:end')
 			}
 		}
 	}

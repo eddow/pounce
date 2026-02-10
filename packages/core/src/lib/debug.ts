@@ -77,6 +77,27 @@ export const testing: {
 	renderingEvent?: (evt: string, ...args: any[]) => void
 } = {}
 
+export const perfCounters = {
+	componentRenders: 0,
+	elementRenders: 0,
+	renderCacheHits: 0,
+	reconciliations: 0,
+	forIterations: 0,
+	dynamicSwitches: 0,
+	reset() {
+		this.componentRenders = 0
+		this.elementRenders = 0
+		this.renderCacheHits = 0
+		this.reconciliations = 0
+		this.forIterations = 0
+		this.dynamicSwitches = 0
+	},
+	get cacheHitRatio() {
+		const total = this.componentRenders + this.elementRenders + this.renderCacheHits
+		return total === 0 ? 0 : this.renderCacheHits / total
+	},
+}
+
 /**
  * Pounce framework configuration options
  * These can be modified at runtime to adjust framework behavior
@@ -95,6 +116,7 @@ try {
 	const win = window as any
 	if (win) {
 		win.reactiveOptions = reactiveOptions
+		win.__POUNCE_PERF__ = perfCounters
 	}
 } catch {
 	// Platform not yet bound, ignore

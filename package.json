@@ -8,6 +8,10 @@
 		"lint": "pnpm -r run lint"
 	},
 	"devDependencies": {
+		"@vitest/browser": "^4.0.18",
+		"@vitest/browser-playwright": "^4.0.18",
+		"playwright": "^1.58.2",
+		"pure-glyf": "link:../../pure-glyf",
 		"typescript": "5.9.3",
 		"vitest": "^4.0.18"
 	},

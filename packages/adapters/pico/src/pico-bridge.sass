@@ -33,6 +33,9 @@
   // Inverse (for badges, toasts, etc.)
   --pounce-fg-inverse: var(--pico-color-inverse, #fff)
 
+  // Muted background (subtle highlights, token defaults, hover states)
+  --pounce-bg-muted: color-mix(in srgb, var(--pico-color, currentColor) 8%, transparent)
+
   // Semantic variant backgrounds (for custom variant CSS below)
   --pounce-success-bg: var(--pounce-success)
   --pounce-success-border: var(--pounce-success)
@@ -373,6 +376,13 @@ a.pounce-link-no-underline,
 .pounce-link-no-underline
   text-decoration: none
 
+.pounce-link[aria-current="page"]
+  color: var(--pico-primary-inverse, var(--pounce-fg-inverse, #fff))
+  background: var(--pico-primary-background, var(--pico-primary))
+  padding: 0.15rem 0.6rem
+  border-radius: 2rem
+  text-decoration: none !important
+
 .pounce-link[data-variant="primary"]
   color: var(--pico-primary, inherit)
 
@@ -510,9 +520,12 @@ a.pounce-link-no-underline,
   --pounce-card-bg: var(--pico-card-background-color)
   --pounce-border: var(--pico-muted-border-color)
   --pounce-muted: var(--pico-muted-color)
+  --pounce-muted-border: var(--pico-muted-border-color)
   --pounce-primary: var(--pico-primary)
   --pounce-secondary: var(--pico-secondary)
   --pounce-contrast: var(--pico-contrast)
+  --pounce-fg-inverse: var(--pico-color-inverse, #fff)
+  --pounce-bg-muted: color-mix(in srgb, var(--pico-color, currentColor) 8%, transparent)
 
 // =============================================================================
 // 14. Layout — base styles that Pico's unlayered CSS overrides from @layer
@@ -564,7 +577,239 @@ nav .pounce-menu-bar-desktop
   margin: 0
 
 // =============================================================================
-// 15. Transition classes
+// 15. Inline Input — override Pico's block display on inputs
+// =============================================================================
+
+// Pico forces <input> to display:block; width:100%. This utility resets
+// that for inline use cases (e.g. "as [agent]" label+input pattern).
+.pounce-input-inline
+  display: inline-block !important
+  width: auto !important
+  border: none
+  border-bottom: 1px solid var(--pico-muted-border-color, var(--pounce-border))
+  border-radius: 0
+  background: transparent
+  padding: 0.1rem 0.25rem
+  margin: 0
+  font: inherit
+  color: inherit
+
+  &:focus
+    border-bottom-color: var(--pico-primary, var(--pounce-primary))
+    outline: none
+    box-shadow: none
+
+// =============================================================================
+// 16. ThemeToggle — base styles (bypass @layer)
+// =============================================================================
+
+.pounce-theme-toggle
+  display: inline-flex
+  align-items: center
+  position: relative
+
+  .pounce-theme-toggle-main
+    display: inline-flex
+    align-items: center
+    gap: 0.4rem
+    padding: 0.4rem 0.75rem
+    border: 1px solid var(--pico-muted-border-color, var(--pounce-border, #d1d5db))
+    border-radius: var(--pico-border-radius, 0.5rem)
+    background: var(--pico-background-color, var(--pounce-bg, #fff))
+    color: var(--pico-color, var(--pounce-fg, #374151))
+    cursor: pointer
+    font-size: 0.875rem
+    line-height: 1.5
+    transition: background 0.15s ease, border-color 0.15s ease
+    margin: 0
+    width: auto
+    box-shadow: none
+
+    &:hover
+      border-color: var(--pico-primary, var(--pounce-primary, #3b82f6))
+
+  .pounce-theme-toggle-dropdown
+    display: inline-flex
+    align-items: center
+    padding: 0.4rem 0.35rem
+    border: 1px solid var(--pico-muted-border-color, var(--pounce-border, #d1d5db))
+    border-left: none
+    border-radius: 0 var(--pico-border-radius, 0.5rem) var(--pico-border-radius, 0.5rem) 0
+    background: var(--pico-background-color, var(--pounce-bg, #fff))
+    color: var(--pico-color, var(--pounce-fg, #374151))
+    cursor: pointer
+    font-size: 0.75rem
+    transition: background 0.15s ease
+    margin: 0
+    width: auto
+    box-shadow: none
+
+    &:hover
+      background: var(--pounce-bg-muted, rgba(0, 0, 0, 0.05))
+
+  .pounce-theme-toggle-main:has(+ .pounce-theme-toggle-dropdown)
+    border-right: none
+    border-radius: var(--pico-border-radius, 0.5rem) 0 0 var(--pico-border-radius, 0.5rem)
+
+  .pounce-theme-toggle-menu
+    position: absolute
+    top: 100%
+    right: 0
+    margin-top: 0.25rem
+    min-width: 8rem
+    background: var(--pico-background-color, var(--pounce-bg, #fff))
+    border: 1px solid var(--pico-muted-border-color, var(--pounce-border, #d1d5db))
+    border-radius: var(--pico-border-radius, 0.5rem)
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)
+    z-index: 10
+    overflow: hidden
+
+  .pounce-theme-toggle-option
+    display: flex
+    align-items: center
+    gap: 0.5rem
+    width: 100%
+    padding: 0.5rem 0.75rem
+    border: none
+    background: none
+    color: var(--pico-color, var(--pounce-fg, #374151))
+    cursor: pointer
+    font-size: 0.875rem
+    text-align: left
+    margin: 0
+    box-shadow: none
+
+    &:hover
+      background: var(--pounce-bg-muted, rgba(0, 0, 0, 0.05))
+
+    &[aria-checked="true"]
+      font-weight: 600
+
+  .pounce-theme-toggle-auto-badge
+    font-size: 0.65rem
+    opacity: 0.6
+    margin-left: -0.2rem
+
+// DisplayProvider — display: contents so it doesn't break layout
+.pounce-display-provider
+  display: contents
+
+// =============================================================================
+// 18. Overlay bridge — Dialog, Toast, Drawer
+// =============================================================================
+
+// --- Backdrop ---
+.pounce-overlay-manager .pounce-backdrop
+  background: rgba(0, 0, 0, 0.5)
+  backdrop-filter: blur(4px)
+
+// --- Dialog ---
+.pounce-dialog
+  background: var(--pico-card-background-color, var(--pounce-card-bg, #fff))
+  border: 1px solid var(--pico-card-border-color, var(--pounce-border))
+  border-radius: var(--pico-border-radius, 0.5rem)
+  color: var(--pico-color, var(--pounce-fg))
+  box-shadow: var(--pico-card-box-shadow, 0 20px 25px -5px rgba(0, 0, 0, 0.1))
+
+  header
+    border-bottom: 1px solid var(--pico-card-border-color, var(--pounce-border))
+    h3
+      margin: 0
+
+  footer
+    background: var(--pico-card-sectioning-background-color, var(--pounce-bg-muted))
+    border-top: 1px solid var(--pico-card-border-color, var(--pounce-border))
+
+  // Close button — reset Pico's aggressive <button> styling
+  .pounce-dialog-close
+    background: transparent !important
+    border: none !important
+    padding: 0.25rem !important
+    margin: 0
+    min-width: auto
+    height: auto
+    width: auto
+    color: var(--pico-muted-color, var(--pounce-muted))
+    box-shadow: none !important
+    &:hover
+      color: var(--pico-color, var(--pounce-fg))
+      background: var(--pounce-bg-muted) !important
+
+// --- Toast ---
+.pounce-toast
+  background: var(--pico-card-background-color, var(--pounce-card-bg, #fff))
+  border: 1px solid var(--pico-card-border-color, var(--pounce-border))
+  border-radius: var(--pico-border-radius, 0.5rem)
+  color: var(--pico-color, var(--pounce-fg))
+  border-left: 4px solid var(--pico-secondary, var(--pounce-secondary))
+
+  &[data-variant="success"]
+    border-left-color: var(--pounce-success)
+  &[data-variant="danger"]
+    border-left-color: var(--pounce-danger)
+  &[data-variant="warning"]
+    border-left-color: var(--pounce-warning)
+  &[data-variant="primary"]
+    border-left-color: var(--pico-primary, var(--pounce-primary))
+
+  // Close button — reset Pico <button>
+  .pounce-toast-close
+    background: transparent !important
+    border: none !important
+    padding: 0.25rem !important
+    margin: 0
+    min-width: auto
+    height: auto
+    width: auto
+    color: var(--pico-muted-color, var(--pounce-muted))
+    box-shadow: none !important
+    font-size: 1rem
+    line-height: 1
+    cursor: pointer
+    &:hover
+      color: var(--pico-color, var(--pounce-fg))
+
+// --- Drawer ---
+.pounce-drawer
+  background: var(--pico-card-background-color, var(--pounce-card-bg, #fff))
+  color: var(--pico-color, var(--pounce-fg))
+  width: min(24rem, 85vw)
+  border: none
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.15)
+
+  .pounce-drawer-header
+    border-bottom: 1px solid var(--pico-card-border-color, var(--pounce-border))
+
+    .pounce-drawer-title
+      margin: 0
+      color: var(--pico-color, var(--pounce-fg))
+
+    // Close button — reset Pico <button>
+    .pounce-drawer-close
+      background: transparent !important
+      border: none !important
+      padding: 0.25rem !important
+      margin: 0
+      min-width: auto
+      height: auto
+      width: auto
+      color: var(--pico-muted-color, var(--pounce-muted))
+      box-shadow: none !important
+      font-size: 1.25rem
+      line-height: 1
+      cursor: pointer
+      &:hover
+        color: var(--pico-color, var(--pounce-fg))
+
+  .pounce-drawer-body
+    color: var(--pico-color, var(--pounce-fg))
+
+  .pounce-drawer-footer
+    border-top: 1px solid var(--pico-card-border-color, var(--pounce-border))
+    background: var(--pico-card-sectioning-background-color, var(--pounce-bg-muted))
+
+// =============================================================================
+// 19. Transition classes
 // =============================================================================
 
 .pounce-pico-enter

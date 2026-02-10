@@ -1,5 +1,6 @@
 import { onEffectThrow, reactive } from 'mutts'
 import { bindChildren } from '@pounce/core'
+import { getAdapter } from '../adapter/registry'
 
 /**
  * ErrorBoundary - Catches and displays errors in component trees
@@ -59,6 +60,7 @@ const ErrorReceiver = (props: ReceiverProps) => {
 }
 
 export const ErrorBoundary = (props: ErrorBoundaryProps) => {
+	const adapter = getAdapter('ErrorBoundary')
 	const state = reactive({ error: undefined as Error | undefined })
 
 	const mount = (container: Node) => {
@@ -81,10 +83,11 @@ export const ErrorBoundary = (props: ErrorBoundaryProps) => {
 		}
 	}
 
-	return <div class="pounce-error-boundary" use={mount} />
+	return <div class={adapter.classes?.base || 'pounce-error-boundary'} use={mount} />
 }
 
 export const ProductionErrorBoundary = (props: { children: JSX.Element | JSX.Element[] }) => {
+	const adapter = getAdapter('ErrorBoundary')
 	const state = reactive({ error: undefined as Error | undefined })
 
 	const mount = (container: Node) => {
@@ -110,5 +113,5 @@ export const ProductionErrorBoundary = (props: { children: JSX.Element | JSX.Ele
 		}
 	}
 
-	return <div class="pounce-error-boundary-prod" use={mount} />
+	return <div class={adapter.classes?.production || 'pounce-error-boundary-prod'} use={mount} />
 }

@@ -384,25 +384,37 @@ import { Stars } from '@pounce/ui'
 
 ### InfiniteScroll
 
-Virtualized scrollable list rendering only visible items.
+Virtualized scrollable list rendering only visible items. Supports both **fixed-height** (fast path) and **variable-height** (measured) items.
 
 ```tsx
 import { InfiniteScroll } from '@pounce/ui'
 
+// Fixed height — fast path, no measurement overhead
 <InfiniteScroll items={largeArray} itemHeight={40} stickyLast>
   {(item, index) => <div>{index}: {item.name}</div>}
+</InfiniteScroll>
+
+// Variable height — items measured via ResizeObserver
+<InfiniteScroll items={messages} itemHeight={(msg) => msg.hasImage ? 200 : 48}>
+  {(msg) => <MessageBubble message={msg} />}
 </InfiniteScroll>
 ```
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `items` | `T[]` | — | Data array |
-| `itemHeight` | `number` | — | Fixed row height in px |
+| `itemHeight` | `number \| (item: T, index: number) => number` | — | Fixed height (number) or per-item estimator (function) |
+| `estimatedItemHeight` | `number` | `40` | Fallback height for unmeasured items (variable mode only) |
 | `stickyLast` | `boolean` | `true` | Auto-scroll to bottom on new items |
+| `el` | `JSX.GlobalHTMLAttributes` | — | Pass-through HTML attributes for scroll container |
 | `children` | `(item: T, index: number) => JSX.Element` | — | Row renderer |
 
+**Fixed mode** (`itemHeight: number`): uses simple arithmetic for virtualization. Items get `contain: strict` for maximum performance.
+
+**Variable mode** (`itemHeight: function`): uses a prefix-sum offset array with binary search for O(log n) visible range lookup. Each rendered item is observed via `ResizeObserver`; when actual heights differ from estimates, offsets are recalculated and scroll position is anchored to prevent content jumps.
+
 **Adapter key**: `InfiniteScroll` (`BaseAdaptation`)  
-**CSS classes**: `.pounce-infinite-scroll`, `.pounce-infinite-scroll-content`, `.pounce-infinite-scroll-item`  
+**CSS classes**: `.pounce-infinite-scroll`, `.pounce-infinite-scroll-content`, `.pounce-infinite-scroll-item`, `.pounce-infinite-scroll-item--fixed`  
 **Directives used**: `resize`, `scroll`
 
 ---

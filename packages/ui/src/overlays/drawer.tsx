@@ -1,5 +1,6 @@
 import { componentStyle } from '@pounce/kit/dom'
 import { type OverlaySpec, type PushOverlayFunction } from './manager'
+import { getAdapter } from '../adapter/registry'
 
 declare module './manager' {
 	interface OverlayHelpers {
@@ -89,8 +90,9 @@ export const Drawer = {
 				labelledby: options.title ? titleId : undefined
 			},
 			render: (close) => {
+				const adapter = getAdapter('Drawer')
 				return (
-					<div class={['pounce-drawer', `pounce-drawer-${side}`]}>
+					<div class={[adapter.classes?.base || 'pounce-drawer', `pounce-drawer-${side}`]}>
 						<div class="pounce-drawer-header" if={options.title}>
 							<h2 class="pounce-drawer-title" id={titleId}>
 								{options.title}

@@ -1,5 +1,5 @@
 import { effect, onEffectTrigger, project } from 'mutts'
-import { compose, type Scope } from '../../lib'
+import { compose } from '../../lib'
 
 export interface MiniCounterProps {
 	list?: string[]

@@ -95,3 +95,26 @@ If you want to provide your own interaction helpers, use the `extend` prop on `W
     <App />
 </WithOverlays>
 ```
+
+## Windowed Modals Pattern
+
+For localized overlay management (e.g., a modal that only affects a specific panel), use `fixed={false}`:
+
+```tsx
+<div class="panel">
+    <WithOverlays fixed={false}>
+        <PanelContent />
+    </WithOverlays>
+</div>
+```
+
+**Behavior:**
+- Container uses `position: absolute` instead of `fixed`
+- Backdrop only dims the panel, not the entire viewport
+- Z-index automatically increments above parent overlay managers
+- Escape key handling is scoped to this manager
+
+**Use cases:**
+- Modals within a DockView panel
+- Confirmation dialogs in a sidebar
+- Contextual overlays in a split-pane layout

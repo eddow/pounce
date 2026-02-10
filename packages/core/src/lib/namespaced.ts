@@ -1,5 +1,4 @@
 const NAME_SPACED_SYMBOL = Symbol.for('pounceTS.nameSpaced')
-// TODO: check and fix the given prop with namespaced parts - which comes first, how it ends up
 type UnionToIntersection<U> = (U extends unknown ? (arg: U) => void : never) extends (
 	arg: infer R
 ) => void

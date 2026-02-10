@@ -1,8 +1,8 @@
 /**
  * Test routing logic and functionality
  */
-import { describe, expect, test } from 'vitest'
-import { buildRoute, matchRoute, routeMatcher } from '../src/router/logic.js'
+import { afterEach, describe, expect, test } from 'vitest'
+import { buildRoute, clearFormats, matchRoute, registerFormat, routeMatcher } from '../src/router/logic.js'
 
 describe('matchRoute', () => {
 	test('matches literal routes and extracts path parameters', () => {
@@ -403,5 +403,57 @@ describe('Performance - Large Route Tables', () => {
 
 		// 1000 lookups should complete in reasonable time
 		expect(duration).toBeLessThan(500)
+	})
+})
+
+describe('Custom Format Registry', () => {
+	afterEach(() => clearFormats())
+
+	test('registerFormat adds a custom validator used by matchRoute', () => {
+		registerFormat('slug', (v) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v))
+		const routes = [{ path: '/posts/[slug:slug]' }]
+
+		expect(matchRoute('/posts/hello-world', routes)).not.toBeNull()
+		expect(matchRoute('/posts/hello-world', routes)?.params).toEqual({ slug: 'hello-world' })
+		expect(matchRoute('/posts/UPPERCASE', routes)).toBeNull()
+	})
+
+	test('custom format is case-insensitive', () => {
+		registerFormat('Hex', (v) => /^[0-9a-f]+$/i.test(v))
+		const routes = [{ path: '/color/[code:hex]' }]
+
+		expect(matchRoute('/color/ff00aa', routes)?.params).toEqual({ code: 'ff00aa' })
+		expect(matchRoute('/color/FF00AA', routes)?.params).toEqual({ code: 'FF00AA' })
+		expect(matchRoute('/color/xyz', routes)).toBeNull()
+	})
+
+	test('unregistered custom format throws on parse', () => {
+		expect(() => matchRoute('/x', [{ path: '/[v:unknown_fmt]' }])).toThrow(
+			'Unsupported route parameter format: unknown_fmt'
+		)
+	})
+
+	test('clearFormats removes all custom formats', () => {
+		registerFormat('slug', (v) => /^[a-z-]+$/.test(v))
+		clearFormats()
+		expect(() => matchRoute('/x', [{ path: '/[v:slug]' }])).toThrow(
+			'Unsupported route parameter format: slug'
+		)
+	})
+
+	test('custom format works in query parameters', () => {
+		registerFormat('color', (v) => /^#[0-9a-f]{6}$/i.test(v))
+		const routes = [{ path: '/theme?bg=[bg:color]' }]
+
+		expect(matchRoute('/theme?bg=%23ff00aa', routes)?.params).toEqual({ bg: '#ff00aa' })
+		expect(matchRoute('/theme?bg=red', routes)).toBeNull()
+	})
+
+	test('custom format works with routeMatcher', () => {
+		registerFormat('semver', (v) => /^\d+\.\d+\.\d+$/.test(v))
+		const matcher = routeMatcher([{ path: '/pkg/[version:semver]' }])
+
+		expect(matcher('/pkg/1.2.3')?.params).toEqual({ version: '1.2.3' })
+		expect(matcher('/pkg/latest')).toBeNull()
 	})
 })

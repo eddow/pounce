@@ -2,6 +2,7 @@ import { type Scope } from '@pounce/core'
 import { reactive } from 'mutts'
 import { type OverlayEntry, type PushOverlayFunction } from './manager'
 import { componentStyle } from '@pounce/kit/dom'
+import { perf } from '../perf'
 import { getTransitionConfig, applyTransition } from '../shared/transitions'
 import type { ComponentName } from '../adapter/types'
 
@@ -143,12 +144,16 @@ export const WithOverlays = (props: WithOverlaysProps, scope: Scope) => {
 	const overlayElements = new Map<string, HTMLElement>()
 
 	const push: PushOverlayFunction = (spec) => {
+		perf?.mark('overlay:show')
+		
 		return new Promise((resolve) => {
 			const entry: OverlayEntry = {
 				...spec,
 				id: spec.id || Math.random().toString(36).substring(2, 9),
 				closing: false,
 				resolve: (value) => {
+					perf?.mark('overlay:close')
+					perf?.measure(`overlay:${spec.mode}:lifecycle`, 'overlay:show', 'overlay:close')
 					const index = stack.findIndex((e) => e.id === entry.id)
 					if (index !== -1) {
 						entry.closing = true
@@ -173,6 +178,8 @@ export const WithOverlays = (props: WithOverlaysProps, scope: Scope) => {
 				},
 			}
 			stack.push(entry)
+			perf?.mark?.('overlay:render')
+			perf?.measure?.(`overlay:${spec.mode}:show`, 'overlay:show', 'overlay:render')
 		})
 	}
 

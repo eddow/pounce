@@ -103,22 +103,15 @@ export interface RouteRegistry {
 }
 
 const REGISTRY_SYMBOL = Symbol.for('__POUNCE_ROUTE_REGISTRY__')
-
-export function setRouteRegistry(registry: RouteRegistry): void {
-	const ctx = getContext()
-	if (ctx) ctx.routeRegistry = registry
-	;(globalThis as any)[REGISTRY_SYMBOL] = registry
-}
-
-export function getRouteRegistry(): RouteRegistry | null {
-	return (globalThis as any)[REGISTRY_SYMBOL] || null
-}
-
-export function clearRouteRegistry(): void {
-	;(globalThis as any)[REGISTRY_SYMBOL] = null
-}
-
 const CONFIG_SYMBOL = Symbol.for('__POUNCE_CONFIG__')
+
+type ApiGlobals = {
+	[REGISTRY_SYMBOL]?: RouteRegistry | null
+	[CONFIG_SYMBOL]?: typeof DEFAULT_CONFIG
+}
+
+const globals = globalThis as unknown as ApiGlobals
+
 const DEFAULT_CONFIG = {
 	timeout: 10000,
 	ssr: false,
@@ -126,10 +119,23 @@ const DEFAULT_CONFIG = {
 	retryDelay: 100,
 }
 
+export function setRouteRegistry(registry: RouteRegistry): void {
+	const ctx = getContext()
+	if (ctx) ctx.routeRegistry = registry
+	globals[REGISTRY_SYMBOL] = registry
+}
+
+export function getRouteRegistry(): RouteRegistry | null {
+	return globals[REGISTRY_SYMBOL] || null
+}
+
+export function clearRouteRegistry(): void {
+	globals[REGISTRY_SYMBOL] = null
+}
+
 function getGlobalConfig() {
-	const g = globalThis as any
-	if (!g[CONFIG_SYMBOL]) g[CONFIG_SYMBOL] = { ...DEFAULT_CONFIG }
-	return g[CONFIG_SYMBOL]
+	if (!globals[CONFIG_SYMBOL]) globals[CONFIG_SYMBOL] = { ...DEFAULT_CONFIG }
+	return globals[CONFIG_SYMBOL]
 }
 
 export const config = getGlobalConfig()
@@ -266,7 +272,7 @@ export function createApiClientFactory(executor: RequestExecutor) {
 				? {}
 				: { 'Content-Type': 'application/json' }
 			const requestBody = isFormData
-				? (body as any)
+				? (body as BodyInit)
 				: body !== undefined
 					? JSON.stringify(body)
 					: undefined
@@ -400,14 +406,15 @@ export function createApiClientFactory(executor: RequestExecutor) {
 
 	// Proxy creation
 	const api = new Proxy(apiClient, {
-		get(target, prop: string) {
-			if (prop in target) return (target as any)[prop]
+		get(target, prop, receiver) {
+			if (prop in target) return Reflect.get(target, prop, receiver)
 			const methods = ['get', 'post', 'put', 'del', 'patch']
-			if (methods.includes(prop)) {
+			if (typeof prop === 'string' && methods.includes(prop)) {
 				const currentPath = typeof window !== 'undefined' ? window.location.href : '.'
-				return (target(currentPath) as any)[prop]
+				const instance = target(currentPath)
+				return Reflect.get(instance, prop)
 			}
-			return (target as any)[prop]
+			return Reflect.get(target, prop, receiver)
 		},
 	}) as unknown as ApiClient & ApiClientInstance
 

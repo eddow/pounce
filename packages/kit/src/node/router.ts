@@ -1,4 +1,3 @@
-// TODO: This file has nothing to do here, what is no-dom related should be in src/no-dom
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import type { Middleware, RouteHandler } from '../api/core'

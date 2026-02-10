@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { bindApp, document } from '@pounce/core'
 import { RadioButton } from '../../src/components/radiobutton'
 import { setAdapter, resetAdapter } from '../../src/adapter/registry'
+import { vanillaAdapter } from '../../src/adapter/vanilla'
 import { reactive } from 'mutts'
 
 describe('RadioButton', () => {
@@ -12,7 +13,7 @@ describe('RadioButton', () => {
 	let unmount: (() => void) | undefined
 
 	beforeEach(() => {
-		resetAdapter()
+		setAdapter(vanillaAdapter)
 		container = document.createElement('div')
 		document.body.appendChild(container)
 	})
@@ -20,6 +21,7 @@ describe('RadioButton', () => {
 	afterEach(() => {
 		if (unmount) unmount()
 		container.remove()
+		resetAdapter()
 	})
 
 	const render = (element: JSX.Element) => {
@@ -60,10 +62,12 @@ describe('RadioButton', () => {
 
 	it('respects adapter overrides', () => {
 		setAdapter({
-			RadioButton: {
-				classes: {
-					base: 'custom-radio',
-					checked: 'is-active'
+			components: {
+				RadioButton: {
+					classes: {
+						base: 'custom-radio',
+						checked: 'is-active'
+					}
 				}
 			}
 		})

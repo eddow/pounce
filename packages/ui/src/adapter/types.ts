@@ -89,6 +89,7 @@ export type UiComponents = {
 	InfiniteScroll: BaseAdaptation
 	Layout: BaseAdaptation
 	Link: BaseAdaptation
+	Loading: BaseAdaptation
 	Menu: BaseAdaptation
 	Multiselect: BaseAdaptation
 	Pill: BaseAdaptation

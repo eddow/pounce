@@ -7,6 +7,30 @@ import {
 	Stars,
 } from '../../src'
 
+function LoadingDemo() {
+	const state = reactive({ saving: false })
+	function simulateSave() {
+		state.saving = true
+		setTimeout(() => { state.saving = false }, 2000)
+	}
+	return (
+		<Stack gap="sm">
+			<Inline wrap gap="md">
+				<Button use:loading={state.saving} onClick={simulateSave}>
+					Save (2s)
+				</Button>
+				<Button.secondary use:loading={state.saving}>
+					Also busy
+				</Button.secondary>
+				<div use:loading={state.saving} style="padding: 1rem; border: 1px solid var(--pounce-muted-border, #ccc); border-radius: 0.5rem;">
+					Any element can be loading
+				</div>
+			</Inline>
+			<Text size="sm" muted>Status: {state.saving ? 'Saving...' : 'Idle'}</Text>
+		</Stack>
+	)
+}
+
 export default function FormsRoute() {
 	const checkState = reactive({
 		notifications: true,
@@ -34,6 +58,12 @@ export default function FormsRoute() {
 				<Heading level={1}>Forms</Heading>
 				<Text muted>Controls and inputs with variant accent colors.</Text>
 			</header>
+
+			<section>
+				<Heading level={3}>Loading State</Heading>
+				<Text muted>The <code>use:loading</code> directive works on any element — buttons, divs, inputs.</Text>
+				<LoadingDemo />
+			</section>
 
 			<section>
 				<Heading level={3}>Select & Combobox</Heading>

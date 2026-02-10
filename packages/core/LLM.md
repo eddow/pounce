@@ -76,6 +76,12 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
 > **Input Bindings**
 > Avoid `onChange` handlers for inputs. Use two-way binding with mutable state.
 > *   **Pattern**: Pass a mutable state slice to the component, and let the component mutate it directly.
+> *   **Supported elements**: `<input>` (all types), `<textarea>`, `<select>` — all wire `value=` biDi automatically.
+> *   `<input type="checkbox/radio">`: biDi on `checked=` (via `input` event)
+> *   `<input type="number/range">`: biDi on `value=` coerces to `Number` (via `input` event)
+> *   `<input>` (other): biDi on `value=` (via `input` event)
+> *   `<textarea>`: biDi on `value=` (via `input` event)
+> *   `<select>`: biDi on `value=` (via `change` event)
 
 ### 6. Element Lifecycle & Cleanup
 `h()` uses `cleanedBy(element, attend(...))` to tie the reactive bindings to the element's lifecycle. When the element is removed, all inner effects (`attend`, `biDi`, `effect`) are disposed automatically. **No DOM cleanup is needed** — there is no point resetting attributes, styles, or removing event listeners on an element that is being removed. DOM listeners die with the element.

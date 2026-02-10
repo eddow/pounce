@@ -79,6 +79,7 @@ export function pounceCorePlugin(options: PounceCorePluginOptions): Plugin {
 		name: 'pounce-core',
 		enforce: 'pre',
 		async transform(code, id) {
+			if (id.startsWith('\0') || id.includes('?')) return null
 			if (!/\.(tsx?|jsx?)$/.test(id)) return null
 			if (id.includes('node_modules')) return null
 

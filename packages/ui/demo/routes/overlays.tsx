@@ -65,10 +65,10 @@ export default function OverlaysRoute(_props: {}, scope: Scope) {
 					<Button variant="success" onClick={() => toast.success('Profile updated successfully')}>
 						Success
 					</Button>
-					<Button variant="warning" onClick={() => toast.warning('Network connection is slow')}>
+					<Button variant="warning" onClick={() => toast.warn('Network connection is slow')}>
 						Warning
 					</Button>
-					<Button variant="danger" onClick={() => toast.danger('Failed to save changes')}>
+					<Button variant="danger" onClick={() => toast.error('Failed to save changes')}>
 						Danger
 					</Button>
 				</Inline>
@@ -79,7 +79,7 @@ export default function OverlaysRoute(_props: {}, scope: Scope) {
 				<Inline wrap gap="sm">
 					<Button onClick={() => drawer({
 						title: 'Settings',
-						body: () => (
+						children: (
 							<Stack gap="md" style="padding: 1rem;">
 								<Text>Drawer content goes here.</Text>
 								<Text muted size="sm">This is a left-side drawer by default.</Text>
@@ -91,7 +91,7 @@ export default function OverlaysRoute(_props: {}, scope: Scope) {
 					<Button variant="secondary" onClick={() => drawer({
 						title: 'Details',
 						side: 'right',
-						body: () => (
+						children: (
 							<Stack gap="md" style="padding: 1rem;">
 								<Text>Right-side drawer content.</Text>
 								<Text muted size="sm">Slides in from the right edge.</Text>

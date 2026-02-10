@@ -93,8 +93,27 @@ Framework-agnostic UI component library for Pounce applications. Evolved from `@
 - `./analysis/` — Internal architectural docs (variants, adapter factoring, orthogonal concerns, etc.)
 - `./analysis/WALKTHROUGH.md` — Master task list and migration status
 
+## InfiniteScroll Variable-Height Architecture
+- **Fixed mode** (`itemHeight: number`): fast path — `floor(scrollTop/h)` for start, `ceil(viewportH/h)` for count. Items get `contain: strict`.
+- **Variable mode** (`itemHeight: (item, i) => number`): prefix-sum offset array (`Float64Array`) + binary search for visible range. `estimatedItemHeight` (default 40) used for unmeasured items.
+- **Offset table**: `heightCache[i]` stores per-item height, `offsets[i]` stores cumulative offset. `rebuildOffsets(from, count)` is O(n-i) partial recalc.
+- **ResizeObserver**: each variable-mode item gets observed via `data-vindex` attribute. Measurements batched via `requestAnimationFrame`.
+- **Scroll anchoring**: when items above viewport change height, `scrollTop` is adjusted by the delta to prevent content jumps.
+- **Rendering**: `{() => computeVisibleIndices().map(renderItem)}` pattern. `project()` is **incompatible** with pounce's render pipeline for components with effects (creates nested batch/effect conflicts). Items don't render in jsdom unit tests — this is a pre-existing limitation of the `{() => ...}` pattern (babel double-wraps it).
+- **Memory**: `Float64Array` with doubling growth via `ensureCapacity()` — efficient for 100k+ items.
+
+## Directives
+| Directive | File | Value Type | Notes |
+|-----------|------|------------|-------|
+| `use:loading` | `directives/loading.ts` | `boolean` | Sets `aria-busy="true"`, adapter class, `disabled` on form elements. Pico gets free spinner via `[aria-busy]`. |
+| `use:badge` | `directives/badge.ts` | `BadgeInput` | Floating badge overlay on any element |
+| `use:scroll` | `directives/scroll.ts` | `ScrollOptions` | Two-way scroll position binding |
+| `use:resize` | `directives/resize.ts` | `object\|fn` | Two-way size binding via ResizeObserver |
+| `use:intersect` | `directives/intersect.ts` | `IntersectOptions` | IntersectionObserver wrapper |
+| `use:pointer` | `directives/pointer.ts` | `PointerState` | Pointer position tracking |
+
 ## Upcoming
-- **Form validation & loading** — `loading` prop (Button), `valid` prop (form controls), `aria-busy`/`aria-invalid`. Big TODO, needs design pass.
+- **Form validation** — `valid` prop (form controls), `aria-invalid`. Needs design pass.
 
 ## Known Issues
 - ~~`this=` ref pattern~~ — ✅ Confirmed working by Corrie. Real build blocker was stale `variantClass` import in `badge.ts` — fixed.

@@ -70,3 +70,72 @@ test.describe('2-Way Binding', () => {
 		await expect(input1).toHaveValue('initial')
 	})
 })
+
+test.describe('Textarea 2-Way Binding', () => {
+	test.beforeEach(async ({ page }) => {
+		await page.goto('/#Binding')
+		await page.waitForSelector('#tests [data-testid="textarea1"]')
+	})
+
+	test('textarea has initial value', async ({ page }) => {
+		const textarea = page.locator('[data-testid="textarea1"]')
+		const display = page.locator('[data-testid="textarea-display"]')
+		await expect(textarea).toHaveValue('initial textarea')
+		await expect(display).toContainText('initial textarea')
+	})
+
+	test('typing in textarea updates reactive state', async ({ page }) => {
+		const textarea = page.locator('[data-testid="textarea1"]')
+		const display = page.locator('[data-testid="textarea-display"]')
+
+		await textarea.click()
+		await textarea.fill('new textarea content')
+
+		await expect(display).toContainText('new textarea content')
+		const stateValue = await page.evaluate(() => window.__bindingFixture?.getTextareaValue())
+		expect(stateValue).toBe('new textarea content')
+	})
+
+	test('programmatic update reflects in textarea', async ({ page }) => {
+		const textarea = page.locator('[data-testid="textarea1"]')
+
+		await page.evaluate(() => {
+			window.__bindingFixture?.reset()
+		})
+		await expect(textarea).toHaveValue('initial textarea')
+	})
+})
+
+test.describe('Select 2-Way Binding', () => {
+	test.beforeEach(async ({ page }) => {
+		await page.goto('/#Binding')
+		await page.waitForSelector('#tests [data-testid="select1"]')
+	})
+
+	test('select has initial value', async ({ page }) => {
+		const select = page.locator('[data-testid="select1"]')
+		const display = page.locator('[data-testid="select-display"]')
+		await expect(select).toHaveValue('b')
+		await expect(display).toContainText('b')
+	})
+
+	test('changing select updates reactive state', async ({ page }) => {
+		const select = page.locator('[data-testid="select1"]')
+		const display = page.locator('[data-testid="select-display"]')
+
+		await select.selectOption('c')
+
+		await expect(display).toContainText('c')
+		const stateValue = await page.evaluate(() => window.__bindingFixture?.getSelectValue())
+		expect(stateValue).toBe('c')
+	})
+
+	test('programmatic update reflects in select', async ({ page }) => {
+		const select = page.locator('[data-testid="select1"]')
+
+		await page.evaluate(() => {
+			window.__bindingFixture?.reset()
+		})
+		await expect(select).toHaveValue('b')
+	})
+})

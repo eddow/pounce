@@ -9,6 +9,17 @@ import type { AsyncLocalStorage } from 'node:async_hooks'
 // We'll import InterceptorMiddleware from client.ts, but only as type.
 import type { InterceptorMiddleware } from './base-client.js'
 
+// Typed global slots — eliminates `as any` on globalThis
+const STORAGE_KEY = Symbol.for('__POUNCE_STORAGE__')
+const CONTEXT_KEY = Symbol.for('__POUNCE_CONTEXT__')
+
+type PounceGlobals = {
+	[STORAGE_KEY]?: AsyncLocalStorage<RequestScope>
+	[CONTEXT_KEY]?: RequestScope | null
+}
+
+const globals = globalThis as unknown as PounceGlobals
+
 export interface InterceptorEntry {
 	pattern: string | RegExp
 	handler: InterceptorMiddleware
@@ -37,29 +48,20 @@ export interface RequestScope {
 	routeRegistry?: any
 }
 
-// Storage for strict thread-safety in Node.js (AsyncLocalStorage)
-const STORAGE_KEY = Symbol.for('__POUNCE_STORAGE__')
-
 /** @internal */
 export function getStorage(): AsyncLocalStorage<RequestScope> | null {
-	const g = globalThis as any
-	return g[STORAGE_KEY] || null
+	return globals[STORAGE_KEY] || null
 }
 
 export function setStorage(storage: AsyncLocalStorage<RequestScope>) {
-	const g = globalThis as any
-	g[STORAGE_KEY] = storage
+	globals[STORAGE_KEY] = storage
 }
 
 async function ensureStorage(): Promise<AsyncLocalStorage<RequestScope>> {
-	const g = globalThis as any
-	if (g[STORAGE_KEY]) {
-		return g[STORAGE_KEY]
-	}
-
+	if (globals[STORAGE_KEY]) return globals[STORAGE_KEY]
 	const { AsyncLocalStorage } = await import('node:async_hooks')
 	const s = new AsyncLocalStorage<RequestScope>()
-	g[STORAGE_KEY] = s
+	globals[STORAGE_KEY] = s
 	return s
 }
 
@@ -73,11 +75,11 @@ export function getContext(): RequestScope | null {
 		if (store) return store
 	}
 	// Fallback for browser/single-threaded environments or shared SSR state
-	return (globalThis as any).__POUNCE_CONTEXT__ || null
+	return globals[CONTEXT_KEY] || null
 }
 
 function setGlobalCtx(ctx: RequestScope | null) {
-	;(globalThis as any).__POUNCE_CONTEXT__ = ctx
+	globals[CONTEXT_KEY] = ctx
 }
 
 /**

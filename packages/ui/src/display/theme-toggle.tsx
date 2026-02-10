@@ -173,7 +173,7 @@ export function ThemeToggle(props: ThemeToggleProps, scope: Scope) {
 				type="button"
 			>
 				{currentIcon()}
-				{isAuto() ? <span class="pounce-theme-toggle-auto-badge">A</span> : null}
+				{!props.simple && isAuto() ? <span class="pounce-theme-toggle-auto-badge">A</span> : null}
 			</button>
 			<button
 				if={!props.simple}

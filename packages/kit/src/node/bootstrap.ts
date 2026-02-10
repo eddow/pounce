@@ -42,7 +42,7 @@ export function createClientInstance(url?: string | URL): Client {
 			throw new Error('client.reload() is not available in SSR context')
 		},
 		dispose: () => {},
-		prefersDark: () => false,
+		prefersDark: false,
 	}) as Client
 }
 

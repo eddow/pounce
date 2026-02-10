@@ -23,7 +23,7 @@ The shared `index.ts` re-exports only `api` types and `router` logic (no DOM/Nod
 
 ### Client Singleton
 
-- **`client`** — reactive object (`Client` interface) with URL, viewport, focus, visibility, language, timezone, direction, online status
+- **`client`** — reactive object (`Client` interface) with URL, viewport, focus, visibility, language, timezone, direction, online status, `prefersDark` (reactive, tracks `prefers-color-scheme` media query)
 - **DOM**: `dom/client.ts` binds real browser state via event listeners + `MutationObserver`
 - **Node**: `node/client.ts` creates an `AsyncLocalStorage`-backed proxy; each SSR request gets an isolated `createClientInstance()`
 - **Shared**: `client/shared.ts` holds the singleton slot; `setClient()` binds the implementation
@@ -31,8 +31,8 @@ The shared `index.ts` re-exports only `api` types and `router` logic (no DOM/Nod
 ### Router
 
 Two layers:
-1. **`router/logic.ts`** — Pure route parsing/matching/building. Syntax: `/users/[id:uuid]/posts?page=[page:integer?]`. Supports `[param]`, `[param:format]`, `[...catchAll]`, optional query params.
-2. **`router/components.tsx`** — `<Router>` component (reactive, effect-based) and `<A>` link component (client-side navigation with `aria-current`).
+1. **`router/logic.ts`** — Pure route parsing/matching/building. Syntax: `/users/[id:uuid]/posts?page=[page:integer?]`. Supports `[param]`, `[param:format]`, `[...catchAll]`, optional query params. Custom formats via `registerFormat(name, validator)`.
+2. **`router/components.tsx`** — `<Router>` component (reactive via `lift()` + `PounceElement`) and `<A>` link component (client-side navigation with `aria-current`).
 
 `defineRoute()` in `router/defs.ts` creates typed route definitions with `buildUrl()` and optional `querySchema` (arktype).
 
@@ -133,13 +133,15 @@ src/
 - **Build**: `source ~/.nvm/nvm.sh && nvm use 22 && pnpm run build`
 - **Test**: `source ~/.nvm/nvm.sh && nvm use 22 && pnpm run test`
 - **Build chain**: plugin → core → kit (plugin exports from `dist/`, must be rebuilt first)
-- **Tests**: 86 tests across 5 spec files (api/inference, router, intl, css, storage)
+- **Unit tests**: 100 tests across 6 spec files (api/inference, router ×2, intl, css, storage)
+- **E2E tests**: 8 Playwright tests (SPA nav, params, back/forward, direct URL, 404, aria-current)
+- **E2E run**: `source ~/.nvm/nvm.sh && nvm use 22 && pnpm run test:e2e`
 - **DTS**: Zero errors. `vite-plugin-dts` generates declarations.
 
 ## Dependencies
 
 - **mutts** — reactivity (`reactive`, `effect`, `cleanedBy`, `flavored`)
-- **@pounce/core** — JSX (`h`, `Fragment`, `compose`, `copyObject`), `implementationDependent`, SSR (`withSSR`)
+- **@pounce/core** — JSX (`h`, `Fragment`, `compose`, `PounceElement`), `implementationDependent`, SSR (`withSSR`)
 - **arktype** — route query schema validation
 
 ## ⚠️ Gotchas
@@ -153,6 +155,4 @@ src/
 
 ## Known Issues
 
-- `router/components.tsx` has unused `h`/`Fragment` imports (auto-injected by JSX transform on `.tsx` files)
-- `node/router.ts` TODO: "This file has nothing to do here" — file-based routing may move to `@pounce/board`
-- `base-client.ts` has some `any` types in the proxy/factory pattern — needs tightening
+- `router/components.tsx` has unused `h`/`Fragment` imports (auto-injected by babel on `.tsx` files — harmless, tree-shaken in build)

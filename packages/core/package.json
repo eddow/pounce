@@ -1,8 +1,8 @@
 {
   "name": "@pounce/core",
   "version": "1.0.0",
-  "description": "",
-  "types": "src/index.d.ts",
+  "description": "Fine-grained reactive UI framework with direct DOM manipulation",
+  "types": "dist/packages/core/src/index.d.ts",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -12,39 +12,40 @@
     "test:unit": "vitest run",
     "test:e2e": "playwright test --forbid-only",
     "test:ui": "playwright test --ui",
-    "biome": "biome check --write src"
+    "biome": "biome check --write src",
+    "prepack": "rm -rf dist/src/demo dist/src/entry.d.ts && find dist -name '*.spec.d.ts' -delete"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["pounce", "reactive", "jsx", "ui", "framework", "fine-grained"],
+  "author": "fmdm",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/eddow/@pounce/core.git"
+    "url": "git+https://github.com/eddow/pounce.git"
   },
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/packages/core/src/index.d.ts",
       "node": "./dist/node.js",
       "default": "./dist/dom.js"
     },
     "./node": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/packages/core/src/index.d.ts",
       "import": "./dist/node.js",
       "default": "./dist/node.js"
     },
     "./dom": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/packages/core/src/index.d.ts",
       "import": "./dist/dom.js",
       "default": "./dist/dom.js"
     },
     "./jsx-runtime": {
-      "types": "./dist/runtime/jsx-runtime.d.ts",
+      "types": "./dist/packages/core/src/runtime/jsx-runtime.d.ts",
       "import": "./dist/jsx-runtime.js",
       "default": "./dist/jsx-runtime.js"
     },
     "./jsx-dev-runtime": {
-      "types": "./dist/runtime/jsx-dev-runtime.d.ts",
+      "types": "./dist/packages/core/src/runtime/jsx-dev-runtime.d.ts",
       "import": "./dist/jsx-dev-runtime.js",
       "default": "./dist/jsx-dev-runtime.js"
     },
@@ -69,10 +70,32 @@
     "vite-plugin-dts": "^4.5.3",
     "vitest": "^4.0.18"
   },
-  "dependencies": {
-    "dockview-core": "^4.13.1",
-    "jsdom": "^27.4.0",
-    "mutts": "link:../../../mutts"
+  "peerDependencies": {
+    "jsdom": "^27.0.0"
   },
+  "peerDependenciesMeta": {
+    "jsdom": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "mutts": "^1.0.9"
+  },
+  "files": [
+    "dist",
+    "src/lib/*.ts",
+    "src/lib/*.md",
+    "!src/lib/*.spec.ts",
+    "src/dom",
+    "src/node",
+    "src/runtime",
+    "src/types",
+    "src/shared.ts",
+    "src/index.ts",
+    "src/index.d.ts",
+    "docs",
+    "README.md",
+    "LLM.md"
+  ],
   "packageManager": "pnpm@10.28.2"
 }

@@ -1,6 +1,6 @@
 {
   "name": "@pounce/plugin",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Centralized plugin hub for Pounce build-time transformations",
   "type": "module",
   "exports": {
@@ -44,8 +44,12 @@
     "jsx",
     "typescript"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "fmdm",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eddow/pounce.git"
+  },
   "devDependencies": {
     "@types/babel__core": "^7.20.5",
     "@types/node": "^24.10.1",

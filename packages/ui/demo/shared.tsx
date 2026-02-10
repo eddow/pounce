@@ -1,7 +1,7 @@
 import type { Scope } from '@pounce/core'
 import { A, Router, type RouteWildcard } from '@pounce/kit/dom'
 import { AppShell, Container, DisplayProvider, ErrorBoundary, Heading, Inline, Link, StandardOverlays, Text, ThemeToggle, Toolbar } from '../src'
-import { badge, intersect, pointer, resize, scroll } from '../src/directives'
+import { badge, intersect, loading, pointer, resize, scroll } from '../src/directives'
 import DisplayRoute from './routes/display'
 import FormsRoute from './routes/forms'
 import OverlaysRoute from './routes/overlays'
@@ -29,6 +29,13 @@ export type DemoAppOptions = {
 }
 
 export function DemoApp(options: DemoAppOptions) {
+	const savedTheme = (() => {
+		try { const v = localStorage.getItem('theme'); return v ? JSON.parse(v) : 'auto' }
+		catch { return 'auto' }
+	})()
+	const persistTheme = (t: string) => {
+		try { localStorage.setItem('theme', JSON.stringify(t)) } catch { /* noop */ }
+	}
 	const sections: DemoSection[] = [
 		...baseRoutes,
 		...(options.extraRoutes ?? []),
@@ -59,8 +66,9 @@ export function DemoApp(options: DemoAppOptions) {
 		scope.intersect = intersect
 		scope.pointer = pointer
 		scope.badge = badge
+		scope.loading = loading
 		return (
-			<DisplayProvider>
+			<DisplayProvider theme={savedTheme} onThemeChange={persistTheme}>
 				<StandardOverlays>
 					<AppShell
 						header={

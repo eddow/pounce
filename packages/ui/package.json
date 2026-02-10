@@ -27,7 +27,13 @@
 		"test:e2e": "playwright test",
 		"biome": "biome check --write src"
 	},
+	"keywords": ["pounce", "ui", "components", "reactive"],
+	"author": "fmdm",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/eddow/pounce.git"
+	},
 	"devDependencies": {
 		"@axe-core/playwright": "^4.10.0",
 		"@biomejs/biome": "^2.2.7",
@@ -42,10 +48,17 @@
 		"vite-plugin-dts": "^4.5.3",
 		"vitest": "^4.0.18"
 	},
+	"peerDependencies": {
+		"dockview-core": "^4.13.1"
+	},
+	"peerDependenciesMeta": {
+		"dockview-core": {
+			"optional": true
+		}
+	},
 	"dependencies": {
 		"@pounce/core": "workspace:*",
 		"@pounce/kit": "workspace:*",
-		"dockview-core": "^4.13.1",
 		"mutts": "link:../../../mutts"
 	},
 	"packageManager": "pnpm@10.28.2"

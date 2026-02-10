@@ -42,7 +42,7 @@ const state = reactive<MutableClient>({
 	replace: implementationDependent('Client.replace'),
 	reload: implementationDependent('Client.reload'),
 	dispose: () => {}, // Dispose is safe to be no-op by default
-	prefersDark: () => false,
+	prefersDark: false,
 })
 
 export const client = state as Client

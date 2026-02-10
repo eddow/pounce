@@ -3,6 +3,7 @@ import { Button } from '../components/button'
 import { Icon } from '../components/icon'
 import { type OverlaySpec } from './manager'
 import { getVariantTrait } from '../shared/variants'
+import { getAdapter } from '../adapter/registry'
 
 declare module './manager' {
 	interface OverlayHelpers {
@@ -100,9 +101,11 @@ export const Dialog = {
 				labelledby: opts.title ? titleId : undefined,
 				describedby: opts.message ? descId : undefined
 			},
-			render: (close) => (
+			render: (close) => {
+				const adapter = getAdapter('Dialog')
+				return (
 				<div 
-					class={['pounce-dialog', opts.size ? `pounce-size-${opts.size}` : '']}
+					class={[adapter.classes?.base || 'pounce-dialog', opts.size ? `pounce-size-${opts.size}` : '']}
 					traits={getVariantTrait(opts.variant)}
 				>
 					<header if={opts.title}>
@@ -144,7 +147,7 @@ export const Dialog = {
 						<Button.primary onClick={() => close('ok')}>OK</Button.primary>
 					</footer>
 				</div>
-			)
+			)}
 		}
 	}
 }

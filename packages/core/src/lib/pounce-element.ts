@@ -1,5 +1,6 @@
 import { cleanedBy, effect, named, reactive, type ScopedCallback, untracked } from 'mutts'
-import { type ComponentInfo, POUNCE_OWNER } from './debug'
+import { perf } from '../perf'
+import { type ComponentInfo, perfCounters, POUNCE_OWNER } from './debug'
 import { ReactiveProp } from './jsx-factory'
 
 export const rootScope: Scope = reactive(Object.create(null))
@@ -79,13 +80,19 @@ export class PounceElement {
 	 * Render the element - executes the produce function with caching
 	 */
 	render(scope: Scope = rootScope): Node | readonly Node[] {
+		const tagName = typeof this.tag === 'string' ? this.tag : this.tag?.name || 'anonymous'
 		// Check cache first
 		let partial = PounceElement.renderCache.get(this)
-		if (partial !== undefined) return partial
+		if (partial !== undefined) {
+			perfCounters.renderCacheHits++
+			perf?.mark(`render:${tagName}:cache-hit`)
+			return partial
+		}
 		if (!partial) {
+			perf?.mark(`render:${tagName}:start`)
 			// Execute produce function untracked to prevent unwanted reactivity
 			effect(named(
-				typeof this.tag === 'string' ? this.tag : this.tag?.name || 'anonymous',
+				tagName,
 				({ reaction }) => {
 					if (reaction) {
 						console.warn(`Component rebuild detected.
@@ -97,11 +104,9 @@ It means the component definition refers a reactive value that has been modified
 
 			if (!partial) throw new DynamicRenderingError('Renderer returned no content')
 			PounceElement.renderCache.set(this, partial)
+			perf?.mark(`render:${tagName}:end`)
+			perf?.measure(`render:${tagName}`, `render:${tagName}:start`, `render:${tagName}:end`)
 		}
-
-		const tagName = untracked(
-			() => (typeof this.tag === 'string' ? this.tag : this.tag?.name) || 'anonymous'
-		)
 
 		// getTarget matches types for single nodes vs fragments
 		const getTarget = () => (Array.isArray(partial) && partial.length === 1 ? partial[0] : partial!)

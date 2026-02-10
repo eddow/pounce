@@ -8,6 +8,7 @@ export { picoComponents } from './components'
 export { picoTransitions } from './transitions'
 export { tooltip } from './directives/index'
 export type { TooltipInput, TooltipOptions, TooltipPlacement } from './directives/index'
+export { createGlyfIconFactory } from './icons'
 
 /**
  * PicoCSS framework adapter for @pounce/ui.

@@ -37,7 +37,6 @@ export const setPlatformAPIs = (
 	}
 ) => {
 	entryPoint = name
-	console.log('Setting platform APIs for', name)
 	if (apis.window !== undefined) window = apis.window
 	if (apis.document !== undefined) document = apis.document
 	if (apis.Node !== undefined) Node = apis.Node

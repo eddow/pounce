@@ -22,10 +22,12 @@ const serverExecutor: RequestExecutor = async (req: Request, timeout: number) =>
 }
 
 const REGISTRY_SYMBOL = Symbol.for('__POUNCE_ROUTE_REGISTRY__')
+type NodeApiGlobals = { [REGISTRY_SYMBOL]?: import('../api/base-client.js').RouteRegistry | null }
+const globals = globalThis as unknown as NodeApiGlobals
 
 async function dispatchToHandler(request: Request): Promise<Response> {
 	const ctx = getContext()
-	const processRegistry = (globalThis as any)[REGISTRY_SYMBOL]
+	const processRegistry = globals[REGISTRY_SYMBOL]
 	const activeRegistry = ctx?.routeRegistry || processRegistry
 
 	if (!activeRegistry) {

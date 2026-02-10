@@ -14,10 +14,23 @@
 
 export type RouteWildcard = string
 
-/** Supported parameter format types. */
-export type RouteParamFormat = 'string' | 'number' | 'integer' | 'float' | 'uuid' | RegExp
+/** Supported parameter format types. Built-in or custom-registered name, or inline RegExp. */
+export type RouteParamFormat = 'string' | 'number' | 'integer' | 'float' | 'uuid' | (string & {}) | RegExp
 
-// TODO: Add support for custom format types via registry
+/** Validator for a custom format: receives the raw string value, returns true if valid. */
+export type FormatValidator = (value: string) => boolean
+
+const customFormats = new Map<string, FormatValidator>()
+
+/** Register a custom route parameter format. */
+export function registerFormat(name: string, validator: FormatValidator): void {
+	customFormats.set(name.toLowerCase(), validator)
+}
+
+/** Remove all custom formats (useful for tests). */
+export function clearFormats(): void {
+	customFormats.clear()
+}
 
 export type RouteParams = Record<string, string>
 
@@ -63,10 +76,7 @@ interface ParsedParamToken {
 }
 
 function normalizeFormat(format?: string): RouteParamFormat {
-	if (!format) {
-		return 'string'
-	}
-
+	if (!format) return 'string'
 	const lowered = format.toLowerCase()
 	switch (lowered) {
 		case 'string':
@@ -81,6 +91,7 @@ function normalizeFormat(format?: string): RouteParamFormat {
 		case 'uuid':
 			return 'uuid'
 		default:
+			if (customFormats.has(lowered)) return lowered
 			throw new Error(`Unsupported route parameter format: ${format}`)
 	}
 }
@@ -219,10 +230,7 @@ function safeDecode(segment: string): string {
 }
 
 function matchesFormat(value: string, format: RouteParamFormat): boolean {
-	if (format instanceof RegExp) {
-		return format.test(value)
-	}
-
+	if (format instanceof RegExp) return format.test(value)
 	switch (format) {
 		case 'string':
 			return value.length > 0
@@ -233,8 +241,10 @@ function matchesFormat(value: string, format: RouteParamFormat): boolean {
 			return value.trim().length > 0 && Number.isFinite(Number(value))
 		case 'uuid':
 			return UUID_REGEX.test(value)
-		default:
-			return false
+		default: {
+			const validator = customFormats.get(format)
+			return validator ? validator(value) : false
+		}
 	}
 }
 

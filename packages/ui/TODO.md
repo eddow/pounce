@@ -246,27 +246,48 @@ pico-tee identified 9 native Pico features we're not leveraging. Each is categor
 
 ### UI engine — Form Validation & Loading States
 
-> **TODO**: This is a significant topic that deserves its own design pass. See dedicated section below.
+- **`use:loading` directive** — ✅ Implemented as a generic directive (not Button-only). Works on any element via `aria-busy` + adapter class + `disabled` on form elements. Pounce gets free spinner.
+- **`valid` prop** — TODO: form controls, `aria-invalid`. Needs design pass.
+- **Error messages** — TODO: where/how to render validation messages.
 
-Covers: `loading` prop (Button + interactive components), `valid` prop (form controls), error messages, `aria-busy`, `aria-invalid`, adapter styling hooks. Triggered by Pico's native support for these ARIA attributes.
+### Performance Instrumentation
+
+- **Core components instrumented** — ✅ InfiniteScroll (virtualization), Overlays (lifecycle), Button (click handling)
+- **Performance test suite** — ✅ `tests/performance/ui-perf.spec.tsx` with baseline benchmarks
+- **Performance documentation** — ✅ `PERFORMANCE.md` with expected metrics and guidelines
+
+**Markers available**:
+- `infinitescroll:*` — compute, height, render, flush operations
+- `overlay:*` — show, render, close, lifecycle per mode (modal/toast/drawer)
+- `button:click` — click handler execution time
+
+**Expected performance**:
+- InfiniteScroll compute: < 0.5ms for 10k items
+- Overlay show: < 10ms (Dialog/Drawer), < 5ms (Toast)
+- Button click: < 1ms tracking overhead
 
 ## Form Validation & Loading States
 
-> **STATUS: TODO — needs design pass before implementation**
+### ✅ Loading — Done
 
-This is a cross-cutting concern that touches Button, all form controls, and potentially any interactive component. Pico styles `aria-busy` (spinner) and `aria-invalid` (red/green borders) natively, but the UI engine should support these universally.
+`use:loading` directive in `src/directives/loading.ts`. Generic, works on any element.
+- Sets `aria-busy="true"` — Pico renders native spinner
+- Adds adapter's `loading` class (or `pounce-loading` fallback: `pointer-events: none; opacity: 0.6`)
+- Sets `disabled` on form elements (button, input, select, textarea, fieldset)
+- Adapter key: `Loading` (`BaseAdaptation`) — Pico needs zero bridge CSS
+- 12 tests in `loading.spec.ts`
 
-### Scope
+### TODO — Validation
 
-1. **`loading` on Button** — `aria-busy="true"` + disabled. Adapter provides spinner styling.
-2. **`valid` on form controls** — `aria-invalid="true|false"`. Adapter provides border colours.
-3. **Error message display** — where/how to render validation messages (inline, below field, toast?)
-4. **Form-level validation** — coordinating field-level `valid` with form submission
-5. **Adapter hooks** — what adapters need to provide (spinner CSS, valid/invalid colours, error message styling)
+> **STATUS: needs design pass**
+
+1. **`valid` on form controls** — `aria-invalid="true|false"`. Adapter provides border colours.
+2. **Error message display** — where/how to render validation messages (inline, below field, toast?)
+3. **Form-level validation** — coordinating field-level `valid` with form submission
+4. **Adapter hooks** — what adapters need to provide (valid/invalid colours, error message styling)
 
 ### Open Questions
 
-- Should `loading` also suppress `onClick` or just set `disabled`?
 - Should `valid` accept `'error' | 'warning' | 'success'` instead of boolean? (richer than just valid/invalid)
 - How does this interact with `variant`? (e.g. a `danger` button that's also `loading`)
 - Should there be a `<FormField>` wrapper that handles label + input + error message layout?

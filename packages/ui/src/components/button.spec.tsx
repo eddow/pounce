@@ -2,12 +2,14 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { bindApp, document } from '@pounce/core'
 import { Button } from '../../src/components/button'
 import { setAdapter, resetAdapter } from '../../src/adapter/registry'
+import { vanillaAdapter } from '../../src/adapter/vanilla'
 
 describe('Button', () => {
 	let container: HTMLElement
 	let unmount: (() => void) | undefined
 
 	beforeEach(() => {
+		setAdapter(vanillaAdapter)
 		container = document.createElement('div')
 		document.body.appendChild(container)
 	})
@@ -71,12 +73,13 @@ describe('Button', () => {
 	// Adapter Tests (inspired by Pico's framework integration)
 	it('respects adapter overrides for base and variant classes', () => {
 		setAdapter({
+			variants: {
+				primary: { classes: ['btn-primary'], attributes: { 'data-variant': 'primary' } },
+			},
 			components: {
 				Button: {
 					classes: {
 						base: 'custom-btn',
-						primary: 'btn-primary',
-						danger: 'btn-danger',
 						iconOnly: 'btn-icon-only'
 					}
 				}
@@ -89,7 +92,7 @@ describe('Button', () => {
 		expect(button).toBeTruthy()
 		expect(button?.classList.contains('pounce-button')).toBe(false)
 
-		// Test variant class override
+		// Test variant class override (variants come from adapter.variants, not component classes)
 		container.innerHTML = ''
 		render(<Button.primary>Primary</Button.primary>)
 		const primaryButton = container.querySelector('.custom-btn')

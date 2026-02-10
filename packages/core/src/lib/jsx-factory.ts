@@ -12,9 +12,11 @@ import {
 	project,
 	reactive,
 	unreactive,
+	untracked,
 } from 'mutts'
+import { perf } from '../perf'
 import { crypto, document } from '../shared'
-import { type ComponentInfo, nf, POUNCE_OWNER, rootComponents, testing } from './debug'
+import { type ComponentInfo, nf, perfCounters, POUNCE_OWNER, rootComponents, testing } from './debug'
 import { restructureProps } from './namespaced'
 import {
 	type Child,
@@ -135,6 +137,8 @@ export const h = (
 
 		mountObject = new PounceElement(
 			function componentRender(scope: Scope = rootScope) {
+				perfCounters.componentRenders++
+				perf?.mark(`component:${componentCtor.name}:start`)
 				const parent = scope.component
 				const isRegistered = parent ? parent.children.has(info) : rootComponents.has(info)
 				if (info.parent !== parent || !isRegistered) {
@@ -153,10 +157,17 @@ export const h = (
 				const givenProps = reactive(propsInto(props ?? {}, { children }))
 				const result = componentCtor(restructureProps(givenProps), childScope)
 				const processed = processChildren([result], childScope)
+				untracked(() => {
+					for (const node of processed)
+						if (node.nodeType === 1)
+							(node as Element).setAttribute('data-pounce-component', info.name)
+				})
 				cleanedBy(processed, () => {
 					if (info.parent) info.parent.children.delete(info)
 					else rootComponents.delete(info)
 				})
+				perf?.mark(`component:${componentCtor.name}:end`)
+				perf?.measure(`component:${componentCtor.name}`, `component:${componentCtor.name}:start`, `component:${componentCtor.name}:end`)
 				return processed
 			},
 			{ tag }
@@ -205,7 +216,10 @@ export const h = (
 		if (traitStyles.length > 0 || origStyle) {
 			const getBaseStyle = origStyle?.get ?? (() => undefined)
 			Object.defineProperty(composed, 'style', {
-				get: () => [...traitStyles, ...asArray(getBaseStyle())],
+				get: () => {
+					const base = getBaseStyle()
+					return [...traitStyles, ...(Array.isArray(base) ? base : base ? [base] : [])]
+				},
 				enumerable: true,
 				configurable: true,
 			})
@@ -279,6 +293,15 @@ export const h = (
 										listen(element, 'input', () => provide(input.value))
 									break
 							}
+						} else if (tag === 'textarea') {
+							if (key === 'value')
+								listen(element, 'input', () => provide((element as HTMLTextAreaElement).value))
+						} else if (tag === 'select') {
+							if (key === 'value') {
+								listen(element, 'change', () => provide((element as HTMLSelectElement).value))
+								// Re-apply value after children (<option>) are mounted
+								queueMicrotask(() => setHtmlProperty(element, 'value', binding.get()))
+							}
 						}
 						// No cleanup needed — cleanedBy disposes the reactive scope,
 						// and DOM listeners die with the element
@@ -295,6 +318,8 @@ export const h = (
 
 		mountObject = new PounceElement(
 			function elementRender(scope: Scope = rootScope) {
+				perfCounters.elementRenders++
+				perf?.mark(`element:${tag}:start`)
 				const componentToUse = (scope || rootScope).component
 				if (lastComponent !== componentToUse) {
 					if (lastComponent) lastComponent.elements.delete(element)
@@ -302,16 +327,16 @@ export const h = (
 					if (componentToUse) {
 						;(element as ComponentNode)[POUNCE_OWNER] = componentToUse
 						componentToUse.elements.add(element)
-						element.setAttribute('data-pounce-component', componentToUse.name)
 					} else {
 						delete (element as ComponentNode)[POUNCE_OWNER]
-						element.removeAttribute('data-pounce-component')
 					}
 				}
 				if (children && children.length > 0) {
 					const processedChildren = processChildren(children, scope || rootScope)
 					cleanedBy(element, bindChildren(element, processedChildren))
 				}
+				perf?.mark(`element:${tag}:end`)
+				perf?.measure(`element:${tag}`, `element:${tag}:start`, `element:${tag}:end`)
 				return element
 			},
 			{ tag }
@@ -338,21 +363,32 @@ export const intrinsicComponentAliases: Record<string, Function> = extend(null, 
 		if (body instanceof ReactiveProp) body = body.get()
 		const cb = body as (item: T, oldItem?: Child) => Child
 		const memoized = memoize(cb as (item: T & object) => any)
+		let forCount = 0
 		const compute = () => {
+			perfCounters.forIterations++
+			const fid = ++forCount
+			perf?.mark(`for:${fid}:start`)
 			const each = (props as any).each as readonly T[] | undefined
-			if (!each) return [] as any[]
-			return isNonReactive(each)
+			if (!each) { perf?.mark(`for:${fid}:end`); perf?.measure(`for:${fid}(0)`, `for:${fid}:start`, `for:${fid}:end`); return [] as any[] }
+			const result = isNonReactive(each)
 				? (each.map((item: T) => cb(item)) as any[])
 				: (project(each, ({ value: item, old }) => {
 						return isObject(item) || isSymbol(item) || isFunction(item)
 							? memoized(item as T & object)
 							: cb(item, old as any | undefined)
 					}) as any[])
+			perf?.mark(`for:${fid}:end`)
+			perf?.measure(`for:${fid}(${each.length})`, `for:${fid}:start`, `for:${fid}:end`)
+			return result
 		}
 		return new PounceElement(() => processChildren([r(compute) as Child], scope), { tag: 'dynamic' })
 	},
 	dynamic(props: { tag: any; children?: any } & Record<string, any>, scope: Scope) {
+		let dynCount = 0
 		function compute(): any[] {
+			perfCounters.dynamicSwitches++
+			const did = ++dynCount
+			perf?.mark(`dynamic:${did}:start`)
 			onEffectTrigger((obj, _evolution, prop) => {
 				if (obj === props && prop !== 'tag') {
 					throw new Error(
@@ -402,7 +438,10 @@ export const intrinsicComponentAliases: Record<string, Function> = extend(null, 
 			})
 
 			const output = h(tagValue, filteredProps, ...childArray).render(scope)
-			return Array.isArray(output) ? output : [output]
+			const result = Array.isArray(output) ? output : [output]
+			perf?.mark(`dynamic:${did}:end`)
+			perf?.measure(`dynamic:${did}`, `dynamic:${did}:start`, `dynamic:${did}:end`)
+			return result
 		}
 
 		return lift(compute)

@@ -1,7 +1,15 @@
 {
 	"name": "@pounce/kit",
-	"version": "0.0.1",
+	"version": "1.0.0",
+	"description": "Routing, i18n, and application utilities for Pounce",
 	"type": "module",
+	"keywords": ["pounce", "router", "i18n", "kit"],
+	"author": "fmdm",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/eddow/pounce.git"
+	},
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
@@ -22,13 +30,29 @@
 			"types": "./dist/intl.d.ts",
 			"import": "./dist/intl.js",
 			"default": "./dist/intl.js"
-		}
+		},
+		"./src": {
+			"types": "./src/index.ts",
+			"node": "./src/node/index.ts",
+			"default": "./src/dom/index.ts"
+		},
+		"./src/*": "./src/*"
 	},
+	"files": [
+		"dist",
+		"src",
+		"!src/**/*.spec.*",
+		"docs",
+		"README.md",
+		"LLM.md"
+	],
 	"scripts": {
 		"build": "vite build",
 		"test": "vitest run",
 		"test:e2e": "playwright test",
-		"biome": "biome check --write src"
+		"biome": "biome check --write src",
+		"prepack": "find dist -name '*.spec.d.ts' -delete 2>/dev/null; true",
+		"perf": "VITE_PERF=true VITE_PERF_LOG=true pnpm run test:e2e"
 	},
 	"dependencies": {
 		"@pounce/core": "workspace:*",

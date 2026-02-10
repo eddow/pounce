@@ -135,8 +135,9 @@ describe('Menu.Bar', () => {
 
 	it('renders trailing content', () => {
 		render(<Menu.Bar items={[]} trailing={<button>Login</button>} />)
-		const button = container.querySelector('button')
-		expect(button?.textContent).toBe('Login')
+		const buttons = container.querySelectorAll('button')
+		const login = Array.from(buttons).find(b => b.textContent === 'Login')
+		expect(login).toBeTruthy()
 	})
 
 	it('respects adapter overrides for bar classes', () => {

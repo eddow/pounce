@@ -53,8 +53,12 @@
 		"middleware",
 		"full-stack"
 	],
-	"author": "",
+	"author": "fmdm",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/eddow/pounce.git"
+	},
 	"peerDependenciesMeta": {
 		"@pounce/core": {
 			"optional": true

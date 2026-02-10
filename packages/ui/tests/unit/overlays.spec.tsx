@@ -69,7 +69,7 @@ describe('Overlays System', () => {
 			push(Dialog.show('Hello'))
 			await tick()
 
-			const dialog = document.querySelector('.pounce-dialog')
+			const dialog = document.querySelector('.test-dialog')
 			expect(dialog).toBeTruthy()
 			expect(dialog?.textContent).toContain('Hello')
 		})
@@ -99,7 +99,7 @@ describe('Overlays System', () => {
 			expect(result).toBe(null)
 			// Advance past transition fallback timeout (duration * 1.5)
 			vi.advanceTimersByTime(500)
-			expect(document.querySelector('.pounce-dialog')).toBeFalsy()
+			expect(document.querySelector('.test-dialog')).toBeFalsy()
 			vi.useRealTimers()
 		})
 
@@ -122,7 +122,7 @@ describe('Overlays System', () => {
 			const backdrop = document.querySelector('.pounce-backdrop') as HTMLElement
 			backdrop.click()
 
-			expect(document.querySelector('.pounce-dialog')).toBeTruthy()
+			expect(document.querySelector('.test-dialog')).toBeTruthy()
 		})
 
 		it('handles Escape key orchestration', async () => {
@@ -201,7 +201,7 @@ describe('Overlays System', () => {
 			push(Toast.show('Notification'))
 			await tick()
 
-			const toast = document.querySelector('.pounce-toast')
+			const toast = document.querySelector('.test-toast')
 			expect(toast).toBeTruthy()
 			expect(toast?.textContent).toContain('Notification')
 		})
@@ -222,7 +222,7 @@ describe('Overlays System', () => {
 			push(Toast.show({ message: 'Success!', variant: 'success' }))
 			await tick()
 
-			const toast = document.querySelector('.pounce-toast')
+			const toast = document.querySelector('.test-toast')
 			expect(toast).toBeTruthy()
 			expect(toast?.getAttribute('data-variant')).toBe('success')
 		})
@@ -245,7 +245,7 @@ describe('Overlays System', () => {
 			push(Drawer.show({ title: 'Settings', children: <p>Content</p> }))
 			await tick()
 
-			const drawer = document.querySelector('.pounce-drawer')
+			const drawer = document.querySelector('.test-drawer')
 			expect(drawer).toBeTruthy()
 			expect(drawer?.textContent).toContain('Settings')
 			expect(drawer?.textContent).toContain('Content')
@@ -315,8 +315,8 @@ describe('Overlays System', () => {
 			const toastLayer = document.querySelector('.pounce-mode-toast')
 			expect(modalLayer).toBeTruthy()
 			expect(toastLayer).toBeTruthy()
-			expect(modalLayer?.querySelector('.pounce-dialog')).toBeTruthy()
-			expect(toastLayer?.querySelector('.pounce-toast')).toBeTruthy()
+			expect(modalLayer?.querySelector('.test-dialog')).toBeTruthy()
+			expect(toastLayer?.querySelector('.test-toast')).toBeTruthy()
 		})
 	})
 
@@ -341,7 +341,7 @@ describe('Overlays System', () => {
 			await tick()
 
 			// Find the OK button and click it
-			const buttons = document.querySelectorAll('.pounce-dialog footer button')
+			const buttons = document.querySelectorAll('.test-dialog footer button')
 			const okButton = Array.from(buttons).find(b => b.textContent?.includes('OK'))
 			expect(okButton).toBeTruthy()
 			;(okButton as HTMLElement).click()
@@ -366,7 +366,7 @@ describe('Overlays System', () => {
 			push(Dialog.show({ message: 'Small', size: 'sm' }))
 			await tick()
 
-			const dialog = document.querySelector('.pounce-dialog.pounce-size-sm')
+			const dialog = document.querySelector('.test-dialog.pounce-size-sm')
 			expect(dialog).toBeTruthy()
 		})
 	})

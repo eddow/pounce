@@ -17,7 +17,7 @@ const DISPLAY_KEY = 'display'
  * Returned when no DisplayProvider is in the ancestor chain.
  */
 export const defaultDisplayContext: DisplayContext = {
-	get theme() { return client.prefersDark() ? 'dark' : 'light' },
+	get theme() { return client.prefersDark ? 'dark' : 'light' },
 	themeSetting: 'auto',
 	get direction() { return client.direction ?? 'ltr' },
 	get locale() { return client.language ?? 'en-US' },
@@ -60,7 +60,7 @@ export function DisplayProvider(props: DisplayProviderProps, scope: Scope) {
 		const setting = state.themeSetting
 		if (setting !== 'auto') return setting
 		if (parent) return parent.theme
-		return client.prefersDark() ? 'dark' : 'light'
+		return client.prefersDark ? 'dark' : 'light'
 	}
 
 	function resolveDirection(): 'ltr' | 'rtl' {

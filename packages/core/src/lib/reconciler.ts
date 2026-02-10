@@ -1,16 +1,21 @@
 import { cleanedBy, cleanup, effect, lift, project, type ScopedCallback, scan, tag, unwrap } from 'mutts'
+import { perf } from '../perf'
 import { document, Node } from '../shared'
-import { testing } from './debug'
+import { perfCounters, testing } from './debug'
 import { type Child, DynamicRenderingError, PounceElement, type Scope, emptyChild } from './pounce-element'
 import { isNumber, isString } from './renderer-internal'
 import { extend, isElement } from './utils'
 import { ReactiveProp } from './jsx-factory'
 
+let reconcileCount = 0
 export function bindChildren(
 	parent: Node,
 	newChildren: Node | readonly Node[] | undefined
 ): ScopedCallback {
 	return effect(function redraw() {
+		perfCounters.reconciliations++
+		const rid = ++reconcileCount
+		perf?.mark(`reconcile:${rid}:start`)
 		const items = Array.isArray(newChildren) ? newChildren : newChildren ? [newChildren] : []
 		let added = 0
 		let removed = 0
@@ -52,6 +57,8 @@ export function bindChildren(
 			parent.removeChild(parent.lastChild!)
 		}
 		testing.renderingEvent?.(`reconcileChildren (+${added} -${removed})`, parent, newChildren)
+		perf?.mark(`reconcile:${rid}:end`)
+		perf?.measure(`reconcile:${rid}(+${added}-${removed})`, `reconcile:${rid}:start`, `reconcile:${rid}:end`)
 	})
 }
 
@@ -81,12 +88,14 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 		return emptyChild
 	}))
 
+	const stableAccums = new WeakMap<PounceElement, { ifOccurred: boolean; value?: PounceElement }>()
+
 	const conditioned = tag('reconciler::conditioned', scan(
 		renderers,
 		function processConditions(acc: { ifOccurred: boolean; value?: PounceElement }, child: PounceElement) {
-			if ('condition' in child || 'if' in child || 'when' in child || 'else' in child) {
+			if (child.condition || child.if || child.when || child.else) {
 				if (child.else && acc.ifOccurred) return { ifOccurred: true }
-				if ('condition' in child && child.condition && !child.condition())
+				if (child.condition && !child.condition())
 					return extend(acc, { value: undefined })
 				if (child.if)
 					for (const [key, value] of Object.entries(child.if) as [string, any])
@@ -96,7 +105,14 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 						if (!scope[key](value())) return extend(acc, { value: undefined })
 				return { ifOccurred: true, value: child }
 			}
-			return extend(acc, { value: child })
+			let stable = stableAccums.get(child)
+			if (stable) {
+				stable.ifOccurred = acc.ifOccurred
+				return stable
+			}
+			stable = { ifOccurred: acc.ifOccurred, value: child }
+			stableAccums.set(child, stable)
+			return stable
 		},
 		{ ifOccurred: false }
 	))

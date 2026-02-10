@@ -3,6 +3,7 @@ import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
 import { asVariant, getVariantTrait } from '../shared/variants'
 import { Icon } from './icon'
+import { perf } from '../perf'
 
 // Default Button Styles (SASS)
 componentStyle.sass`
@@ -74,6 +75,16 @@ const ButtonBase = (props: ButtonProps) => {
 		},
 		props,
 		(s: any) => ({
+			get onClick() {
+				const original = s.onClick
+				if (!original || s.disabled) return undefined
+				return (e: MouseEvent) => {
+					perf?.mark('button:click:start')
+					original(e)
+					perf?.mark('button:click:end')
+					perf?.measure('button:click', 'button:click:start', 'button:click:end')
+				}
+			},
 			get iconElement() {
 				if (!s.icon) return null
 

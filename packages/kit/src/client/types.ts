@@ -38,6 +38,7 @@ export interface ClientState {
 	language: string
 	timezone: string
 	direction: Direction
+	prefersDark: boolean
 }
 
 /** Options for `client.navigate()`. */
@@ -55,5 +56,4 @@ export interface Client extends ClientState {
 	replace(to: string | URL, options?: Omit<NavigateOptions, 'replace'>): void
 	reload(): void
 	dispose(): void
-	prefersDark(): boolean
 }

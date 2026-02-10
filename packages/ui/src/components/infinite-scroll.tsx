@@ -4,6 +4,7 @@ import { componentStyle } from '@pounce/kit/dom'
 import { resize } from '../directives/resize'
 import { scroll } from '../directives/scroll'
 import { getAdapter } from '../adapter/registry'
+import { perf } from '../perf'
 
 componentStyle.sass`
 .pounce-infinite-scroll
@@ -21,15 +22,67 @@ componentStyle.sass`
 	position: absolute
 	left: 0
 	width: 100%
+
+.pounce-infinite-scroll-item--fixed
 	contain: strict
 `
+
+// ── Prefix-sum helpers (variable-height mode) ──────────────────────────
+
+/** Binary search: find the index whose offset range contains `scrollTop`. */
+function findStartIndex(offsets: Float64Array, scrollTop: number, count: number): number {
+	let lo = 0
+	let hi = count - 1
+	while (lo < hi) {
+		const mid = (lo + hi) >>> 1
+		if (offsets[mid + 1] <= scrollTop) lo = mid + 1
+		else hi = mid
+	}
+	return lo
+}
+
+/** Rebuild offsets[fromIndex+1 .. count] from heightCache. O(n-i). */
+function rebuildOffsets(
+	heightCache: Float64Array,
+	offsets: Float64Array,
+	fromIndex: number,
+	count: number,
+) {
+	for (let i = fromIndex; i < count; i++) {
+		offsets[i + 1] = offsets[i] + heightCache[i]
+	}
+}
+
+/** Ensure Float64Arrays are large enough, copying existing data. */
+function ensureCapacity(
+	heightCache: Float64Array<ArrayBuffer>,
+	offsets: Float64Array<ArrayBuffer>,
+	needed: number,
+): [Float64Array<ArrayBuffer>, Float64Array<ArrayBuffer>] {
+	if (heightCache.length >= needed) return [heightCache, offsets]
+	const newSize = Math.max(needed, heightCache.length * 2)
+	const newHeights = new Float64Array(newSize)
+	newHeights.set(heightCache)
+	const newOffsets = new Float64Array(newSize + 1)
+	newOffsets.set(offsets)
+	return [newHeights, newOffsets]
+}
+
+// ── Props ──────────────────────────────────────────────────────────────
 
 /** Props for {@link InfiniteScroll}. Generic over item type `T`. */
 export type InfiniteScrollProps<T> = {
 	/** Data array to render. */
 	items: T[]
-	/** Fixed row height in pixels — required for virtualization math. */
-	itemHeight: number
+	/**
+	 * Row height in pixels.
+	 * - **number** — fixed height (fast path, no measurement overhead).
+	 * - **function** — estimated height per item; actual heights are measured
+	 *   via ResizeObserver and the offset table is corrected on the fly.
+	 */
+	itemHeight: number | ((item: T, index: number) => number)
+	/** Scalar fallback for unmeasured items when `itemHeight` is a function. @default 40 */
+	estimatedItemHeight?: number
 	/** Auto-scroll to bottom when new items are appended. @default true */
 	stickyLast?: boolean
 	/** Pass-through HTML attributes for the scroll container. */
@@ -45,8 +98,14 @@ export type InfiniteScrollProps<T> = {
  *
  * @example
  * ```tsx
+ * // Fixed height (fast path)
  * <InfiniteScroll items={rows} itemHeight={40} stickyLast>
  *   {(item, i) => <div>{i}: {item.name}</div>}
+ * </InfiniteScroll>
+ *
+ * // Variable height with estimator
+ * <InfiniteScroll items={messages} itemHeight={(msg) => msg.hasImage ? 200 : 48}>
+ *   {(msg) => <MessageBubble message={msg} />}
  * </InfiniteScroll>
  * ```
  *
@@ -55,39 +114,144 @@ export type InfiniteScrollProps<T> = {
 export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<string, unknown>) => {
 	Object.assign(scope, { resize, scroll })
 	const adapter = getAdapter('InfiniteScroll')
+	const variableMode = typeof props.itemHeight === 'function'
 
 	const state = compose(
 		{
 			stickyLast: true,
+			estimatedItemHeight: 40,
 			scroll: { value: 0, max: 0 },
 			size: { width: 0, height: 0 },
 		},
-		props
+		props,
 	)
 
-	const visibleState = reactive({
-		get startNode() {
-			return Math.floor(state.scroll.value / state.itemHeight)
-		},
-		get visibleCount() {
-			const height = state.size.height || 500
-			return Math.ceil(height / state.itemHeight)
-		},
-		get items() {
-			const start = Math.max(0, this.startNode - 2)
-			const end = Math.min(state.items.length, start + this.visibleCount + 4)
-			const slice = []
-			for (let i = start; i < end; i++) {
-				slice.push({ item: state.items[i], index: i })
-			}
-			return slice
-		},
-		get offset() {
-			return Math.max(0, this.startNode - 2) * state.itemHeight
-		},
-	})
+	// ── Variable-height offset table ──────────────────────────────────
 
-	// Sticky Last Logic
+	let heightCache = new Float64Array(256)
+	let offsets = new Float64Array(257)
+	let itemCount = 0
+	// Reactive trigger — bumped externally (rAF) when offsets change
+	const offsetTrigger = reactive({ v: 0 })
+	let scrollContainerEl: HTMLElement | null = null
+	let rafPending = false
+	const pendingMeasurements: Array<{ index: number; height: number }> = []
+
+	/** Estimate height for item at index (non-reactive, pure). */
+	function estimateHeight(items: T[], index: number): number {
+		const fn = props.itemHeight as (item: T, index: number) => number
+		const item = items[index]
+		return item !== undefined ? fn(item, index) : state.estimatedItemHeight
+	}
+
+	/** Sync offset table with current items length. Called from computeVisible effect. */
+	function syncOffsets(items: T[]) {
+		const n = items.length
+		if (n === itemCount) return
+		;[heightCache, offsets] = ensureCapacity(heightCache, offsets, n)
+		for (let i = itemCount; i < n; i++) {
+			heightCache[i] = estimateHeight(items, i)
+		}
+		const from = Math.min(itemCount, n)
+		itemCount = n
+		rebuildOffsets(heightCache, offsets, from, itemCount)
+	}
+
+	/** Called when ResizeObserver measures an item. Batched via rAF. */
+	function onItemMeasured(index: number, measuredHeight: number) {
+		pendingMeasurements.push({ index, height: measuredHeight })
+		if (!rafPending) {
+			rafPending = true
+			requestAnimationFrame(flushMeasurements)
+		}
+	}
+
+	function flushMeasurements() {
+		rafPending = false
+		if (pendingMeasurements.length === 0) return
+		let minChanged = itemCount
+		const scrollTop = state.scroll.value
+		const currentStart = itemCount > 0 ? findStartIndex(offsets, scrollTop, itemCount) : 0
+		let totalDeltaAbove = 0
+
+		for (const { index, height } of pendingMeasurements) {
+			if (index >= itemCount) continue
+			const delta = height - heightCache[index]
+			if (Math.abs(delta) < 0.5) continue
+			heightCache[index] = height
+			if (index < minChanged) minChanged = index
+			if (index < currentStart) totalDeltaAbove += delta
+		}
+		pendingMeasurements.length = 0
+
+		if (minChanged < itemCount) {
+			rebuildOffsets(heightCache, offsets, minChanged, itemCount)
+			// Scroll anchor correction
+			if (totalDeltaAbove !== 0 && scrollContainerEl) {
+				scrollContainerEl.scrollTop += totalDeltaAbove
+			}
+			offsetTrigger.v++
+		}
+		perf?.mark('infinitescroll:flush:end')
+		perf?.measure('infinitescroll:flush', 'infinitescroll:flush:start', 'infinitescroll:flush:end')
+	}
+
+	// ── Visible range computation (pure function, called inline) ──────
+
+	function computeVisibleIndices(): number[] {
+		perf?.mark('infinitescroll:compute:start')
+		const items = state.items
+		const n = items.length
+		const scrollTop = state.scroll.value
+		const viewportH = state.size.height || 500
+		let startNode: number
+		let endNode: number
+
+		if (variableMode) {
+			void offsetTrigger.v
+			syncOffsets(items)
+			if (itemCount === 0) {
+				startNode = 0
+				endNode = 0
+			} else {
+				startNode = findStartIndex(offsets, scrollTop, itemCount)
+				endNode = Math.min(
+					findStartIndex(offsets, scrollTop + viewportH, itemCount) + 1,
+					itemCount,
+				)
+			}
+		} else {
+			const h = state.itemHeight as number
+			startNode = Math.floor(scrollTop / h)
+			endNode = Math.min(n, startNode + Math.ceil(viewportH / h))
+		}
+
+		const start = Math.max(0, startNode - 2)
+		const end = Math.min(n, endNode + 2)
+		const result: number[] = []
+		for (let i = start; i < end; i++) result.push(i)
+		perf?.mark('infinitescroll:compute:end')
+		perf?.measure('infinitescroll:compute', 'infinitescroll:compute:start', 'infinitescroll:compute:end')
+		return result
+	}
+
+	function computeTotalHeight(): number {
+		perf?.mark('infinitescroll:height:start')
+		let result: number
+		if (variableMode) {
+			void offsetTrigger.v
+			syncOffsets(state.items)
+			result = itemCount > 0 ? offsets[itemCount] : 0
+		} else {
+			result = state.items.length * (state.itemHeight as number)
+		}
+		perf?.mark('infinitescroll:height:end')
+		perf?.measure('infinitescroll:height', 'infinitescroll:height:start', 'infinitescroll:height:end')
+		return result
+	}
+
+	// ── Sticky Last Logic ──────────────────────────────────────────────
+
 	let wasAtBottom = false
 	let previousMax = 0
 	let previousValue = 0
@@ -114,11 +278,65 @@ export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<
 		previousValue = value
 	})
 
+	// ── Renderer unwrap ────────────────────────────────────────────────
+
 	const getRenderer = () => {
 		let child = Array.isArray(props.children) ? props.children[0] : props.children
 		while (typeof child === 'function' && child.length === 0) child = (child as () => unknown)()
 		return child as (item: T, index: number) => JSX.Element
 	}
+
+	// ── ResizeObserver for variable-height items ───────────────────────
+
+	const itemObserver = variableMode ? new ResizeObserver((entries) => {
+		for (const entry of entries) {
+			const el = entry.target as HTMLElement
+			const idx = Number(el.dataset.vindex)
+			if (!Number.isNaN(idx)) {
+				const height = entry.borderBoxSize?.[0]?.blockSize ?? el.offsetHeight
+				onItemMeasured(idx, height)
+			}
+		}
+	}) : null
+
+	// ── Per-item render ────────────────────────────────────────────────
+
+	const itemClass = adapter.classes?.item || 'pounce-infinite-scroll-item'
+	const fixedItemClass = `${itemClass} pounce-infinite-scroll-item--fixed`
+
+	const renderItem = (index: number) => {
+		const item = state.items[index]
+		const renderer = getRenderer()
+		if (variableMode) {
+			void offsetTrigger.v
+			const top = offsets[index] ?? 0
+			const minH = heightCache[index] ?? state.estimatedItemHeight
+			return (
+				<div
+					class={itemClass}
+					data-vindex={index}
+					style={`top: ${top}px; min-height: ${minH}px;`}
+					use={(el: HTMLElement) => {
+						itemObserver!.observe(el)
+						return () => itemObserver!.unobserve(el)
+					}}
+				>
+					{renderer(item, index)}
+				</div>
+			)
+		}
+		const h = state.itemHeight as number
+		return (
+			<div
+				class={fixedItemClass}
+				style={`top: ${index * h}px; height: ${h}px;`}
+			>
+				{renderer(item, index)}
+			</div>
+		)
+	}
+
+	// ── JSX ────────────────────────────────────────────────────────────
 
 	return (
 		<div
@@ -129,29 +347,19 @@ export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<
 				state.size.height = h
 			}}
 			use:scroll={{ y: state.scroll }}
+			use={(el: HTMLElement) => { scrollContainerEl = el }}
 		>
 			<div
 				class={adapter.classes?.content || 'pounce-infinite-scroll-content'}
-				style={`height: ${state.items.length * state.itemHeight}px; position: relative;`}
+				style={`height: ${computeTotalHeight()}px; position: relative;`}
 			>
-				<div
-					style={`position: absolute; top: ${visibleState.offset}px; width: 100%; left: 0;`}
-				>
-					{() =>
-						visibleState.items.map((wrapper) => {
-							const { item, index } = wrapper
-							const renderer = getRenderer()
-							return (
-								<div
-									class={adapter.classes?.item || 'pounce-infinite-scroll-item'}
-									style={`height: ${state.itemHeight}px; position: relative;`}
-								>
-									{renderer(item, index)}
-								</div>
-							)
-						})
-					}
-				</div>
+				{() => {
+				perf?.mark('infinitescroll:render:start')
+				const result = computeVisibleIndices().map(renderItem)
+				perf?.mark('infinitescroll:render:end')
+				perf?.measure('infinitescroll:render', 'infinitescroll:render:start', 'infinitescroll:render:end')
+				return result
+			}}
 			</div>
 		</div>
 	)

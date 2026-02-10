@@ -7,6 +7,7 @@ import type {
 	Direction,
 	NavigateOptions,
 } from '../client/types.js'
+import { perf } from '../perf.js'
 
 // Bind the base reactive client implementation
 setClient(baseClient)
@@ -26,7 +27,7 @@ if (typeof window !== 'undefined') {
 	client.viewport = createViewportSnapshot()
 	client.history = createHistorySnapshot()
 	client.focused = getInitialFocusState()
-	client.visibilityState = (document.visibilityState as any) ?? 'hidden'
+	client.visibilityState = (document.visibilityState === 'visible' ? 'visible' : 'hidden')
 	client.devicePixelRatio = getInitialDevicePixelRatio()
 	client.online = getInitialOnlineState()
 	client.language = getInitialLanguage()
@@ -37,6 +38,8 @@ if (typeof window !== 'undefined') {
 // --- API Overrides ---
 
 client.navigate = (to: string | URL, options?: NavigateOptions): void => {
+	perf?.mark('route:start')
+	
 	const href = resolveHref(to)
 	const stateData = options?.state ?? null
 
@@ -47,6 +50,8 @@ client.navigate = (to: string | URL, options?: NavigateOptions): void => {
 	}
 
 	synchronizeUrl()
+	perf?.mark('route:end')
+	perf?.measure('route:navigate', 'route:start', 'route:end')
 }
 
 client.replace = (to: string | URL, options?: Omit<NavigateOptions, 'replace'>): void => {
@@ -64,19 +69,17 @@ client.dispose = (): void => {
 	}
 }
 
-client.prefersDark = (): boolean => {
-	try {
-		const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-		return mediaQuery.matches
-		/* TODO: find how to organise a readonly-reactive (specific readonly biDi?)
-
-			mediaQuery.addEventListener('change', (e) => {
-				this.current = e.matches ? 'dark' : 'light'
-			})
-		*/
-	} catch {
-		return false
+// Reactive prefersDark: tracks prefers-color-scheme media query
+try {
+	const darkQuery = window.matchMedia('(prefers-color-scheme: dark)')
+	client.prefersDark = darkQuery.matches
+	const syncDark = (e: MediaQueryListEvent) => {
+		client.prefersDark = e.matches
 	}
+	darkQuery.addEventListener('change', syncDark)
+	cleanupFns.push(() => darkQuery.removeEventListener('change', syncDark))
+} catch {
+	client.prefersDark = false
 }
 
 // --- Internals ---
@@ -92,7 +95,7 @@ function initializeClientListeners(): void {
 		client.focused = getInitialFocusState()
 	}
 	const syncVisibility = () => {
-		client.visibilityState = (document.visibilityState as any) ?? 'hidden'
+		client.visibilityState = (document.visibilityState === 'visible' ? 'visible' : 'hidden')
 	}
 	const syncOnline = () => {
 		client.online = getInitialOnlineState()
@@ -134,8 +137,11 @@ function initializeClientListeners(): void {
 }
 
 function synchronizeUrl(): void {
+	perf?.mark('route:sync:start')
 	client.url = createUrlSnapshot(new URL(window.location.href))
 	client.history = createHistorySnapshot()
+	perf?.mark('route:sync:end')
+	perf?.measure('route:sync', 'route:sync:start', 'route:sync:end')
 }
 
 // --- Helpers ---

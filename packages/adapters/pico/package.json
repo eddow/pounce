@@ -1,6 +1,6 @@
 {
 	"name": "@pounce/adapter-pico",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "PicoCSS framework adapter for @pounce/ui",
 	"type": "module",
 	"main": "./dist/index.cjs",
@@ -41,13 +41,21 @@
 		"@pounce/kit": "workspace:*",
 		"@pounce/plugin": "workspace:*",
 		"@pounce/ui": "workspace:*",
+		"@tabler/icons": "^3.36.1",
 		"mutts": "link:../../../../mutts",
+		"pure-glyf": "link:../../../../../pure-glyf",
 		"sass": "^1.93.2",
 		"typescript": "5.9.3",
 		"vite": "7.3.1",
 		"vite-plugin-dts": "^4.5.3",
 		"vitest": "^4.0.18"
 	},
+	"keywords": ["pounce", "picocss", "adapter", "css"],
+	"author": "fmdm",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/eddow/pounce.git"
+	},
 	"packageManager": "pnpm@10.28.2"
 }
