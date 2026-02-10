@@ -1,28 +1,72 @@
 /**
- * Server-side exports for @pounce/board
- * Consumes @pounce/kit/node for server-specific functionality
+ * Server-side exports for pounce-board
+ * Use: import { buildRouteTree } from 'pounce-board/server'
  */
 
-import * as kitNode from '@pounce/kit/node'
-export * from '@pounce/kit/node'
+// Router
+export {
+	buildRouteTree,
+	matchRoute,
+	collectMiddleware,
+	parseSegment,
+	type RouteMatch,
+	type RouteTreeNode,
+	type RouteParams,
+} from '../lib/router/index.js'
 
-// Re-export router functions flattened for compatibility
-export const buildRouteTree = kitNode.serverRouter.buildRouteTree
-export const matchRoute = kitNode.serverRouter.matchFileRoute
-export const collectMiddleware = kitNode.serverRouter.collectMiddleware
-export const parseSegment = kitNode.serverRouter.parseSegment
+export { defineRoute, type RouteDefinition } from '../lib/router/defs.js'
 
-// Types - re-export for augmentation support
-export type FileRouteMatch = kitNode.serverRouter.FileRouteMatch
-export type RouteTreeNode = kitNode.serverRouter.RouteTreeNode
-export type RouteParams = kitNode.serverRouter.RouteParams
-export type SegmentInfo = kitNode.serverRouter.SegmentInfo
+// HTTP core
+export {
+	runMiddlewares,
+	createJsonResponse,
+	createErrorResponse,
+	addSecurityHeaders,
+	compressResponse,
+	ApiError,
+	type Middleware,
+	type RouteHandler,
+	type RequestContext,
+	type RouteResponse,
+	type HttpMethod,
+} from '../lib/http/core.js'
 
-// Re-export core types to enable declaration merging
-export type {
-	RequestContext,
-	Middleware,
-	RouteHandler,
-	RouteResponse,
-	HttpMethod,
-} from '@pounce/kit'
+// HTTP client (works on server too for SSR dispatch)
+export {
+	api,
+	config,
+	enableSSR,
+	disableSSR,
+	clearSSRData,
+	setRouteRegistry,
+	clearRouteRegistry,
+	intercept,
+	clearInterceptors,
+} from '../lib/http/client.js'
+
+// SSR injection
+export {
+	withSSRContext,
+	injectSSRData,
+	getCollectedSSRResponses,
+	injectApiResponses,
+	escapeJson,
+	getSSRId,
+	type SSRDataMap,
+} from '../lib/ssr/utils.js'
+
+// Context
+export {
+	getContext,
+	runWithContext,
+	createScope,
+	trackSSRPromise,
+	flushSSRPromises,
+	type RequestScope,
+} from '../lib/http/context.js'
+
+// Proxy
+export { defineProxy, type ProxyConfig, type ProxyEndpointConfig } from '../lib/http/proxy.js'
+
+// Adapters
+export { createPounceApp, createPounceMiddleware, clearRouteTreeCache } from '../adapters/hono.js'

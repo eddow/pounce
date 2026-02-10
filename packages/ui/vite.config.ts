@@ -1,22 +1,22 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
 import { fileURLToPath } from 'node:url'
-import { pounceUIPackage } from '@pounce/plugin/packages'
+import { pounceCorePackage } from '@pounce/core/plugin'
+import { pounceUIPlugin } from './vite-plugin-pounce-ui'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
   plugins: [
-    ...pounceUIPackage({
-      ui: {
-        core: {
-          jsxRuntime: {
-            runtime: 'automatic',
-            importSource: '@pounce/core',
-          },
-        }
+    ...pounceCorePackage({
+      core: {
+        jsxRuntime: {
+          runtime: 'automatic',
+          importSource: '@pounce/core',
+        },
       }
-    })
+    }),
+    pounceUIPlugin()
   ],
   build: {
     lib: {

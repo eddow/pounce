@@ -9,4 +9,5 @@ blob-report/
 sandbox/
 pure-glyf.d.ts
 *.tsbuildinfo
+.turbo
 .vscode

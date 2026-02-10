@@ -2,7 +2,7 @@
   "name": "@pounce/core",
   "version": "1.0.0",
   "description": "Fine-grained reactive UI framework with direct DOM manipulation",
-  "types": "dist/packages/core/src/index.d.ts",
+  "types": "./dist/dom.d.ts",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -25,27 +25,27 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/packages/core/src/index.d.ts",
+      "types": "./dist/dom.d.ts",
       "node": "./dist/node.js",
       "default": "./dist/dom.js"
     },
     "./node": {
-      "types": "./dist/packages/core/src/index.d.ts",
+      "types": "./dist/node.d.ts",
       "import": "./dist/node.js",
       "default": "./dist/node.js"
     },
     "./dom": {
-      "types": "./dist/packages/core/src/index.d.ts",
+      "types": "./dist/dom.d.ts",
       "import": "./dist/dom.js",
       "default": "./dist/dom.js"
     },
     "./jsx-runtime": {
-      "types": "./dist/packages/core/src/runtime/jsx-runtime.d.ts",
+      "types": "./dist/jsx-runtime.d.ts",
       "import": "./dist/jsx-runtime.js",
       "default": "./dist/jsx-runtime.js"
     },
     "./jsx-dev-runtime": {
-      "types": "./dist/packages/core/src/runtime/jsx-dev-runtime.d.ts",
+      "types": "./dist/jsx-dev-runtime.d.ts",
       "import": "./dist/jsx-dev-runtime.js",
       "default": "./dist/jsx-dev-runtime.js"
     },
@@ -54,10 +54,15 @@
       "node": "./src/node/index.ts",
       "default": "./src/dom/index.ts"
     },
+    "./plugin": {
+      "types": "./src/plugin/index.ts",
+      "import": "./dist/plugin.js",
+      "default": "./dist/plugin.js"
+    },
     "./src/*": "./src/*"
   },
   "devDependencies": {
-    "@pounce/plugin": "workspace:*",
+    "@types/babel__core": "^7.20.5",
     "@biomejs/biome": "^2.2.7",
     "@playwright/test": "^1.56.1",
     "@types/jsdom": "^27.0.0",
@@ -79,7 +84,13 @@
     }
   },
   "dependencies": {
-    "mutts": "^1.0.9"
+    "mutts": "^1.0.9",
+    "@babel/core": "^7.28.4",
+    "@babel/plugin-proposal-decorators": "^7.28.6",
+    "@babel/plugin-transform-react-jsx": "^7.25.9",
+    "@babel/plugin-transform-typescript": "^7.28.6",
+    "@babel/types": "^7.28.6",
+    "vite-plugin-dts": "^4.5.3"
   },
   "files": [
     "dist",
@@ -94,6 +105,7 @@
     "src/index.ts",
     "src/index.d.ts",
     "docs",
+    "src/plugin",
     "README.md",
     "LLM.md"
   ],

@@ -1,7 +1,7 @@
 import * as path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { runMiddlewares } from '@pounce/board/server'
-import { buildRouteTree, matchRoute } from '@pounce/board/server'
+import { runMiddlewares } from 'pounce-board/server'
+import { buildRouteTree, matchRoute } from 'pounce-board/server'
 
 const FIXTURE_ROUTES = path.resolve(import.meta.dirname, '../fixtures/auth-blocking/routes')
 

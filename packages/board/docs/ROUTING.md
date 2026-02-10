@@ -1,6 +1,6 @@
 # Routing System
 
-`@pounce/board` uses a file-based routing system with support for dynamic segments, catch-all routes, and per-route middleware.
+`pounce-board` uses a file-based routing system with support for dynamic segments, catch-all routes, and per-route middleware.
 
 ## File-Based Convention
 
@@ -55,5 +55,5 @@ The matching result returns a `layouts` array containing all collected layouts, 
 
 For the definitive behavior of route discovery and component matching, refer to the integration tests:
 
-- **Component Discovery**: [tests/integration/component-discovery.spec.ts](file:///home/fmdm/dev/ownk/@pounce/board/tests/integration/component-discovery.spec.ts)
-- **Route Matching Logic**: [src/lib/router/index.spec.ts](file:///home/fmdm/dev/ownk/@pounce/board/src/lib/router/index.spec.ts)
+- **Component Discovery**: [tests/integration/component-discovery.spec.ts](file:///home/fmdm/dev/ownk/pounce-board/tests/integration/component-discovery.spec.ts)
+- **Route Matching Logic**: [src/lib/router/index.spec.ts](file:///home/fmdm/dev/ownk/pounce-board/src/lib/router/index.spec.ts)

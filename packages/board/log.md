@@ -3,7 +3,7 @@
 ## 2026-01-19: Initial Audit & Reflection
 
 ### Review of Assignments
-The initial task was to browse `@pounce/board/walkthrough.md` and check for undone tasks that might have been implemented but not marked.
+The initial task was to browse `pounce-board/walkthrough.md` and check for undone tasks that might have been implemented but not marked.
 
 ### Findings vs Plan
 The `walkthrough.md` served as a high-level roadmap, but the actual implementation has slightly diverged in terms of file naming and status.

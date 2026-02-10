@@ -1,14 +1,31 @@
-import { defineConfig, mergeConfig } from 'vitest/config'
-import { fileURLToPath } from 'node:url'
-import { createBaseConfig } from '../../test/vitest.config.base'
+import path from 'node:path';
+import { defineConfig } from "vitest/config";
 
-const __dirname = fileURLToPath(new URL('.', import.meta.url))
-
-const baseConfig = createBaseConfig(__dirname)
-
-export default mergeConfig(baseConfig, defineConfig({
-  test: {
-    name: 'board',
-    environment: 'node',
+export default defineConfig({
+  resolve: {
+    alias: {
+      'pounce-ts/jsx-runtime': path.resolve(__dirname, '../core/src/runtime/jsx-runtime.ts'),
+      'pounce-ts/jsx-dev-runtime': path.resolve(__dirname, '../core/src/runtime/jsx-dev-runtime.ts'),
+      'pounce-ts/server': path.resolve(__dirname, '../core/src/node/index.ts'),
+      'pounce-ts': path.resolve(__dirname, '../core/src'),
+      'pounce-ui': path.resolve(__dirname, '../ui/src'),
+      '@pounce/kit': path.resolve(__dirname, '../kit/src'),
+      'mutts': path.resolve(__dirname, '../../../mutts/src'),
+      'npc-script': path.resolve(__dirname, '../../../npcs/src'),
+      'omni18n': path.resolve(__dirname, '../../../omni18n/src'),
+      'pounce-board/client': path.resolve(__dirname, 'src/client'),
+      'pounce-board/server': path.resolve(__dirname, 'src/server'),
+      'pounce-board': path.resolve(__dirname, 'src'), // Default to server in Node test env
+    },
   },
-}))
+  test: {
+    include: ["src/**/*.spec.ts", "tests/integration/**/*.spec.ts"],
+    environment: "node",
+    setupFiles: ["tests/setup-mutts.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html"],
+      exclude: ["**/tests/**", "**/node_modules/**", "**/dist/**"],
+    },
+  },
+});

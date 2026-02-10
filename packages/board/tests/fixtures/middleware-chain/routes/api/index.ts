@@ -1,7 +1,7 @@
 /**
  * API index handler - root + api middleware applies
  */
-import type { RequestContext } from '@pounce/board/server'
+import type { RequestContext } from 'pounce-board/server'
 
 export async function get(ctx: RequestContext) {
 	return {

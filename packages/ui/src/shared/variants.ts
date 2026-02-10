@@ -47,23 +47,23 @@ export function getVariantTrait(variant: string | undefined): Trait | undefined 
  * Wraps a component in a proxy that treats any property access as a variant flavor.
  * Example: Button.danger(...) -> Button({ variant: 'danger', ... })
  */
-export function asVariant<T extends (props: any) => any>(component: T): T & Record<string, T> {
+export function asVariant<T extends (...args: never[]) => any>(component: T): T & Record<string, T> {
 	return new Proxy(component, {
 		get(target, prop, receiver) {
 			if (typeof prop === 'string' && !(prop in target)) {
 				// Return a wrapper that merges variant into the first argument (props)
 				return new Proxy(target, {
-					apply(target, thisArg, args: any[]) {
+					apply(target, thisArg, args: unknown[]) {
 						const [props, ...rest] = args
 						const mergedProps = props && typeof props === 'object' 
 							? { variant: prop, ...props }
 							: { variant: prop }
-						return target.apply(thisArg, [mergedProps, ...rest] as any)
+						return Reflect.apply(target, thisArg, [mergedProps, ...rest])
 					}
 				})
 			}
 			return Reflect.get(target, prop, receiver)
 		},
-	}) as any
+	}) as T & Record<string, T>
 }
 

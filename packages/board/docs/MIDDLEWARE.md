@@ -30,7 +30,7 @@ Export a `middleware` array from `common.ts`:
 
 ```typescript
 // routes/api/common.ts
-import type { Middleware, RequestContext } from '@pounce/board/http/core.js'
+import type { Middleware, RequestContext } from 'pounce-board/http/core.js'
 
 export const middleware: Middleware[] = [
   async (ctx: RequestContext, next: () => Promise<Response>) => {
@@ -125,7 +125,7 @@ export const middleware: Middleware[] = [
 
 ## Testing Middleware
 
-See [`tests/integration/middleware-chain.spec.ts`](file:///home/fmdm/dev/ownk/@pounce/board/tests/integration/middleware-chain.spec.ts) for comprehensive tests covering:
+See [`tests/integration/middleware-chain.spec.ts`](file:///home/fmdm/dev/ownk/pounce-board/tests/integration/middleware-chain.spec.ts) for comprehensive tests covering:
 
 - Execution order verification
 - Context propagation across middleware layers

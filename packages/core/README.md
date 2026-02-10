@@ -34,16 +34,15 @@ Complete documentation is available in the [docs folder](docs):
 
 ```bash
 npm install @pounce/core
-npm install -D @pounce/plugin
 ```
 
 ### Build Configuration
 
-Pounce uses a centralized plugin system for JSX transformation. Configure your `vite.config.ts`:
+Pounce includes its own Vite plugin for JSX transformation. Configure your `vite.config.ts`:
 
 ```typescript
 import { defineConfig } from 'vite'
-import { pounceCorePackage } from '@pounce/plugin/packages'
+import { pounceCorePackage } from '@pounce/core/plugin'
 
 export default defineConfig({
   plugins: [
@@ -162,7 +161,7 @@ function Counter(props: { value: number, onReset?(): void }) {
 - **JSX** - Familiar component syntax
 - **mutts** - Reactive state management
 - **Vite** - Fast development and build tool
-- **@pounce/plugin** - Build-time JSX transformation and reactive enhancements
+- **@pounce/core/plugin** - Build-time JSX transformation and reactive enhancements
 
 ## 📝 License
 

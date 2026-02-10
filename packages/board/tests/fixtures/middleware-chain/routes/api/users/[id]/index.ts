@@ -1,7 +1,7 @@
 /**
  * User detail handler - inherits all parent middleware
  */
-import type { RequestContext } from '@pounce/board/server'
+import type { RequestContext } from 'pounce-board/server'
 
 export async function get(ctx: RequestContext) {
 	return {

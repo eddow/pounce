@@ -15,7 +15,6 @@
 			"@pounce/core/*": ["../core/dist/*"],
 			"@pounce/core/test": ["../core/src/test/dom.ts"],
 			"@pounce/kit": ["../kit/src/index.ts"],
-			"@pounce/kit/dom": ["../kit/src/dom/index.ts"],
 			"@pounce/ui": ["./src/index.ts"]
 		}
 	},

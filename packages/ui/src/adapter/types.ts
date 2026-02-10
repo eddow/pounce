@@ -123,10 +123,9 @@ export type TransitionConfig = {
  */
 export type ComponentParts<Props = any> = {
 	props: Props
-	state: any
-	children: JSX.Element | JSX.Element[]
-	ariaProps: Record<string, any>
-	[key: string]: any
+	state: Record<string, unknown>
+	children: JSX.Children
+	ariaProps: Record<string, string | boolean | undefined>
 }
 
 /**

@@ -724,17 +724,17 @@ Adapters are composable — call `setAdapter()` multiple times to layer concerns
 
 ```typescript
 import { defineConfig } from 'vite'
-import { pounceUIPackage } from '@pounce/plugin/packages'
+import { pounceCorePackage } from '@pounce/core/plugin'
+import { pounceUIPlugin } from './vite-plugin-pounce-ui'
 
 export default defineConfig({
   plugins: [
-    ...pounceUIPackage({
-      ui: {
-        core: {
-          jsxRuntime: { runtime: 'automatic', importSource: '@pounce/core' }
-        }
+    ...pounceCorePackage({
+      core: {
+        jsxRuntime: { runtime: 'automatic', importSource: '@pounce/core' }
       }
-    })
+    }),
+    pounceUIPlugin()
   ]
 })
 ```

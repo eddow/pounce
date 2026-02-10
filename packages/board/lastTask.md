@@ -103,4 +103,4 @@ Open
 Complete walkthrough of CLI and dev server implementation, including SSR hydration verification.
 
 
-@pounce/board/tests/e2e/ssr-hydration.spec.ts
+pounce-board/tests/e2e/ssr-hydration.spec.ts

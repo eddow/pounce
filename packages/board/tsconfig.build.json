@@ -3,9 +3,6 @@
 		"target": "ES2022",
 		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"jsx": "react",
-		"jsxFactory": "h",
-		"jsxFragmentFactory": "Fragment",
 		"strict": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
@@ -13,7 +10,7 @@
 		"declaration": true,
 		"declarationMap": true,
 		"outDir": "./dist",
-		// "rootDir": "./src",
+		"rootDir": "./src",
 		"baseUrl": ".",
 		"paths": {
 			"~/lib/*": [
@@ -25,35 +22,14 @@
 			"~/cli/*": [
 				"./src/cli/*"
 			],
-			"@pounce/board": [
+			"pounce-board": [
 				"./src/server/index.ts"
 			],
-			"@pounce/board/client": [
+			"pounce-board/client": [
 				"./src/client/index.ts"
 			],
-			"@pounce/board/server": [
+			"pounce-board/server": [
 				"./src/server/index.ts"
-			],
-			"pure-glyf": [
-				"../../../pure-glyf/src/index.ts"
-			],
-			"pure-glyf/*": [
-				"../../../pure-glyf/src/*"
-			],
-			"@pounce/kit": [
-				"../kit/dist/index.d.ts"
-			],
-			"@pounce/kit/node": [
-				"../kit/dist/node.d.ts"
-			],
-			"@pounce/kit/dom": [
-				"../kit/dist/dom.d.ts"
-			],
-			"mutts": [
-				"../../../mutts/dist/index.d.ts"
-			],
-			"mutts/*": [
-				"../../../mutts/dist/*"
 			]
 		}
 	},
@@ -63,8 +39,6 @@
 	"exclude": [
 		"node_modules",
 		"dist",
-		"tests",
-		"../../../mutts/src/**/*",
-		"../kit/src/**/*"
+		"tests"
 	]
 }

@@ -1,6 +1,6 @@
 # API Client
 
-The universal `api()` client in @pounce/board handles all data fetching, supporting SSR dispatch, hydration, and client-side navigation.
+The universal `api()` client in pounce-board handles all data fetching, supporting SSR dispatch, hydration, and client-side navigation.
 
 ## Usage
 

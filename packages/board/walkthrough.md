@@ -8,7 +8,7 @@
 
 > [!IMPORTANT]
 > **Read these LLM.md files before implementing:**
-> - [@pounce/core/LLM.md](file:///home/fmdm/dev/ownk/@pounce/core/LLM.md) – UI framework, fine-grained reactivity, JSX transforms
+> - [pounce-ts/LLM.md](file:///home/fmdm/dev/ownk/pounce-ts/LLM.md) – UI framework, fine-grained reactivity, JSX transforms
 > - [mutts/LLM.md](file:///home/fmdm/dev/ownk/mutts/LLM.md) – Reactivity system (**used both FE and BE**)
 > - [bounce-ts/LLM.md](file:///home/fmdm/dev/ownk/bounce-ts/LLM.md) – Existing Pounce implementation (reference for patterns)
 
@@ -18,27 +18,27 @@
 
 | Document | Purpose | Key Content |
 |----------|---------|-------------|
-| [README.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/README.md) | Quick start | Feature list, basic examples |
-| [CONCEPTS.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/CONCEPTS.md) | Core concepts | Routing, API calls, SSR flow, middleware |
-| [ARCHITECTURE.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/ARCHITECTURE.md) | Full architecture | Diagrams, security, scalability, CI/CD, plugins |
-| [API.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/API.md) | API reference | `api()`, `getSSRData()`, `Middleware` type, `defineProxy()` |
-| [SSR.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/SSR.md) | SSR guide | Injection, hydration, framework integrations |
-| [MIDDLEWARE.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/MIDDLEWARE.md) | Middleware patterns | Auth, rate-limiting, validation, caching, composition |
-| [EXTERNAL_APIS.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/EXTERNAL_APIS.md) | External proxies | `defineProxy()`, transforms, mocking, auth |
-| [IMPLEMENTATION.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/IMPLEMENTATION.md) | Core implementation | HTTP core, client, SSR utils, proxy system, testing |
-| [EXAMPLES.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/EXAMPLES.md) | Full examples | Blog, E-commerce, Admin dashboard |
-| [MIGRATION.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/MIGRATION.md) | Migration guides | From Express, Next.js, SvelteKit, NestJS |
-| [BEST_PRACTICES.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/BEST_PRACTICES.md) | Best practices | Structure, types, security, testing, deployment |
+| [README.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/README.md) | Quick start | Feature list, basic examples |
+| [CONCEPTS.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/CONCEPTS.md) | Core concepts | Routing, API calls, SSR flow, middleware |
+| [ARCHITECTURE.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/ARCHITECTURE.md) | Full architecture | Diagrams, security, scalability, CI/CD, plugins |
+| [API.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/API.md) | API reference | `api()`, `getSSRData()`, `Middleware` type, `defineProxy()` |
+| [SSR.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/SSR.md) | SSR guide | Injection, hydration, framework integrations |
+| [MIDDLEWARE.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/MIDDLEWARE.md) | Middleware patterns | Auth, rate-limiting, validation, caching, composition |
+| [EXTERNAL_APIS.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/EXTERNAL_APIS.md) | External proxies | `defineProxy()`, transforms, mocking, auth |
+| [IMPLEMENTATION.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/IMPLEMENTATION.md) | Core implementation | HTTP core, client, SSR utils, proxy system, testing |
+| [EXAMPLES.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/EXAMPLES.md) | Full examples | Blog, E-commerce, Admin dashboard |
+| [MIGRATION.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/MIGRATION.md) | Migration guides | From Express, Next.js, SvelteKit, NestJS |
+| [BEST_PRACTICES.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/BEST_PRACTICES.md) | Best practices | Structure, types, security, testing, deployment |
 
 ---
 
 ## Overview
 
-**Pounce-Board** is a full-stack meta-framework for **@pounce/core**—analogous to what SvelteKit is to Svelte.
+**Pounce-Board** is a full-stack meta-framework for **pounce-ts**—analogous to what SvelteKit is to Svelte.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                       @pounce/board                          │
+│                       pounce-board                          │
 │  (Full-stack meta-framework)                                │
 │  - File-based routing        - Middleware stacks            │
 │  - SSR hydration             - External API proxies         │
@@ -46,7 +46,7 @@
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                        @pounce/core                            │
+│                        pounce-ts                            │
 │  (UI Component Framework)                                   │
 │  - Fine-grained reactivity   - Direct DOM manipulation      │
 │  - Two-way binding via JSX   - No Virtual DOM               │
@@ -84,7 +84,7 @@
 ### Framework Source Structure
 
 ```
-@pounce/board/
+pounce-board/
 ├── src/
 │   ├── lib/                       # Framework internals
 │   │   ├── tsconfig.json          # Shared lib tsconfig
@@ -195,7 +195,7 @@ Folders wrapped in parentheses are **not included in the URL** but allow shared 
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "@pounce/core",
+    "jsxImportSource": "pounce-ts",
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "types": ["vite/client"]
   },
@@ -313,7 +313,7 @@ const users = await api("/api/users").get();
 
 ```tsx
 // routes/dashboard/index.tsx
-import { api } from '@pounce/board/http';
+import { api } from 'pounce-board/http';
 
 export default function Dashboard() {
   // This runs on server (SSR) first, then on client
@@ -363,7 +363,7 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 
 ---
 
-## @pounce/core Integration Notes
+## pounce-ts Integration Notes
 
 > [!WARNING]
 > **Anti-patterns to avoid:**
@@ -389,47 +389,94 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 
 ### 1.2 Dependencies
 - [ ] Add `mutts` as dependency
-- [ ] Add `@pounce/core` as dependency
+- [ ] Add `pounce-ts` as dependency
 - [ ] Implement Hono adapter (primary integration)
 - [ ] Add Arktype for validation
 - [ ] Add development dependencies (Vite, TypeScript, etc.)
 
 ### 1.3 Build Setup
 - [ ] All the tsconfig.xxx.json, all the vite plugins &c. should be confgured automatically - each with one import
-- [ ] The server shouldn't have to be configured manually - all the route/middleware/... initialisation should be centralised by @pounce/board, perhaps just exported from @pounce/board so that it can be augmented
+- [ ] The server shouldn't have to be configured manually - all the route/middleware/... initialisation should be centralised by pounce-board, perhaps just exported from pounce-board so that it can be augmented
 
 ---
 
 ## Phase 2: Core HTTP Layer
 
-### 2.1 - 2.3 Core HTTP Layer (Now in @pounce/kit)
-- [x] **Moved to Kit:** `lib/http/core.ts` is now part of `@pounce/kit/api/core`.
-- [x] **Moved to Kit:** Middleware Runner implemented in `kit`.
-- [x] **Moved to Kit:** Response utilities implemented in `kit`.
+### 2.1 Core Types (`lib/http/core.ts`)
+- [x] Define `HttpMethod` type
+- [x] Define `RequestContext` interface
+- [x] Define `Middleware` type signature
+- [x] Define `RouteHandler` interface
+- [x] Define `RouteResponse` type (`{ status, data?, error?, headers? }`)
+
+### 2.2 Middleware Runner
+- [x] Implement `runMiddlewares(stack, context, handler)`
+- [x] Handle middleware chain execution
+- [x] Handle short-circuit responses
+- [x] Handle error propagation
+- [x] Add timing/performance instrumentation hooks
+
+### 2.3 Response Utilities
+- [x] Implement `createJsonResponse(data, status, headers)`
+- [x] Implement `createErrorResponse(error, status)`
+- [x] Implement response compression utilities
+- [x] Add security headers helper
+- [x] Audit global state for concurrency safety (e.g. `client.ts` singletons)
 
 ---
 
 
 ## Phase 3: API Client
 
-### 3.1 - 3.5 API Client (Now in @pounce/kit)
-- [x] **Moved to Kit:** `lib/http/client.ts` is now `@pounce/kit/api/client`.
-- [x] **Moved to Kit:** Universal `api()` implementation (DOM vs No-DOM strategies).
-- [x] **Moved to Kit:** ImplementationDependent errors for environment-specific features.
-- [x] **Moved to Kit:** SSR data tracking and injection.
+### 3.1 Core Client (`lib/http/client.ts`)
+- [x] Implement `api(path)` factory function
+- [x] Implement relative path resolution (`"."`)
+- [x] Implement absolute path handling (`"/users/123"`)
+- [x] Implement external proxy support (object-based)
+- [x] Support advanced API syntaxes:
+    - `api("/path").get(...)` (Standard)
+    - `api(".").get(...)` (Relative)
+    - `get("/path", ...)` (Directly imported method)
+    - `api.get("/path", ...)` (Functional proxy)
+
+### 3.2 HTTP Methods
+- [x] Implement `.get<T>(params?)`
+- [x] Implement `.post<T>(body)`
+- [x] Implement `.put<T>(body)`
+- [x] Implement `.del<T>(params?)`
+- [x] Implement `.patch<T>(body)`
+
+### 3.3 SSR Awareness
+- [x] Implement `enableSSR()` mode flag
+- [x] Implement server-side direct function call (no network)
+- [x] Implement client-side script tag reading (first load)
+- [x] Implement client-side fetch (navigation)
+- [x] Track API calls during SSR for injection
+
+### 3.4 Error Handling
+- [x] Implement typed error responses
+- [x] Add retry logic
+- [x] Add timeout handling
+- [x] Add request/response interceptors
+- [x] Finish the reflexion of [INTERCEPTORS.md](./analysis/INTERCEPTORS.md)
+- [x] Make sure interceptors are usable on BE (for SSR but also for proxies, functionality forwarding, ...)
+
+### 3.5 SSR modules
+- [x] Analyse integration with pure-glyf: bundle the CSS directly as include it in generated html
+- [ ] Use previous analyse to allow custom data bundlers
 ---
 
 ## Phase 4: SSR Integration (Phased)
 
-### 4.1 Phase 1: Basic Node/SSR Support (`@pounce/core`)
-- [x] Implement `renderToString(element, scope)` in `@pounce/core/server`
+### 4.1 Phase 1: Basic Node/SSR Support (`pounce-ts`)
+- [x] Implement `renderToString(element, scope)` in `pounce-ts/server`
 - [x] Support `linkedom` as an optional server-side dependency
 - [x] Verify synchronous component rendering in Node
 
 ### 4.2 Phase 2: Async Data Tracking
-- [x] Implement SSR Promise Tracker in `@pounce/board/lib/http/context`
+- [x] Implement SSR Promise Tracker in `pounce-board/lib/http/context`
 - [x] Update `api()` client to register pending SSR requests
-- [x] Implement `renderToStringAsync` in `@pounce/core/server`
+- [x] Implement `renderToStringAsync` in `pounce-ts/server`
 - [x] Verify components wait for data before final HTML generation
 
 ### 4.3 Phase 3: Pounce-Board Integration
@@ -452,16 +499,52 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 > [!NOTE]
 > Proxies are **code utilities** for calling external APIs, not HTTP routes or forwarders.
 
-### 5.1 - 5.3 External API Proxies (Now in @pounce/kit)
-- [x] **Moved to Kit:** Proxy system logic is part of `kit` API.
+### 5.1 Proxy Configuration (`lib/http/proxy.ts`)
+- [x] Implement `defineProxy(config)` function
+- [x] Support `baseUrl` configuration
+- [x] Support global `request` transforms
+- [x] Support per-endpoint configuration
+
+### 5.2 Endpoint Features
+- [x] Implement `path` with `{param}` substitution
+- [x] Implement `method` (GET, POST, PUT, DELETE, PATCH)
+- [x] Implement `transform(response, params)` for response mapping
+- [x] Implement `prepare(body)` for request mapping
+- [x] Implement `params(input)` for query parameter mapping
+- [x] Implement `onError(error)` for custom error handling
+- [x] Implement `schema` for Zod validation
+- [x] Implement `raw` flag for non-JSON responses
+- [x] Implement `mock(params)` for development mocking
+
+### 5.3 Advanced Features
+- [x] Support file uploads (FormData)
+- [ ] Support streaming responses
+- [x] Support request retries
+- [x] Support request caching
+- [x] Type inference from endpoint definitions
 
 ---
 
 ## Phase 6: File-Based Router
 
-### 6.1 - 6.4 File-Based Router (Now in @pounce/kit)
-- [x] **Moved to Kit:** `lib/router/index.ts` concepts moved to `kit/router`.
-- [x] **Board Responsibility:** Board still handles scanning user's `routes/` directory (via CLI/Adapter) and passing it to Kit's `buildRouteTree`.
+### 6.1 Route Scanner (`lib/router/index.ts`)
+- [x] Scan `routes/` directory structure
+- [x] Parse dynamic segments (`[id]`, `[...slug]`)
+- [x] Build route tree from filesystem
+- [x] Support `import.meta.glob` for Vite
+- [x] Support Node.js file scanning fallback
+
+### 6.2 Route Matching
+- [x] Implement path-to-route matching
+- [x] Handle dynamic segments extraction
+- [x] Handle catch-all segments
+- [x] Handle route priority/ordering
+
+### 6.3 Handler Loading
+- [x] Load `index.ts` for backend handlers
+- [x] Load `index.tsx` for frontend components
+- [x] Load `common.ts` for middleware
+- [x] Load `common.tsx` a layout
 - [ ] Load `types.d.ts` for shared types
 - [ ] Handle hot module replacement in dev
 
@@ -567,17 +650,23 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 ### Test Structure Overview
 
 ```
-@pounce/board/
+pounce-board/
 ├── src/
-├── src/
-│   ├── client/
-│   │   └── index.ts          # Facade
-│   ├── server/
-│   │   └── index.ts          # Facade
+│   ├── lib/
+│   │   ├── http/
+│   │   │   ├── core.ts
+│   │   │   ├── core.spec.ts          # ← Colocated unit test
+│   │   │   ├── client.ts
+│   │   │   ├── client.spec.ts        # ← Colocated unit test
+│   │   │   ├── proxy.ts
+│   │   │   └── proxy.spec.ts         # ← Colocated unit test
+│   │   ├── ssr/
+│   │   │   ├── utils.ts
+│   │   │   └── utils.spec.ts         # ← Colocated unit test
+│   │   └── router/
+│   │       ├── index.ts
+│   │       └── index.spec.ts         # ← Colocated unit test
 │   └── adapters/
-│       ├── hono.ts
-│       └── hono.spec.ts      # Adapter specific tests
-│
 │       ├── hono.ts
 │       └── hono.spec.ts              # ← Colocated unit test
 │
@@ -595,7 +684,7 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 │   │   └── ssr-flow.spec.ts
 │   │
 │   └── consumers/                    # ← Test consumer apps
-│       ├── minimal-app/              # Minimal @pounce/board app
+│       ├── minimal-app/              # Minimal pounce-board app
 │       │   ├── routes/
 │       │   │   ├── index.ts
 │       │   │   ├── index.tsx
@@ -605,7 +694,7 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 │       │   │           ├── index.tsx
 │       │   │           └── common.ts
 
-│       │   ├── package.json          # Uses @pounce/board as dep
+│       │   ├── package.json          # Uses pounce-board as dep
 │       │   └── vite.config.ts
 │       │
 │       ├── blog-app/                 # Blog example as test
@@ -619,9 +708,71 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 └── package.json
 ```
 
-### 10.1 Unit Tests (Now in @pounce/kit)
-- **Note:** Unit tests for `router`, `client`, `http-core` are now located in `@pounce/kit`.
-- Board tests focus on **Integration** and **Consumers**.
+### 10.1 Unit Tests (Vitest - Colocated `.spec.ts` files)
+
+Tests live **next to their source files** for easy discovery and maintenance.
+
+**Configuration (`vitest.config.ts`):**
+```ts
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    include: ['src/**/*.spec.ts'],
+    environment: 'node',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      exclude: ['**/tests/**', '**/node_modules/**']
+    }
+  }
+});
+```
+
+**Unit Test TODOs:**
+
+#### `lib/http/core.spec.ts`
+- [x] Test `runMiddlewares()` executes chain in order
+- [x] Test middleware can short-circuit with Response
+- [x] Test context mutations propagate through chain
+- [x] Test error propagation from handler
+- [x] Test error propagation from middleware
+- [x] Test empty middleware stack calls handler directly
+
+#### `lib/http/client.spec.ts`
+- [x] Test `api(".")` relative path resolution
+- [x] Test `api("/abs")` absolute path handling
+- [x] Test `.get()`, `.post()`, `.put()`, `.del()`, `.patch()` methods
+- [x] Test SSR mode returns cached data
+- [x] Test client mode fetches from network
+- [x] Test error response typing
+
+#### `lib/http/proxy.spec.ts`
+- [x] Test `defineProxy()` creates callable endpoints
+- [x] Test `{param}` path substitution
+- [x] Test `prepare()` transforms request body
+- [x] Test `transform()` transforms response
+- [x] Test `params()` adds query parameters
+- [x] Test `onError()` handles failures
+- [x] Test `schema` validates with Zod
+- [x] Test `mock()` returns mock data in dev
+- [x] Test `raw` flag returns Response object
+
+#### `lib/ssr/utils.spec.ts`
+- [x] Test `injectApiResponses()` adds script tags
+- [x] Test script tag IDs are unique
+- [x] Test JSON is properly escaped (XSS prevention)
+- [x] Test `getSSRData()` reads from script tags
+- [x] Test `getSSRData()` returns null for missing tags
+- [x] Test one-time consumption removes data
+
+#### `lib/router/index.spec.ts`
+- [x] Test route tree building from filesystem
+- [x] Test `[id]` dynamic segment parsing
+- [x] Test `[...slug]` catch-all parsing
+- [x] Test route matching priority
+- [x] Test middleware inheritance collection
+- [x] Test handler file loading
 
 ---
 
@@ -731,25 +882,25 @@ export default defineConfig({
 
 ### 10.4 Consumer Test Apps (`/tests/consumers/`)
 
-**Real applications** that use @pounce/board as a dependency, ensuring the package works correctly when consumed.
+**Real applications** that use pounce-board as a dependency, ensuring the package works correctly when consumed.
 
 #### `tests/consumers/minimal-app/`
 Bare-minimum app to test basic functionality:
-- [x] Create `package.json` with `@pounce/board` dependency
+- [x] Create `package.json` with `pounce-board` dependency
 - [x] Create single route with handler + page
 - [x] Create dynamic route `/users/[id]`
 - [x] Create middleware example
 - [x] Create SSR data loading example
 
 #### `tests/consumers/blog-app/`
-Full blog implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/EXAMPLES.md)):
+Full blog implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/EXAMPLES.md)):
 - [x] Posts CRUD routes
 - [x] Authentication middleware
 - [ ] SSR with initial data
 - [ ] External API proxy for comments
 
 #### `tests/consumers/e-commerce-app/`
-E-commerce implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/EXAMPLES.md)):
+E-commerce implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/EXAMPLES.md)):
 - [ ] Product catalog routes
 - [ ] Cart management
 - [ ] External payment API proxy
@@ -884,7 +1035,7 @@ E-commerce implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/@pounce
 
 ## Quick Reference: What Lives Where
 
-| Concept | @pounce/board | @pounce/core | mutts |
+| Concept | pounce-board | pounce-ts | mutts |
 |---------|--------------|-----------|-------|
 | Reactivity | Uses for BE caching | Uses for FE rendering | Provides core system |
 | Components | `index.tsx` files | `h()`, JSX runtime | - |

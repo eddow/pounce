@@ -8,9 +8,9 @@
 ✅ **SSR data injection** – Script-tag based hydration
 ✅ **Explicit middleware** – Per-route middleware stacks
 ✅ **External API proxies** – Typed legacy system integration
-✅ **Framework** – @pounce/board is to @pounce/core what sveltekit is to svelte
+✅ **Framework** – pounce-board is to pounce-ts what sveltekit is to svelte
 
-npm install @pounce/board
+npm install pounce-board
 ```
 
 ### 2. Project Structure

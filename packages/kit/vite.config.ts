@@ -2,7 +2,7 @@
 import { defineConfig } from 'vite'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'node:url'
-import { pounceCorePackage } from '@pounce/plugin/packages'
+import { pounceCorePackage } from '@pounce/core/plugin'
 
 const projectRootDir = dirname(fileURLToPath(import.meta.url))
 

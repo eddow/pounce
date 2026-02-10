@@ -1,14 +1,15 @@
 {
 	"compilerOptions": {
-		"composite": true,
 		"skipLibCheck": true,
 		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"allowSyntheticDefaultImports": true
+		"allowSyntheticDefaultImports": true,
+		"noEmit": true
 	},
 	"include": [
 		"vite.config.ts",
 		"vitest.config.ts",
-		"../../test/vitest.config.base.ts"
+		"../../test/vitest.config.base.ts",
+		"src/plugin/**/*.ts"
 	]
 }

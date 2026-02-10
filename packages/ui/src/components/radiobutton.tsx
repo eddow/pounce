@@ -1,6 +1,8 @@
+import type { Scope } from '@pounce/core'
 import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
+import { useDisplayContext } from '../display/display-context'
 import { asVariant, getVariantTrait } from '../shared/variants'
 import { Icon } from './icon'
 
@@ -61,7 +63,7 @@ export type RadioButtonProps<Value = any> = {
 	children?: JSX.Children
 }
 
-const RadioButtonBase = (props: RadioButtonProps<any>) => {
+const RadioButtonBase = (props: RadioButtonProps, scope: Scope) => {
 	const adapter = getAdapter('RadioButton')
 
 	const state = compose(
@@ -120,8 +122,8 @@ const RadioButtonBase = (props: RadioButtonProps<any>) => {
 	if (adapter.renderStructure) {
 		return adapter.renderStructure({
 			props,
-			state: state as any,
-			children: state.children as any,
+			state: state as Record<string, unknown>,
+			children: state.children,
 			ariaProps: {
 				'role': 'radio',
 				'aria-checked': `${state.checked}`,
@@ -130,7 +132,7 @@ const RadioButtonBase = (props: RadioButtonProps<any>) => {
 					: state.ariaLabel,
 				'aria-disabled': state.disabled || undefined,
 			},
-		}, {} as any) // TODO: Pass DisplayContext
+		}, useDisplayContext(scope))
 	}
 
 	return (

@@ -128,7 +128,7 @@ export function applyTransition(
 	element.addEventListener('transitionend', handleTransitionEnd, { once: true })
 	
 	// Fallback timeout (1.5x duration to account for delays)
-	timeoutId = setTimeout(complete, duration * 1.5) as any
+	timeoutId = window.setTimeout(complete, duration * 1.5)
 	
 	// Return cleanup function
 	return () => {

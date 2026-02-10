@@ -7,7 +7,10 @@
 	"module": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"exports": {
-		".": "./dist/index.js",
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
 		"./css": "./dist/ui.css",
 		"./css-dark": "./dist/ui-dark.css"
 	},
@@ -38,7 +41,6 @@
 		"@axe-core/playwright": "^4.10.0",
 		"@biomejs/biome": "^2.2.7",
 		"@playwright/test": "^1.56.1",
-		"@pounce/plugin": "workspace:*",
 		"@types/node": "25.1.0",
 		"arktype": "^2.1.29",
 		"jsdom": "^27.4.0",
@@ -61,5 +63,12 @@
 		"@pounce/kit": "workspace:*",
 		"mutts": "link:../../../mutts"
 	},
+	"files": [
+		"dist",
+		"src",
+		"!src/**/*.spec.*",
+		"README.md",
+		"LLM.md"
+	],
 	"packageManager": "pnpm@10.28.2"
 }

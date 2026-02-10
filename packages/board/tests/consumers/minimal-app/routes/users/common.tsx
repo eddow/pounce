@@ -1,4 +1,4 @@
-import type { Child } from '@pounce/core'
+import type { Child } from 'pounce-ts'
 
 export default function UsersLayout({ children }: { children: Child }) {
 	return (

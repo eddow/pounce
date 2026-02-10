@@ -42,6 +42,12 @@
 			"@pounce/core/test": [
 				"../core/src/test/dom.ts"
 			],
+			"@pounce/core/jsx-runtime": [
+				"../core/dist/jsx-runtime.d.ts"
+			],
+			"@pounce/core/jsx-dev-runtime": [
+				"../core/dist/jsx-dev-runtime.d.ts"
+			],
 			"@pounce/kit": [
 				"../kit/src/index.ts"
 			],

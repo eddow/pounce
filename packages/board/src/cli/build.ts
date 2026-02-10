@@ -31,10 +31,10 @@ export async function runBuild(options: BuildOptions = {}) {
 		},
 		resolve: {
 			alias: {
-				'@pounce/board/adapters': path.resolve(__dirname, '../../src/adapters/hono.ts'),
-				'@pounce/board/client': path.resolve(__dirname, '../../src/client/index.ts'),
-				'@pounce/board/server': path.resolve(__dirname, '../../src/server/index.ts'),
-				'@pounce/board': path.resolve(__dirname, '../../src/client/index.ts'),
+				'pounce-board/adapters': path.resolve(__dirname, '../../src/adapters/hono.ts'),
+				'pounce-board/client': path.resolve(__dirname, '../../src/client/index.ts'),
+				'pounce-board/server': path.resolve(__dirname, '../../src/server/index.ts'),
+				'pounce-board': path.resolve(__dirname, '../../src/client/index.ts'),
 			}
 		}
 	})
@@ -54,10 +54,10 @@ import {
     injectApiResponses, 
     getCollectedSSRResponses,
     flushSSRPromises
-} from '@pounce/board/server'
-import { api } from '@pounce/board/client'
-import { renderToStringAsync, withSSR } from '@pounce/core/server'
-import { h } from '@pounce/core'
+} from 'pounce-board/server'
+import { api } from 'pounce-board/client'
+import { renderToStringAsync, withSSR } from 'pounce-ts/server'
+import { h } from 'pounce-ts'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
@@ -171,10 +171,10 @@ serve({
 			},
 			resolve: {
 				alias: {
-					'@pounce/board/adapters': path.resolve(__dirname, '../../src/adapters/hono.ts'),
-					'@pounce/board/client': path.resolve(__dirname, '../../src/client/index.ts'),
-					'@pounce/board/server': path.resolve(__dirname, '../../src/server/index.ts'),
-					'@pounce/board': path.resolve(__dirname, '../../src/client/index.ts'),
+					'pounce-board/adapters': path.resolve(__dirname, '../../src/adapters/hono.ts'),
+					'pounce-board/client': path.resolve(__dirname, '../../src/client/index.ts'),
+					'pounce-board/server': path.resolve(__dirname, '../../src/server/index.ts'),
+					'pounce-board': path.resolve(__dirname, '../../src/client/index.ts'),
 				}
 			}
 		})

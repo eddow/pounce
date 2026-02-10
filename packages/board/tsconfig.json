@@ -21,36 +21,51 @@
 			"~/cli/*": [
 				"./src/cli/*"
 			],
-			"@pounce/board": [
+			"pounce-board": [
 				"./src/server/index.ts"
 			],
-			"@pounce/board/client": [
+			"pounce-board/client": [
 				"./src/client/index.ts"
 			],
-			"@pounce/board/server": [
+			"pounce-board/server": [
 				"./src/server/index.ts"
 			],
-			"@pounce/core": [
-				"../core/dist/index.d.ts"
+			"pounce-ts": [
+				"../core/src/lib/index.ts"
 			],
-			"@pounce/core/*": [
-				"../core/dist/*"
+			"pounce-ts/*": [
+				"../core/src/*"
+			],
+			"pounce-ui": [
+				"../ui/src/index.ts"
+			],
+			"pounce-ui/*": [
+				"../ui/src/*"
 			],
 			"@pounce/kit": [
 				"../kit/src/index.ts"
 			],
-			"@pounce/kit/node": [
-				"../kit/src/node/index.ts"
+			"@pounce/kit/*": [
+				"../kit/src/*"
 			],
-			"@pounce/kit/dom": [
-				"../kit/src/dom/index.ts"
+			"@pounce/board": [
+				"./src/index.ts"
+			],
+			"@pounce/board/*": [
+				"./src/*"
 			],
 			"mutts": [
-				"../../../mutts/dist/index.d.ts"
+				"../../../mutts/src/index.ts"
 			],
 			"mutts/*": [
-				"../../../mutts/dist/*"
+				"../../../mutts/src/*"
 			],
+			"npc-script": [
+				"../../../npcs/src/index.ts"
+			],
+			"omni18n": [
+				"../../../omni18n/src/client.ts"
+			]
 		}
 	},
 	"include": [

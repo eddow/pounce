@@ -68,12 +68,10 @@ export function badge(target: Node | Node[], input: BadgeInput) {
 	// Render content into badge
 	// jsx elements need bindApp to be reactive if they contain such logic
 	const content = options.value
-	const unbind = bindApp(
-		(typeof content === 'object' && content !== null && 'render' in content
-			? content
-			: (h(Fragment, {}, String(content)) as any)) as JSX.Element,
-		badgeElement as HTMLElement
-	)
+	const jsxContent = typeof content === 'object' && content !== null && 'render' in content
+		? content as JSX.Element
+		: h(Fragment, {}, String(content)) as JSX.Element
+	const unbind = bindApp(jsxContent, badgeElement)
 
 	return () => {
 		if (typeof unbind === 'function') unbind()

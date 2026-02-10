@@ -1,6 +1,6 @@
 # External API Proxies
 
-`@pounce/board` provides a type-safe way to consume external APIs using `defineProxy`.
+`pounce-board` provides a type-safe way to consume external APIs using `defineProxy`.
 
 ## Defining a Proxy
 
@@ -38,7 +38,7 @@ const myApi = defineProxy({
 - **Retries**: Configurable retry logic at multiple levels:
     1. **Endpoint Level**: `retries` in endpoint config.
     2. **Proxy Level**: `retries` and `retryDelay` in `defineProxy` config.
-    3. **Global Level**: `config.retries` and `config.retryDelay` from `@pounce/board/http`.
+    3. **Global Level**: `config.retries` and `config.retryDelay` from `pounce-board/http`.
 - **Global Config**: `request` option allows setting global headers (like Auth tokens) for all endpoints.
 
 ## Implementation Details

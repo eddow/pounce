@@ -1,4 +1,4 @@
-import type { Middleware } from '@pounce/board/server'
+import type { Middleware } from 'pounce-board/server'
 
 export const middleware: Middleware[] = [
 	async (ctx, next) => {

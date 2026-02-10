@@ -1,14 +1,10 @@
 # Pounce-Board LLM Cheatsheet
 
 ## Core Philosophy
-- **Automated Integration**: Unlike bounce-ts which requires manual setup, @pounce/board automatically wires routes, middleware, and Hono integration
+- **Automated Integration**: Unlike bounce-ts which requires manual setup, pounce-board automatically wires routes, middleware, and Hono integration
 - **File-based Conventions**: Route structure determines behavior (`.ts` = backend, `.tsx` = frontend, `common.ts` = middleware)
 - **Type Safety First**: Shared `.d.ts` files between client/server are mandatory
 - **Universal API Client**: Single `api()` function works with absolute, site-absolute, and site-relative URLs
-
-## File Organization Rules
-- **Temporary Files**: All temporary files, scripts, logs, notes, and scratch work MUST be created in the `sandbox/` folder
-- **No Root Clutter**: Never create temporary `.md`, `.txt`, or other scratch files in the project root
 
 ## Status & Caveats (Updated 2026-01-20)
 - **Status**: Core routing, Hono integration, SSR injection, and basic CLI (`pounce dev`) are implemented.
@@ -17,9 +13,9 @@
 
 ## Package Entry Points
 - **Universal**: `import { ... } from '@pounce/board'` - Types, API client (adapts to env), universal utilities.
-- **Server-Only**: `import { ... } from '@pounce/board/server'` - Router, Hono adapters, middleware runner.
-- **Client-Only**: `import { ... } from '@pounce/board/client'` - Hydration utilities, client-side specifics.
-- **Automatic Resolution**: `@pounce/board` automatically resolves to client or server build based on specific environment (browser vs node) via `package.json` exports.
+- **Server-Only**: `import { ... } from 'pounce-board/server'` - Router, Hono adapters, middleware runner.
+- **Client-Only**: `import { ... } from 'pounce-board/client'` - Hydration utilities, client-side specifics.
+- **Automatic Resolution**: `pounce-board` automatically resolves to client or server build based on specific environment (browser vs node) via `package.json` exports.
 
 
 ## Routing & File Conventions
@@ -34,7 +30,7 @@
   - **Client (first load)**: Reads from `<script id="pounce-data-{base64}">` tags
   - **Client (navigation)**: Standard fetch
 - **SSR ID Generation**: Deterministic base64-encoded path for hydration keys
-- **CSS Injection**: Automatically collects and injects styles from `@pounce/ui` (including `@pounce/ui`)
+- **CSS Injection**: Automatically collects and injects styles from `pounce-ui` (including `pure-glyf`)
 - **Hydration**: Data injected via script tags, not global window object
 - **Synchronous Hydration**: `api().get()` returns a "Smart Promise" with a `.hydrated` property.
   ```tsx

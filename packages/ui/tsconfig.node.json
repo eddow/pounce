@@ -11,6 +11,7 @@
 		"vite.config.ts",
 		"vitest.config.ts",
 		"playwright.config.ts",
-		"../../test/vitest.config.base.ts"
+		"../../test/vitest.config.base.ts",
+		"build/**/*.ts"
 	]
 }

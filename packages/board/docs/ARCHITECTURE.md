@@ -1,6 +1,6 @@
 # Pounce-Board Architecture
 
-`@pounce/board` follows a Clean Architecture approach, separating core logic from framework-specific adapters. This ensures that the core features (routing, http, ssr) are independent of the underlying server implementation.
+`pounce-board` follows a Clean Architecture approach, separating core logic from framework-specific adapters. This ensures that the core features (routing, http, ssr) are independent of the underlying server implementation.
 
 ## Directory Structure
 
@@ -29,7 +29,7 @@ The core contains everything needed to define an application without tying it to
 
 ### 2. Adapters (`src/adapters/`)
 Adapters glue the Core to a specific runtime.
-- **`hono.ts`**: Maps Hono requests to `@pounce/board`'s internal Request/Response types, handles route registration, and executes the Pounce middleware stack.
+- **`hono.ts`**: Maps Hono requests to `pounce-board`'s internal Request/Response types, handles route registration, and executes the Pounce middleware stack.
 
 ### 3. Public API (`src/index.ts`)
 Exposes a unified surface area for consumers, re-exporting necessary parts from Lib and Adapters.

@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { pounceCorePlugin } from '@pounce/plugin/configs'
+import { pounceCorePlugin } from '../packages/core/src/plugin/index'
 import { playwright } from '@vitest/browser-playwright'
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url))
@@ -24,9 +24,7 @@ export const createBaseConfig = (packageDir: string) => {
 				'mutts': resolve(rootDir, isBrowser
 					? '../../mutts/src/entry-browser.ts'
 					: '../../mutts/src/index.ts'),
-				'npc-script': resolve(rootDir, '../../npcs/src/index.ts'),
-				'omni18n': resolve(rootDir, '../../omni18n/src/client.ts'),
-				'pure-glyf': resolve(rootDir, '../../pure-glyf/src/index.ts'),
+				'pure-glyf': resolve(rootDir, '../packages/pure-glyf/src/index.ts'),
 				'@pounce/core/jsx-runtime': resolve(rootDir, '../packages/core/src/runtime/jsx-runtime.ts'),
 				'@pounce/core/jsx-dev-runtime': resolve(rootDir, '../packages/core/src/runtime/jsx-dev-runtime.ts'),
 				'@pounce/core/node': resolve(rootDir, '../packages/core/src/node/index.ts'),
@@ -36,7 +34,7 @@ export const createBaseConfig = (packageDir: string) => {
 				'@pounce/kit': resolve(rootDir, '../packages/kit/src'),
 				'@pounce/ui': resolve(rootDir, '../packages/ui/src'),
 				'@pounce/board': resolve(rootDir, '../packages/board/src'),
-				'@pounce/plugin': resolve(rootDir, '../packages/plugin/src'),
+				'@pounce/core/plugin': resolve(rootDir, '../packages/core/src/plugin/index.ts'),
 			},
 		},
 		test: {

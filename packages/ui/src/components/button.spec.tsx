@@ -42,7 +42,7 @@ describe('Button', () => {
 			container.innerHTML = ''
 
 			// Test dynamic flavoring
-			const ButtonVariant = (Button as any)[variant]
+			const ButtonVariant = Button[variant]
 			render(<ButtonVariant>{variant.charAt(0).toUpperCase() + variant.slice(1)}</ButtonVariant>)
 
 			const button = container.querySelector('.pounce-button')

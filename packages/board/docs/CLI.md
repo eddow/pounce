@@ -4,7 +4,7 @@ The Pounce-Board CLI provides tools for development, building, and previewing yo
 
 ## Installation
 
-The CLI is included with the `@pounce/board` package. You can run it using `npx`:
+The CLI is included with the `pounce-board` package. You can run it using `npx`:
 
 ```bash
 npx pounce <command>
@@ -23,7 +23,7 @@ pounce dev [options]
 
 **Options:**
 - `--port <port>`: Port to listen on (default: `3000`)
-- `--routes <dir>`: Directory containing @pounce/board routes (default: `./routes`)
+- `--routes <dir>`: Directory containing pounce-board routes (default: `./routes`)
 - `--html <path>`: Path to the entry HTML file (default: `./index.html`)
 
 **Example:**

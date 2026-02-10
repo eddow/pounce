@@ -8,10 +8,10 @@
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"paths": {
-			"@pounce/board/*": [
+			"pounce-board/*": [
 				"../../../dist/lib/*"
 			],
-			"@pounce/board/adapters/*": [
+			"pounce-board/adapters/*": [
 				"../../../dist/adapters/*"
 			]
 		}

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { h } from '@pounce/core'
-import { renderToString, renderToStringAsync, withSSR } from '@pounce/core/server'
+import { h } from 'pounce-ts'
+import { renderToString, renderToStringAsync, withSSR } from 'pounce-ts/server'
 import { reactive } from 'mutts'
 import { createScope, runWithContext, flushSSRPromises, trackSSRPromise } from '../../src/lib/http/context.js'
 

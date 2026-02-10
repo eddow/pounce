@@ -42,7 +42,7 @@ For external APIs that need custom transforms, headers, or validation, use `defi
 
 ```ts
 // routes/api/github.ts
-import { defineProxy } from "@pounce/board/http";
+import { defineProxy } from "pounce-board/http";
 
 export const proxy = defineProxy({
   baseUrl: "https://api.github.com",

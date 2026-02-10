@@ -138,7 +138,7 @@ const MyComp = (props) => {
 
 ### 3.1 JSX Compilation
 
-The **babel plugin** (`@pounce/plugin`) transforms JSX before execution:
+The **babel plugin** (`@pounce/core/plugin`) transforms JSX before execution:
 
 | Source | Compiled |
 |--------|----------|
@@ -561,10 +561,11 @@ Adapters must be `Partial<FrameworkAdapter>`. CSS should be a separate import (n
 ## 6. BUILD & TEST
 
 ```
-Build chain: @pounce/plugin → @pounce/core → @pounce/kit → @pounce/ui
+Build chain: @pounce/core → @pounce/kit → @pounce/ui
+Orchestrated by Turborepo: `pnpm run build` from monorepo root
 ```
 
-- Plugin exports from `dist/` (built JS). After modifying plugin source, MUST rebuild before changes take effect.
+- Core's babel plugin lives in `@pounce/core/plugin` (source in `src/plugin/`).
 - All packages use pnpm: `source ~/.nvm/nvm.sh && nvm use 22 && pnpm ...`
 - Dual entry points: `dom` (browser) and `node` (SSR) for core, kit.
 - Vitest config includes the babel plugin (`esbuild: false`). Tests should NOT manually use `r()`.

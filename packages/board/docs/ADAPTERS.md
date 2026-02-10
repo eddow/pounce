@@ -8,14 +8,14 @@ The Hono adapter allows you to use Pounce-Board's file-based routing and middlew
 
 ### Installation
 
-The Hono adapter is included in the core `@pounce/board` package.
+The Hono adapter is included in the core `pounce-board` package.
 
 ### Basic Usage
 
 The easiest way to start is using `createPounceApp`, which gives you a Hono instance pre-configured with Pounce middleware.
 
 ```typescript
-import { createPounceApp } from '@pounce/board/adapters/hono';
+import { createPounceApp } from 'pounce-board/adapters/hono';
 
 const app = createPounceApp({
   routesDir: './routes' // optional, default
@@ -30,7 +30,7 @@ If you want to add Pounce-Board to an existing Hono application, use `createPoun
 
 ```typescript
 import { Hono } from 'hono';
-import { createPounceMiddleware } from '@pounce/board/adapters/hono';
+import { createPounceMiddleware } from 'pounce-board/adapters/hono';
 
 const app = new Hono();
 

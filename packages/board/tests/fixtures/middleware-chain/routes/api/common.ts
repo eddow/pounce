@@ -1,7 +1,7 @@
 /**
  * API middleware - runs after root, before api handlers
  */
-import type { Middleware, RequestContext } from '@pounce/board/server'
+import type { Middleware, RequestContext } from 'pounce-board/server'
 
 export const middleware: Middleware[] = [
 	async (ctx: RequestContext, next: () => Promise<Response>) => {

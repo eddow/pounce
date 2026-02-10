@@ -1,6 +1,6 @@
 import * as path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { buildRouteTree, matchRoute } from '@pounce/board/server'
+import { buildRouteTree, matchRoute } from 'pounce-board/server'
 
 const MINIMAL_APP_ROUTES = path.resolve(import.meta.dirname, '../consumers/minimal-app/routes')
 

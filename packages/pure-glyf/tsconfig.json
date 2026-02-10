@@ -1,0 +1,32 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": [
+			"ES2022",
+			"DOM",
+			"DOM.Iterable"
+		],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"jsx": "react-jsx",
+		"jsxImportSource": "@pounce/core",
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+		"skipLibCheck": true,
+		"paths": {
+			"@pounce/core": ["../core/dist/src/lib/index.d.ts"],
+			"@pounce/core/*": ["../core/dist/*"],
+			"@pounce/ui": ["../ui/dist/index.d.ts"]
+		},
+		"declaration": true,
+		"declarationDir": "./dist",
+		"emitDeclarationOnly": true,
+		"outDir": "./dist",
+		"rootDir": "./src"
+	},
+	"include": [
+		"src"
+	]
+}

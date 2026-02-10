@@ -1,7 +1,7 @@
 /**
  * Users list handler - root + api + users middleware applies
  */
-import type { RequestContext } from '@pounce/board/server'
+import type { RequestContext } from 'pounce-board/server'
 
 export async function get(ctx: RequestContext) {
 	return {

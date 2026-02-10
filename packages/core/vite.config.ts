@@ -1,8 +1,8 @@
 import { defineConfig } from 'vitest/config'
-import { existsSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { pounceCorePackage } from '@pounce/plugin/packages'
+import { pounceCorePackage } from './src/plugin/index'
 
 const projectRootDir = dirname(fileURLToPath(import.meta.url))
 
@@ -32,9 +32,6 @@ export default defineConfig({
 			'@pounce/core/jsx-dev-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-dev-runtime.ts'),
 			'@pounce/core': resolvePath(projectRootDir, 'src/lib/index.ts'),
 			'mutts': resolvePath(projectRootDir, '../../../mutts/src'),
-			'npc-script': resolvePath(projectRootDir, '../../../npcs/src'),
-			'omni18n': resolvePath(projectRootDir, '../../../omni18n/src'),
-			'pure-glyf': resolvePath(projectRootDir, '../../../pure-glyf/src'),
 		},
 	},
 	plugins: [
@@ -48,19 +45,24 @@ export default defineConfig({
 			},
 			dts: {
 				rollupTypes: false,
-				copyDtsFiles: true,
-				include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.d.ts'],
 				afterBuild() {
-					// Generate dist/index.d.ts — the build has dom/node entries but no index entry,
-					// yet package.json exports and downstream tsconfigs reference dist/index.d.ts
-					const indexDts = join(projectRootDir, 'dist', 'index.d.ts')
-					if (!existsSync(indexDts)) {
-						writeFileSync(
-							indexDts,
-							'/// <reference path="./src/types/jsx.d.ts" />\nexport * from \'./src/dom/index\'\nexport type { JSX } from \'./src/types/jsx\'\n'
-						)
+					const typesDir = join(projectRootDir, 'dist/src/types')
+					if (!existsSync(typesDir)) mkdirSync(typesDir, { recursive: true })
+					copyFileSync(
+						join(projectRootDir, 'src/types/jsx.d.ts'),
+						join(typesDir, 'jsx.d.ts')
+					)
+					const domDts = join(projectRootDir, 'dist/dom.d.ts')
+					const content = readFileSync(domDts, 'utf8')
+					if (!content.includes('jsx.d.ts')) {
+						writeFileSync(domDts, `/// <reference path="./src/types/jsx.d.ts" />\n${content}`)
 					}
-				}
+					const nodeDts = join(projectRootDir, 'dist/node.d.ts')
+					const nodeContent = readFileSync(nodeDts, 'utf8')
+					if (!nodeContent.includes('jsx.d.ts')) {
+						writeFileSync(nodeDts, `/// <reference path="./src/types/jsx.d.ts" />\n${nodeContent}`)
+					}
+				},
 			}
 		}),
 	],
@@ -75,12 +77,21 @@ export default defineConfig({
 				node: resolvePath(projectRootDir, 'src/node/index.ts'),
 				'jsx-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-runtime.ts'),
 				'jsx-dev-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-dev-runtime.ts'),
+				plugin: resolvePath(projectRootDir, 'src/plugin/index.ts'),
 			},
 			formats: ['es', 'cjs'],
 			fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'js' : 'cjs'}`,
 		},
 		rollupOptions: {
-			external: ['mutts', 'jsdom', '@babel/core', 'node:path', 'node:url', 'node:async_hooks'],
+			external: [
+				'mutts', 'jsdom',
+				'@babel/core', '@babel/types',
+				'@babel/plugin-proposal-decorators',
+				'@babel/plugin-transform-react-jsx',
+				'@babel/plugin-transform-typescript',
+				'vite', 'vite-plugin-dts',
+				'node:path', 'node:url', 'node:async_hooks',
+			],
 		},
 		outDir: 'dist',
 		target: 'esnext',

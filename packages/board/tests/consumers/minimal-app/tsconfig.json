@@ -8,14 +8,14 @@
 		"skipLibCheck": true,
 		"noEmit": true,
 		"jsx": "react-jsx",
-		"jsxImportSource": "@pounce/core",
+		"jsxImportSource": "pounce-ts",
 		"baseUrl": ".",
 		"paths": {
-			"@pounce/core": [
-				"../../../../core/src/lib"
+			"pounce-ts": [
+				"../../../../pounce-ts/src/lib"
 			],
-			"@pounce/core/*": [
-				"../../../../core/src/lib/*"
+			"pounce-ts/*": [
+				"../../../../pounce-ts/src/lib/*"
 			],
 			"mutts": [
 				"../../../../mutts/src"
@@ -23,20 +23,20 @@
 			"mutts/*": [
 				"../../../../mutts/src/*"
 			],
-			"@pounce/board": [
-				"../../../../board/src/server/index.ts"
+			"pounce-board": [
+				"../../../../pounce-board/src/server/index.ts"
 			],
-			"@pounce/board/client": [
-				"../../../../board/src/client/index.ts"
+			"pounce-board/client": [
+				"../../../../pounce-board/src/client/index.ts"
 			],
-			"@pounce/board/server": [
-				"../../../../board/src/server/index.ts"
+			"pounce-board/server": [
+				"../../../../pounce-board/src/server/index.ts"
 			]
 		}
 	},
 	"include": [
 		"**/*",
-		"../../../../core/**/*",
+		"../../../../pounce-ts/**/*",
 		"../../../../mutts/**/*"
 	]
 }

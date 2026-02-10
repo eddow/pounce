@@ -1,6 +1,8 @@
+import type { Scope } from '@pounce/core'
 import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
+import { useDisplayContext } from '../display/display-context'
 import { asVariant, getVariantTrait } from '../shared/variants'
 import { Icon } from './icon'
 import { perf } from '../perf'
@@ -61,7 +63,7 @@ export type ButtonProps = {
 	children?: JSX.Children
 }
 
-const ButtonBase = (props: ButtonProps) => {
+const ButtonBase = (props: ButtonProps, scope: Scope) => {
 	const adapter = getAdapter('Button')
 
 	const state = compose(
@@ -124,15 +126,15 @@ const ButtonBase = (props: ButtonProps) => {
 	if (adapter.renderStructure) {
 		return adapter.renderStructure({
 			props,
-			state: state as any,
-			children: state.children as any,
+			state: state as Record<string, unknown>,
+			children: state.children,
 			ariaProps: {
 				'aria-label': state.isIconOnly
 					? (state.ariaLabel ?? state.el?.['aria-label'] ?? 'Action')
 					: (state.ariaLabel ?? state.el?.['aria-label']),
 				'aria-disabled': state.disabled || undefined,
 			},
-		}, {} as any) // TODO: Pass DisplayContext
+		}, useDisplayContext(scope))
 	}
 
 	return (

@@ -1,49 +1,38 @@
-import { defineConfig, devices } from '@playwright/test'
-
-declare const process: { env: { CI?: string } }
-
-const isCI = Boolean(process.env.CI)
-const projectRootDir = decodeURIComponent(new URL('.', import.meta.url).pathname)
-const minimalAppPort = 5275
-const blogAppPort = 5276
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: "./tests/e2e",
   fullyParallel: true,
-  forbidOnly: isCI,
-  retries: isCI ? 2 : 0,
-  workers: isCI ? 1 : undefined,
-
-  timeout: 30_000,
-  expect: {
-    timeout: 5_000,
-  },
-  reporter: [['list'], ['html', { open: 'never' }]],
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: [["html", { open: "never" }]],
   use: {
-    baseURL: `http://127.0.0.1:${minimalAppPort}`,
-    headless: true,
-    trace: 'retain-on-failure',
+    baseURL: "http://localhost:3000",
+    trace: "on-first-retry",
   },
   projects: [
     {
-      name: 'chrome',
-      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
     },
   ],
   webServer: [
     {
-      command: `npm run dev -- --port ${minimalAppPort} --hmr-port ${minimalAppPort + 20000}`,
-      cwd: `${projectRootDir}/tests/consumers/minimal-app`,
-      url: `http://127.0.0.1:${minimalAppPort}`,
+      command: "npm run dev",
+      cwd: "./tests/consumers/minimal-app",
+      url: "http://localhost:3000",
       reuseExistingServer: false,
-      timeout: 120_000,
     },
     {
-      command: `PORT=${blogAppPort} npm run dev`,
-      cwd: `${projectRootDir}/tests/consumers/blog-app`,
-      url: `http://127.0.0.1:${blogAppPort}`,
+      command: "npm run dev",
+      cwd: "./tests/consumers/blog-app",
+      url: "http://localhost:3001",
       reuseExistingServer: false,
-      timeout: 120_000,
     },
   ],
-})
+});

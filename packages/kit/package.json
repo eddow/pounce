@@ -12,17 +12,17 @@
 	},
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
+			"types": "./dist/dom.d.ts",
 			"node": "./dist/node.js",
 			"default": "./dist/dom.js"
 		},
 		"./dom": {
-			"types": "./dist/index.d.ts",
+			"types": "./dist/dom.d.ts",
 			"import": "./dist/dom.js",
 			"default": "./dist/dom.js"
 		},
 		"./node": {
-			"types": "./dist/index.d.ts",
+			"types": "./dist/node.d.ts",
 			"import": "./dist/node.js",
 			"default": "./dist/node.js"
 		},
@@ -62,7 +62,6 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.13",
 		"@playwright/test": "^1.58.1",
-		"@pounce/plugin": "workspace:*",
 		"@types/node": "25.1.0",
 		"jsdom": "^27.4.0",
 		"rollup": "4.57.1",

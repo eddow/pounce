@@ -1,7 +1,29 @@
 /**
- * Main entry point for @pounce/board (Universal)
- * Re-exports from client entry for universal types/usage.
- * Specific environments should use /client or /server exports.
+ * Main entry point for pounce-board (Universal)
+ * re-exports client or server output based on environment via package.json conditions
  */
 
-export * from './client/index.js'
+// Universal types and utilities
+export {
+	api,
+	config,
+	enableSSR,
+	disableSSR,
+	clearSSRData,
+	getSSRData,
+	getSSRId,
+	intercept,
+	type InterceptorMiddleware,
+} from './lib/http/client.js'
+
+export { PounceResponse } from './lib/http/response.js'
+export { ApiError } from './lib/http/core.js'
+export type {
+	Middleware,
+	RequestContext,
+	RouteHandler,
+	RouteResponse,
+	HttpMethod,
+} from './lib/http/core.js'
+
+export { defineRoute, type RouteDefinition } from './lib/router/defs.js'

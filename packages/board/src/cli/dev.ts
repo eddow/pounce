@@ -5,8 +5,9 @@ import { createServer } from 'node:http'
 import * as path from 'node:path'
 import { createServer as createViteServer } from 'vite'
 import { createPounceMiddleware, clearRouteTreeCache } from '../adapters/hono.js'
-import { api, enableSSR, matchRoute, buildRouteTree } from '../server/index.js'
+import { api, enableSSR } from '../lib/http/client.js'
 import { fileURLToPath } from 'node:url'
+import { matchRoute, buildRouteTree } from '../lib/router/index.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -18,10 +19,10 @@ export interface DevServerOptions {
 }
 
 /**
- * Run the @pounce/board development server.
+ * Run the pounce-board development server.
  * 
  * This server integrates Hono with Vite in middleware mode to provide:
- * - Automated @pounce/board route discovery and API handling.
+ * - Automated pounce-board route discovery and API handling.
  * - Hot Module Replacement (HMR) for frontend components.
  * - Automated SSR data injection and hydration.
  *
@@ -47,24 +48,24 @@ export async function runDevServer(options: DevServerOptions = {}) {
 				allow: [
 					path.resolve('.'),
 					path.resolve(__dirname, '../../../mutts'),
-					path.resolve(__dirname, '../../../@pounce/core'),
+					path.resolve(__dirname, '../../../pounce-ts'),
 				]
 			}
 		},
 		appType: 'custom',
 		resolve: {
 			alias: {
-				'@pounce/core/jsx-runtime': path.resolve(__dirname, '../../../@pounce/core/src/runtime/jsx-runtime.ts'),
-				'@pounce/core/jsx-dev-runtime': path.resolve(__dirname, '../../../@pounce/core/src/runtime/jsx-dev-runtime.ts'),
-				'@pounce/core': path.resolve(__dirname, '../../../@pounce/core/src/lib'),
+				'pounce-ts/jsx-runtime': path.resolve(__dirname, '../../../pounce-ts/src/runtime/jsx-runtime.ts'),
+				'pounce-ts/jsx-dev-runtime': path.resolve(__dirname, '../../../pounce-ts/src/runtime/jsx-dev-runtime.ts'),
+				'pounce-ts': path.resolve(__dirname, '../../../pounce-ts/src/lib'),
 				'mutts': path.resolve(__dirname, '../../../mutts/src'),
 			}
 		},
 		optimizeDeps: {
-			exclude: ['mutts', '@pounce/core']
+			exclude: ['mutts', 'pounce-ts']
 		},
 		ssr: {
-			noExternal: ['mutts', '@pounce/core']
+			noExternal: ['mutts', 'pounce-ts']
 		}
 	})
 
@@ -89,7 +90,7 @@ export async function runDevServer(options: DevServerOptions = {}) {
 		const url = new URL(c.req.url)
 
 		// Import SSR utilities dynamically to avoid circular deps
-		const { withSSRContext, injectApiResponses, getCollectedSSRResponses } = await import('../server/index.js')
+		const { withSSRContext, injectApiResponses, getCollectedSSRResponses } = await import('../lib/ssr/utils.js')
 
 		// Run all SSR operations within a proper context
 		const origin = `${url.protocol}//${url.host}`
@@ -121,9 +122,9 @@ export async function runDevServer(options: DevServerOptions = {}) {
 			
 			if (match && match.component) {
 				// 3. Load framework utilities from the SAME Vite instance as the components
-				const { renderToStringAsync, withSSR } = await vite.ssrLoadModule('@pounce/core/server')
-				const { h } = await vite.ssrLoadModule('@pounce/core')
-				const { flushSSRPromises } = await vite.ssrLoadModule('@pounce/board/server')
+				const { renderToStringAsync, withSSR } = await vite.ssrLoadModule('pounce-ts/server')
+				const { h } = await vite.ssrLoadModule('pounce-ts')
+				const { flushSSRPromises } = await vite.ssrLoadModule('pounce-board/server')
 
 				if (typeof match.component !== 'function') {
 					console.warn(

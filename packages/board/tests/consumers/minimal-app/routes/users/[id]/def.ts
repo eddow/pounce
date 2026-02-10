@@ -1,7 +1,7 @@
 import { defineRoute } from '@pounce/board'
-import { type } from 'arktype'
+import { z } from 'zod'
 
-export const userRoute = defineRoute('/users/[id]', type({
-	'details?': 'boolean',
-	'format?': "'full' | 'compact'",
+export const userRoute = defineRoute('/users/[id]', z.object({
+	details: z.boolean().optional(),
+    format: z.enum(['full', 'compact']).optional()
 }))

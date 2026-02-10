@@ -1,9 +1,9 @@
-/** @jsxImportSource @pounce/core */
-import { bindApp } from '@pounce/core'
+/** @jsxImportSource pounce-ts */
+import { bindApp } from 'pounce-ts'
 import { intercept } from '@pounce/board'
-import Home from './routes/index.js'
-import UserDetail from './routes/users/[id]/index.js'
-import UserList from './routes/users/list.js'
+import Home from './routes/index.tsx'
+import UserDetail from './routes/users/[id]/index.tsx'
+import UserList from './routes/users/list.tsx'
 
 // Sample interceptor for manual verification
 intercept('**', async (req: Request, next: (req: Request) => Promise<any>) => {

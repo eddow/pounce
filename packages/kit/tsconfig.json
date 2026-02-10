@@ -19,9 +19,9 @@
 		"noEmit": true,
 		"baseUrl": ".",
 		"paths": {
-			"@pounce/core": ["../core/dist/packages/core/src/index.d.ts"],
-			"@pounce/core/server": ["../core/dist/packages/core/src/node/index.d.ts"],
-			"@pounce/core/*": ["../core/dist/packages/core/src/*"],
+			"@pounce/core": ["../core/src/index.d.ts"],
+			"@pounce/core/server": ["../core/src/node/index.ts"],
+			"@pounce/core/*": ["../core/src/*"],
 			"mutts": ["../../../mutts/dist/index.d.ts"],
 			"mutts/*": ["../../../mutts/dist/*"]
 		}
