@@ -1,6 +1,6 @@
 import { compose, PounceElement } from '@pounce/core'
 import { lift } from 'mutts'
-import { client } from '../client/shared.js'
+import { client } from '../platform/shared.js'
 import { perf } from '../perf.js'
 import {
 	matchRoute as coreMatchRoute,

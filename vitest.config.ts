@@ -20,7 +20,6 @@ export default defineConfig({
 			'packages/kit',
 			'packages/ui',
 			'packages/board',
-			'packages/plugin',
 		],
 	},
 })

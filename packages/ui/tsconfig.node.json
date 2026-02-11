@@ -9,9 +9,10 @@
 	},
 	"include": [
 		"vite.config.ts",
+		"vite-plugin-pounce-ui.ts",
 		"vitest.config.ts",
 		"playwright.config.ts",
-		"../../test/vitest.config.base.ts",
+		"../../test/test-base.config.ts",
 		"build/**/*.ts"
 	]
 }

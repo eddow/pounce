@@ -84,6 +84,19 @@ export default defineConfig({
 });
 ```
 
+### Pounce Adapter (`./pounce` export)
+`pure-glyf/pounce` exports `createGlyfIconFactory(icons)` — a bridge that adapts a pure-glyf icon map to Pounce's `iconFactory` signature. Optional: only available when `@pounce/core` and `@pounce/ui` peer deps are installed.
+
+```typescript
+import { tablerSun, tablerMoon } from 'pure-glyf/icons'
+import { createGlyfIconFactory } from 'pure-glyf/pounce'
+
+const iconFactory = createGlyfIconFactory({ sun: tablerSun, moon: tablerMoon })
+setAdapter(myAdapter, { iconFactory })
+```
+
+Build note: `vite.config.ts` uses `pounceCorePlugin` for JSX transform on `pounce.tsx`, and `beforeWriteFile` in `vite-plugin-dts` rewrites relative `../ui/dist/...` paths back to `@pounce/ui` in generated `.d.ts` files.
+
 ### Pounce Babel Plugin Compatibility
 `@pounce/core/plugin` (formerly `@pounce/plugin`) now skips virtual module IDs (`\0`-prefixed) and query-string IDs. Full icon libraries (e.g. `@tabler/icons/icons/outline` with ~5000 SVGs) work directly — no curated subset needed.
 

@@ -1,0 +1,16 @@
+
+import { createPounceApp } from 'pounce-board'
+import { getRequestListener } from '@hono/node-server'
+import { createServer } from 'http'
+
+const port = Number(process.env.PORT) || 3002
+
+const app = createPounceApp({
+	routesDir: './routes',
+})
+
+const server = createServer(getRequestListener(app.fetch))
+
+server.listen(port, () => {
+	console.log(`E-Commerce App running at http://localhost:${port}`)
+})

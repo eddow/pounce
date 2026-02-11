@@ -17,6 +17,7 @@ export default defineConfig({
         },
       },
       dts: {
+        rollupTypes: true,
         insertTypesEntry: true,
         compilerOptions: {
           preserveSymlinks: false,

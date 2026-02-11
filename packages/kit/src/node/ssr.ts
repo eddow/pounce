@@ -1,7 +1,5 @@
-import { withSSR as coreWithSSR } from '@pounce/core/server'
 import { createScope, getContext, type RequestScope, runWithContext } from '../api/context.js'
 import { escapeJson, type SSRDataMap } from '../api/ssr-hydration.js'
-import { createClientInstance, runWithClientAsync } from './bootstrap.js'
 
 // Re-export universal hydration utilities for convenience
 export {
@@ -13,49 +11,29 @@ export {
 	type SSRDataMap,
 } from '../api/ssr-hydration.js'
 
-/**
- * Unified SSR wrapper that composes both @pounce/core and @pounce/kit isolation.
- * This ensures both the JSDOM environment and the client singleton are properly isolated per request.
- */
-export async function withSSR<T>(
-	fn: () => Promise<T>,
-	options?: { url?: string | URL }
-): Promise<T> {
-	return coreWithSSR((_dom: { document: Document; window: Window }) => {
-		return runWithClientAsync(async (_client) => {
-			return fn()
-		}, options)
-	})
-}
+// Re-export platform adapter types for SSR engines to implement
+export type { PlatformAdapter } from '../platform/types.js'
+export { setPlatform } from '../platform/shared.js'
+export { createTestAdapter } from '../platform/test.js'
 
 /**
- * Synchronous version of withSSR for simple cases.
- */
-export function withSSRSync<T>(fn: () => T, options?: { url?: string | URL }): T {
-	return coreWithSSR((_dom: { document: Document; window: Window }) => {
-		const clientInstance = createClientInstance(options?.url)
-		const { als } = require('../node/bootstrap.js')
-		return als.run(clientInstance, () => fn())
-	})
-}
-
-/**
- * Run a function within an SSR context (Legacy wrapper)
- * Now delegates to runWithContext from lib/http/context
+ * Run a function within an SSR context.
+ * Delegates to runWithContext from api/context.
+ *
+ * Note: request isolation (ALS, per-request client) is the SSR engine's
+ * responsibility. The engine should call `setPlatform()` with its own
+ * adapter before invoking this.
  */
 export async function withSSRContext<T>(
 	fn: () => Promise<T>,
 	origin?: string
 ): Promise<{ result: T; context: RequestScope }> {
-	// Always create a new scope for nested isolation
 	const existing = getContext()
 	const scope = createScope(existing?.config)
 	scope.origin = origin || existing?.origin
 	scope.routeRegistry = existing?.routeRegistry
-	// We do NOT inherit responses by default to maintain isolation as per tests
 
 	return runWithContext(scope, async () => {
-		// Enable SSR by default if using this legacy wrapper, as it implies SSR usage
 		scope.config.ssr = true
 		const result = await fn()
 		return { result, context: scope }
@@ -87,7 +65,6 @@ export function injectApiResponses(html: string, responses: SSRDataMap): string 
 		)
 		.join('\n')
 
-	// Insert before </head> if exists, otherwise before </body>
 	if (html.includes('</head>')) {
 		return html.replace('</head>', `${scripts}\n</head>`)
 	}
@@ -95,6 +72,5 @@ export function injectApiResponses(html: string, responses: SSRDataMap): string 
 		return html.replace('</body>', `${scripts}\n</body>`)
 	}
 
-	// Fallback: append to end
 	return html + scripts
 }

@@ -1,28 +1,42 @@
-import { client as baseClient } from '../client/implementation.js'
-import { client, setClient } from '../client/shared.js'
+import { processChildren, bindChildren, type Scope, rootScope } from '@pounce/core'
+import { reactive } from 'mutts'
+import type { ScopedCallback } from 'mutts'
+import { setPlatform } from '../platform/shared.js'
 import type {
+	Client,
 	ClientHistoryState,
 	ClientUrl,
 	ClientViewport,
 	Direction,
 	NavigateOptions,
-} from '../client/types.js'
+	PlatformAdapter,
+} from '../platform/types.js'
 import { perf } from '../perf.js'
 
-// Bind the base reactive client implementation
-setClient(baseClient)
+// --- Build the reactive client ---
 
-export { client }
-
-// --- Initialization ---
-// Note: This file is DOM-only, so we use native window/document directly
-// The canonical exports from @pounce/core are for shared isomorphic code
+const client = reactive({
+	url: createUrlSnapshot(new URL('http://localhost/')),
+	viewport: { width: 0, height: 0 } as ClientViewport,
+	history: { length: 0 } as ClientHistoryState,
+	focused: false,
+	visibilityState: 'hidden' as const,
+	devicePixelRatio: 1,
+	online: true,
+	language: 'en-US',
+	timezone: 'UTC',
+	direction: 'ltr' as Direction,
+	navigate: (_to: string | URL, _options?: NavigateOptions) => {},
+	replace: (_to: string | URL, _options?: Omit<NavigateOptions, 'replace'>) => {},
+	reload: () => {},
+	dispose: () => {},
+	prefersDark: false,
+}) as Client
 
 const cleanupFns: (() => void)[] = []
 
 if (typeof window !== 'undefined') {
 	initializeClientListeners()
-	// Initial Sync
 	synchronizeUrl()
 	client.viewport = createViewportSnapshot()
 	client.history = createHistorySnapshot()
@@ -39,16 +53,13 @@ if (typeof window !== 'undefined') {
 
 client.navigate = (to: string | URL, options?: NavigateOptions): void => {
 	perf?.mark('route:start')
-	
 	const href = resolveHref(to)
 	const stateData = options?.state ?? null
-
 	if (options?.replace) {
 		window.history.replaceState(stateData, '', href)
 	} else {
 		window.history.pushState(stateData, '', href)
 	}
-
 	synchronizeUrl()
 	perf?.mark('route:end')
 	perf?.measure('route:navigate', 'route:start', 'route:end')
@@ -69,7 +80,6 @@ client.dispose = (): void => {
 	}
 }
 
-// Reactive prefersDark: tracks prefers-color-scheme media query
 try {
 	const darkQuery = window.matchMedia('(prefers-color-scheme: dark)')
 	client.prefersDark = darkQuery.matches
@@ -81,6 +91,25 @@ try {
 } catch {
 	client.prefersDark = false
 }
+
+// --- Platform Adapter ---
+
+const domAdapter: PlatformAdapter = {
+	client,
+	head(children: JSX.Element, scope: Scope = rootScope): ScopedCallback {
+		const rendered = processChildren([children], scope)
+		const stopReconciler = bindChildren(document.head, rendered)
+		return () => {
+			stopReconciler()
+			for (const node of rendered) {
+				if (node.parentNode === document.head) document.head.removeChild(node)
+			}
+		}
+	},
+}
+
+setPlatform(domAdapter)
+export { domAdapter }
 
 // --- Internals ---
 

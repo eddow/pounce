@@ -1,0 +1,27 @@
+{
+  "name": "@pounce/docs",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@picocss/pico": "^2",
+    "@pounce/adapter-pico": "workspace:*",
+    "@pounce/core": "workspace:*",
+    "@pounce/kit": "workspace:*",
+    "@pounce/ui": "workspace:*",
+    "highlight.js": "^11",
+    "mutts": "link:../../../mutts",
+    "pure-glyf": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25",
+    "sass": "^1.93",
+    "typescript": "^5.9",
+    "vite": "^7"
+  }
+}

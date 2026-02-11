@@ -7,18 +7,15 @@ const projectRootDir = resolve(__dirname)
 export default defineConfig({
 	resolve: {
 		alias: {
-			'pounce-board/adapters': resolve(__dirname, '../../../src/adapters/hono.ts'),
-			'pounce-board/client': resolve(__dirname, '../../../src/client/index.ts'),
-			'pounce-board/server': resolve(__dirname, '../../../src/server/index.ts'),
-			'pounce-board': resolve(__dirname, '../../../src/client/index.ts'),
-			'pounce-ts/jsx-runtime': resolve(__dirname, '../../../../pounce-ts/src/runtime/jsx-runtime.ts'),
-			'pounce-ts/jsx-dev-runtime': resolve(__dirname, '../../../../pounce-ts/src/runtime/jsx-dev-runtime.ts'),
-			'pounce-ts/server': resolve(__dirname, '../../../../pounce-ts/src/lib/server.ts'),
-			'pounce-ts': resolve(__dirname, '../../../../pounce-ts/src/lib/index.ts'),
+			'@pounce/board/adapters': resolve(__dirname, '../../../src/adapters/hono.ts'),
+			'@pounce/board/client': resolve(__dirname, '../../../src/client/index.ts'),
+			'@pounce/board/server': resolve(__dirname, '../../../src/server/index.ts'),
+			'@pounce/board': resolve(__dirname, '../../../src/index.ts'),
+			'@pounce/core/jsx-runtime': resolve(__dirname, '../../../../core/src/runtime/jsx-runtime.ts'),
+			'@pounce/core/jsx-dev-runtime': resolve(__dirname, '../../../../core/src/runtime/jsx-dev-runtime.ts'),
+			'@pounce/core/server': resolve(__dirname, '../../../../core/src/lib/server.ts'),
+			'@pounce/core': resolve(__dirname, '../../../../core/src/lib/index.ts'),
 			'mutts': resolve(__dirname, '../../../../mutts/src/index.ts'),
-			'@pounce/runtime/jsx-runtime': resolve(__dirname, '../../../../pounce-ts/src/runtime/jsx-runtime.ts'),
-			'@pounce/runtime/jsx-dev-runtime': resolve(__dirname, '../../../../pounce-ts/src/runtime/jsx-dev-runtime.ts'),
-			'@pounce/runtime': resolve(__dirname, '../../../../pounce-ts/src/lib/index.ts'),
 		},
 	},
 	plugins: [
@@ -29,7 +26,7 @@ export default defineConfig({
 				if (!/\.(tsx?|jsx?)$/.test(id)) return null
 				if (id.includes('node_modules')) return null
 				
-				const { babelPluginJsxReactive } = await import('../../../../pounce-ts/src/babel-plugin-jsx-reactive')
+				const { babelPluginJsxReactive } = await import('../../../../core/src/babel-plugin-jsx-reactive.ts')
 				
 				const result = transformSync(code, {
 					filename: id,
@@ -43,7 +40,7 @@ export default defineConfig({
 							'@babel/plugin-transform-react-jsx',
 							{
 								runtime: 'automatic',
-								importSource: '@pounce/runtime',
+								importSource: '@pounce/core',
 								throwIfNamespace: false,
 							},
 						],

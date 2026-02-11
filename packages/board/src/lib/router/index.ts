@@ -1,6 +1,6 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import { parsePathSegment, type ParsedPathSegment, type RouteParams } from 'pounce-ts'
+import { parsePathSegment, type ParsedPathSegment, type RouteParams } from '@pounce/kit/router/logic'
 import type { Middleware, RouteHandler } from '../http/core.js'
 
 /**
@@ -442,116 +442,8 @@ export async function buildRouteTree(
 			const entryPath = path.join(dir, entry.name)
 
 			if (entry.isFile()) {
-				if (entry.name === 'common.ts') {
-					try {
-						// For fs scanning we use the provided importFn which likely does dynamic import
-						const mod = await importFn(entryPath)
-						if (mod.middleware) {
-							node.middleware = mod.middleware
-						}
-					} catch (e) {
-						console.error(`Failed to load middleware from ${entryPath}`, e)
-					}
-				} else if (entry.name === 'common.tsx') {
-					try {
-						const mod = await importFn(entryPath)
-						if (mod.default) {
-							node.layout = mod.default
-						}
-					} catch (e) {
-						console.error(`Failed to load layout from ${entryPath}`, e)
-					}
-				} else if (entry.name === 'index.ts') {
-					try {
-						const mod = await importFn(entryPath)
-						const handlers: Record<string, RouteHandler> = {}
-						const methods = ['get', 'post', 'put', 'del', 'patch', 'delete'] // include delete alias
-						for (const method of methods) {
-							// exports can be 'get', 'GET', etc.
-							const exportName = method
-							if (typeof mod[exportName] === 'function') {
-								const upperMethod = method === 'del' || method === 'delete' ? 'DELETE' : method.toUpperCase()
-								handlers[upperMethod] = mod[exportName]
-							}
-						}
-						// Don't overwrite if empty, checks are done lazily
-						node.handlers = handlers
-					} catch (e) {
-						console.error(`Failed to load handlers from ${entryPath}`, e)
-					}
-				} else if (entry.name === 'index.tsx') {
-					try {
-						const mod = await importFn(entryPath)
-						if (mod.default) {
-							node.component = mod.default
-						}
-					} catch (e) {
-						console.error(`Failed to load component from ${entryPath}`, e)
-					}
-				} else if ((entry.name.endsWith('.ts') && !entry.name.endsWith('.d.ts')) || entry.name.endsWith('.tsx')) {
-					// Named route file (e.g. users.ts -> /users or users.tsx)
-					const fileName = path.parse(entry.name).name
-					const segmentInfo = parseSegment(fileName)
-					const segment = segmentInfo.normalizedSegment
-
-					// Check if child node already exists (e.g. created by matching .ts file)
-					let childNode = node.children.get(segment)
-					if (!childNode) {
-						childNode = {
-							segment: segment,
-							isDynamic: segmentInfo.isDynamic,
-							isCatchAll: segmentInfo.isCatchAll,
-							paramName: segmentInfo.paramName,
-							children: new Map(),
-						}
-						node.children.set(segment, childNode)
-					}
-
-					try {
-						const mod = await importFn(entryPath)
-						
-						if (entry.name.endsWith('.ts')) {
-							const handlers: Record<string, RouteHandler> = {}
-							const methods = ['get', 'post', 'put', 'del', 'patch', 'delete']
-							for (const method of methods) {
-								const exportName = method
-								if (typeof mod[exportName] === 'function') {
-									const upperMethod =
-										method === 'del' || method === 'delete' ? 'DELETE' : method.toUpperCase()
-									handlers[upperMethod] = mod[exportName]
-								}
-							}
-							childNode.handlers = handlers
-						} else if (entry.name.endsWith('.tsx')) {
-							if (mod.default) {
-								childNode.component = mod.default
-							}
-						}
-					} catch (e) {
-						console.error(`Failed to load handlers/component from ${entryPath}`, e)
-					}
-				} else if (entry.name.endsWith('.d.ts')) {
-					if (entry.name === 'types.d.ts' || entry.name === 'index.d.ts') {
-						node.types = entryPath
-					} else {
-						const fileNameNoExt = entry.name.slice(0, -5)
-						const segmentInfo = parseSegment(fileNameNoExt)
-						const segment = segmentInfo.normalizedSegment
-
-						let childNode = node.children.get(segment)
-						if (!childNode) {
-							childNode = {
-								segment: segment,
-								isDynamic: segmentInfo.isDynamic,
-								isCatchAll: segmentInfo.isCatchAll,
-								paramName: segmentInfo.paramName,
-								children: new Map(),
-							}
-							node.children.set(segment, childNode)
-						}
-						childNode.types = entryPath
-					}
-				}
+				const loader = () => importFn(entryPath)
+				await processFile(entry.name, loader, node, entryPath)
 			} else if (entry.isDirectory()) {
 				const segmentInfo = parseSegment(entry.name)
 				const isGroup = entry.name.startsWith('(') && entry.name.endsWith(')')

@@ -1,3 +1,4 @@
+/// <reference path="../types/jsx.d.ts" />
 import { effect, type ScopedCallback } from 'mutts'
 import { perf } from '../perf'
 import { document } from '../shared'
@@ -46,6 +47,8 @@ export {
 } from './renderer-internal'
 export * from './utils'
 export * from './traits'
+export type { NameSpacedProps } from './namespaced'
+export type { StyleInput } from './styles'
 
 
 // biome-ignore lint/suspicious/noExplicitAny: Centralized global JSX injection for the framework

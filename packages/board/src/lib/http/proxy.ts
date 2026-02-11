@@ -126,7 +126,7 @@ export function defineProxy<Endpoints extends Record<string, ProxyEndpointConfig
 						// Build URL with path parameter substitution
 						let path = endpoint.path
 						for (const [key, value] of Object.entries(params)) {
-							path = path.replace(`[${key}]`, encodeURIComponent(String(value)))
+							path = path.replace(`{${key}}`, encodeURIComponent(String(value)))
 						}
 
 						const url = new URL(path, config.baseUrl)

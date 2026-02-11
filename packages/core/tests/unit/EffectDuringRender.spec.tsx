@@ -2,7 +2,7 @@
  * Test effect-during-render bug reproduction
  */
 import { describe, it, expect, beforeEach } from 'vitest'
-import { reactive, onEffectTrigger } from 'mutts'
+import { reactive, why } from 'mutts'
 import { bindApp, type Scope, document } from '@pounce/core'
 
 describe('Effect during render bug', () => {
@@ -67,7 +67,7 @@ describe('Effect during render bug', () => {
 		expect(parentRenderCount.count).toBe(1) // Should still be 1
 	})
 
-	it('detects effect inside render with onEffectTrigger', () => {
+	it('detects effect inside render with why', () => {
 		const effectsDuringRender: string[] = []
 
 		const state = reactive({
@@ -75,17 +75,17 @@ describe('Effect during render bug', () => {
 		})
 
 		const TestComponent = () => {
-			onEffectTrigger((_obj, evolution, prop) => {
+			why((_obj, evolution, prop) => {
 				effectsDuringRender.push(`${String(prop)}: ${evolution}`)
 			})
 
-			// This reads state.count during render - should trigger onEffectTrigger!
+			// This reads state.count during render - should trigger why!
 			return <div>Count: {state.count}</div>
 		}
 
 		bindApp(<TestComponent />, container)
 
-		// If onEffectTrigger caught the reactive read during render, it would have logged it
+		// If why() caught the reactive read during render, it would have logged it
 		console.log('Effects detected during render:', effectsDuringRender)
 	})
 })

@@ -1,4 +1,5 @@
-import type { RequestContext } from 'pounce-board/server'
+import type { RequestContext } from '@pounce/board'
+import { api } from '@pounce/board'
 
 export async function post({ request }: RequestContext) {
 	try {

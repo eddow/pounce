@@ -17,30 +17,13 @@ Pounce injects API responses as script tags during SSR:
 
 ### Example Implementation
 ```ts
-// Server-side rendering middleware
-app.use(async (req, res, next) => {
-  const apiResponses = new Map<string, unknown>();
+import { registerInjector } from 'pounce-board/ssr';
 
-  // Monkey-patch the API client during SSR
-  const originalApi = api;
-  api = (path) => {
-    return {
-      get: async (params) => {
-        const response = await originalApi(path).get(params);
-        apiResponses.set(`api-response-${path.replace(/\//g, "-")}`, response);
-        return response;
-      }
-      // ... other methods
-    };
-  };
-
-  // Render the app
-  const html = await renderApp(req.url);
-
-  // Inject responses
-  const finalHtml = injectApiResponses(html, Object.fromEntries(apiResponses));
-
-  res.send(finalHtml);
+// Register a custom injector (e.g. for styles)
+registerInjector(async (ctx) => {
+  const styles = await collectStyles();
+  // Return HTML string to be injected before </head> or </body>
+  return `<style>${styles}</style>`;
 });
 ```
 

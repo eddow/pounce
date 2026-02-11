@@ -21,12 +21,19 @@ Kit follows the [dual entry-point policy](../../dual-ep-policy.md):
 
 The shared `index.ts` re-exports only `api` types and `router` logic (no DOM/Node deps).
 
-### Client Singleton
+### Platform Adapter
 
-- **`client`** — reactive object (`Client` interface) with URL, viewport, focus, visibility, language, timezone, direction, online status, `prefersDark` (reactive, tracks `prefers-color-scheme` media query)
-- **DOM**: `dom/client.ts` binds real browser state via event listeners + `MutationObserver`
-- **Node**: `node/client.ts` creates an `AsyncLocalStorage`-backed proxy; each SSR request gets an isolated `createClientInstance()`
-- **Shared**: `client/shared.ts` holds the singleton slot; `setClient()` binds the implementation
+Kit defines a `PlatformAdapter` interface — the contract between kit and its environment. Three implementations:
+
+| Adapter | Where | How |
+|---------|-------|-----|
+| **DOM** | `kit/dom/client.ts` | Real browser: event listeners, `document.head`, history API |
+| **Test** | `kit/platform/test.ts` | Global reactive client, jsdom head — no ALS, no proxies |
+| **SSR** | Provided by board | ALS-backed client, head serialization — board's business, not kit's |
+
+- **`client`** — proxy that delegates to `platform.client`. Returns `undefined` on get when no platform is set (allows `client?.language` fallback). Throws on set.
+- **`head(children)`** — delegates to `platform.head()`. DOM: `bindChildren(document.head, ...)`. SSR: board serializes nodes for injection.
+- **`setPlatform(adapter)`** — called once by the environment entry point.
 
 ### Router
 
@@ -85,10 +92,11 @@ Two layers:
 ```
 src/
 ├── index.ts              # Barrel: re-exports api + router
-├── client/
-│   ├── types.ts          # ClientState, Client, Direction, NavigateOptions
-│   ├── implementation.ts # Reactive default client (mutts reactive())
-│   └── shared.ts         # Singleton slot + setClient()
+├── platform/
+│   ├── types.ts          # PlatformAdapter, Client, ClientState, Direction, NavigateOptions
+│   ├── shared.ts         # Singleton slot: setPlatform(), client proxy, head() delegate
+│   ├── test.ts           # createTestAdapter() — global reactive client, no ALS
+│   └── index.ts          # Barrel
 ├── router/
 │   ├── logic.ts          # Pure parsing/matching/building (497 lines)
 │   ├── defs.ts           # defineRoute() + type-safe buildUrl
@@ -103,18 +111,16 @@ src/
 │   ├── ssr-hydration.ts  # SSR data injection/extraction
 │   └── index.ts          # Barrel
 ├── dom/
-│   ├── index.ts          # DOM entry: re-exports shared + dom-specific
-│   ├── client.ts         # Browser client: event listeners, history interception
+│   ├── index.ts          # DOM entry: imports client.js (side-effect), re-exports platform + dom-specific
+│   ├── client.ts         # DOM adapter: reactive client + event listeners + head() via bindChildren
 │   ├── api.ts            # Fetch-based executor
 │   ├── css.ts            # css/sass/scss tags, __injectCSS, SSR collection
 │   └── storage.ts        # stored() — reactive localStorage
 ├── node/
-│   ├── index.ts          # Node entry: re-exports shared + node-specific + css stubs
-│   ├── client.ts         # ALS-backed client proxy
-│   ├── bootstrap.ts      # createClientInstance, createClientProxy, runWithClient
+│   ├── index.ts          # Node entry: re-exports platform + node-specific + css stubs
 │   ├── api.ts            # Server dispatch executor
 │   ├── router.ts         # File-based route tree (buildRouteTree, matchFileRoute)
-│   └── ssr.ts            # withSSR, withSSRContext, injectApiResponses
+│   └── ssr.ts            # withSSRContext, injectApiResponses, re-exports setPlatform + createTestAdapter
 └── intl/
     ├── index.ts          # Barrel: 6 components + locale resolver
     ├── locale.ts         # resolveLocale, setLocaleResolver
@@ -133,7 +139,7 @@ src/
 - **Build**: `source ~/.nvm/nvm.sh && nvm use 22 && pnpm run build`
 - **Test**: `source ~/.nvm/nvm.sh && nvm use 22 && pnpm run test`
 - **Build chain**: plugin → core → kit (plugin exports from `dist/`, must be rebuilt first)
-- **Unit tests**: 100 tests across 6 spec files (api/inference, router ×2, intl, css, storage)
+- **Unit tests**: 104 tests across 7 spec files (api/inference, router ×2, intl, css, storage, head)
 - **E2E tests**: 8 Playwright tests (SPA nav, params, back/forward, direct URL, 404, aria-current)
 - **E2E run**: `source ~/.nvm/nvm.sh && nvm use 22 && pnpm run test:e2e`
 - **DTS**: Zero errors. `vite-plugin-dts` generates declarations.
@@ -150,7 +156,7 @@ src/
 2. **CSS tags are build-time**: `css`, `sass`, `scss` are replaced by the Vite plugin. The runtime fallback just calls `__injectCSS()` with raw text (no preprocessing).
 3. **`stored()` needs cleanup**: Returns a `cleanedBy()` object. If used outside a component lifecycle, call the cleanup manually.
 4. **Node entry stubs CSS**: `node/index.ts` exports no-op `css`/`sass`/`scss` functions.
-5. **`client` is `null!` until bootstrap**: The singleton is set by `dom/client.ts` or `node/client.ts` on import. Don't access `client` at module scope in shared code.
+5. **`client` proxy is graceful before platform init**: Returns `undefined` on property access when no platform is set (allows `client?.language ?? 'en-US'` fallback). Throws on set/head() — those require an explicit platform.
 6. **No arrow function JSX children**: `{() => expr}` in JSX survives the babel plugin as a raw function — the reconciler drops it as `emptyChild`. Use `{expr}` instead (babel wraps it as `r(() => expr)`).
 
 ## Known Issues

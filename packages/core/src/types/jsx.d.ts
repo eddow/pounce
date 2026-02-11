@@ -289,6 +289,10 @@ declare global {
 				children?: Children
 			}
 			for: ElementIntrinsicAttributes<Node[]> & ForElementProps
+			portal: ElementIntrinsicAttributes<Node[]> & {
+				target: string | HTMLElement
+				children?: Children
+			}
 			// Form Elements
 			input: BaseHTMLAttributes<HTMLInputElement> &
 				(InputNumber | InputString | InputBoolean) & {

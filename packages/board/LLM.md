@@ -6,10 +6,13 @@
 - **Type Safety First**: Shared `.d.ts` files between client/server are mandatory
 - **Universal API Client**: Single `api()` function works with absolute, site-absolute, and site-relative URLs
 
-## Status & Caveats (Updated 2026-01-20)
+## Status & Caveats (Updated 2026-02-10)
 - **Status**: Core routing, Hono integration, SSR injection, and basic CLI (`pounce dev`) are implemented.
 - **Caveat**: `walkthrough.md` may lag behind code. Verified tests are the source of truth.
 - **Drift**: Some test files referenced in plans might have different names (e.g., `route-scanner.spec.ts` vs `route-loading.spec.ts`).
+- **Known Issues**: 
+  - SSR async rendering: Reactive state updates don't trigger DOM re-renders in JSDOM (2 test failures)
+  - API client duplication with @pounce/kit (ApiError, PounceResponse) - kept local to avoid compatibility issues
 
 ## Package Entry Points
 - **Universal**: `import { ... } from '@pounce/board'` - Types, API client (adapts to env), universal utilities.
@@ -64,3 +67,11 @@
 2. **Framework vs Library**: Pounce-board is opinionated meta-framework, bounce-ts is flexible library  
 3. **SSR Built-in**: First-class SSR support vs bolt-on
 4. **Middleware System**: Per-route middleware inheritance vs global middleware
+
+## Recent Fixes & Learnings (2026-02-10)
+- **Request Type Conflicts**: Removed `import { Request } from '@playwright/test'` which was overriding global Request type
+- **PounceResponse setData**: Added missing `setData()` method for interceptor response modification
+- **Type Safety**: Changed `ApiError.data: any` to `unknown` for better type safety
+- **ESM Imports**: Fixed `cli/build.ts` to use `import { builtinModules } from 'node:module'` instead of require()
+- **Dynamic Imports**: Replaced dynamic `import('node:async_hooks')` with static import in server-only context.ts
+- **JSON Parsing**: Fixed PounceResponse.json() to handle empty/null responses gracefully

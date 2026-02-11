@@ -1,7 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { escapeJson, getSSRData, injectApiResponses } from './utils.js'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { escapeJson, getSSRData, injectApiResponses, registerInjector, injectSSRContent } from './utils.js'
 
 describe('ssr utils', () => {
+	afterEach(() => {
+		vi.unstubAllGlobals()
+		vi.restoreAllMocks()
+	})
+	
 	describe('injectApiResponses', () => {
 		it('should inject script tags into HTML', () => {
 			const html = '<html><head></head><body></body></html>'
@@ -25,6 +30,54 @@ describe('ssr utils', () => {
 			const result = injectApiResponses(html, responses)
 			expect(result).not.toContain('</script><script>')
 			expect(result).toContain('\\u003c/script\\u003e')
+		})
+	})
+	
+	describe('injectSSRContent', () => {
+		it('should run custom injectors', async () => {
+			const { withSSRContext } = await import('./utils.js')
+			
+			// Register custom injector
+			registerInjector(() => '<script>console.log("injected")</script>')
+
+			await withSSRContext(async () => {
+				const html = '<html><body></body></html>'
+				const result = await injectSSRContent(html)
+				
+				expect(result).toContain('<script>console.log("injected")</script>')
+				expect(result).toContain('</body>')
+			})
+		})
+
+		it('should inject default API responses', async () => {
+			const { withSSRContext, injectSSRData } = await import('./utils.js')
+			
+			await withSSRContext(async () => {
+				injectSSRData('test-api', { foo: 'bar' })
+				
+				const html = '<html><body></body></html>'
+				const result = await injectSSRContent(html)
+				
+				expect(result).toContain(
+					'<script type="application/json" id="test-api">{"foo":"bar"}</script>'
+				)
+			})
+		})
+
+		it('should support async injectors', async () => {
+			const { withSSRContext } = await import('./utils.js')
+
+			registerInjector(async () => {
+				await new Promise(resolve => setTimeout(resolve, 10))
+				return '<style>.async { color: red; }</style>'
+			})
+
+			await withSSRContext(async () => {
+				const html = '<html><head></head><body></body></html>'
+				const result = await injectSSRContent(html)
+				
+				expect(result).toContain('<style>.async { color: red; }</style>')
+			})
 		})
 	})
 

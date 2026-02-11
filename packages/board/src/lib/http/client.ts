@@ -14,6 +14,8 @@ import {
 	runMiddlewares,
 } from './core.js'
 import type { ExtractPathParams } from '../types/inference.js'
+import type { RouteDefinition } from '../router/defs.js'
+import { z } from 'zod'
 
 import { PounceResponse } from './response.js'
 
@@ -632,8 +634,7 @@ export const api = new Proxy(apiClient, {
 	},
 }) as unknown as ApiClient & ApiClientInstance
 
-import type { RouteDefinition } from '../router/defs.js'
-import { z } from 'zod'
+
 
 
 export interface ApiClient {

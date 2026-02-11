@@ -31,7 +31,7 @@ export default defineConfig({
       formats: ['es', 'cjs'],
     },
     rollupOptions: {
-      external: ['vite', 'node:fs', 'node:path', '@pounce/core', '@pounce/core/jsx-runtime', '@pounce/ui']
+      external: ['vite', 'node:fs', 'node:path', /^@pounce\/core/, /^@pounce\/ui/]
     }
   }
 });

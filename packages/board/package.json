@@ -1,5 +1,5 @@
 {
-	"name": "pounce-board",
+	"name": "@pounce/board",
 	"version": "0.1.0",
 	"description": "Full-stack meta-framework for pounce-ts with file-based routing, SSR, and middleware",
 	"type": "module",
@@ -36,7 +36,7 @@
 	},
 	"scripts": {
 		"dev": "tsc --watch",
-		"build": "tsc -p tsconfig.build.json",
+		"build": "vite build",
 		"test": "vitest run",
 		"test:unit": "vitest --project unit",
 		"test:integration": "vitest --project integration",
@@ -67,33 +67,28 @@
 	},
 	"dependencies": {
 		"@hono/node-server": "^1.19.9",
+		"@pounce/core": "link:../core",
+		"@pounce/kit": "link:../kit",
+		"@pounce/ui": "link:../ui",
 		"cac": "^6.7.14",
 		"hono": "^4.6.14",
-		"mutts": "link:../mutts",
-		"pounce-ts": "link:../pounce-ts",
-		"pounce-ui": "link:../pounce-ui",
+		"mutts": "link:../../../mutts",
 		"zod": "^3.24.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.0.6",
 		"@playwright/test": "^1.49.1",
 		"@types/node": "^22.10.5",
-		"@vitest/coverage-v8": "^2.1.8",
+		"@vitest/coverage-v8": "^4.0.18",
 		"jsdom": "^27.4.0",
 		"typescript": "^5.7.2",
-		"vite": "^6.0.7",
-		"vitest": "^2.1.8"
+		"vite": "^7.3.1",
+		"vitest": "^4.0.18"
 	},
 	"files": [
 		"dist",
 		"README.md",
 		"LICENSE"
 	],
-	"packageManager": "pnpm@10.7.1+sha512.2d92c86b7928dc8284f53494fb4201f983da65f0fb4f0d40baafa5cf628fa31dae3e5968f12466f17df7e97310e30f343a648baea1b9b350685dafafffdf5808",
-	"pnpm": {
-		"overrides": {
-			"pounce-ts": "link:../pounce-ts",
-			"mutts": "link:../mutts"
-		}
-	}
+	"packageManager": "pnpm@10.7.1+sha512.2d92c86b7928dc8284f53494fb4201f983da65f0fb4f0d40baafa5cf628fa31dae3e5968f12466f17df7e97310e30f343a648baea1b9b350685dafafffdf5808"
 }

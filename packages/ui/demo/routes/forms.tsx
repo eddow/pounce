@@ -1,3 +1,4 @@
+import type { Scope } from '@pounce/core'
 import { reactive } from 'mutts'
 import {
 	Button,
@@ -5,9 +6,11 @@ import {
 	Stack, Inline,
 	Select, Combobox, Checkbox, Radio, Switch,
 	Stars,
+	loading,
 } from '../../src'
 
-function LoadingDemo() {
+function LoadingDemo(_props: {}, scope: Scope) {
+	scope.loading = loading
 	const state = reactive({ saving: false })
 	function simulateSave() {
 		state.saving = true
@@ -45,6 +48,7 @@ export default function FormsRoute() {
 	const switchState = reactive({
 		maintenance: false,
 		darkMode: true,
+		feature: true,
 	})
 
 	const starsState = reactive({
@@ -109,15 +113,15 @@ export default function FormsRoute() {
 				<Heading level={3}>Radio Buttons</Heading>
 				<Stack gap="md">
 					<Inline wrap gap="md">
-						<Radio name="demo-radio" value="a" checked={radioState.value === 'a'} onClick={() => { radioState.value = 'a' }}>
+						<Radio.success name="demo-radio" value="a" group={radioState.value}>
 							Option A
-						</Radio>
-						<Radio name="demo-radio" value="b" checked={radioState.value === 'b'} onClick={() => { radioState.value = 'b' }}>
+						</Radio.success>
+						<Radio name="demo-radio" value="b" group={radioState.value}>
 							Option B
 						</Radio>
-						<Radio name="demo-radio" value="c" variant="success" checked={radioState.value === 'c'} onClick={() => { radioState.value = 'c' }}>
+						<Radio.warning name="demo-radio" value="c" group={radioState.value}>
 							Option C
-						</Radio>
+						</Radio.warning>
 					</Inline>
 					<Text size="sm" muted>Selected: {radioState.value}</Text>
 				</Stack>
@@ -128,7 +132,7 @@ export default function FormsRoute() {
 				<Inline wrap gap="md">
 					<Switch checked={switchState.maintenance}>Maintenance</Switch>
 					<Switch variant="secondary" checked={switchState.darkMode}>Dark mode</Switch>
-					<Switch variant="success" checked description="Active" labelPosition="start">
+					<Switch variant="success" checked={switchState.feature} description="Active" labelPosition="start">
 						Feature flag
 					</Switch>
 					<Switch variant="danger" disabled description="Cannot change">Locked</Switch>

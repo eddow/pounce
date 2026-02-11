@@ -14,6 +14,9 @@ export default defineConfig({
           runtime: 'automatic',
           importSource: '@pounce/core',
         },
+      },
+      dts: {
+        rollupTypes: true,
       }
     }),
     pounceUIPlugin()

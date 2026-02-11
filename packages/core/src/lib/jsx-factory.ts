@@ -8,14 +8,14 @@ import {
 	isNonReactive,
 	lift,
 	memoize,
-	onEffectTrigger,
+	why,
 	project,
 	reactive,
 	unreactive,
 	untracked,
 } from 'mutts'
 import { perf } from '../perf'
-import { crypto, document } from '../shared'
+import { document } from '../shared'
 import { type ComponentInfo, nf, perfCounters, POUNCE_OWNER, rootComponents, testing } from './debug'
 import { restructureProps } from './namespaced'
 import {
@@ -123,8 +123,8 @@ export const h = (
 	if (componentCtor) {
 		const info: ComponentInfo = unreactive({
 			id:
-				typeof crypto !== 'undefined' && crypto?.randomUUID
-					? crypto.randomUUID()
+				typeof globalThis !== 'undefined' && globalThis.crypto?.randomUUID
+					? globalThis.crypto.randomUUID()
 					: Math.random().toString(36).slice(2),
 			name: componentCtor.name,
 			ctor: componentCtor,
@@ -389,7 +389,7 @@ export const intrinsicComponentAliases: Record<string, Function> = extend(null, 
 			perfCounters.dynamicSwitches++
 			const did = ++dynCount
 			perf?.mark(`dynamic:${did}:start`)
-			onEffectTrigger((obj, _evolution, prop) => {
+			why((obj, _evolution, prop) => {
 				if (obj === props && prop !== 'tag') {
 					throw new Error(
 						'Renderers effects are immutable. in <dynamic>, only a tag change can lead to a re-render'
@@ -448,6 +448,25 @@ export const intrinsicComponentAliases: Record<string, Function> = extend(null, 
 	},
 	fragment(props: { children: PounceElement[] }, scope: Scope) {
 		return new PounceElement(() => processChildren(props.children, scope), { tag: 'fragment' })
+	},
+	portal(props: { target: string | Element; children?: Child[] }, scope: Scope) {
+		const children = props.children ?? []
+
+		return new PounceElement(function portalRender() {
+			const sentinel = document.createComment('portal')
+			const rendered = processChildren(children as Child[], scope)
+			effect(function portalBind() {
+				const raw = props.target
+				const target = isString(raw) ? document.querySelector(raw as string) : raw as Element | null
+				if (!target) return
+				const stopReconciler = bindChildren(target, rendered)
+				return () => {
+					stopReconciler()
+					while (target.firstChild) target.removeChild(target.firstChild)
+				}
+			})
+			return sentinel
+		}, { tag: 'portal' })
 	},
 })
 

@@ -34,5 +34,11 @@ export default defineConfig({
       url: "http://localhost:3001",
       reuseExistingServer: false,
     },
+    {
+      command: "npm run dev",
+      cwd: "./tests/consumers/e-commerce-app",
+      url: "http://localhost:3002",
+      reuseExistingServer: false,
+    },
   ],
 });

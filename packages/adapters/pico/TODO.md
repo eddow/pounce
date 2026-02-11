@@ -9,7 +9,7 @@
 - [x] Bridge CSS for heading margin reset inside Toolbar
 - [x] Typography variant colors via `[data-variant]` (Heading, Text, Link)
 - [x] Demo shell refactored to use Toolbar, Container, Inline, Link, Heading
-- [x] `createGlyfIconFactory()` helper in `src/icons.tsx` — bridges pure-glyf → adapter `iconFactory`
+- [x] `createGlyfIconFactory()` — re-exported from `pure-glyf/pounce` via `src/icons.tsx`
 - [x] `pureGlyfPlugin` wired in Pico demo `vite.config.ts` (points directly at `@tabler/icons/icons/outline`) + `mount()` + `iconFactory` in `main.tsx`
 - [x] DisplayProvider + ThemeToggle wired into demo shell (by compys)
 - [x] ThemeToggle bridge CSS (section 15) — all sub-elements styled with Pico variables

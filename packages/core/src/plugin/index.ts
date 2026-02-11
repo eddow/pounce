@@ -9,6 +9,7 @@ export interface DtsConfigOptions {
 	rollupTypes?: boolean
 	copyDtsFiles?: boolean
 	include?: string[]
+	exclude?: string[]
 	compilerOptions?: DtsPluginOptions['compilerOptions']
 	beforeWriteFile?: DtsPluginOptions['beforeWriteFile']
 	afterBuild?: DtsPluginOptions['afterBuild']
@@ -20,8 +21,10 @@ export function createStandardDtsPlugin(options: DtsConfigOptions = {}) {
 		rollupTypes: options.rollupTypes ?? false,
 		copyDtsFiles: options.copyDtsFiles,
 		include: options.include,
+		exclude: options.exclude ?? ['**/node_modules/**', '**/mutts/**'],
 		compilerOptions: {
 			preserveSymlinks: false,
+			composite: false,
 			...options.compilerOptions,
 		},
 		beforeWriteFile: options.beforeWriteFile,

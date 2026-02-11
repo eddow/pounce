@@ -1,7 +1,7 @@
 import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
-import { getVariantTrait } from '../shared/variants'
+import { asVariant, getVariantTrait } from '../shared/variants'
 
 componentStyle.sass`
 .pounce-select
@@ -148,7 +148,7 @@ export type SelectProps = JSX.IntrinsicElements['select'] & {
  *
  * Adapter key: `Select` (BaseAdaptation)
  */
-export const Select = (props: SelectProps) => {
+const SelectBase = (props: SelectProps) => {
 	const adapter = getAdapter('Select')
 	const state = compose({ variant: 'primary', fullWidth: false }, props)
 	const variantTrait = getVariantTrait(state.variant)
@@ -190,16 +190,17 @@ export type ComboboxProps = JSX.IntrinsicElements['input'] & {
  *
  * Adapter key: `Combobox` (BaseAdaptation)
  */
-export const Combobox = (props: ComboboxProps) => {
+const ComboboxBase = (props: ComboboxProps) => {
 	const generatedId = `pounce-combobox-${Math.random().toString(36).slice(2, 9)}`
 	const adapter = getAdapter('Combobox')
 	const state = compose(
 		{ variant: 'primary', list: generatedId, options: [] as ComboboxOption[], type: 'text' },
 		props
 	)
+	const variantTrait = getVariantTrait(state.variant)
 
 	return (
-		<div class={[adapter.classes?.base || 'pounce-combobox', toneClass(state.variant), state.class]}>
+		<div class={[adapter.classes?.base || 'pounce-combobox', toneClass(state.variant), state.class]} traits={variantTrait ? [variantTrait] : undefined}>
 			<input {...state} />
 			<datalist id={state.list}>
 				{state.options.map((option) => {
@@ -235,9 +236,10 @@ export type CheckboxProps = ControlBaseProps
  *
  * Adapter key: `Checkbox` (BaseAdaptation)
  */
-export const Checkbox = (props: CheckboxProps) => {
+const CheckboxBase = (props: CheckboxProps) => {
 	const adapter = getAdapter('Checkbox')
 	const state = compose({ variant: 'primary', type: 'checkbox' }, props)
+	const variantTrait = getVariantTrait(state.variant)
 
 	return (
 		<label
@@ -248,6 +250,7 @@ export const Checkbox = (props: CheckboxProps) => {
 				toneClass(state.variant),
 				state.el?.class,
 			]}
+			traits={variantTrait ? [variantTrait] : undefined}
 		>
 			<input
 				type="checkbox"
@@ -269,7 +272,10 @@ export const Checkbox = (props: CheckboxProps) => {
 }
 
 /** Props for {@link Radio}. */
-export type RadioProps = ControlBaseProps
+export type RadioProps = ControlBaseProps & {
+	/** Two-way binding: the selected value in the radio group. Derives `checked` from `group === value`. */
+	group?: any
+}
 
 /**
  * Labeled radio button. Group radios with a shared `name` attribute.
@@ -282,9 +288,22 @@ export type RadioProps = ControlBaseProps
  *
  * Adapter key: `Radio` (BaseAdaptation)
  */
-export const Radio = (props: RadioProps) => {
+const RadioBase = (props: RadioProps) => {
 	const adapter = getAdapter('Radio')
-	const state = compose({ variant: 'primary', type: 'radio' }, props)
+	const state = compose(
+		{ variant: 'primary', type: 'radio' },
+		props,
+		(s: any) => ({
+			get isChecked() {
+				if (s.group !== undefined && s.value !== undefined) return s.group === s.value
+				return s.checked
+			},
+			set isChecked(v: boolean) {
+				if (v && s.group !== undefined) s.group = s.value
+			}
+		})
+	)
+	const variantTrait = getVariantTrait(state.variant)
 
 	return (
 		<label
@@ -295,10 +314,11 @@ export const Radio = (props: RadioProps) => {
 				toneClass(state.variant),
 				state.el?.class,
 			]}
+			traits={variantTrait ? [variantTrait] : undefined}
 		>
 			<input
 				type="radio"
-				checked={state.checked}
+				checked={state.isChecked}
 				name={state.name}
 				value={state.value != null ? String(state.value) : undefined}
 				disabled={state.disabled}
@@ -333,9 +353,18 @@ export type SwitchProps = ControlBaseProps & {
  *
  * Adapter key: `Switch` (BaseAdaptation)
  */
-export const Switch = (props: SwitchProps) => {
+const SwitchBase = (props: SwitchProps) => {
 	const adapter = getAdapter('Switch')
-	const state = compose({ variant: 'primary', labelPosition: 'end', type: 'checkbox' }, props)
+	const state = compose(
+		{ variant: 'primary', labelPosition: 'end', type: 'checkbox' },
+		props,
+		(s: any) => ({
+			get isChecked() {
+				return s.checked
+			}
+		})
+	)
+	const variantTrait = getVariantTrait(state.variant)
 
 	return (
 		<label
@@ -347,15 +376,16 @@ export const Switch = (props: SwitchProps) => {
 				state.labelPosition === 'start' ? 'pounce-switch-label-start' : undefined,
 				state.el?.class,
 			]}
+			traits={variantTrait ? [variantTrait] : undefined}
 		>
 			<input
 				role="switch"
 				type="checkbox"
-				checked={state.checked}
+				checked={state.isChecked}
 				name={state.name}
 				disabled={state.disabled}
 				class={[adapter.classes?.input || 'pounce-control-input', 'pounce-switch-input', state.class]}
-				aria-checked={state.checked}
+				aria-checked={state.isChecked}
 			/>
 			<span class="pounce-switch-visual" aria-hidden="true" />
 			<span class={adapter.classes?.copy || 'pounce-control-copy'} if={state.label || state.children || state.description}>
@@ -369,3 +399,9 @@ export const Switch = (props: SwitchProps) => {
 		</label>
 	)
 }
+
+export const Select = asVariant(SelectBase)
+export const Combobox = asVariant(ComboboxBase)
+export const Checkbox = asVariant(CheckboxBase)
+export const Radio = asVariant(RadioBase)
+export const Switch = asVariant(SwitchBase)

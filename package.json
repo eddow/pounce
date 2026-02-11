@@ -4,9 +4,11 @@
 	"license": "MIT",
 	"scripts": {
 		"build": "turbo run build",
+		"build:watch": "turbo watch build",
 		"test": "turbo run test",
 		"lint": "turbo run lint",
 		"dev": "turbo run dev",
+		"profile:ui": "turbo run profile --filter=@pounce/ui",
 		"dev:all": "turbo run build && (turbo run dev --filter=@pounce/adapter-pico & pnpm --dir ../red-hist run dev & wait)"
 	},
 	"devDependencies": {

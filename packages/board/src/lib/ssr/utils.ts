@@ -81,10 +81,73 @@ export function clearSSRData(): void {
     }
 }
 
+// Injector Registry
+export type Injector = (context: RequestScope) => string | Promise<string>
+const injectors: Injector[] = []
+
 /**
- * Inject API responses into HTML as script tags
+ * Register a custom SSR data injector
+ * @param fn Function that returns HTML string (e.g. script/style tags) to be injected
+ */
+export function registerInjector(fn: Injector): void {
+	injectors.push(fn)
+}
+
+// Register default API data injector
+registerInjector((ctx) => {
+	if (!ctx.config.ssr) return ''
+	const scripts = []
+	
+	// Inject collected SSR responses
+	for (const [id, data] of ctx.ssr.responses.entries()) {
+		scripts.push(
+			`<script type="application/json" id="${id}">${escapeJson(JSON.stringify(data))}</script>`
+		)
+	}
+	
+	return scripts.join('\n')
+})
+
+/**
+ * Inject all registered content into HTML
+ * Runs all injectors and appends content to head or body
+ */
+export async function injectSSRContent(html: string): Promise<string> {
+	const ctx = getContext()
+	
+	let injectedContent = ''
+	
+	// Always run injectors if context exists (they check config.ssr internally if needed)
+	if (ctx) {
+		for (const injector of injectors) {
+			injectedContent += await injector(ctx) + '\n'
+		}
+	} else {
+		// Fallback for when context is lost but we have collected responses (rare/legacy)
+        // logic moved to injectors, so strictly we need context now.
+	}
+
+	if (!injectedContent.trim()) return html
+
+	// Insert before </head> if exists, otherwise before </body>
+	if (html.includes('</head>')) {
+		return html.replace('</head>', `${injectedContent}</head>`)
+	}
+	if (html.includes('</body>')) {
+		return html.replace('</body>', `${injectedContent}</body>`)
+	}
+
+	// Fallback: append to end
+	return html + injectedContent
+}
+
+/**
+ * [DEPRECATED] Inject API responses into HTML
+ * Kept for backward compatibility but forwards to new system logic if possible
+ * or performs simplified sync injection
  */
 export function injectApiResponses(html: string, responses: SSRDataMap): string {
+	// Sync fallback for legacy calls
 	const scripts = Object.entries(responses)
 		.map(
 			([_, { id, data }]) =>
@@ -92,15 +155,9 @@ export function injectApiResponses(html: string, responses: SSRDataMap): string 
 		)
 		.join('\n')
 
-	// Insert before </head> if exists, otherwise before </body>
 	if (html.includes('</head>')) {
 		return html.replace('</head>', `${scripts}\n</head>`)
 	}
-	if (html.includes('</body>')) {
-		return html.replace('</body>', `${scripts}\n</body>`)
-	}
-
-	// Fallback: append to end
 	return html + scripts
 }
 

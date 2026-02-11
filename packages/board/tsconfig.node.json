@@ -9,6 +9,6 @@
   },
   "include": [
     "vitest.config.ts",
-    "../../test/vitest.config.base.ts"
+    "../../test/test-base.config.ts"
   ]
 }

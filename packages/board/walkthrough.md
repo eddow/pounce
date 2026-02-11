@@ -1,6 +1,6 @@
 # Pounce-Board Project Walkthrough
 
-> **Status:** Project specification complete, implementation not yet begun.
+> **Status:** Implementation in progress (Consumer Apps Phase).
 
 ---
 
@@ -462,8 +462,8 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 - [x] Make sure interceptors are usable on BE (for SSR but also for proxies, functionality forwarding, ...)
 
 ### 3.5 SSR modules
-- [x] Analyse integration with pure-glyf: bundle the CSS directly as include it in generated html
-- [ ] Use previous analyse to allow custom data bundlers
+- [x] Analyze integration with pure-glyf: bundle the CSS directly as include it in generated html
+- [x] Use `registerInjector` to allow custom data bundlers
 ---
 
 ## Phase 4: SSR Integration (Phased)
@@ -896,14 +896,14 @@ Bare-minimum app to test basic functionality:
 Full blog implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/EXAMPLES.md)):
 - [x] Posts CRUD routes
 - [x] Authentication middleware
-- [ ] SSR with initial data
-- [ ] External API proxy for comments
+- [/] SSR with initial data
+- [/] External API proxy for comments
 
 #### `tests/consumers/e-commerce-app/`
 E-commerce implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/EXAMPLES.md)):
-- [ ] Product catalog routes
-- [ ] Cart management
-- [ ] External payment API proxy
+- [/] Product catalog routes
+- [/] Cart management
+- [/] External payment API proxy
 - [ ] Complex middleware chains
 
 ---

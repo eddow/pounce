@@ -15,7 +15,7 @@ describe('defineProxy', () => {
 			const proxy = defineProxy({
 				baseUrl: 'https://api.example.com',
 				endpoints: {
-					getUser: { method: 'GET', path: '/users/[id]' },
+					getUser: { method: 'GET', path: '/users/{id}' },
 					createUser: { method: 'POST', path: '/users' },
 				},
 			})
@@ -28,7 +28,7 @@ describe('defineProxy', () => {
 			const proxy = defineProxy({
 				baseUrl: 'https://api.example.com',
 				endpoints: {
-					getUser: { method: 'GET', path: '/users/[id]' },
+					getUser: { method: 'GET', path: '/users/{id}' },
 				},
 			})
 
@@ -45,7 +45,7 @@ describe('defineProxy', () => {
 			const proxy = defineProxy({
 				baseUrl: 'https://api.example.com',
 				endpoints: {
-					getUser: { method: 'GET', path: '/users/[id]' },
+					getUser: { method: 'GET', path: '/users/{id}' },
 				},
 			})
 
@@ -94,7 +94,7 @@ describe('defineProxy', () => {
 			const proxy = defineProxy({
 				baseUrl: 'https://api.example.com',
 				endpoints: {
-					getUser: { method: 'GET', path: '/users/[id]' },
+					getUser: { method: 'GET', path: '/users/{id}' },
 				},
 			})
 
@@ -116,7 +116,7 @@ describe('defineProxy', () => {
 			const proxy = defineProxy({
 				baseUrl: 'https://api.example.com',
 				endpoints: {
-					getUserPost: { method: 'GET', path: '/users/[userId]/posts/[postId]' },
+					getUserPost: { method: 'GET', path: '/users/{userId}/posts/{postId}' },
 				},
 			})
 
@@ -138,7 +138,7 @@ describe('defineProxy', () => {
 			const proxy = defineProxy({
 				baseUrl: 'https://api.example.com',
 				endpoints: {
-					getUser: { method: 'GET', path: '/users/[id]' },
+					getUser: { method: 'GET', path: '/users/{id}' },
 				},
 			})
 
@@ -205,7 +205,7 @@ describe('defineProxy', () => {
 				endpoints: {
 					getUser: {
 						method: 'GET',
-						path: '/users/[id]',
+						path: '/users/{id}',
 						transform: (data: any) => ({
 							id: data.userId,
 							name: data.fullName,
@@ -241,7 +241,7 @@ describe('defineProxy', () => {
 				endpoints: {
 					getUser: {
 						method: 'GET',
-						path: '/users/[id]',
+						path: '/users/{id}',
 						transform: transformFn,
 					},
 				},
@@ -299,7 +299,7 @@ describe('defineProxy', () => {
 				endpoints: {
 					getUser: {
 						method: 'GET',
-						path: '/users/[id]',
+						path: '/users/{id}',
 						onError: (_error: any) => {
 							throw new Error(`Custom error: User not found`)
 						},
@@ -321,7 +321,7 @@ describe('defineProxy', () => {
 			const proxy = defineProxy({
 				baseUrl: 'https://api.example.com',
 				endpoints: {
-					getUser: { method: 'GET', path: '/users/[id]' },
+					getUser: { method: 'GET', path: '/users/{id}' },
 				},
 			})
 
@@ -347,7 +347,7 @@ describe('defineProxy', () => {
 				endpoints: {
 					getUser: {
 						method: 'GET',
-						path: '/users/[id]',
+						path: '/users/{id}',
 						schema: mockSchema as any,
 					},
 				},
@@ -376,7 +376,7 @@ describe('defineProxy', () => {
 				endpoints: {
 					getUser: {
 						method: 'GET',
-						path: '/users/[id]',
+						path: '/users/{id}',
 						schema: mockSchema as any,
 					},
 				},
@@ -401,7 +401,7 @@ describe('defineProxy', () => {
 				endpoints: {
 					downloadFile: {
 						method: 'GET',
-						path: '/files/[id]',
+						path: '/files/{id}',
 						raw: true,
 					},
 				},
@@ -427,7 +427,7 @@ describe('defineProxy', () => {
 					endpoints: {
 						getUser: {
 							method: 'GET',
-							path: '/users/[id]',
+							path: '/users/{id}',
 							mock: (params) => ({
 								id: params.id,
 								name: `Mock User ${params.id}`,
@@ -461,7 +461,7 @@ describe('defineProxy', () => {
 					endpoints: {
 						getUser: {
 							method: 'GET',
-							path: '/users/[id]',
+							path: '/users/{id}',
 							mock: (params) => ({ id: params.id, name: 'Mock User' }),
 						},
 					},
@@ -494,7 +494,7 @@ describe('defineProxy', () => {
 					},
 				},
 				endpoints: {
-					getUser: { method: 'GET', path: '/users/[id]' },
+					getUser: { method: 'GET', path: '/users/{id}' },
 				},
 			})
 
@@ -528,7 +528,7 @@ describe('defineProxy', () => {
 					},
 				}),
 				endpoints: {
-					getUser: { method: 'GET', path: '/users/[id]' },
+					getUser: { method: 'GET', path: '/users/{id}' },
 				},
 			})
 
@@ -556,7 +556,7 @@ describe('defineProxy', () => {
 			const proxy = defineProxy({
 				baseUrl: 'https://api.example.com',
 				endpoints: {
-					action: { method, path: '/resource/[id]' },
+					action: { method, path: '/resource/{id}' },
 				},
 			})
 

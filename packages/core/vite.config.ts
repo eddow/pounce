@@ -44,23 +44,22 @@ export default defineConfig({
 				},
 			},
 			dts: {
-				rollupTypes: false,
+				rollupTypes: true,
 				afterBuild() {
-					const typesDir = join(projectRootDir, 'dist/src/types')
-					if (!existsSync(typesDir)) mkdirSync(typesDir, { recursive: true })
-					copyFileSync(
-						join(projectRootDir, 'src/types/jsx.d.ts'),
-						join(typesDir, 'jsx.d.ts')
-					)
-					const domDts = join(projectRootDir, 'dist/dom.d.ts')
-					const content = readFileSync(domDts, 'utf8')
-					if (!content.includes('jsx.d.ts')) {
-						writeFileSync(domDts, `/// <reference path="./src/types/jsx.d.ts" />\n${content}`)
-					}
-					const nodeDts = join(projectRootDir, 'dist/node.d.ts')
-					const nodeContent = readFileSync(nodeDts, 'utf8')
-					if (!nodeContent.includes('jsx.d.ts')) {
-						writeFileSync(nodeDts, `/// <reference path="./src/types/jsx.d.ts" />\n${nodeContent}`)
+					// Copy JSX types to dist, rewriting relative imports to point to rolled-up dom.d.ts
+					const jsxSource = readFileSync(join(projectRootDir, 'src/types/jsx.d.ts'), 'utf8')
+					const jsxDist = jsxSource
+						.replace(/from\s+['"]\.\.\/lib(?:\/\w+)?['"]/g, "from './dom'")
+						.replace(/from\s+['"]\.\.\/lib['"]/g, "from './dom'")
+					writeFileSync(join(projectRootDir, 'dist/jsx.d.ts'), jsxDist)
+					// Add /// <reference> to dom.d.ts and node.d.ts so consumers get JSX namespace
+					for (const entry of ['dom.d.ts', 'node.d.ts']) {
+						const file = join(projectRootDir, 'dist', entry)
+						if (!existsSync(file)) continue
+						const content = readFileSync(file, 'utf8')
+						if (!content.includes('jsx.d.ts')) {
+							writeFileSync(file, `/// <reference path="./jsx.d.ts" />\n${content}`)
+						}
 					}
 				},
 			}

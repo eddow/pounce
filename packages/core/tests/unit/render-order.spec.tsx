@@ -2,7 +2,7 @@
  * Test effect topology and error propagation
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { effect, project, onEffectThrow, reactive, reset } from 'mutts'
+import { effect, project, caught, reactive, reset } from 'mutts'
 import '@pounce/core'
 
 describe('Effect topology and error propagation', () => {
@@ -33,7 +33,7 @@ describe('Effect topology and error propagation', () => {
 		project.array([null], () => {
 			logs.push('parent-start')
 
-			onEffectThrow((_err) => {
+			caught((_err) => {
 				parentCaught = true
 				logs.push('parent-caught')
 			})
@@ -75,7 +75,7 @@ describe('Effect topology and error propagation', () => {
 		effect(() => {
 			logs.push('parent-start')
 
-			onEffectThrow((_err) => {
+			caught((_err) => {
 				parentCaught = true
 				logs.push('parent-caught')
 			})
@@ -138,7 +138,7 @@ describe('Effect topology and error propagation', () => {
 		const ErrorBoundary: ComponentFunction = (props) => {
 			logs.push('boundary-start')
 
-			onEffectThrow((err) => {
+			caught((err) => {
 				parentCaught = true
 				logs.push(`caught: ${err.message}`)
 			})

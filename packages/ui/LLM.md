@@ -74,24 +74,11 @@ Framework-agnostic UI component library for Pounce applications. Evolved from `@
 | ErrorBoundary | `error-boundary.tsx` | `ErrorBoundary` |
 | DockView | `dockview.tsx` | `Dockview` |
 
-## Migration Pattern (from pico)
-- `pp-*` → `pounce-*` classes
-- `--pico-*` → `--pounce-*` CSS variables
-- `componentStyle.sass` for default styles (injected once)
-- `getAdapter('Name')` for class overrides
-- `getVariantTrait()` + `asVariant()` for variant-aware components
-- Form inputs: explicit `type` attribute (avoids TS union narrowing issues with `compose`)
-
 ## ⚠️ Critical
 - **SSR Safety**: `@pounce/ui` works in SSR. Kit uses dual entry-points (auto-selects `kit/dom` or `kit/node`)
 - **No `as any`**: All adapter types are strongly typed. `getAdapter<T>()` returns `UiComponents[T]`.
 - **Adapter before render**: `setAdapter()` must be called before any component renders (SSR safety lock)
 - **Test adapter**: `tests/test-adapter.ts` provides `installTestAdapter()` with all component class overrides
-
-## Documentation
-- `./README.md` — Full component API reference with usage examples and prop tables
-- `./analysis/` — Internal architectural docs (variants, adapter factoring, orthogonal concerns, etc.)
-- `./analysis/WALKTHROUGH.md` — Master task list and migration status
 
 ## InfiniteScroll Variable-Height Architecture
 - **Fixed mode** (`itemHeight: number`): fast path — `floor(scrollTop/h)` for start, `ceil(viewportH/h)` for count. Items get `contain: strict`.
@@ -112,15 +99,8 @@ Framework-agnostic UI component library for Pounce applications. Evolved from `@
 | `use:intersect` | `directives/intersect.ts` | `IntersectOptions` | IntersectionObserver wrapper |
 | `use:pointer` | `directives/pointer.ts` | `PointerState` | Pointer position tracking |
 
-## Upcoming
-- **Form validation** — `valid` prop (form controls), `aria-invalid`. Needs design pass.
-
 ## Known Issues
-- ~~`this=` ref pattern~~ — ✅ Confirmed working by Corrie. Real build blocker was stale `variantClass` import in `badge.ts` — fixed.
-- ButtonGroup global keydown handler is over-broad (matches any `[role="group"]`) — compys to narrow
-
-## Status
-🚧 Under development — all components migrated (35.5/39 WALKTHROUGH tasks complete), adapter system operational, `@pounce/adapter-pico` functional, not yet production-ready.
+(none)
 
 ## DisplayContext Architecture
 - **Kit provides**: `client.prefersDark()`, `client.direction`, `client.language` — raw system values

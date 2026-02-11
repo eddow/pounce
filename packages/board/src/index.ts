@@ -27,3 +27,4 @@ export type {
 } from './lib/http/core.js'
 
 export { defineRoute, type RouteDefinition } from './lib/router/defs.js'
+export { defineProxy, type ProxyConfig, type ProxyEndpointConfig } from './lib/http/proxy.js'

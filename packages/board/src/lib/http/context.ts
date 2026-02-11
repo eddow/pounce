@@ -1,8 +1,11 @@
 /**
  * Request Context for pounce-board
  * Handles thread-local storage for SSR data, configuration, and interceptors.
+ * 
+ * NOTE: This file is server-side only due to AsyncLocalStorage usage.
+ * The client-side context.ts in @pounce/core handles browser environments.
  */
-import type { AsyncLocalStorage } from 'node:async_hooks'
+import { AsyncLocalStorage } from 'node:async_hooks'
 
 // Define the Interceptor type here to avoid circular imports if possible, 
 // or import strictly as type. 
@@ -57,7 +60,6 @@ async function ensureStorage(): Promise<AsyncLocalStorage<RequestScope>> {
 		return g[STORAGE_KEY]
 	}
 
-	const { AsyncLocalStorage } = await import('node:async_hooks')
 	const s = new AsyncLocalStorage<RequestScope>()
 	g[STORAGE_KEY] = s
 	return s

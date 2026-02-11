@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "jsxImportSource": "@pounce/core",
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@pounce/core": ["../core/src/lib/index.ts"],
+      "@pounce/core/*": ["../core/src/*"],
+      "@pounce/kit": ["../kit/src/dom/index.ts"],
+      "@pounce/kit/*": ["../kit/src/*"],
+      "@pounce/ui": ["../ui/src/index.ts"],
+      "@pounce/adapter-pico": ["../adapters/pico/src/index.ts"],
+      "mutts": ["../../../mutts/src/index.ts"],
+      "pure-glyf": ["../pure-glyf/src/index.ts"],
+      "pure-glyf/*": ["../pure-glyf/src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

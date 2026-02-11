@@ -1,4 +1,4 @@
-import { createPounceApp } from '@pounce/board'
+import { createPounceApp } from '@pounce/board/server'
 import { getRequestListener } from '@hono/node-server'
 import { createServer } from 'http'
 

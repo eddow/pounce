@@ -1,11 +1,11 @@
 /**
- * Test onEffectThrow functionality
+ * Test caught functionality
  */
 import { describe, it, expect } from 'vitest'
 import { bindApp, document } from '@pounce/core'
-import { effect, onEffectThrow, reactive, project } from 'mutts'
+import { effect, caught, reactive, project } from 'mutts'
 
-describe('onEffectThrow basic', () => {
+describe('caught basic', () => {
 	it('should catch errors in effects', () => {
 		const container = document.createElement('div')
 		const caughtErrors: Error[] = []
@@ -13,7 +13,7 @@ describe('onEffectThrow basic', () => {
 		const state = reactive({ shouldThrow: false })
 
 		effect(() => {
-			onEffectThrow((error) => {
+			caught((error) => {
 				caughtErrors.push(error as Error)
 				console.log('Caught error:', error)
 			})
@@ -39,7 +39,7 @@ describe('onEffectThrow basic', () => {
 
 		// Mimic ErrorBoundary structure
 		const ErrorBoundaryLike = (props: { children: () => any }) => {
-			onEffectThrow((error) => {
+			caught((error) => {
 				caughtErrors.push(error as Error)
 				console.log('Caught in ErrorBoundaryLike:', error)
 			})
@@ -68,7 +68,7 @@ describe('onEffectThrow basic', () => {
 		}
 
 		effect(() => {
-			onEffectThrow((error) => {
+			caught((error) => {
 				caughtErrors.push(error as Error)
 				console.log('Caught child error:', error)
 			})
@@ -86,7 +86,7 @@ describe('onEffectThrow basic', () => {
 
 		// This mimics how pounce/core renders components
 		const result = project.array([null], () => {
-			onEffectThrow((error) => {
+			caught((error) => {
 				caughtErrors.push(error as Error)
 				console.log('Caught in project.array:', error)
 			})

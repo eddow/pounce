@@ -7,31 +7,37 @@ componentStyle.sass`
 	background-color: var(--pounce-primary, #3b82f6)
 	color: var(--pounce-fg-inverse, #fff)
 	border-color: var(--pounce-primary, #3b82f6)
+	--pounce-control-accent: var(--pounce-primary, #3b82f6)
 
 .pounce-variant-secondary
 	background-color: var(--pounce-secondary, #64748b)
 	color: var(--pounce-fg-inverse, #fff)
 	border-color: var(--pounce-secondary, #64748b)
+	--pounce-control-accent: var(--pounce-secondary, #64748b)
 
 .pounce-variant-success
 	background-color: var(--pounce-success, #15803d)
 	color: var(--pounce-fg-inverse, #fff)
 	border-color: var(--pounce-success, #15803d)
+	--pounce-control-accent: var(--pounce-success, #15803d)
 
 .pounce-variant-danger
 	background-color: var(--pounce-danger, #b91c1c)
 	color: var(--pounce-fg-inverse, #fff)
 	border-color: var(--pounce-danger, #b91c1c)
+	--pounce-control-accent: var(--pounce-danger, #b91c1c)
 
 .pounce-variant-warning
 	background-color: var(--pounce-warning, #f59e0b)
 	color: var(--pounce-fg, #000)
 	border-color: var(--pounce-warning, #f59e0b)
+	--pounce-control-accent: var(--pounce-warning, #f59e0b)
 
 .pounce-variant-contrast
 	background-color: var(--pounce-contrast, #0f172a)
 	color: var(--pounce-fg-inverse, #fff)
 	border-color: var(--pounce-contrast, #0f172a)
+	--pounce-control-accent: var(--pounce-contrast, #0f172a)
 
 @keyframes pounce-fade-in
 	from

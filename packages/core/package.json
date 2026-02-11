@@ -55,7 +55,7 @@
       "default": "./src/dom/index.ts"
     },
     "./plugin": {
-      "types": "./src/plugin/index.ts",
+      "types": "./dist/plugin.d.ts",
       "import": "./dist/plugin.js",
       "default": "./dist/plugin.js"
     },
@@ -84,7 +84,7 @@
     }
   },
   "dependencies": {
-    "mutts": "^1.0.9",
+		"mutts": "link:../mutts",
     "@babel/core": "^7.28.4",
     "@babel/plugin-proposal-decorators": "^7.28.6",
     "@babel/plugin-transform-react-jsx": "^7.25.9",

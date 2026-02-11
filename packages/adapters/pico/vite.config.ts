@@ -13,8 +13,8 @@ export default defineConfig({
 		},
 		rollupOptions: {
 			external: [
-				'@pounce/core',
-				'@pounce/ui',
+				/^@pounce\/core/,
+				/^@pounce\/ui/,
 				'@picocss/pico',
 				/^@picocss\/pico\//
 			]

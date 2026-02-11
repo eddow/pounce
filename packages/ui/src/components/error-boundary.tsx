@@ -1,12 +1,12 @@
-import { onEffectThrow, reactive } from 'mutts'
-import { bindChildren } from '@pounce/core'
+import { caught, reactive } from 'mutts'
+import { bindChildren, type Scope } from '@pounce/core'
 import { getAdapter } from '../adapter/registry'
 
 /**
  * ErrorBoundary - Catches and displays errors in component trees
  *
  * Architecture: An inner `ErrorReceiver` component wraps the children and
- * registers `onEffectThrow` to catch errors from child rendering/effects.
+ * registers `caught` to catch errors from child rendering/effects.
  * When an error is caught, it updates shared reactive state. The boundary's
  * `use=` mount callback reactively renders either the receiver or a fallback
  * based on that state — decoupled from the boundary's own `produce`.
@@ -28,7 +28,7 @@ export interface ErrorBoundaryProps {
 	fallback?: (error: Error, errorInfo: { componentStack: string }) => JSX.Element
 	onError?: (error: Error, errorInfo: { componentStack: string }) => void
 }
-
+// TODO: Could really be remade with jsx instead of .render()
 const defaultFallback = (error: Error) => (
 	<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
 		<h3>Something went wrong</h3>
@@ -48,7 +48,7 @@ interface ReceiverProps {
 }
 
 const ErrorReceiver = (props: ReceiverProps) => {
-	onEffectThrow((thrown: unknown) => {
+	caught((thrown: unknown) => {
 		const error = thrown instanceof Error ? thrown : new Error(String(thrown))
 		if (error.name === 'DynamicRenderingError') return
 		if (!props.state.error) {
@@ -59,7 +59,7 @@ const ErrorReceiver = (props: ReceiverProps) => {
 	return <span style="display:contents">{props.children}</span>
 }
 
-export const ErrorBoundary = (props: ErrorBoundaryProps) => {
+export const ErrorBoundary = (props: ErrorBoundaryProps, scope: Scope) => {
 	const adapter = getAdapter('ErrorBoundary')
 	const state = reactive({ error: undefined as Error | undefined })
 
@@ -69,9 +69,9 @@ export const ErrorBoundary = (props: ErrorBoundaryProps) => {
 		if (!state.error) {
 			const receiver = <ErrorReceiver state={state} onError={props.onError}>{props.children}</ErrorReceiver>
 			try {
-				return bindChildren(el, receiver.render())
+				return bindChildren(el, receiver.render(scope))
 			} catch {
-				// DynamicRenderingError — ErrorReceiver's onEffectThrow already set state.error
+				// DynamicRenderingError — ErrorReceiver's caught() already set state.error
 			}
 		}
 
@@ -79,14 +79,14 @@ export const ErrorBoundary = (props: ErrorBoundaryProps) => {
 			const fallbackJsx = props.fallback
 				? props.fallback(state.error, { componentStack: '' })
 				: defaultFallback(state.error)
-			return bindChildren(el, fallbackJsx.render())
+			return bindChildren(el, fallbackJsx.render(scope))
 		}
 	}
 
 	return <div class={adapter.classes?.base || 'pounce-error-boundary'} use={mount} />
 }
 
-export const ProductionErrorBoundary = (props: { children: JSX.Element | JSX.Element[] }) => {
+export const ProductionErrorBoundary = (props: { children: JSX.Element | JSX.Element[] }, scope: Scope) => {
 	const adapter = getAdapter('ErrorBoundary')
 	const state = reactive({ error: undefined as Error | undefined })
 
@@ -96,9 +96,9 @@ export const ProductionErrorBoundary = (props: { children: JSX.Element | JSX.Ele
 		if (!state.error) {
 			const receiver = <ErrorReceiver state={state}>{props.children}</ErrorReceiver>
 			try {
-				return bindChildren(el, receiver.render())
+				return bindChildren(el, receiver.render(scope))
 			} catch {
-				// DynamicRenderingError — ErrorReceiver's onEffectThrow already set state.error
+				// DynamicRenderingError — ErrorReceiver's caught() already set state.error
 			}
 		}
 
@@ -109,7 +109,7 @@ export const ProductionErrorBoundary = (props: { children: JSX.Element | JSX.Ele
 					<p>Please refresh the page and try again.</p>
 				</div>
 			)
-			return bindChildren(el, fallbackJsx.render())
+			return bindChildren(el, fallbackJsx.render(scope))
 		}
 	}
 

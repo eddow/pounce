@@ -9,7 +9,7 @@
 	"include": [
 		"vite.config.ts",
 		"vitest.config.ts",
-		"../../test/vitest.config.base.ts",
+		"../../test/test-base.config.ts",
 		"src/plugin/**/*.ts"
 	]
 }

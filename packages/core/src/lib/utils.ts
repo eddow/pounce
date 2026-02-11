@@ -52,8 +52,8 @@ export function copyObject(into: Record<string, any>, from: Record<string, any>)
 function readonlyProp(key: PropertyKey, value: any) {
 	return () => {
 		if (pounceOptions.writeRoProps !== 'ignore') {
-			const msg = isFunction(value)
-				? `Property "${String(key)}" has been given a computed value "${value}", but it is not a two-way binding`
+			const msg = value instanceof ReactiveProp
+				? `Property "${String(key)}" has been given a computed value "${value.get}", but it is not a two-way binding`
 				: `Property "${String(key)}" has been given the fixed value "${value}", but it is not a two-way binding`
 			if (pounceOptions.writeRoProps === 'warn') console.warn(msg)
 			else if (pounceOptions.writeRoProps === 'error') throw new Error(msg)

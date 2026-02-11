@@ -3,6 +3,8 @@
  * Use: import { buildRouteTree } from 'pounce-board/server'
  */
 
+import { Middleware, RouteResponse } from '@pounce/kit'
+
 // Router
 export {
 	buildRouteTree,

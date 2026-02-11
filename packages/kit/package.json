@@ -3,7 +3,12 @@
 	"version": "1.0.0",
 	"description": "Routing, i18n, and application utilities for Pounce",
 	"type": "module",
-	"keywords": ["pounce", "router", "i18n", "kit"],
+	"keywords": [
+		"pounce",
+		"router",
+		"i18n",
+		"kit"
+	],
 	"author": "fmdm",
 	"license": "MIT",
 	"repository": {
@@ -35,6 +40,11 @@
 			"types": "./src/index.ts",
 			"node": "./src/node/index.ts",
 			"default": "./src/dom/index.ts"
+		},
+		"./router/logic": {
+			"types": "./src/router/logic.ts",
+			"import": "./src/router/logic.ts",
+			"default": "./src/router/logic.ts"
 		},
 		"./src/*": "./src/*"
 	},

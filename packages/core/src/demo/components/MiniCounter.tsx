@@ -1,4 +1,4 @@
-import { effect, onEffectTrigger, project } from 'mutts'
+import { effect, why, project } from 'mutts'
 import { compose } from '../../lib'
 
 export interface MiniCounterProps {
@@ -7,7 +7,7 @@ export interface MiniCounterProps {
 }
 
 export function MiniCounter(props: MiniCounterProps) {
-	onEffectTrigger((obj, evolution) => {
+	why((obj, evolution) => {
 		console.log(obj, evolution)
 	})
 	const state = compose({ list: [] as string[], addedText: Date.now().toString() }, props)

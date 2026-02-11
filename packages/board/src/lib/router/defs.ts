@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { parsePathSegment } from 'pounce-ts'
+import { parsePathSegment } from '@pounce/kit/router/logic'
 
 export type RouteParams<Path extends string> = Record<string, string>
 

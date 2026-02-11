@@ -28,9 +28,15 @@
 		"test:unit": "vitest run",
 		"test:watch": "vitest",
 		"test:e2e": "playwright test",
+		"profile": "playwright test -c playwright.perf.config.ts",
 		"biome": "biome check --write src"
 	},
-	"keywords": ["pounce", "ui", "components", "reactive"],
+	"keywords": [
+		"pounce",
+		"ui",
+		"components",
+		"reactive"
+	],
 	"author": "fmdm",
 	"license": "MIT",
 	"repository": {

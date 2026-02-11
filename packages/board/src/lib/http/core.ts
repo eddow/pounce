@@ -11,7 +11,7 @@ export class ApiError extends Error {
 	constructor(
 		public status: number,
 		public statusText: string,
-		public data: any,
+		public data: unknown,
 		public url: string
 	) {
 		super(`HTTP ${status}: ${statusText}`)

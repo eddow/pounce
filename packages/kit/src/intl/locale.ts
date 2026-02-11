@@ -1,4 +1,4 @@
-import { client } from '../client/shared'
+import { client } from '../platform/shared'
 
 let localeOverride: (() => string | undefined) | null = null
 

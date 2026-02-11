@@ -7,12 +7,14 @@ import { reactive } from 'mutts'
 import { setAdapter } from '../../../src/adapter/registry'
 import { TEST_ADAPTER } from '../../test-adapter'
 import OverlayFixture from './OverlayFixture'
+import RadioFixture from './RadioFixture'
 
 // Install test adapter before rendering
 setAdapter(TEST_ADAPTER)
 
 const fixtures: Record<string, () => JSX.Element> = {
 	overlay: () => <OverlayFixture />,
+	radio: () => <RadioFixture />,
 }
 
 const state = reactive({

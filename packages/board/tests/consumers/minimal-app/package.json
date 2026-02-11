@@ -12,7 +12,7 @@
 		"@hono/node-server": "latest",
 		"hono": "latest",
 		"mutts": "link:../../../../mutts",
-		"pounce-board": "link:../../..",
+		"@pounce/board": "file:../../..",
 		"pounce-ts": "link:../../../../pounce-ts"
 	},
 	"devDependencies": {

@@ -3,6 +3,7 @@ import { build as viteBuild } from 'vite'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { builtinModules } from 'node:module'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -56,8 +57,8 @@ import {
     flushSSRPromises
 } from 'pounce-board/server'
 import { api } from 'pounce-board/client'
-import { renderToStringAsync, withSSR } from 'pounce-ts/server'
-import { h } from 'pounce-ts'
+import { renderToStringAsync, withSSR } from '@pounce/core/node'
+import { h } from '@pounce/core'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
@@ -165,7 +166,7 @@ serve({
                     external: [
                         /^node:/,
                         'jsdom',
-                        ...require('module').builtinModules
+                        ...builtinModules
                     ]
 				}
 			},
@@ -186,7 +187,3 @@ serve({
 	
 	console.log('\n✅ Build complete!')
 }
-
-// Need require for builtinModules check in ESM...
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);

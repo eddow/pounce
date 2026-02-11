@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPounceMiddleware } from 'pounce-board/server'
 import { clearSSRData, injectSSRData } from 'pounce-board/server'
-import { api } from '@pounce/board'
+import { api } from 'pounce-board/client'
 
 /**
  * @vocab "Test as Documentation"

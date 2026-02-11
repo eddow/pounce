@@ -8,6 +8,7 @@ import { createPounceMiddleware, clearRouteTreeCache } from '../adapters/hono.js
 import { api, enableSSR } from '../lib/http/client.js'
 import { fileURLToPath } from 'node:url'
 import { matchRoute, buildRouteTree } from '../lib/router/index.js'
+import { withSSRContext, injectSSRContent } from '../lib/ssr/utils.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -22,7 +23,7 @@ export interface DevServerOptions {
  * Run the pounce-board development server.
  * 
  * This server integrates Hono with Vite in middleware mode to provide:
- * - Automated pounce-board route discovery and API handling.
+ * - Automated @pounce/board route discovery and API handling.
  * - Hot Module Replacement (HMR) for frontend components.
  * - Automated SSR data injection and hydration.
  *
@@ -47,29 +48,32 @@ export async function runDevServer(options: DevServerOptions = {}) {
 			fs: {
 				allow: [
 					path.resolve('.'),
-					path.resolve(__dirname, '../../../mutts'),
-					path.resolve(__dirname, '../../../pounce-ts'),
+					path.resolve(__dirname, '../../../../mutts'),
+					path.resolve(__dirname, '../../../core'),
 				]
 			}
 		},
 		appType: 'custom',
 		resolve: {
 			alias: {
-				'pounce-ts/jsx-runtime': path.resolve(__dirname, '../../../pounce-ts/src/runtime/jsx-runtime.ts'),
-				'pounce-ts/jsx-dev-runtime': path.resolve(__dirname, '../../../pounce-ts/src/runtime/jsx-dev-runtime.ts'),
-				'pounce-ts': path.resolve(__dirname, '../../../pounce-ts/src/lib'),
-				'mutts': path.resolve(__dirname, '../../../mutts/src'),
+				'@pounce/core/jsx-runtime': path.resolve(__dirname, '../../../core/src/runtime/jsx-runtime.ts'),
+				'@pounce/core/jsx-dev-runtime': path.resolve(__dirname, '../../../core/src/runtime/jsx-dev-runtime.ts'),
+				'@pounce/core': path.resolve(__dirname, '../../../core/src/lib'),
+				'mutts': path.resolve(__dirname, '../../../../../mutts/src'),
+				'@pounce/board/client': path.resolve(__dirname, '../client/index.ts'),
+				'@pounce/board/server': path.resolve(__dirname, '../server/index.ts'),
+				'@pounce/board': path.resolve(__dirname, '../index.ts'),
 			}
 		},
 		optimizeDeps: {
-			exclude: ['mutts', 'pounce-ts']
+			exclude: ['mutts', '@pounce/core']
 		},
 		ssr: {
-			noExternal: ['mutts', 'pounce-ts']
+			noExternal: ['mutts', '@pounce/core']
 		}
 	})
 
-	// 2. Attach Pounce-Board middleware
+	// 2. Attach @pounce/board middleware
 	// This handles API routes and SSR data injection
 	app.use('*', createPounceMiddleware({ 
 		routesDir,
@@ -77,6 +81,14 @@ export async function runDevServer(options: DevServerOptions = {}) {
 	}))
 
 	// Watch for route changes and clear cache
+	// 
+	// HMR Strategy for Backend/SSR:
+	// 1. Files change -> Vite watcher detects it
+	// 2. We clear the route tree cache here
+	// 3. Next request triggers buildRouteTree() again
+	// 4. importFn calls vite.ssrLoadModule(path)
+	// 5. Vite sees the file modified and returns the FRESH module instance
+	//    (Vite invalidates its internal module graph automatically on change)
 	vite.watcher.on('all', (event, filePath) => {
 		const absoluteRoutesDir = path.resolve(routesDir)
 		if (filePath.startsWith(absoluteRoutesDir)) {
@@ -90,7 +102,7 @@ export async function runDevServer(options: DevServerOptions = {}) {
 		const url = new URL(c.req.url)
 
 		// Import SSR utilities dynamically to avoid circular deps
-		const { withSSRContext, injectApiResponses, getCollectedSSRResponses } = await import('../lib/ssr/utils.js')
+		// const { withSSRContext, injectSSRContent } = await import('../lib/ssr/utils.js')
 
 		// Run all SSR operations within a proper context
 		const origin = `${url.protocol}//${url.host}`
@@ -122,9 +134,9 @@ export async function runDevServer(options: DevServerOptions = {}) {
 			
 			if (match && match.component) {
 				// 3. Load framework utilities from the SAME Vite instance as the components
-				const { renderToStringAsync, withSSR } = await vite.ssrLoadModule('pounce-ts/server')
-				const { h } = await vite.ssrLoadModule('pounce-ts')
-				const { flushSSRPromises } = await vite.ssrLoadModule('pounce-board/server')
+				const { renderToStringAsync, withSSR } = await vite.ssrLoadModule('@pounce/core/server')
+				const { h } = await vite.ssrLoadModule('@pounce/core')
+				const { flushSSRPromises } = await vite.ssrLoadModule('@pounce/board/server')
 
 				if (typeof match.component !== 'function') {
 					console.warn(
@@ -166,11 +178,7 @@ export async function runDevServer(options: DevServerOptions = {}) {
 		}
 
 		// Build SSR data map from context's collected responses
-		const ssrData: Record<string, { id: string; data: unknown }> = {}
-		for (const [id, data] of context.ssr.responses.entries()) {
-			ssrData[id] = { id, data }
-		}
-		const finalHtml = injectApiResponses(result, ssrData)
+		const finalHtml = await injectSSRContent(result)
 
 		return c.html(finalHtml)
 	})

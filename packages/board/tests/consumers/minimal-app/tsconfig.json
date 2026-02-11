@@ -23,13 +23,13 @@
 			"mutts/*": [
 				"../../../../mutts/src/*"
 			],
-			"pounce-board": [
-				"../../../../pounce-board/src/server/index.ts"
+			"@pounce/board/*": [
+				"../../../../pounce-board/src/*"
 			],
-			"pounce-board/client": [
+			"@pounce/board/client": [
 				"../../../../pounce-board/src/client/index.ts"
 			],
-			"pounce-board/server": [
+			"@pounce/board/server": [
 				"../../../../pounce-board/src/server/index.ts"
 			]
 		}
@@ -38,5 +38,9 @@
 		"**/*",
 		"../../../../pounce-ts/**/*",
 		"../../../../mutts/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"dist"
 	]
 }
