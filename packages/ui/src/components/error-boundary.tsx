@@ -1,5 +1,5 @@
 import { caught, reactive } from 'mutts'
-import { bindChildren, type Scope } from '@pounce/core'
+import { reconcile, type Scope } from '@pounce/core'
 import { getAdapter } from '../adapter/registry'
 
 /**
@@ -69,7 +69,7 @@ export const ErrorBoundary = (props: ErrorBoundaryProps, scope: Scope) => {
 		if (!state.error) {
 			const receiver = <ErrorReceiver state={state} onError={props.onError}>{props.children}</ErrorReceiver>
 			try {
-				return bindChildren(el, receiver.render(scope))
+				return reconcile(el, receiver.render(scope))
 			} catch {
 				// DynamicRenderingError — ErrorReceiver's caught() already set state.error
 			}
@@ -79,7 +79,7 @@ export const ErrorBoundary = (props: ErrorBoundaryProps, scope: Scope) => {
 			const fallbackJsx = props.fallback
 				? props.fallback(state.error, { componentStack: '' })
 				: defaultFallback(state.error)
-			return bindChildren(el, fallbackJsx.render(scope))
+			return reconcile(el, fallbackJsx.render(scope))
 		}
 	}
 
@@ -96,7 +96,7 @@ export const ProductionErrorBoundary = (props: { children: JSX.Element | JSX.Ele
 		if (!state.error) {
 			const receiver = <ErrorReceiver state={state}>{props.children}</ErrorReceiver>
 			try {
-				return bindChildren(el, receiver.render(scope))
+				return reconcile(el, receiver.render(scope))
 			} catch {
 				// DynamicRenderingError — ErrorReceiver's caught() already set state.error
 			}
@@ -109,7 +109,7 @@ export const ProductionErrorBoundary = (props: { children: JSX.Element | JSX.Ele
 					<p>Please refresh the page and try again.</p>
 				</div>
 			)
-			return bindChildren(el, fallbackJsx.render(scope))
+			return reconcile(el, fallbackJsx.render(scope))
 		}
 	}
 

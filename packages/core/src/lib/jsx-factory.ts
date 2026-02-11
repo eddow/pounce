@@ -27,7 +27,7 @@ import {
 	rootScope,
 	type Scope,
 } from './pounce-element'
-import { bindChildren, processChildren } from './reconciler'
+import { reconcile, processChildren } from './reconciler'
 import {
 	applyStyleProperties,
 	checkComponentRebuild,
@@ -333,7 +333,7 @@ export const h = (
 				}
 				if (children && children.length > 0) {
 					const processedChildren = processChildren(children, scope || rootScope)
-					cleanedBy(element, bindChildren(element, processedChildren))
+					cleanedBy(element, reconcile(element, processedChildren))
 				}
 				perf?.mark(`element:${tag}:end`)
 				perf?.measure(`element:${tag}`, `element:${tag}:start`, `element:${tag}:end`)
@@ -448,25 +448,6 @@ export const intrinsicComponentAliases: Record<string, Function> = extend(null, 
 	},
 	fragment(props: { children: PounceElement[] }, scope: Scope) {
 		return new PounceElement(() => processChildren(props.children, scope), { tag: 'fragment' })
-	},
-	portal(props: { target: string | Element; children?: Child[] }, scope: Scope) {
-		const children = props.children ?? []
-
-		return new PounceElement(function portalRender() {
-			const sentinel = document.createComment('portal')
-			const rendered = processChildren(children as Child[], scope)
-			effect(function portalBind() {
-				const raw = props.target
-				const target = isString(raw) ? document.querySelector(raw as string) : raw as Element | null
-				if (!target) return
-				const stopReconciler = bindChildren(target, rendered)
-				return () => {
-					stopReconciler()
-					while (target.firstChild) target.removeChild(target.firstChild)
-				}
-			})
-			return sentinel
-		}, { tag: 'portal' })
 	},
 })
 

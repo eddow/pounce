@@ -5,7 +5,6 @@
 import { effect, why, watch } from 'mutts'
 import './Counter.scss'
 import { compose, type Scope } from '../../lib'
-import { why } from 'mutts/src'
 
 export default function CounterWebComponent(
 	props: {

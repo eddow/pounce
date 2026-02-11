@@ -27,13 +27,13 @@ Kit defines a `PlatformAdapter` interface — the contract between kit and its e
 
 | Adapter | Where | How |
 |---------|-------|-----|
-| **DOM** | `kit/dom/client.ts` | Real browser: event listeners, `document.head`, history API |
+| **DOM** | `kit/dom/client.ts` | Real browser: event listeners, history API |
 | **Test** | `kit/platform/test.ts` | Global reactive client, jsdom head — no ALS, no proxies |
 | **SSR** | Provided by board | ALS-backed client, head serialization — board's business, not kit's |
 
 - **`client`** — proxy that delegates to `platform.client`. Returns `undefined` on get when no platform is set (allows `client?.language` fallback). Throws on set.
-- **`head(children)`** — delegates to `platform.head()`. DOM: `bindChildren(document.head, ...)`. SSR: board serializes nodes for injection.
 - **`setPlatform(adapter)`** — called once by the environment entry point.
+- **Head injection**: use `latch(document.head, ...)` from `@pounce/core` directly. No kit wrapper needed.
 
 ### Router
 
@@ -94,7 +94,7 @@ src/
 ├── index.ts              # Barrel: re-exports api + router
 ├── platform/
 │   ├── types.ts          # PlatformAdapter, Client, ClientState, Direction, NavigateOptions
-│   ├── shared.ts         # Singleton slot: setPlatform(), client proxy, head() delegate
+│   ├── shared.ts         # Singleton slot: setPlatform(), client proxy
 │   ├── test.ts           # createTestAdapter() — global reactive client, no ALS
 │   └── index.ts          # Barrel
 ├── router/
@@ -112,7 +112,7 @@ src/
 │   └── index.ts          # Barrel
 ├── dom/
 │   ├── index.ts          # DOM entry: imports client.js (side-effect), re-exports platform + dom-specific
-│   ├── client.ts         # DOM adapter: reactive client + event listeners + head() via bindChildren
+│   ├── client.ts         # DOM adapter: reactive client + event listeners
 │   ├── api.ts            # Fetch-based executor
 │   ├── css.ts            # css/sass/scss tags, __injectCSS, SSR collection
 │   └── storage.ts        # stored() — reactive localStorage
@@ -156,7 +156,7 @@ src/
 2. **CSS tags are build-time**: `css`, `sass`, `scss` are replaced by the Vite plugin. The runtime fallback just calls `__injectCSS()` with raw text (no preprocessing).
 3. **`stored()` needs cleanup**: Returns a `cleanedBy()` object. If used outside a component lifecycle, call the cleanup manually.
 4. **Node entry stubs CSS**: `node/index.ts` exports no-op `css`/`sass`/`scss` functions.
-5. **`client` proxy is graceful before platform init**: Returns `undefined` on property access when no platform is set (allows `client?.language ?? 'en-US'` fallback). Throws on set/head() — those require an explicit platform.
+5. **`client` proxy is graceful before platform init**: Returns `undefined` on property access when no platform is set (allows `client?.language ?? 'en-US'` fallback). Throws on set — requires an explicit platform. Head injection: use `latch(document.head, ...)` from core.
 6. **No arrow function JSX children**: `{() => expr}` in JSX survives the babel plugin as a raw function — the reconciler drops it as `emptyChild`. Use `{expr}` instead (babel wraps it as `r(() => expr)`).
 
 ## Known Issues

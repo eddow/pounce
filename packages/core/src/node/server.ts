@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { JSDOM } from 'jsdom'
-import { bindChildren, rootScope, type Scope } from '../lib'
+import { reconcile, rootScope, type Scope } from '../lib'
 
 /**
  * Global storage for the JSDOM instance associated with the current execution context (e.g., an SSR request).
@@ -24,7 +24,7 @@ export function withSSR<T>(fn: (dom: { document: Document; window: Window }) => 
 
 	return als.run(jsdom, () =>
 		fn({
-			document: document as unknown as Document,
+			document: document as Document,
 			window: window as unknown as Window,
 		})
 	)
@@ -38,7 +38,7 @@ export function renderToString(element: JSX.Element, scope: Scope = rootScope): 
 	return withSSR(({ document }) => {
 		const container = document.getElementById('root')!
 		const mountable = element.render(scope)
-		bindChildren(container as unknown as HTMLElement, mountable)
+		reconcile(container as HTMLElement, mountable)
 		return container.innerHTML
 	})
 }
@@ -55,7 +55,7 @@ export async function renderToStringAsync(
 	return await withSSR(async ({ document }) => {
 		const container = document.getElementById('root')!
 		const mountable = element.render(scope)
-		bindChildren(container as unknown as HTMLElement, mountable)
+		reconcile(container as HTMLElement, mountable)
 
 		// If we have a way to collect promises, wait for them
 		if (options.collectPromises) {

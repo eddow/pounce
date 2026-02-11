@@ -29,6 +29,8 @@ import StatusPage from './pages/ui/status'
 import StarsPage from './pages/ui/stars'
 import ErrorBoundaryPage from './pages/ui/error-boundary'
 import MenuPage from './pages/ui/menu'
+import TypographyPage from './pages/ui/typography'
+import InfiniteScrollPage from './pages/ui/infinite-scroll'
 
 // Route type that includes the view function
 type AppRoute = ClientRouteDefinition & {
@@ -65,6 +67,8 @@ const routes: AppRoute[] = [
   { path: '/ui/stars', view: StarsPage },
   { path: '/ui/error-boundary', view: ErrorBoundaryPage },
   { path: '/ui/menu', view: MenuPage },
+  { path: '/ui/typography', view: TypographyPage },
+  { path: '/ui/infinite-scroll', view: InfiniteScrollPage },
 ]
 
 export default routes

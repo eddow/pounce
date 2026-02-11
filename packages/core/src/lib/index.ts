@@ -1,12 +1,10 @@
 /// <reference path="../types/jsx.d.ts" />
-import { effect, type ScopedCallback } from 'mutts'
 import { perf } from '../perf'
-import { document } from '../shared'
 import { testing } from './debug'
 import { rootScope, type Scope } from './pounce-element'
-import { bindChildren } from './reconciler'
+import { latch } from './reconciler'
 import { h, Fragment } from './jsx-factory'
-import { isFunction, isString } from './renderer-internal'
+import { isFunction } from './renderer-internal'
 
 // Singleton verification — detects dual-module hazard (e.g. bundled + external copies)
 const GLOBAL_POUNCE_KEY = '__POUNCE_CORE_INSTANCE__'
@@ -61,30 +59,14 @@ export function bindApp(
 	container: string | HTMLElement | (() => HTMLElement) = '#app',
 	scope: Scope = rootScope
 ) {
-	let stop: ScopedCallback | undefined
-	function actuallyBind() {
-		perf?.mark('app:mount:start')
-		const appElement = isString(container)
-			? (document.querySelector(container) as HTMLElement)
-			: isFunction(container)
-				? container()
-				: container
-		if (!appElement) {
-			console.error('App container not found')
-			return
-		}
-		testing.renderingEvent?.('bind app root', appElement)
-		perf?.mark('app:render:start')
-		stop = effect(() => bindChildren(appElement, app.render(scope)))
-		perf?.mark('app:render:end')
-		perf?.measure('app:render', 'app:render:start', 'app:render:end')
-		perf?.mark('app:mount:end')
-		perf?.measure('app:mount', 'app:mount:start', 'app:mount:end')
-	}
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', actuallyBind)
-	} else {
-		actuallyBind()
-	}
-	return () => stop?.()
+	const target = isFunction(container) ? container() : container
+	perf?.mark('app:mount:start')
+	testing.renderingEvent?.('latch app root', target)
+	perf?.mark('app:render:start')
+	const unlatch = latch(target as string | Element, app, scope)
+	perf?.mark('app:render:end')
+	perf?.measure('app:render', 'app:render:start', 'app:render:end')
+	perf?.mark('app:mount:end')
+	perf?.measure('app:mount', 'app:mount:start', 'app:mount:end')
+	return unlatch
 }

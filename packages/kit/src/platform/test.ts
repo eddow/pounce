@@ -1,11 +1,9 @@
-import { processChildren, bindChildren, type Scope, rootScope } from '@pounce/core'
 import { reactive } from 'mutts'
-import type { ScopedCallback } from 'mutts'
 import type { Client, PlatformAdapter } from './types.js'
 
 /**
  * Test platform adapter — global reactive client, no ALS, no proxies.
- * Uses jsdom's `document.head` for head injection (vitest provides it).
+ * Head injection: use `latch(document.head, ...)` from @pounce/core directly.
  */
 export function createTestAdapter(url?: string | URL): PlatformAdapter {
 	const parsedUrl = url ? new URL(url) : new URL('http://localhost/')
@@ -36,17 +34,5 @@ export function createTestAdapter(url?: string | URL): PlatformAdapter {
 		prefersDark: false,
 	}) as Client
 
-	return {
-		client,
-		head(children: JSX.Element, scope: Scope = rootScope): ScopedCallback {
-			const rendered = processChildren([children], scope)
-			const stopReconciler = bindChildren(document.head, rendered)
-			return () => {
-				stopReconciler()
-				for (const node of rendered) {
-					if (node.parentNode === document.head) document.head.removeChild(node)
-				}
-			}
-		},
-	}
+	return { client }
 }

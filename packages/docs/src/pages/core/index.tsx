@@ -46,7 +46,7 @@ export default function CorePage() {
           <li><strong>Babel plugin</strong> transforms JSX — wraps expressions in <code>r()</code>, generates two-way bindings</li>
           <li><strong><code>h()</code></strong> creates <code>PounceElement</code> descriptors (not DOM nodes yet)</li>
           <li><strong><code>PounceElement.render()</code></strong> produces real DOM nodes inside a <code>mutts</code> effect</li>
-          <li><strong>Reconciler</strong> (<code>bindChildren</code>) syncs children to the DOM, handling conditionals and lists</li>
+          <li><strong>Reconciler</strong> (<code>reconcile</code>) syncs children to the DOM — <code>latch()</code> is the public API for latching content onto any element</li>
           <li><strong>Reactive updates</strong> — when a <code>mutts</code> dependency changes, only the specific text node, attribute, or child list updates</li>
         </ol>
       </Section>

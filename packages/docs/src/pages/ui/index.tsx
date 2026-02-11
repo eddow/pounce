@@ -92,10 +92,16 @@ export default function UIPage() {
             <tr><td><code>Badge</code></td><td>Small uppercase status label</td></tr>
             <tr><td><code>Pill</code></td><td>Medium status indicator with icons</td></tr>
             <tr><td><code>Chip</code></td><td>Interactive dismissible token</td></tr>
+            <tr><td><code>CheckButton</code></td><td>Toggle button with role="checkbox" semantics</td></tr>
+            <tr><td><code>RadioButton</code></td><td>Button-style radio with group/value binding</td></tr>
+            <tr><td><code>Multiselect</code></td><td>Dropdown multi-selection with Set binding</td></tr>
+            <tr><td><code>Heading</code></td><td>Semantic heading (h1–h6) with variant coloring</td></tr>
+            <tr><td><code>Text</code></td><td>Paragraph text with size presets and muted mode</td></tr>
+            <tr><td><code>Link</code></td><td>Styled anchor with client-side routing</td></tr>
             <tr><td><code>Icon</code></td><td>Icon rendering via adapter factory</td></tr>
             <tr><td><code>ErrorBoundary</code></td><td>Catches child rendering errors with fallback</td></tr>
-            <tr><td><code>Forms</code></td><td>Select, Combobox, Checkbox, Radio, Switch, MultiSelect</td></tr>
-            <tr><td><code>Layout</code></td><td>Stack, Inline, AppShell, Heading, Text</td></tr>
+            <tr><td><code>Forms</code></td><td>Select, Combobox, Checkbox, Radio, Switch</td></tr>
+            <tr><td><code>Layout</code></td><td>Stack, Inline, Grid, AppShell, Container</td></tr>
           </tbody>
         </table>
       </Section>

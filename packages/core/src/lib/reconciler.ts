@@ -2,13 +2,15 @@ import { cleanedBy, cleanup, effect, lift, project, type ScopedCallback, scan, t
 import { perf } from '../perf'
 import { document, Node } from '../shared'
 import { perfCounters, testing } from './debug'
-import { type Child, DynamicRenderingError, PounceElement, type Scope, emptyChild } from './pounce-element'
+import { type Child, DynamicRenderingError, PounceElement, rootScope, type Scope, emptyChild } from './pounce-element'
 import { isNumber, isString } from './renderer-internal'
 import { extend, isElement } from './utils'
 import { ReactiveProp } from './jsx-factory'
 
+const latchOwners = new WeakMap<Element, string>()
+
 let reconcileCount = 0
-export function bindChildren(
+export function reconcile(
 	parent: Node,
 	newChildren: Node | readonly Node[] | undefined
 ): ScopedCallback {
@@ -56,10 +58,77 @@ export function bindChildren(
 			removed++
 			parent.removeChild(parent.lastChild!)
 		}
-		testing.renderingEvent?.(`reconcileChildren (+${added} -${removed})`, parent, newChildren)
+		testing.renderingEvent?.(`reconcile (+${added} -${removed})`, parent, newChildren)
 		perf?.mark(`reconcile:${rid}:end`)
 		perf?.measure(`reconcile:${rid}(+${added}-${removed})`, `reconcile:${rid}:start`, `reconcile:${rid}:end`)
 	})
+}
+
+/**
+ * Latch reactive content onto a DOM element.
+ * Polymorph: accepts PounceElement, Child[], Node, Node[], or undefined.
+ * Processes content through the appropriate pipeline, then reconciles into the target.
+ * Includes DOMContentLoaded guard and conflict detection.
+ */
+export function latch(
+	target: string | Element,
+	content: PounceElement | Child | Child[] | Node | Node[] | undefined,
+	scope: Scope = rootScope
+): ScopedCallback {
+	let stop: ScopedCallback | undefined
+
+	function actuallyLatch() {
+		const element = isString(target)
+			? document.querySelector(target as string) as Element | null
+			: target as Element | null
+		if (!element) {
+			console.error(`[pounce] latch target not found: ${target}`)
+			return
+		}
+
+		const tag = element.tagName?.toLowerCase() ?? String(target)
+		const existing = latchOwners.get(element)
+		if (existing) {
+			console.warn(`[pounce] latch conflict on <${tag}>: already latched by "${existing}". Previous content will be replaced.`)
+		}
+		const label = isString(target) ? target as string : `<${tag}>`
+		latchOwners.set(element, label)
+
+		let nodes: Node | readonly Node[] | undefined
+		if (content instanceof PounceElement) {
+			nodes = content.render(scope)
+		} else if (content instanceof Node) {
+			nodes = content
+		} else if (Array.isArray(content)) {
+			if (content.length > 0 && content[0] instanceof Node) {
+				nodes = content as Node[]
+			} else {
+				nodes = processChildren(content as Child[], scope)
+			}
+		} else if (content !== undefined && content !== null) {
+			nodes = processChildren([content as Child], scope)
+		}
+
+		testing.renderingEvent?.('latch', tag, element)
+		stop = reconcile(element, nodes)
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', actuallyLatch)
+	} else {
+		actuallyLatch()
+	}
+
+	return () => {
+		stop?.()
+		const element = isString(target)
+			? document.querySelector(target as string) as Element | null
+			: target as Element | null
+		if (element) {
+			latchOwners.delete(element)
+			while (element.firstChild) element.removeChild(element.firstChild)
+		}
+	}
 }
 
 /**

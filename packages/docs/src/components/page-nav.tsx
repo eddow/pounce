@@ -49,6 +49,8 @@ export default function PageNav() {
           <li><A href="/ui/stars">Stars</A></li>
           <li><A href="/ui/error-boundary">ErrorBoundary</A></li>
           <li><A href="/ui/menu">Menu</A></li>
+          <li><A href="/ui/typography">Typography</A></li>
+          <li><A href="/ui/infinite-scroll">InfiniteScroll</A></li>
           <li><A href="/ui/adapter">Adapter</A></li>
         </ul>
       </li>

@@ -1,5 +1,3 @@
-import type { Scope } from '@pounce/core'
-import type { ScopedCallback } from 'mutts'
 import type { Client, PlatformAdapter } from './types.js'
 
 let _platform: PlatformAdapter | null = null
@@ -28,11 +26,3 @@ export const client: Client = new Proxy({} as Client, {
 	},
 	set(_, prop, value) { return Reflect.set(ensure('client.set').client, prop, value) },
 })
-
-/**
- * Inject JSX children into `<head>`, return cleanup.
- * Delegates to the active platform adapter.
- */
-export function head(children: JSX.Element, scope?: Scope): ScopedCallback {
-	return ensure('head').head(children, scope)
-}

@@ -1,6 +1,4 @@
-import { processChildren, bindChildren, type Scope, rootScope } from '@pounce/core'
 import { reactive } from 'mutts'
-import type { ScopedCallback } from 'mutts'
 import { setPlatform } from '../platform/shared.js'
 import type {
 	Client,
@@ -96,16 +94,6 @@ try {
 
 const domAdapter: PlatformAdapter = {
 	client,
-	head(children: JSX.Element, scope: Scope = rootScope): ScopedCallback {
-		const rendered = processChildren([children], scope)
-		const stopReconciler = bindChildren(document.head, rendered)
-		return () => {
-			stopReconciler()
-			for (const node of rendered) {
-				if (node.parentNode === document.head) document.head.removeChild(node)
-			}
-		}
-	},
 }
 
 setPlatform(domAdapter)

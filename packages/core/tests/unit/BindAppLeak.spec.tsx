@@ -33,7 +33,7 @@ describe('bindApp re-render bug', () => {
 		state.count++
 
 		// If bindApp has the effect wrapper, App might re-render (count becomes 2)
-		// If bindChildren (inner effect) handles it, App re-render might not happen
+		// If reconcile (inner effect) handles it, App re-render might not happen
 		// depending on how processChildren/rendered reactive array works.
 
 		console.log('App render count after change:', appRenderCount.count)

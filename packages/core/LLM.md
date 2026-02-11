@@ -144,3 +144,27 @@ The vitest base config (`test/vitest.config.base.ts`) includes `pounceCorePlugin
 `@pounce/core` uses `instanceof ReactiveProp` in critical paths (`propsInto`, `valuedAttributeGetter`, event handlers, reconciler). If a library build (e.g. `@pounce/kit`) aliases `@pounce/core/jsx-runtime` to **source** but externalizes `@pounce/core`, the built dist will bundle a **second copy** of `ReactiveProp` — breaking all `instanceof` checks at runtime (manifests as `[object Object]` in DOM attributes).
 
 **Rule**: Library builds that externalize `@pounce/core` MUST externalize ALL subpaths: use `/^@pounce\/core/` regex, never list individual subpaths. A singleton guard in `src/lib/index.ts` throws if two instances load.
+
+### 11. `latch()` — Latching Content onto Elements
+
+`latch(target, content, scope?)` is the public API for rendering pounce content into any DOM element. It replaces the old `<portal>` intrinsic and kit's `head()` function.
+
+```typescript
+import { latch } from '@pounce/core'
+
+// Latch into document.head (replaces kit's head())
+const unlatch = latch(document.head, <link rel="canonical" href="/page" />)
+
+// Latch into any element by selector or ref
+latch('#sidebar', <Nav />, scope)
+latch(myElement, [<span>a</span>, <span>b</span>])
+
+// Cleanup removes all latched content
+unlatch()
+```
+
+- **Polymorph**: accepts `PounceElement`, `Child[]`, `Node`, `Node[]`, or `undefined`
+- **DOMContentLoaded guard**: defers if document is still loading
+- **Conflict detection**: warns if two latches target the same element
+- **`bindApp()`** is a thin wrapper around `latch()` with perf markers
+- **`reconcile()`** is the internal primitive (not exported for consumers) — syncs `Node[]` into a parent

@@ -1,5 +1,3 @@
-import type { Scope } from '@pounce/core'
-import type { ScopedCallback } from 'mutts'
 
 /** Parsed representation of the current URL. */
 export interface ClientUrl {
@@ -65,19 +63,13 @@ export interface Client extends ClientState {
  *
  * Kit defines this interface. Adapters implement it:
  * - **DOM adapter** (`kit/dom/`): real browser APIs
- * - **Test adapter** (`kit/test/`): global reactive client, jsdom head
+ * - **Test adapter** (`kit/test/`): global reactive client
  * - **SSR adapter** (provided by board or any SSR engine): ALS-backed client,
- *   head serialization, request-scoped isolation — that's the adapter's business.
+ *   request-scoped isolation — that's the adapter's business.
+ *
+ * Head injection: use `latch(document.head, ...)` from @pounce/core directly.
  */
 export interface PlatformAdapter {
 	/** Reactive client state singleton */
 	readonly client: Client
-
-	/**
-	 * Inject JSX children into `<head>`, return cleanup.
-	 * - DOM: appends to `document.head` via `bindChildren`
-	 * - SSR: serializes nodes and stores them for injection into the HTML response
-	 * - Test: same as DOM (jsdom provides `document.head`)
-	 */
-	head(children: JSX.Element, scope?: Scope): ScopedCallback
 }
