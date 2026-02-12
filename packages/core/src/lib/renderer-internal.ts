@@ -38,7 +38,6 @@ export function listen(
 export function valuedAttributeGetter(to: any) {
 	if (to instanceof ReactiveProp) return to.get
 	if (to === true) return () => true
-	if (isFunction(to)) return to as (...args: any[]) => unknown
 	return () => to
 }
 

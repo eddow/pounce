@@ -168,3 +168,15 @@ unlatch()
 - **Conflict detection**: warns if two latches target the same element
 - **`bindApp()`** is a thin wrapper around `latch()` with perf markers
 - **`reconcile()`** is the internal primitive (not exported for consumers) — syncs `Node[]` into a parent
+
+### 12. Known Issue: Premature Effect Cleanup in `jsx-factory`
+
+**Status:** Open / Mitigated (Workaround Active)
+
+When `attend()` creates effects for event listeners (via `listen()`), the effect's cleanup function is sometimes called **immediately** (15-30ms) after creation during the initial render, even though the element remains in the DOM. This causes `addEventListener` listeners to be removed instantly.
+
+**Workaround:** `jsx-factory.ts` uses direct property assignment (`element.onclick = handler`) as a primary binding mechanism for standard events. This persists even if the reactive effect is disposed. `listen()` is still called as a fallback for custom events, but may be unreliable until the root cause (interaction between `cleanedBy` and `reconciler`) is fixed.
+
+**Implication for Contributors:**
+- Do not remove the `element[propName] = handler` assignment in `eventEffect`.
+- Be aware that `effect()` cleanup logic on DOM elements might run earlier than expected.

@@ -2,7 +2,7 @@ import type { Scope } from '@pounce/core'
 import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
-import { useDisplayContext } from '../display/display-context'
+
 import { asVariant, getVariantTrait } from '../shared/variants'
 import { Icon } from './icon'
 
@@ -132,7 +132,7 @@ const RadioButtonBase = (props: RadioButtonProps, scope: Scope) => {
 					: state.ariaLabel,
 				'aria-disabled': state.disabled || undefined,
 			},
-		}, useDisplayContext(scope))
+		}, scope)
 	}
 
 	return (

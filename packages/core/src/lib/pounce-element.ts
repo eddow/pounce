@@ -1,4 +1,4 @@
-import { cleanedBy, effect, named, reactive, type ScopedCallback, untracked } from 'mutts'
+import { cleanedBy, effect, type EffectCleanup, named, reactive, type ScopedCallback, stopped, untracked } from 'mutts'
 import { perf } from '../perf'
 import { type ComponentInfo, perfCounters, POUNCE_OWNER } from './debug'
 import { ReactiveProp } from './jsx-factory'
@@ -51,8 +51,8 @@ export class PounceElement {
 	if?: Record<string, () => any>
 	use?: Record<string, () => any>
 
-	// Identity map for render caching
-	private static renderCache = new WeakMap<PounceElement, Node | readonly Node[]>()
+	// Identity map for render caching — stores result + stop function to detect dead pipelines
+	private static renderCache = new WeakMap<PounceElement, { result: Node | readonly Node[]; stop: EffectCleanup }>()
 
 	constructor(
 		produce: (scope?: Scope) => Node | readonly Node[],
@@ -77,36 +77,50 @@ export class PounceElement {
 	}
 
 	/**
+	 * Clear the render cache for this element.
+	 * Used when a conditional element is hidden — its inner pipeline is destroyed,
+	 * so re-showing must re-render from scratch instead of returning dead cached nodes.
+	 */
+	invalidateCache() {
+		const entry = PounceElement.renderCache.get(this)
+		if (entry) {
+			entry.stop()
+			PounceElement.renderCache.delete(this)
+		}
+	}
+
+	/**
 	 * Render the element - executes the produce function with caching
 	 */
 	render(scope: Scope = rootScope): Node | readonly Node[] {
 		const tagName = typeof this.tag === 'string' ? this.tag : this.tag?.name || 'anonymous'
 		// Check cache first
-		let partial = PounceElement.renderCache.get(this)
-		if (partial !== undefined) {
+		const cached = PounceElement.renderCache.get(this)
+		if (cached !== undefined && !cached.stop[stopped]) {
 			perfCounters.renderCacheHits++
 			perf?.mark(`render:${tagName}:cache-hit`)
-			return partial
+			return cached.result
 		}
-		if (!partial) {
-			perf?.mark(`render:${tagName}:start`)
-			// Execute produce function untracked to prevent unwanted reactivity
-			effect(named(
-				tagName,
-				({ reaction }) => {
-					if (reaction) {
-						console.warn(`Component rebuild detected.
+		// Cache miss or dead pipeline — (re-)render
+		if (cached) PounceElement.renderCache.delete(this)
+		let partial: Node | readonly Node[] | undefined
+		perf?.mark(`render:${tagName}:start`)
+		const stopRender = effect(named(tagName, ({ reaction }) => {
+			if (reaction) {
+				console.warn(`Component rebuild detected.
 It means the component definition refers a reactive value that has been modified, though the component has not been rebuilt as it is considered forbidden to avoid infinite events loops.`)
-					} else {
-						partial = this.produce(scope)
-					}
-				}))
+			} else {
+				partial = this.produce(scope)
+			}
+		}))
 
-			if (!partial) throw new DynamicRenderingError('Renderer returned no content')
-			PounceElement.renderCache.set(this, partial)
-			perf?.mark(`render:${tagName}:end`)
-			perf?.measure(`render:${tagName}`, `render:${tagName}:start`, `render:${tagName}:end`)
-		}
+		if (!partial) throw new DynamicRenderingError('Renderer returned no content')
+		PounceElement.renderCache.set(this, { result: partial, stop: stopRender })
+		// Anchor the render effect to the DOM output so GC doesn't collect it
+		// (root effects use FinalizationRegistry — if nobody holds the cleanup, GC kills all children)
+		cleanedBy(partial, stopRender)
+		perf?.mark(`render:${tagName}:end`)
+		perf?.measure(`render:${tagName}`, `render:${tagName}:start`, `render:${tagName}:end`)
 
 		// getTarget matches types for single nodes vs fragments
 		const getTarget = () => (Array.isArray(partial) && partial.length === 1 ? partial[0] : partial!)

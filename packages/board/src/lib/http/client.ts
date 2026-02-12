@@ -15,6 +15,7 @@ import {
 } from './core.js'
 import type { ExtractPathParams } from '../types/inference.js'
 import type { RouteDefinition } from '../router/defs.js'
+// TODO - prefer arktype to zod ? (let's have a serious discussion)
 import { z } from 'zod'
 
 import { PounceResponse } from './response.js'

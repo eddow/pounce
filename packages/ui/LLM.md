@@ -61,9 +61,9 @@ Framework-agnostic UI component library for Pounce applications. Evolved from `@
 ### Display & Theming
 | Component | File | Notes |
 |-----------|------|-------|
-| DisplayProvider | `display/display-context.tsx` | Scope-based theme/dir/locale, nestable, `data-theme` on own element |
+| DisplayProvider | `@pounce/kit/display` | Scope-based theme/dir/locale, nestable, `data-theme` on own element |
 | ThemeToggle | `display/theme-toggle.tsx` | Split-button UX: quick toggle + dropdown with auto/dark/light |
-| useDisplayContext | `display/display-context.tsx` | `useDisplayContext(scope)` → `DisplayContext` (falls back to system defaults) |
+| useDisplayContext | `@pounce/kit/display` | `useDisplayContext(scope)` → `DisplayContext` (falls back to system defaults) |
 
 ### Overlays & Error Handling
 | Component | File | Adapter Key |
@@ -104,7 +104,7 @@ Framework-agnostic UI component library for Pounce applications. Evolved from `@
 
 ## DisplayContext Architecture
 - **Kit provides**: `client.prefersDark()`, `client.direction`, `client.language` — raw system values
-- **UI provides**: `DisplayProvider` component reads kit values as root defaults, manages `auto` resolution chain
+- **Kit provides**: `DisplayProvider` component reads kit values as root defaults, manages `auto` resolution chain
 - **Scope key**: `scope.display` — set by `DisplayProvider`, read by `useDisplayContext(scope)`
 - **Icon integration**: `Icon` component reads `DisplayContext` from scope, passes to `iconFactory`
 - **Kit/intl hook**: `setLocaleResolver()` can be wired to read `scope.display.locale`

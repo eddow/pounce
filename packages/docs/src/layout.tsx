@@ -1,12 +1,16 @@
 import type { Scope } from '@pounce/core'
 import { Router } from '@pounce/kit'
-import { Container, DisplayProvider, Heading, Text, ThemeToggle, Toolbar } from '@pounce/ui'
+import { Container, Heading, Text, ThemeToggle, Toolbar } from '@pounce/ui'
+import { Env, type EnvSettings } from '@pounce/kit/env'
+import { reactive } from 'mutts'
 import PageNav from './components/page-nav'
 import routes from './routes'
 
+const envSettings = reactive<EnvSettings>({ theme: 'auto' })
+
 export function DocsApp(_props: {}, _scope: Scope) {
   return (
-    <DisplayProvider>
+    <Env settings={envSettings}>
       <div class="docs-layout">
         <aside class="docs-sidebar">
           <h5>Pounce</h5>
@@ -18,7 +22,7 @@ export function DocsApp(_props: {}, _scope: Scope) {
               <Toolbar>
                 <Heading level={5}>Pounce Docs</Heading>
                 <Toolbar.Spacer />
-                <ThemeToggle simple />
+                <ThemeToggle settings={envSettings} simple />
               </Toolbar>
             </Container>
           </header>
@@ -35,6 +39,6 @@ export function DocsApp(_props: {}, _scope: Scope) {
           </Container>
         </div>
       </div>
-    </DisplayProvider>
+    </Env>
   )
 }

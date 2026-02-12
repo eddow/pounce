@@ -2,7 +2,7 @@
  * Todo Web Component using inline JSX templating
  */
 
-import { effect, memoize } from 'mutts'
+import { memoize } from 'mutts'
 import './Todo.scss'
 import { array, compose } from '../../lib/utils'
 
@@ -38,12 +38,6 @@ export default function TodoWebComponent(
 		},
 		props
 	)
-	effect(() => {
-		return () => {
-			console.log('👋 Todo component unmounted!', { todoCount: state.todos.length })
-		}
-	})
-
 	function addTodo() {
 		const text = state.newTodoText.trim()
 		const allowEmptyTodos = state.allowEmptyTodos ?? false
@@ -130,7 +124,7 @@ export default function TodoWebComponent(
 
 			{/* Todo list */}
 			<>
-				<div if={() => filteredTodos().length > 0} class="todo-list">
+				<div if={filteredTodos().length > 0} class="todo-list">
 					<for each={filteredTodos()}>
 						{(todo) => (
 							<div class="todo-item">

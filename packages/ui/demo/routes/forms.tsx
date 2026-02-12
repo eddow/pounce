@@ -8,14 +8,14 @@ import {
 	Stars,
 	loading,
 } from '../../src'
-
+// TODO: repair radiobuttons and functionality (test the demo)
 function LoadingDemo(_props: {}, scope: Scope) {
 	scope.loading = loading
 	const state = reactive({ saving: false })
 	function simulateSave() {
 		state.saving = true
 		setTimeout(() => { state.saving = false }, 2000)
-	}
+	}	
 	return (
 		<Stack gap="sm">
 			<Inline wrap gap="md">

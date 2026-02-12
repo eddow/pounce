@@ -34,6 +34,7 @@ export default defineConfig({
         dom: resolve(projectRootDir, 'src/dom/index.ts'),
         node: resolve(projectRootDir, 'src/node/index.ts'),
         intl: resolve(projectRootDir, 'src/intl/index.ts'),
+        env: resolve(projectRootDir, 'src/env/index.tsx'),
       },
       formats: ['es', 'cjs'],
       fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'js' : 'cjs'}`,

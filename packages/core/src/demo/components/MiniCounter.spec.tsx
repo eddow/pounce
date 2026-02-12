@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { reactive } from 'mutts'
 import { h, rootScope } from '../../lib'
 import { MiniCounter } from './MiniCounter'
 
@@ -62,5 +63,62 @@ describe('MiniCounter Component', () => {
 		const addButton = root.querySelector('button.add')
 		expect(addButton?.tagName).toBe('BUTTON')
 		expect(addButton?.textContent?.trim()).toBe('+')
+	})
+
+	it('shows Remove All after adding an item dynamically', () => {
+		const list = reactive([] as string[])
+		const mount = h('div', {}, h(MiniCounter, { list }))
+		const root = mount.render(rootScope) as HTMLElement
+
+		// Initially hidden
+		expect(root.querySelector('button.remove-all')).toBeFalsy()
+
+		// Add an item
+		list.push('hello')
+
+		// Should now appear
+		expect(root.querySelector('button.remove-all')).toBeTruthy()
+		expect(root.querySelector('button.remove-all')?.textContent?.trim()).toBe('Remove All')
+	})
+
+	it('shows Remove All in nested App with list.join sibling', () => {
+		const state = reactive({ list: [] as string[] })
+		function App() {
+			return (
+				<>
+					<div>List: <span>{state.list.join(', ')}</span></div>
+					<MiniCounter list={state.list} />
+				</>
+			)
+		}
+		const mount = h('div', {}, h(App, {}))
+		const root = mount.render(rootScope) as HTMLElement
+
+		expect(root.querySelector('button.remove-all')).toBeFalsy()
+		state.list.push('hello')
+		expect(root.querySelector('button.remove-all')).toBeTruthy()
+	})
+
+	it('shows Remove All when triggered via button click', () => {
+		const state = reactive({ list: [] as string[] })
+		function App() {
+			return (
+				<>
+					<div>List: <span>{state.list.join(', ')}</span></div>
+					<MiniCounter list={state.list} />
+				</>
+			)
+		}
+		const mount = h('div', {}, h(App, {}))
+		const root = mount.render(rootScope) as HTMLElement
+
+		expect(root.querySelector('button.remove-all')).toBeFalsy()
+
+		// Simulate clicking the add button (same path as browser)
+		const addBtn = root.querySelector('button.add') as HTMLButtonElement
+		addBtn.click()
+
+		expect(root.querySelector('button.remove')).toBeTruthy()
+		expect(root.querySelector('button.remove-all')).toBeTruthy()
 	})
 })

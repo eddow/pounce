@@ -1,5 +1,6 @@
-import { bindApp, compose, type Scope } from '@pounce/core'
-import { effect, reactive } from 'mutts'
+import { bindApp, type Scope } from '@pounce/core'
+import { reactive } from 'mutts'
+import { MiniCounter } from './components/MiniCounter'
 
 function isFunction(value: any): value is Function {
 	return typeof value === 'function'
@@ -49,52 +50,6 @@ function ResizeSandbox(_props: {}, scope: Scope) {
 					{size.width} × {size.height}
 				</div>
 			</div>
-		</>
-	)
-}
-
-function MiniCounter(props: { list?: string[]; addedText?: string }) {
-	const state = compose({ list: [] as string[], addedText: Date.now().toString() }, props)
-	effect(() => {
-		return () => {
-			console.log('🎯 Counter component unmounted!', { finalList: state.list.join(', ') })
-		}
-	})
-	function add() {
-		state.list.push(state.addedText)
-		state.addedText = Date.now().toString()
-	}
-	function removeAll() {
-		state.list.splice(0)
-	}
-	return (
-		<>
-			<div>
-				<for each={state.list}>
-					{(item: string) => {
-						return (
-							<button
-								class="remove"
-								onClick={() => {
-									const idx = state.list.indexOf(item)
-									if (idx !== -1) state.list.splice(idx, 1)
-								}}
-							>
-								{item}
-							</button>
-						)
-					}}
-				</for>
-			</div>
-			<div>
-				<input type="text" value={state.addedText} />
-				<button class="add" onClick={add}>
-					+
-				</button>
-			</div>
-			<button if={state.list.length > 0} class="remove-all" onClick={removeAll}>
-				Remove All
-			</button>
 		</>
 	)
 }

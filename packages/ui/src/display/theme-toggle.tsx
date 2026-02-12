@@ -1,7 +1,7 @@
 import type { Scope } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
-import { useDisplayContext } from './display-context'
 import { Icon } from '../components/icon'
+import type { EnvSettings } from '@pounce/kit/env'
 
 componentStyle.sass`
 .pounce-theme-toggle
@@ -85,6 +85,8 @@ componentStyle.sass`
 `
 
 export type ThemeToggleProps = {
+	/** The EnvSettings object to read/write theme from */
+	settings: EnvSettings
 	/** Custom icons per theme. Default: sun/moon from adapter iconFactory */
 	icons?: Record<string, JSX.Element | string>
 	/** Custom labels per theme */
@@ -102,7 +104,6 @@ const DEFAULT_ICONS: Record<string, string> = { light: 'sun', dark: 'moon' }
 const DEFAULT_LABELS: Record<string, string> = { light: 'Light', dark: 'Dark' }
 
 export function ThemeToggle(props: ThemeToggleProps, scope: Scope) {
-	const display = useDisplayContext(scope)
 	let menuOpen = false
 	let menuEl: HTMLElement | undefined
 
@@ -110,8 +111,9 @@ export function ThemeToggle(props: ThemeToggleProps, scope: Scope) {
 	const labels = () => props.labels ?? DEFAULT_LABELS
 	const autoLabel = () => props.autoLabel ?? 'Auto'
 
-	const resolvedTheme = () => display.theme
-	const isAuto = () => display.themeSetting === 'auto'
+	const resolvedTheme = () => scope.theme
+	const themeSetting = () => props.settings.theme ?? 'auto'
+	const isAuto = () => themeSetting() === 'auto'
 
 	const currentIcon = () => {
 		const ic = icons()[resolvedTheme()]
@@ -126,7 +128,7 @@ export function ThemeToggle(props: ThemeToggleProps, scope: Scope) {
 	}
 
 	const toggle = () => {
-		display.setTheme(resolvedTheme() === 'dark' ? 'light' : 'dark')
+		props.settings.theme = resolvedTheme() === 'dark' ? 'light' : 'dark'
 	}
 
 	const allThemes = () => {
@@ -136,12 +138,12 @@ export function ThemeToggle(props: ThemeToggleProps, scope: Scope) {
 	}
 
 	const selectTheme = (theme: string) => {
-		display.setTheme(theme)
+		props.settings.theme = theme
 		menuOpen = false
 	}
 
 	const selectAuto = () => {
-		display.setTheme('auto')
+		props.settings.theme = 'auto'
 		menuOpen = false
 	}
 
@@ -210,7 +212,7 @@ export function ThemeToggle(props: ThemeToggleProps, scope: Scope) {
 							<button
 								class="pounce-theme-toggle-option"
 								role="menuitemradio"
-								aria-checked={display.themeSetting === theme}
+								aria-checked={themeSetting() === theme}
 								onClick={() => selectTheme(theme)}
 								type="button"
 							>

@@ -3,12 +3,12 @@ import {
 	atomic,
 	biDi,
 	cleanedBy,
+	cleanup,
 	effect,
 	getActiveProjection,
 	isNonReactive,
 	lift,
 	memoize,
-	why,
 	project,
 	reactive,
 	unreactive,
@@ -244,8 +244,11 @@ export const h = (
 							const rawValue = events[key] ?? composed[key]
 							const handler =
 								rawValue instanceof ReactiveProp ? rawValue.get() : rawValue
+
 							if (handler === undefined) return
-							return listen(element, eventType, atomic(handler))
+
+							const wrappedHandler = atomic(handler)
+							return listen(element, eventType, wrappedHandler)
 						})
 					}
 
@@ -389,13 +392,6 @@ export const intrinsicComponentAliases: Record<string, Function> = extend(null, 
 			perfCounters.dynamicSwitches++
 			const did = ++dynCount
 			perf?.mark(`dynamic:${did}:start`)
-			why((obj, _evolution, prop) => {
-				if (obj === props && prop !== 'tag') {
-					throw new Error(
-						'Renderers effects are immutable. in <dynamic>, only a tag change can lead to a re-render'
-					)
-				}
-			})
 			// Resolve the tag identity to track changes.
 			let tagValue = isFunction(props.tag) && props.tag.length === 0 ? props.tag() : props.tag
 
@@ -438,10 +434,7 @@ export const intrinsicComponentAliases: Record<string, Function> = extend(null, 
 			})
 
 			const output = h(tagValue, filteredProps, ...childArray).render(scope)
-			const result = Array.isArray(output) ? output : [output]
-			perf?.mark(`dynamic:${did}:end`)
-			perf?.measure(`dynamic:${did}`, `dynamic:${did}:start`, `dynamic:${did}:end`)
-			return result
+			return Array.isArray(output) ? output : [output]
 		}
 
 		return lift(compute)

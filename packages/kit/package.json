@@ -41,6 +41,11 @@
 			"node": "./src/node/index.ts",
 			"default": "./src/dom/index.ts"
 		},
+		"./env": {
+			"types": "./dist/env.d.ts",
+			"import": "./dist/env.js",
+			"default": "./dist/env.js"
+		},
 		"./router/logic": {
 			"types": "./src/router/logic.ts",
 			"import": "./src/router/logic.ts",

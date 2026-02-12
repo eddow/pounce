@@ -4,7 +4,7 @@ type Key = string | number | null
 
 function toChildArray(children: unknown): unknown[] {
 	if (children === undefined || children === null) return []
-	return Array.isArray(children) ? children : [children]
+	return [children]
 }
 
 function createVNode(type: any, props?: Record<string, unknown> | null, maybeKey?: Key) {

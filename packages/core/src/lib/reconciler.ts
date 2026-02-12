@@ -4,7 +4,7 @@ import { document, Node } from '../shared'
 import { perfCounters, testing } from './debug'
 import { type Child, DynamicRenderingError, PounceElement, rootScope, type Scope, emptyChild } from './pounce-element'
 import { isNumber, isString } from './renderer-internal'
-import { extend, isElement } from './utils'
+
 import { ReactiveProp } from './jsx-factory'
 
 const latchOwners = new WeakMap<Element, string>()
@@ -14,7 +14,7 @@ export function reconcile(
 	parent: Node,
 	newChildren: Node | readonly Node[] | undefined
 ): ScopedCallback {
-	return effect(function redraw() {
+	const stopRedraw = effect(function redraw() {
 		perfCounters.reconciliations++
 		const rid = ++reconcileCount
 		perf?.mark(`reconcile:${rid}:start`)
@@ -62,6 +62,10 @@ export function reconcile(
 		perf?.mark(`reconcile:${rid}:end`)
 		perf?.measure(`reconcile:${rid}(+${added}-${removed})`, `reconcile:${rid}:start`, `reconcile:${rid}:end`)
 	})
+	// Anchor the redraw effect to the reactive children so GC doesn't collect it.
+	// Root effects use FinalizationRegistry — if nobody holds the cleanup, GC kills the effect.
+	if (newChildren && typeof newChildren === 'object') cleanedBy(newChildren, stopRedraw)
+	return stopRedraw
 }
 
 /**
@@ -141,6 +145,11 @@ export function latch(
  * Returns a flat array of DOM nodes suitable for replaceChildren()
  */
 export function processChildren(children: readonly Child[], scope: Scope): readonly Node[] {
+	/**
+	 * 4 effects per elements is expensive but it has its use
+	 * eg - if terms of condition changed but condition value didn't change (x went from 4 to 5 and condition is x > 3) - then the condition has to be
+	 * re-evaluated, but not the renderers nor the rendered
+	 */
 	const renderers = tag('reconciler::renderers', project.array<Child, PounceElement>(children, function processChild({ value: child }) {
 		while (child instanceof ReactiveProp) child = child.get()
 		if (child === undefined || child === null || child === (false as any)) return emptyChild
@@ -163,16 +172,27 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 		renderers,
 		function processConditions(acc: { ifOccurred: boolean; value?: PounceElement }, child: PounceElement) {
 			if (child.condition || child.if || child.when || child.else) {
-				if (child.else && acc.ifOccurred) return { ifOccurred: true }
-				if (child.condition && !child.condition())
-					return extend(acc, { value: undefined })
-				if (child.if)
+				let hidden = false
+				if (child.else && acc.ifOccurred) hidden = true
+				else if (child.condition && !child.condition()) hidden = true
+				else if (child.if) {
 					for (const [key, value] of Object.entries(child.if) as [string, any])
-						if (scope[key] !== value()) return extend(acc, { value: undefined })
-				if (child.when)
+						if (scope[key] !== value()) { hidden = true; break }
+				} else if (child.when) {
 					for (const [key, value] of Object.entries(child.when) as [string, any])
-						if (!scope[key](value())) return extend(acc, { value: undefined })
-				return { ifOccurred: true, value: child }
+						if (!scope[key](value())) { hidden = true; break }
+				}
+				// Return stable object when condition result hasn't changed
+				// to avoid unnecessary renderChild re-runs
+				let stable = stableAccums.get(child)
+				const value = hidden ? undefined : child
+				if (stable && stable.value === value) {
+					stable.ifOccurred = !hidden || acc.ifOccurred
+					return stable
+				}
+				stable = { ifOccurred: !hidden || acc.ifOccurred, value }
+				stableAccums.set(child, stable)
+				return stable
 			}
 			let stable = stableAccums.get(child)
 			if (stable) {
@@ -186,24 +206,30 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 		{ ifOccurred: false }
 	))
 
+	const lastRenderers = new Map<number, PounceElement>()
+
 	const rendered = tag('reconciler::rendered', project(conditioned, function renderChild(access): Node | readonly Node[] | false | undefined {
 		const accResult = access.value
-		if (!accResult || !accResult.value) return
+		if (!accResult || !accResult.value) {
+			// When hiding a conditional element, invalidate its render cache.
+			// The inner pipeline's effects are destroyed when this project effect cleans up.
+			// Without invalidating, re-showing returns dead cached nodes.
+			const prev = lastRenderers.get(access.key)
+			if (prev) {
+				prev.invalidateCache()
+				lastRenderers.delete(access.key)
+			}
+			return
+		}
 		const renderer = accResult.value as PounceElement
+		lastRenderers.set(access.key, renderer)
 		if (typeof renderer.render !== 'function') {
 			console.error('[pounce] Invalid renderer detected in child list:', renderer)
 			return
 		}
-		const partial = renderer.render(scope)
-		if (!partial) return
-		const nodes = isElement(partial) ? partial : partial
-		if (!nodes && !isNumber(nodes)) return
-
-		if (Array.isArray(nodes)) {
-			return processChildren(nodes, scope)
-		}
-		if (typeof Node !== 'undefined' && nodes instanceof Node) return unwrap(nodes)
-		throw new DynamicRenderingError('Render should return Node-s')
+		const nodes = renderer.render(scope)
+		if (Array.isArray(nodes) || nodes instanceof Node) return nodes
+		if(nodes) throw new DynamicRenderingError('Render should return Node-s')
 	}))
 
 	const flattened = tag('reconciler::flattened', lift(function flattenNodes() {
@@ -216,7 +242,7 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 			}
 		}
 
-		for (const item of rendered) if (item) push(item)
+		push(rendered)
 		return next
 	}))
 	return cleanedBy(flattened, function performCleanup() {

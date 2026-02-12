@@ -1,6 +1,6 @@
 import type { Scope } from '@pounce/core'
 import { getGlobalAdapter } from '../adapter/registry'
-import { useDisplayContext } from '../display/display-context'
+
 
 export type IconProps = {
 	name: string
@@ -23,14 +23,14 @@ export type IconProps = {
  */
 export const Icon = (props: IconProps, scope: Scope) => {
 	const globalAdapter = getGlobalAdapter()
-	const display = useDisplayContext(scope)
-	
+
+
 	if (globalAdapter.iconFactory) {
-		return globalAdapter.iconFactory(props.name, props.size, display)
+		return globalAdapter.iconFactory(props.name, props.size, scope)
 	}
-	
+
 	return (
-		<span 
+		<span
 			class={['pounce-icon', props.class].filter(Boolean).join(' ')}
 			{...props.el}
 		>

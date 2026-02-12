@@ -1,0 +1,297 @@
+// Kept for reference for the optimization, but it brought in too many bugs
+
+import { cleanedBy, cleanup, effect, lift, project, type ScopedCallback, tag, unwrap, untracked } from 'mutts'
+import { perf } from '../perf'
+import { document, Node } from '../shared'
+import { perfCounters, testing } from './debug'
+import { type Child, PounceElement, rootScope, type Scope, emptyChild } from './pounce-element'
+import { isNumber, isString } from './renderer-internal'
+import { ReactiveProp } from './jsx-factory'
+
+const latchOwners = new WeakMap<Element, string>()
+
+let reconcileCount = 0
+export function reconcile(
+	parent: Node,
+	newChildren: Node | readonly Node[] | undefined
+): ScopedCallback {
+	return effect(function redraw() {
+		perfCounters.reconciliations++
+		const rid = ++reconcileCount
+		perf?.mark(`reconcile:${rid}:start`)
+		const items = Array.isArray(newChildren) ? newChildren : newChildren ? [newChildren] : []
+		let added = 0
+		let removed = 0
+		// Replace children
+		let newIndex = 0
+
+		// Iterate through items and sync with live DOM
+		while (newIndex < items.length) {
+			const newChild = unwrap(items[newIndex])
+			const oldChild = parent.childNodes[newIndex]
+
+			if (oldChild === newChild) {
+				// Node is already in the correct place → skip
+				newIndex++
+			} else {
+				// Check if newChild exists later in the DOM
+				let found = false
+				for (let i = newIndex + 1; i < parent.childNodes.length; i++) {
+					if (parent.childNodes[i] === newChild) {
+						// Move the node to the correct position
+						added++
+						parent.insertBefore(newChild, oldChild)
+						found = true
+						break
+					}
+				}
+
+				if (!found) {
+					// Insert new node (or move from outside)
+					added++
+					parent.insertBefore(newChild, oldChild)
+				}
+				newIndex++
+			}
+		}
+
+		while (parent.childNodes.length > items.length) {
+			removed++
+			parent.removeChild(parent.lastChild!)
+		}
+		testing.renderingEvent?.(`reconcile (+${added} -${removed})`, parent, newChildren)
+		perf?.mark(`reconcile:${rid}:end`)
+		perf?.measure(`reconcile:${rid}(+${added}-${removed})`, `reconcile:${rid}:start`, `reconcile:${rid}:end`)
+	})
+}
+
+/**
+ * Latch reactive content onto a DOM element.
+ * Polymorph: accepts PounceElement, Child[], Node, Node[], or undefined.
+ * Processes content through the appropriate pipeline, then reconciles into the target.
+ * Includes DOMContentLoaded guard and conflict detection.
+ */
+export function latch(
+	target: string | Element,
+	content: PounceElement | Child | Child[] | Node | Node[] | undefined,
+	scope: Scope = rootScope
+): ScopedCallback {
+	let stop: ScopedCallback | undefined
+
+	function actuallyLatch() {
+		const element = isString(target)
+			? document.querySelector(target as string) as Element | null
+			: target as Element | null
+		if (!element) {
+			console.error(`[pounce] latch target not found: ${target}`)
+			return
+		}
+
+		const tag = element.tagName?.toLowerCase() ?? String(target)
+		const existing = latchOwners.get(element)
+		if (existing) {
+			console.warn(`[pounce] latch conflict on <${tag}>: already latched by "${existing}". Previous content will be replaced.`)
+		}
+		const label = isString(target) ? target as string : `<${tag}>`
+		latchOwners.set(element, label)
+
+		let nodes: Node | readonly Node[] | undefined
+		if (content instanceof PounceElement) {
+			nodes = content.render(scope)
+		} else if (content instanceof Node) {
+			nodes = content
+		} else if (Array.isArray(content)) {
+			if (content.length > 0 && content[0] instanceof Node) {
+				nodes = content as Node[]
+			} else {
+				nodes = processChildren(content as Child[], scope)
+			}
+		} else if (content !== undefined && content !== null) {
+			nodes = processChildren([content as Child], scope)
+		}
+
+		testing.renderingEvent?.('latch', tag, element)
+		stop = reconcile(element, nodes)
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', actuallyLatch)
+	} else {
+		actuallyLatch()
+	}
+
+	return () => {
+		stop?.()
+		const element = isString(target)
+			? document.querySelector(target as string) as Element | null
+			: target as Element | null
+		if (element) {
+			latchOwners.delete(element)
+			while (element.firstChild) element.removeChild(element.firstChild)
+		}
+	}
+}
+
+/**
+ * Process children arrays, handling various child types including:
+ * - Direct nodes
+ * - Reactive functions
+ * - Arrays of children
+ * - Variable arrays from .map() operations
+ *
+ * Returns a flat array of DOM nodes suitable for replaceChildren()
+ */
+function checkCondition(child: PounceElement, scope: Scope): boolean {
+	if (child.condition && !child.condition()) return false
+	if (child.if)
+		for (const [key, value] of Object.entries(child.if) as [string, any])
+			if (scope[key] !== value()) return false
+	if (child.when)
+		for (const [key, value] of Object.entries(child.when) as [string, any])
+			if (!scope[key](value())) return false
+	return true
+}
+
+function resolveChild(child: Child, scope: Scope): PounceElement {
+	while (child instanceof ReactiveProp) child = child.get()
+	if (child === undefined || child === null || child === (false as any)) return emptyChild
+	if (isString(child) || isNumber(child))
+		return new PounceElement(function createTextNode() { return document.createTextNode(String(child)) })
+	if (child instanceof Node)
+		return new PounceElement(function wrapNode() { return child as Node })
+	if (Array.isArray(child))
+		return new PounceElement(function renderFragment(s) { return processChildren(child as Child[], s || scope) }, {
+			tag: 'fragment',
+		})
+	if (child instanceof PounceElement) return child
+	if (child && typeof (child as any).render === 'function') return child as PounceElement
+	return emptyChild
+}
+
+function renderElement(el: PounceElement, scope: Scope): Node[] {
+	if (el === emptyChild || !el) return []
+	if (el.condition || el.if || el.when) {
+		if (!checkCondition(el, scope)) return []
+	}
+	if (typeof el.render !== 'function') return []
+	const partial = el.render(scope)
+	if (!partial) return []
+	if (Array.isArray(partial)) {
+		const nodes: Node[] = []
+		for (const item of partial)
+			if (item instanceof Node) nodes.push(item)
+		return nodes
+	}
+	if (partial instanceof Node) return [unwrap(partial) as Node]
+	return []
+}
+
+export function processChildren(children: readonly Child[], scope: Scope): readonly Node[] {
+	return untracked(() => {
+		// Collect cleanups from input array children (e.g. project() results)
+		// to prevent them from being garbage collected during flattening.
+		const anchorCleanups: ScopedCallback[] = []
+		for (let i = 0; i < children.length; i++) {
+			let child = children[i]
+			while (child instanceof ReactiveProp) child = child.get()
+			if (Array.isArray(child) && (child as any)[cleanup]) {
+				anchorCleanups.push((child as any)[cleanup])
+			}
+		}
+
+		// Fast paths only for static (non-reactive) arrays — reactive arrays can grow/shrink
+		const isReactiveChildren = (children as any)[cleanup] !== undefined
+
+		// Fast path: 0 children — no effects needed
+		if (children.length === 0 && !isReactiveChildren)
+			return []
+
+		// Fast path: 1 child — single lift instead of project.array + project + lift (5 effects → 1)
+		if (children.length === 1 && !isReactiveChildren) {
+			const result = tag('reconciler::single', lift(function processSingleChild() {
+				return renderElement(resolveChild(children[0], scope), scope)
+			}))
+			return anchorCleanups.length > 0 
+				? cleanedBy(result, () => { for (const c of anchorCleanups) c() })
+				: result
+		}
+
+		const renderers = tag('reconciler::renderers', project.array<Child, PounceElement>(children, function processChild({ value: child }) {
+			while (child instanceof ReactiveProp) child = child.get()
+			if (child === undefined || child === null || child === (false as any)) return emptyChild
+			if (isString(child) || isNumber(child))
+				return new PounceElement(function createTextNode() { return document.createTextNode(String(child)) })
+			if (child instanceof Node) 
+				return new PounceElement(function wrapNode() { return child as Node })
+			if (Array.isArray(child))
+				return new PounceElement(function renderFragment(s) { return processChildren(child as Child[], s || scope) }, {
+					tag: 'fragment',
+				})
+			if (child instanceof PounceElement) return child
+			if (child && typeof (child as any).render === 'function') return child as PounceElement
+			return emptyChild
+		}))
+
+		// Merged scan+render: condition-check and render in a single project.
+		// Replaces the previous scan → project chain (2 effects + 2×N per-index effects).
+		const rendered = tag('reconciler::rendered', project(renderers, function renderChild(access): Node | readonly Node[] | false | undefined {
+			const child = access.value
+			if (child === emptyChild || !child) return
+
+			// Condition filtering (inline — replaces scan)
+			if (child.condition || child.if || child.when || child.else) {
+				if (child.else) {
+					// Walk backwards to find the preceding conditional sibling
+					for (let j = access.key - 1; j >= 0; j--) {
+						const prev = renderers[j]
+						if (!prev || prev === emptyChild) continue
+						if (prev.else) continue // skip chained else
+						if (prev.condition || prev.if || prev.when) {
+							// Evaluate the preceding condition — this creates a reactive dependency
+							if (checkCondition(prev, scope)) return
+							break
+						}
+						break // non-conditional sibling — else always shows
+					}
+				} else {
+					if (!checkCondition(child, scope)) return
+				}
+			}
+
+			// Render
+			if (typeof child.render !== 'function') {
+				console.error('[pounce] Invalid renderer detected in child list:', child)
+				return
+			}
+			const partial = child.render(scope)
+			if (!partial) return
+
+			if (Array.isArray(partial)) return processChildren(partial, scope)
+			if (partial instanceof Node) return unwrap(partial) as Node
+			return
+		}))
+
+		const flattened = tag('reconciler::flattened', lift(function flattenNodes() {
+			const next: Node[] = []
+			for (let i = 0; i < rendered.length; i++) {
+				const item = rendered[i]
+				if (!item) continue
+				if (Array.isArray(item)) {
+					for (const child of item) if (child instanceof Node) next.push(child)
+				} else if (item instanceof Node) {
+					next.push(item)
+				}
+			}
+			return next
+		}))
+
+		return cleanedBy(flattened, function performCleanup() {
+			// Keep collected cleanups alive by referencing them here
+			if (anchorCleanups.length > 0) {
+				for (const c of anchorCleanups) c()
+			}
+			rendered[cleanup]()
+			renderers[cleanup]()
+		})
+	})
+}

@@ -9,7 +9,7 @@
     "build:all": "npm run build",
     "type-check": "tsc --noEmit",
     "test": "npm run test:unit && npm run test:e2e",
-    "test:unit": "vitest run",
+    "test:unit": "NODE_OPTIONS='--expose-gc' vitest run",
     "test:e2e": "playwright test --forbid-only",
     "test:ui": "playwright test --ui",
     "biome": "biome check --write src",

@@ -1,22 +1,13 @@
 import { Trait } from "@pounce/core"
+import type { Scope } from "@pounce/core"
+
+export type DisplayContext = Scope
 
 /**
  * Display context - presentation concerns available from scope.
  * Separate from adapter (styling) concerns.
  * Provided by DisplayProvider, read via useDisplayContext().
  */
-export type DisplayContext = {
-	/** Resolved theme (never 'auto' — always the concrete value) */
-	theme: string
-	/** Raw theme setting ('auto' | 'light' | 'dark' | custom) */
-	themeSetting: string
-	/** Resolved text direction */
-	direction: 'ltr' | 'rtl'
-	/** Resolved locale */
-	locale: string
-	/** Update theme setting for this provider */
-	setTheme: (theme: string) => void
-}
 
 /**
  * Base adaptation type - common fields for all components

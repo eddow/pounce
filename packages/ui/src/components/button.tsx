@@ -2,7 +2,7 @@ import type { Scope } from '@pounce/core'
 import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
-import { useDisplayContext } from '../display/display-context'
+
 import { asVariant, getVariantTrait } from '../shared/variants'
 import { Icon } from './icon'
 import { perf } from '../perf'
@@ -71,7 +71,7 @@ const ButtonBase = (props: ButtonProps, scope: Scope) => {
 			variant: 'primary',
 			iconPosition: 'start',
 			disabled: false,
-			onClick: () => {},
+			onClick: () => { },
 			ariaLabel: undefined as string | undefined,
 			tag: 'button' as const,
 		},
@@ -134,7 +134,7 @@ const ButtonBase = (props: ButtonProps, scope: Scope) => {
 					: (state.ariaLabel ?? state.el?.['aria-label']),
 				'aria-disabled': state.disabled || undefined,
 			},
-		}, useDisplayContext(scope))
+		}, scope)
 	}
 
 	return (

@@ -13,11 +13,7 @@
 		"allowImportingTsExtensions": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
-		"noEmit": false,
-		"declaration": true,
-		"emitDeclarationOnly": true,
-		"declarationMap": true,
-		"outDir": "dist",
+		"noEmit": true,
 		"jsx": "react-jsx",
 		"jsxImportSource": "@pounce/core",
 		"strict": true,
@@ -53,6 +49,9 @@
 			],
 			"@pounce/kit/dom": [
 				"../kit/src/dom/index.ts"
+			],
+			"@pounce/kit/env": [
+				"../kit/src/env/index.tsx"
 			]
 		}
 	},

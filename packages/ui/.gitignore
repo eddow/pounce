@@ -6,3 +6,9 @@ coverage
 .vite
 playwright-report
 test-results
+sandbox
+
+# tsc build artifacts (vite-plugin-dts handles DTS generation)
+src/**/*.js
+src/**/*.d.ts
+src/**/*.d.ts.map

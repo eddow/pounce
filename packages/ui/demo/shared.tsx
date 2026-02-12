@@ -1,12 +1,15 @@
 import type { Scope } from '@pounce/core'
 import { A, Router, type RouteWildcard } from '@pounce/kit/dom'
-import { AppShell, Container, DisplayProvider, ErrorBoundary, Heading, Inline, Link, StandardOverlays, Text, ThemeToggle, Toolbar } from '../src'
+import { AppShell, Container, ErrorBoundary, Heading, Inline, Link, StandardOverlays, Text, ThemeToggle, Toolbar } from '../src'
+import { Env, type EnvSettings } from '@pounce/kit/env'
+import { reactive } from 'mutts'
 import { badge, intersect, loading, pointer, resize, scroll } from '../src/directives'
 import DisplayRoute from './routes/display'
 import FormsRoute from './routes/forms'
 import OverlaysRoute from './routes/overlays'
 import LayoutRoute from './routes/layout'
 import ThemeRoute from './routes/theme'
+import { scope } from 'arktype'
 
 export type DemoSection = {
 	readonly path: RouteWildcard
@@ -33,8 +36,10 @@ export function DemoApp(options: DemoAppOptions) {
 		try { const v = localStorage.getItem('theme'); return v ? JSON.parse(v) : 'auto' }
 		catch { return 'auto' }
 	})()
-	const persistTheme = (t: string) => {
-		try { localStorage.setItem('theme', JSON.stringify(t)) } catch { /* noop */ }
+	const envSettings = reactive<EnvSettings>({ theme: savedTheme })
+	// Persist theme changes to localStorage
+	const persistTheme = () => {
+		try { localStorage.setItem('theme', JSON.stringify(envSettings.theme ?? 'auto')) } catch { /* noop */ }
 	}
 	const sections: DemoSection[] = [
 		...baseRoutes,
@@ -68,7 +73,7 @@ export function DemoApp(options: DemoAppOptions) {
 		scope.badge = badge
 		scope.loading = loading
 		return (
-			<DisplayProvider theme={savedTheme} onThemeChange={persistTheme}>
+			<Env settings={envSettings}>
 				<StandardOverlays>
 					<AppShell
 						header={
@@ -85,7 +90,7 @@ export function DemoApp(options: DemoAppOptions) {
 													</Link>
 												)}
 											</for>
-											<ThemeToggle simple />
+											<ThemeToggle settings={envSettings} simple />
 										</Inline>
 									</Toolbar>
 								</Container>
@@ -103,7 +108,7 @@ export function DemoApp(options: DemoAppOptions) {
 						</Container>
 					</AppShell>
 				</StandardOverlays>
-			</DisplayProvider>
+			</Env>
 		)
 	}
 }

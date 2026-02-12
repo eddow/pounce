@@ -1,9 +1,65 @@
 import type { Scope } from '@pounce/core'
+import { reactive } from 'mutts'
 import {
 	Button,
 	Heading, Text,
 	Stack, Inline,
 } from '../../src'
+
+function EventDebug() {
+	const state = reactive({ clicks: 0, lastResult: '' as string })
+	return (
+		<Stack gap="md" style="padding: 1rem; border: 2px solid crimson; border-radius: 0.5rem; background: rgba(220,20,60,0.05);">
+			<Heading level={3}>Event Debug</Heading>
+			<Text muted>If clicks don't register or dialogs don't dismiss, the bug is active.</Text>
+			<Inline wrap gap="sm">
+				<Button onClick={() => { state.clicks++ }}>
+					Click me ({state.clicks})
+				</Button>
+				<Button variant="secondary" onClick={() => { state.clicks = 0 }}>
+					Reset
+				</Button>
+			</Inline>
+			<Text if={state.lastResult}>Last dialog result: {state.lastResult}</Text>
+		</Stack>
+	)
+}
+
+function DialogDebug(_props: {}, scope: Scope) {
+	const dialog = scope.dialog as (opts: string | object) => Promise<string>
+	const state = reactive({ result: '' as string })
+	return (
+		<Stack gap="md" style="padding: 1rem; border: 2px solid orange; border-radius: 0.5rem; background: rgba(255,165,0,0.05);">
+			<Heading level={3}>Dialog Dismiss Debug</Heading>
+			<Text muted>Click backdrop to dismiss (should return null). Click a button to get its key.</Text>
+			<Inline wrap gap="sm">
+				<Button onClick={async () => {
+					const r = await dialog({
+						title: 'Dismissible',
+						message: 'Click the dark backdrop behind this dialog to dismiss it.',
+						dismissible: true,
+						buttons: { ok: 'OK' },
+					})
+					state.result = String(r)
+				}}>
+					Dismissible Dialog
+				</Button>
+				<Button variant="danger" onClick={async () => {
+					const r = await dialog({
+						title: 'NOT Dismissible',
+						message: 'Backdrop click should NOT close this. Use the button.',
+						dismissible: false,
+						buttons: { close: 'Close' },
+					})
+					state.result = String(r)
+				}}>
+					Non-dismissible
+				</Button>
+			</Inline>
+			<Text if={state.result}>Result: "{state.result}"</Text>
+		</Stack>
+	)
+}
 
 export default function OverlaysRoute(_props: {}, scope: Scope) {
 	const dialog = scope.dialog as (opts: string | object) => Promise<string>
@@ -16,6 +72,9 @@ export default function OverlaysRoute(_props: {}, scope: Scope) {
 				<Heading level={1}>Overlays</Heading>
 				<Text muted>Dialogs, toasts, and drawers via StandardOverlays scope.</Text>
 			</header>
+
+			<EventDebug />
+			<DialogDebug />
 
 			<section>
 				<Heading level={3}>Dialog</Heading>
