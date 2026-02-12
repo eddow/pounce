@@ -5,11 +5,12 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { document } from '@pounce/core'
 import { setAdapter, resetAdapter } from '../../src/adapter/registry'
 import { vanillaAdapter } from '../../src/adapter/vanilla'
-import { pointer, type PointerState } from '../../src/directives/pointer'
-import { resize } from '../../src/directives/resize'
-import { scroll } from '../../src/directives/scroll'
-import { intersect, type IntersectOptions } from '../../src/directives/intersect'
-import { badge, type BadgeInput, type BadgeOptions } from '../../src/directives/badge'
+import { pointer, type PointerState } from './pointer'
+import { resize } from './resize'
+import { scroll } from './scroll'
+import { intersect, type IntersectOptions } from './intersect'
+import { badge, type BadgeInput, type BadgeOptions } from './badge'
+import { trail } from './trail'
 
 describe('Directives', () => {
   describe('pointer', () => {
@@ -257,6 +258,79 @@ describe('Directives', () => {
       const textNode = document.createTextNode('text')
       const result = badge(textNode, '5')
       expect(result).toBeUndefined()
+    })
+  })
+
+  describe('trail', () => {
+    let element: HTMLElement
+    let cleanup: (() => void) | undefined
+    let mutationCallback: MutationCallback
+
+    beforeEach(() => {
+      element = document.createElement('div')
+      document.body.appendChild(element)
+      // Mock MutationObserver
+      globalThis.MutationObserver = vi.fn().mockImplementation(function (callback: MutationCallback) {
+        mutationCallback = callback
+        return {
+          observe: vi.fn(),
+          disconnect: vi.fn(),
+        }
+      })
+    })
+
+    afterEach(() => {
+      cleanup?.()
+      element.remove()
+    })
+
+    it('should return cleanup function', () => {
+      const result = trail(element, true, {})
+      expect(typeof result).toBe('function')
+      result?.()
+    })
+
+    it('should handle non-HTMLElement target', () => {
+      const textNode = document.createTextNode('text')
+      const result = trail(textNode, true, {})
+      expect(result).toBeUndefined()
+    })
+
+    it('should be disabled when value is false', () => {
+      const result = trail(element, false, {})
+      expect(result).toBeUndefined()
+    })
+
+    it('should default to enabled when value is undefined', () => {
+      const result = trail(element, undefined, {})
+      expect(typeof result).toBe('function')
+      result?.()
+    })
+
+    it('should attach scroll listener and MutationObserver', () => {
+      const addSpy = vi.spyOn(element, 'addEventListener')
+      cleanup = trail(element, true, {})
+
+      expect(addSpy).toHaveBeenCalledWith('scroll', expect.any(Function))
+      expect(MutationObserver).toHaveBeenCalled()
+    })
+
+    it('should remove listeners on cleanup', () => {
+      const removeSpy = vi.spyOn(element, 'removeEventListener')
+      cleanup = trail(element, true, {})
+      const disconnectFn = (MutationObserver as any).mock.results[0].value.disconnect
+
+      cleanup!()
+      cleanup = undefined
+
+      expect(removeSpy).toHaveBeenCalledWith('scroll', expect.any(Function))
+      expect(disconnectFn).toHaveBeenCalled()
+    })
+
+    it('should accept array target', () => {
+      const result = trail([element], true, {})
+      expect(typeof result).toBe('function')
+      result?.()
     })
   })
 })

@@ -15,29 +15,28 @@ import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter'
 import { Button } from './button'
 
-componentStyle.sass`
-.pounce-dv-item
-	width: 100%
-	height: 100%
-	
-	&.tab
-		display: flex
-		align-items: center
-		height: 100%
-		width: 100%
-		overflow: hidden
-		padding: 0 4px
-		gap: 2px
-		
-		.title
-			flex: 1
-			overflow: hidden
-			text-overflow: ellipsis
-			white-space: nowrap
-			margin: 0 4px
-		
-		.close
-			margin-left: auto
+componentStyle.css`
+.pounce-dv-item {
+	width: 100%;
+	height: 100%;
+}
+.pounce-dv-item.tab {
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	padding: 0 4px;
+	gap: 2px;
+}
+.pounce-dv-item.tab .title {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	margin: 0 4px;
+}
+.pounce-dv-item.tab .close {
+	margin-left: auto;
+}
 `
 
 export type DockviewWidgetProps<Params extends Record<string, any> = Record<string, any>, Context extends Record<PropertyKey, any> = Record<PropertyKey, any>> = {
@@ -134,7 +133,8 @@ function tabRenderer(
 
 function headerActionRenderer(
 	Widget: DockviewHeaderAction,
-	{ group }: DockviewHeaderActionProps
+	{ group }: DockviewHeaderActionProps,
+	scope: Record<string, any>
 ) {
 	const element = document.createElement('div')
 	element.classList.add('pounce-dv-item')
@@ -142,7 +142,7 @@ function headerActionRenderer(
 	return {
 		element,
 		init() {
-			cleanup = bindApp(<Widget group={group} />, element)
+			cleanup = bindApp(<Widget group={group} />, element, scope)
 		},
 		dispose() {
 			cleanup?.()
@@ -190,7 +190,7 @@ export const Dockview = (
 	const adapter = getAdapter('Dockview')
 	const contexts = new Map<string, Record<PropertyKey, any>>()
 	let initialized = false
-	
+
 	const initDockview = (element: HTMLElement) => {
 		if (initialized) throw new Error('Dockview already initialized')
 		initialized = true
@@ -240,19 +240,22 @@ export const Dockview = (
 				createLeftHeaderActionComponent: headerLeft && ((group) => {
 					return headerActionRenderer(
 						headerLeft,
-						{ group }
+						{ group },
+						scope
 					)
 				}),
 				createRightHeaderActionComponent: headerRight && ((group) => {
 					return headerActionRenderer(
 						headerRight,
-						{ group }
+						{ group },
+						scope
 					)
 				}),
 				createPrefixHeaderActionComponent: headerPrefix && ((group) => {
 					return headerActionRenderer(
 						headerPrefix,
-						{ group }
+						{ group },
+						scope
 					)
 				})
 			})

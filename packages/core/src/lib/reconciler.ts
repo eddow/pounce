@@ -214,6 +214,7 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 			// When hiding a conditional element, invalidate its render cache.
 			// The inner pipeline's effects are destroyed when this project effect cleans up.
 			// Without invalidating, re-showing returns dead cached nodes.
+			// TODO: This seems like a low-level hack who hides a lack functionality or a design misconception. Make sure the whole cache system shouldn't be managed by an intrinsic functionality/contract of mutts
 			const prev = lastRenderers.get(access.key)
 			if (prev) {
 				prev.invalidateCache()
