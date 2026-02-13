@@ -90,10 +90,10 @@ export function pounceCorePlugin(options: PounceCorePluginOptions = {}) {
 	return {
 		name: 'pounce-core',
 		enforce: 'pre' as const,
-		async transform(code: string, id: string) {
+		async transform(code: string, id: string, inMap: any) {
 			if (id.startsWith('\0') || id.includes('?')) return null
 			if (!/\.(tsx?|jsx?)$/.test(id)) return null
-			if (id.includes('node_modules')) return null
+			if (id.includes('node_modules') && !id.includes('/pounce/packages/')) return null
 
 			const result = transformSync(code, {
 				filename: id,
@@ -104,11 +104,13 @@ export function pounceCorePlugin(options: PounceCorePluginOptions = {}) {
 					...resolvedOptions,
 					isTSX: id.endsWith('.tsx'),
 				}),
+				sourceFileName: id,
+				inputSourceMap: (inMap && typeof inMap === 'object' && inMap.mappings) ? inMap : undefined,
 				sourceMaps: true,
 			})
 
-			if (!result) return null
-			return { code: result.code || '', map: result.map ?? undefined }
+			if (!result || !result.code) return null
+			return { code: result.code, map: result.map ?? undefined }
 		},
 	}
 }

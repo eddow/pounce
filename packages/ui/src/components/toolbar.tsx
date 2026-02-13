@@ -102,7 +102,7 @@ const ToolbarComponent = (props: ToolbarProps) => {
 	const adapter = getAdapter('Toolbar')
 
 	const baseClass = adapter?.classes?.root ?? 'pounce-toolbar'
-	const orientationClass = adapter?.classes?.orientation 
+	const orientationClass = adapter?.classes?.orientation
 		? adapter.classes.orientation(state.orientation)
 		: `pounce-toolbar-${state.orientation}`
 
@@ -124,7 +124,7 @@ const ToolbarSpacer = (props: ToolbarSpacerProps) => {
 	const adapter = getAdapter('Toolbar')
 
 	const baseClass = adapter?.classes?.spacer ?? 'pounce-toolbar-spacer'
-	const visibleClass = state.visible 
+	const visibleClass = state.visible
 		? (adapter?.classes?.spacerVisible ?? 'pounce-toolbar-spacer-visible')
 		: undefined
 

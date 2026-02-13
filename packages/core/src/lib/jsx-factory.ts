@@ -3,7 +3,6 @@ import {
 	atomic,
 	biDi,
 	cleanedBy,
-	cleanup,
 	effect,
 	getActiveProjection,
 	isNonReactive,

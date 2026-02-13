@@ -67,5 +67,6 @@ export default defineConfig({
     },
     target: 'esnext',
     emptyOutDir: true,
+    sourcemap: 'inline',
   },
 })

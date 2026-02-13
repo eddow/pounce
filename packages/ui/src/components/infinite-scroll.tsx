@@ -148,7 +148,7 @@ export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<
 	function syncOffsets(items: T[]) {
 		const n = items.length
 		if (n === itemCount) return
-		;[heightCache, offsets] = ensureCapacity(heightCache, offsets, n)
+		[heightCache, offsets] = ensureCapacity(heightCache, offsets, n)
 		for (let i = itemCount; i < n; i++) {
 			heightCache[i] = estimateHeight(items, i)
 		}
@@ -354,12 +354,12 @@ export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<
 				style={`height: ${computeTotalHeight()}px; position: relative;`}
 			>
 				{() => {
-				perf?.mark('infinitescroll:render:start')
-				const result = computeVisibleIndices().map(renderItem)
-				perf?.mark('infinitescroll:render:end')
-				perf?.measure('infinitescroll:render', 'infinitescroll:render:start', 'infinitescroll:render:end')
-				return result
-			}}
+					perf?.mark('infinitescroll:render:start')
+					const result = computeVisibleIndices().map(renderItem)
+					perf?.mark('infinitescroll:render:end')
+					perf?.measure('infinitescroll:render', 'infinitescroll:render:start', 'infinitescroll:render:end')
+					return result
+				}}
 			</div>
 		</div>
 	)

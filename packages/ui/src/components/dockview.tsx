@@ -15,28 +15,27 @@ import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter'
 import { Button } from './button'
 
-componentStyle.css`
-.pounce-dv-item {
-	width: 100%;
-	height: 100%;
-}
-.pounce-dv-item.tab {
-	display: flex;
-	align-items: center;
-	overflow: hidden;
-	padding: 0 4px;
-	gap: 2px;
-}
-.pounce-dv-item.tab .title {
-	flex: 1;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	margin: 0 4px;
-}
-.pounce-dv-item.tab .close {
-	margin-left: auto;
-}
+componentStyle.sass`
+.pounce-dv-item
+	width: 100%
+	height: 100%
+
+	&.tab
+		display: flex
+		align-items: center
+		overflow: hidden
+		padding: 0 4px
+		gap: 2px
+
+		.title
+			flex: 1
+			overflow: hidden
+			text-overflow: ellipsis
+			white-space: nowrap
+			margin: 0 4px
+
+		.close
+			margin-left: auto
 `
 
 export type DockviewWidgetProps<Params extends Record<string, any> = Record<string, any>, Context extends Record<PropertyKey, any> = Record<PropertyKey, any>> = {

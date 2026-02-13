@@ -95,7 +95,7 @@ export default defineConfig({
 		outDir: 'dist',
 		target: 'esnext',
 		minify: false,
-		sourcemap: true
+		sourcemap: 'inline'
 	},
 	test: {
 		environment: 'jsdom',

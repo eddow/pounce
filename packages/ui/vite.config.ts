@@ -8,6 +8,7 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
   plugins: [
+    pounceUIPlugin(),
     ...pounceCorePackage({
       core: {
         jsxRuntime: {
@@ -19,15 +20,17 @@ export default defineConfig({
         rollupTypes: true,
       }
     }),
-    pounceUIPlugin()
   ],
+  esbuild: false,
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: 'PounceUI',
+      name: '@pounce/ui',
       formats: ['es'],
       fileName: 'index'
     },
+    sourcemap: true,
+    minify: false,
     rollupOptions: {
       external: [
         /^@pounce\/core/,
@@ -36,10 +39,6 @@ export default defineConfig({
         'dockview-core',
         'pure-glyf'
       ],
-      output: {
-        // preserveModules: true, // Optional: for better tree-shaking
-        // preserveModulesRoot: 'src'
-      }
     }
   }
 })

@@ -35,8 +35,6 @@ const App = () => (
 - **Centralized Icon**: Global `iconFactory` in adapter, consumed via `<Icon name="..." />`
 - **SSR-Ready**: No client-only DOM access during render
 
-See [analysis/](./analysis/README.md) for architectural deep-dives.
-
 ---
 
 ## Components

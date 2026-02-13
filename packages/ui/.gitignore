@@ -12,3 +12,5 @@ sandbox
 src/**/*.js
 src/**/*.d.ts
 src/**/*.d.ts.map
+__screenshots__
+*.tsbuildinfo

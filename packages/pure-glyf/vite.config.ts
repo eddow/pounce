@@ -32,6 +32,7 @@ export default defineConfig({
     },
     rollupOptions: {
       external: ['vite', 'node:fs', 'node:path', /^@pounce\/core/, /^@pounce\/ui/]
-    }
+    },
+    sourcemap: 'inline'
   }
 });

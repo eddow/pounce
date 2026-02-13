@@ -53,7 +53,13 @@
 			"@pounce/kit/env": [
 				"../kit/src/env/index.tsx"
 			]
-		}
+		},
+		"plugins": [
+			{
+				"name": "typescript-styled-plugin",
+				"tags": ["componentStyle.sass"]
+			}
+		]
 	},
 	"include": [
 		"src/**/*.ts",

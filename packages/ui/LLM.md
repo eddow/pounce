@@ -43,6 +43,13 @@ Framework-agnostic UI component library for Pounce applications. Evolved from `@
 | Pill | `status.tsx` | `asVariant` | `Pill` |
 | Chip | `status.tsx` | `asVariant` | `Chip` |
 
+### Structure
+| Component | File | Variant | Adapter Key |
+|-----------|------|---------|-------------|
+| Accordion | `accordion.tsx` | — | `Accordion` |
+| Card | `card.tsx` | — | `Card` |
+| Progress | `progress.tsx` | — | `Progress` |
+
 ### Data & Content
 | Component | File | Adapter Key |
 |-----------|------|-------------|
@@ -98,6 +105,7 @@ Framework-agnostic UI component library for Pounce applications. Evolved from `@
 | `use:resize` | `directives/resize.ts` | `object\|fn` | Two-way size binding via ResizeObserver |
 | `use:intersect` | `directives/intersect.ts` | `IntersectOptions` | IntersectionObserver wrapper |
 | `use:pointer` | `directives/pointer.ts` | `PointerState` | Pointer position tracking |
+| `use:trail` | `directives/trail.ts` | `TrailOptions` | Keeps scrollable container pinned to bottom, disengages on user scroll-up |
 
 ## Known Issues
 (none)
