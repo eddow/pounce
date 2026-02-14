@@ -3,6 +3,15 @@ import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
 import { asVariant, getVariantTrait } from '../shared/variants'
 import { Icon } from './icon'
+import type { Trait } from '@pounce/core'
+
+/**
+ * Helper to get variant traits as array or undefined
+ */
+function getVariantTraits(variant: string | undefined): Trait[] | undefined {
+	const trait = getVariantTrait(variant)
+	return trait ? [trait] : undefined
+}
 
 componentStyle.sass`
 .pounce-badge,
@@ -109,14 +118,13 @@ export type BadgeProps = {
 const BadgeBase = (props: BadgeProps) => {
 	const adapter = getAdapter('Badge')
 	const state = compose({ tag: 'span', variant: 'primary' }, props)
-	const variantTrait = getVariantTrait(state.variant)
 	const baseTrait = { classes: [adapter.classes?.base || 'pounce-badge'] }
 
 	return (
 		<dynamic
 			tag={state.tag}
 			{...state.el}
-			traits={[baseTrait, variantTrait].filter((t): t is import('@pounce/core').Trait => !!t)}
+			traits={[baseTrait, ...(getVariantTraits(state.variant) || [])]}
 		>
 			{renderIcon(state.icon, '14px')}
 			<span class={adapter.classes?.label || 'pounce-token-label'}>{state.children}</span>
@@ -157,14 +165,13 @@ export type PillProps = {
 const PillBase = (props: PillProps) => {
 	const adapter = getAdapter('Pill')
 	const state = compose({ tag: 'span', variant: 'primary' }, props)
-	const variantTrait = getVariantTrait(state.variant)
 	const baseTrait = { classes: [adapter.classes?.base || 'pounce-pill'] }
 
 	return (
 		<dynamic
 			tag={state.tag}
 			{...state.el}
-			traits={[baseTrait, variantTrait].filter((t): t is import('@pounce/core').Trait => !!t)}
+			traits={[baseTrait, ...(getVariantTraits(state.variant) || [])]}
 		>
 			{renderIcon(state.icon)}
 			<span class={adapter.classes?.label || 'pounce-token-label'}>{state.children}</span>
@@ -212,7 +219,6 @@ const ChipBase = (props: ChipProps) => {
 		{ tag: 'button', variant: 'secondary', dismissible: false, open: true },
 		props
 	)
-	const variantTrait = getVariantTrait(state.variant)
 	const baseTrait = { classes: [adapter.classes?.base || 'pounce-chip'] }
 
 	function close() {
@@ -226,13 +232,19 @@ const ChipBase = (props: ChipProps) => {
 
 	return (
 		<dynamic
-			if={state.open}
 			tag={containerTag}
-			type={containerTag === 'button' ? 'button' : undefined}
-			{...state.el}
 			role={containerRole}
-			traits={[baseTrait, variantTrait].filter((t): t is import('@pounce/core').Trait => !!t)}
+			{...state.el}
+			traits={[baseTrait, ...(getVariantTraits(state.variant) || [])]}
 		>
+			<dynamic
+				if={state.open}
+				tag={containerTag}
+				type={containerTag === 'button' ? 'button' : undefined}
+				{...state.el}
+				role={containerRole}
+				traits={[baseTrait, ...(getVariantTraits(state.variant) || [])]}
+			>
 			{renderIcon(state.icon)}
 			<span class={adapter.classes?.label || 'pounce-token-label'}>{state.children}</span>
 			<button
@@ -248,6 +260,7 @@ const ChipBase = (props: ChipProps) => {
 				<Icon name="x" size="14px" />
 			</button>
 		</dynamic>
+	</dynamic>
 	)
 }
 

@@ -24,7 +24,7 @@ export type ProxyEndpointConfig<
 	 * boolean: true enables default cache (1min). 
 	 * number: enables cache with specified TTL in ms. 
 	 * object: full control over TTL and cache key generation. */
-	cache?: boolean | number | { ttl: number; key?: (params: any) => string }
+	cache?: boolean | number | { ttl: number; key?: (params: Record<string, unknown>) => string }
 	/** Number of retries for this endpoint. Overrides proxy and global config. */
 	retries?: number
 	/** Timeout in milliseconds for this endpoint. Overrides proxy and global config. */
@@ -58,9 +58,9 @@ type EndpointReturnType<T extends ProxyEndpointConfig<any, any>> = T extends {
  * Internal cache for proxy responses
  */
 class ProxyCache {
-	private cache = new Map<string, { data: any; expiry: number }>()
+	private cache = new Map<string, { data: unknown; expiry: number }>()
 
-	get(key: string): any | null {
+	get(key: string): unknown | null {
 		const entry = this.cache.get(key)
 		if (!entry) return null
 		if (Date.now() > entry.expiry) {
@@ -70,7 +70,7 @@ class ProxyCache {
 		return entry.data
 	}
 
-	set(key: string, data: any, ttl: number): void {
+	set(key: string, data: unknown, ttl: number): void {
 		this.cache.set(key, {
 			data,
 			expiry: Date.now() + ttl,
@@ -126,7 +126,7 @@ export function defineProxy<Endpoints extends Record<string, ProxyEndpointConfig
 						// Build URL with path parameter substitution
 						let path = endpoint.path
 						for (const [key, value] of Object.entries(params)) {
-							path = path.replace(`{${key}}`, encodeURIComponent(String(value)))
+							path = path.replace(new RegExp(`\\{${key}\\}`, 'g'), encodeURIComponent(String(value)))
 						}
 
 						const url = new URL(path, config.baseUrl)
@@ -243,7 +243,9 @@ export function defineProxy<Endpoints extends Record<string, ProxyEndpointConfig
 				}
 			},
 		}
-	) as any
+	) as {
+		[K in keyof Endpoints]: (params?: Record<string, unknown>) => EndpointReturnType<Endpoints[K]>
+	} & { $cache: ProxyCache }
 
 	return proxy
 }

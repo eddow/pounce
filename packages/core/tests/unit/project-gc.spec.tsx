@@ -6,7 +6,7 @@
  * Requires --expose-gc (NODE_OPTIONS='--expose-gc' in package.json test:unit).
  */
 import { describe, it, expect, beforeEach } from 'vitest'
-import { reactive, project, untracked } from 'mutts'
+import { reactive, project } from 'mutts'
 import { bindApp, document } from '@pounce/core'
 
 const gc = typeof globalThis.gc === 'function' ? globalThis.gc : undefined

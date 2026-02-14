@@ -1,8 +1,8 @@
 # Component Reactivity Rules
 
-## The Rebuild Fence: a Feature, Not a Bug
+## The Rebuild Fence: Warning-Only Protection
 
-Pounce component constructors run **exactly once**. This is enforced by a **rebuild fence** — a deliberate protective mechanism that prevents the component body from re-executing when reactive state changes. If the constructor accidentally reads reactive state directly, the fence catches it and emits a warning instead of silently re-rendering the entire component.
+Pounce component constructors run **exactly once**. This is enforced by a **rebuild fence** — a protective mechanism that warns when the component body attempts to re-execute due to reactive state changes. If the constructor accidentally reads reactive state directly, the fence catches it and emits a warning but allows execution to continue (configurable via `pounceOptions.maxRebuildsPerWindow`).
 
 This is a **design feature**, not a limitation. Here's why:
 
@@ -15,18 +15,25 @@ Traditional frameworks like React re-render entire component subtrees when state
 3. **Virtual attributes & elements**: `if={}`, `when={}` (virtual attributes on any element) and `<for>` (a virtual element) handle conditional rendering and lists reactively — no need for JS `if` statements or `.map()` in the constructor body
 4. **Effects for logic**: Any imperative reactive logic uses `effect(() => ...)` inside the constructor
 
-Re-running the entire constructor would destroy and recreate all of this, losing DOM state, breaking effect lifecycles, and wasting performance. The rebuild fence prevents this.
+Re-running the entire constructor would destroy and recreate all of this, losing DOM state, breaking effect lifecycles, and wasting performance. The rebuild fence warns about such attempts to help maintain the render-once pattern.
 
 ### What triggers the fence
 
-If the constructor body reads a reactive property as a bare statement (e.g. `state.count` or `props.value * 2` outside of a JSX attribute or an effect), the constructor creates a dependency on that property. When the property changes, the render effect tries to re-execute, and the fence blocks it with a `console.warn`:
+If the constructor body reads a reactive property as a bare statement (e.g. `state.count` or `props.value * 2` outside of a JSX attribute or an effect), the constructor creates a dependency on that property. When the property changes, the render effect tries to re-execute. The fence tracks these attempts and:
 
-```
-Component rebuild detected.
-It means the component definition refers a reactive value that has been modified,
-though the component has not been rebuilt as it is considered forbidden to avoid
-infinite events loops.
-```
+1. **Warns** on each rebuild attempt with:
+   ```
+   Component rebuild detected.
+   It means the component definition refers a reactive value that has been modified,
+   though the component has not been rebuilt as it is considered forbidden to avoid
+   infinite events loops.
+   ```
+
+2. **Rate-limits** warnings using `pounceOptions.maxRebuildsPerWindow` and `pounceOptions.rebuildWindowMs`
+
+3. **Errors** only when exceeding the configured threshold (default: 1000 rebuilds per 100ms window)
+
+The fence can be disabled by setting `pounceOptions.maxRebuildsPerWindow = 0`.
 
 ### Common traps and fixes
 
@@ -34,7 +41,8 @@ infinite events loops.
 
 ```tsx
 function BadComponent(props: { count: number }) {
-  // Reads props.count in the constructor body — triggers the fence on change
+  // Reads props.count in the constructor body — triggers fence warnings on change
+  // Component will re-render (inefficiently) but warnings help identify the issue
   const doubled = props.count * 2
   return <div>{doubled}</div>
 }
@@ -68,7 +76,8 @@ function GoodComponent(props: { count: number }) {
 
 ```tsx
 function BadComponent(props: { loggedIn: boolean }) {
-  // Bare reactive read — fence blocks re-evaluation
+  // Bare reactive read — triggers fence warnings on state changes
+  // Component will re-render inefficiently instead of using reactive conditional
   if (props.loggedIn) return <Dashboard />
   return <Login />
 }
@@ -234,9 +243,9 @@ If you're coming from React:
 
 ## Remember
 
-- **Components render once**
+- **Components should render once** (warnings help identify violations)
 - **Effects handle reactivity**  
 - **DOM updates are fine-grained**
-- **No re-rendering allowed**
+- **Rebuilds are allowed but warned** (configure via `pounceOptions`)
 
-This approach ensures optimal performance and predictable behavior in Pounce applications.
+This approach ensures optimal performance while providing flexibility for edge cases. The rebuild fence serves as a development aid rather than a hard restriction.

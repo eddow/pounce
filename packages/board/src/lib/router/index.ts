@@ -1,4 +1,3 @@
-import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { parsePathSegment, type ParsedPathSegment, type RouteParams } from '@pounce/kit/router/logic'
 import type { Middleware, RouteHandler } from '../http/core.js'
@@ -123,9 +122,6 @@ export function matchRoute(
 	const normalizedPath = urlPath === '/' ? '/' : urlPath.replace(/\/$/, '')
 	const segments = normalizedPath.split('/').filter((s) => s !== '')
 
-	/**
-	 * Recursive tree traversal with priority handling
-	 */
 	/**
 	 * Recursive tree traversal with priority handling
 	 */
@@ -433,7 +429,8 @@ export async function buildRouteTree(
 
 		let entries
 		try {
-			entries = await fs.readdir(dir, { withFileTypes: true })
+			const fs = await import('node:fs/promises')
+			entries = await fs.default.readdir(dir, { withFileTypes: true })
 		} catch {
 			return // Directory likely doesn't exist
 		}
@@ -467,10 +464,3 @@ export async function buildRouteTree(
 	return root
 }
 
-/**
- * Collect middleware from ancestor nodes
- * Deprecated: matchRoute now handles this
- */
-export function collectMiddleware(_path: string[]): Middleware[] {
-	return []
-}

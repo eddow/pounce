@@ -2,7 +2,7 @@
  * Test effect-during-render bug reproduction
  */
 import { describe, it, expect, beforeEach } from 'vitest'
-import { reactive, why } from 'mutts'
+import { reactive, effect, type CleanupReason } from 'mutts'
 import { bindApp, type Scope, document } from '@pounce/core'
 
 describe('Effect during render bug', () => {
@@ -75,11 +75,15 @@ describe('Effect during render bug', () => {
 		})
 
 		const TestComponent = () => {
-			why((_obj, evolution, prop) => {
-				effectsDuringRender.push(`${String(prop)}: ${evolution}`)
+			effect(({ reaction }: { reaction: boolean | CleanupReason }) => {
+				if (reaction && typeof reaction === 'object' && reaction.type === 'propChange') {
+					for (const trigger of reaction.triggers) {
+						effectsDuringRender.push(`${'prop' in trigger.evolution ? String(trigger.evolution.prop) : trigger.evolution.method}: ${trigger.evolution.type}`)
+					}
+				}
 			})
 
-			// This reads state.count during render - should trigger why!
+			// This reads state.count during render
 			return <div>Count: {state.count}</div>
 		}
 

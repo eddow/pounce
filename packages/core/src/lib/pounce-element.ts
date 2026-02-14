@@ -1,4 +1,4 @@
-import { cleanedBy, effect, type EffectCleanup, named, reactive, type ScopedCallback, stopped, untracked } from 'mutts'
+import { cleanedBy, effect, type EffectCleanup, formatCleanupReason, named, reactive, type ScopedCallback, stopped, untracked } from 'mutts'
 import { perf } from '../perf'
 import { type ComponentInfo, perfCounters, POUNCE_OWNER } from './debug'
 import { ReactiveProp } from './jsx-factory'
@@ -105,13 +105,15 @@ export class PounceElement {
 		if (cached) PounceElement.renderCache.delete(this)
 		let partial: Node | readonly Node[] | undefined
 		perf?.mark(`render:${tagName}:start`)
-		const stopRender = effect(named(tagName, ({ reaction }) => {
+		const stopRender = effect(named(`render:${tagName}`, ({ reaction }) => {
 			if (reaction) {
-				console.warn(`Component rebuild detected.
-It means the component definition refers a reactive value that has been modified, though the component has not been rebuilt as it is considered forbidden to avoid infinite events loops.`)
-			} else {
-				partial = this.produce(scope)
+				console.warn(
+					`Component ${tagName} rebuild detected.`,
+					...(reaction === true ? ['No reasons given'] : formatCleanupReason(reaction)),
+					'\nIt means the component definition refers a reactive value that has been modified, though the component has not been rebuilt as it is considered forbidden to avoid infinite events loops.'
+				)
 			}
+			partial = this.produce(scope)
 		}))
 
 		if (!partial) throw new DynamicRenderingError('Renderer returned no content')

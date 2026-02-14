@@ -6,7 +6,7 @@
 
 import { clearSSRData as clearSSRState, getSSRData, getSSRId, injectSSRData } from '../ssr/utils.js'
 import {
-	ApiError,
+    ApiError,
 	type HttpMethod,
 	type Middleware,
 	type RequestContext,
@@ -14,9 +14,12 @@ import {
 	runMiddlewares,
 } from './core.js'
 import type { ExtractPathParams } from '../types/inference.js'
-import type { RouteDefinition } from '../router/defs.js'
-// TODO - prefer arktype to zod ? (let's have a serious discussion)
 import { z } from 'zod'
+
+declare global {
+	var __POUNCE_ROUTE_REGISTRY__: RouteRegistry | null | undefined
+	var __POUNCE_CONFIG__: typeof DEFAULT_CONFIG | undefined
+}
 
 import { PounceResponse } from './response.js'
 
@@ -26,6 +29,8 @@ export type InterceptorMiddleware = (
 ) => Promise<PounceResponse>
 
 import { addContextInterceptor, getContext, trackSSRPromise } from '../http/context.js'
+import { timeout } from 'hono/timeout'
+import { type RouteDefinition } from '../router/defs.js'
 
 interface InterceptorEntry {
 	pattern: string | RegExp
@@ -163,18 +168,18 @@ export function setRouteRegistry(registry: RouteRegistry): void {
 	if (ctx) {
 		ctx.routeRegistry = registry
 	}
-	;(globalThis as any)[REGISTRY_SYMBOL] = registry
+	globalThis.__POUNCE_ROUTE_REGISTRY__ = registry
 }
 
 export function getRouteRegistry(): RouteRegistry | null {
-	return (globalThis as any)[REGISTRY_SYMBOL] || null
+	return globalThis.__POUNCE_ROUTE_REGISTRY__ || null
 }
 
 /**
  * Clear the route registry (for testing)
  */
 export function clearRouteRegistry(): void {
-	;(globalThis as any)[REGISTRY_SYMBOL] = null
+	globalThis.__POUNCE_ROUTE_REGISTRY__ = null
 }
 
 /**
@@ -183,8 +188,7 @@ export function clearRouteRegistry(): void {
  */
 async function dispatchToHandler(request: Request): Promise<Response> {
 	const ctx = getContext()
-	const processRegistry = (globalThis as any)[REGISTRY_SYMBOL]
-	const activeRegistry = ctx?.routeRegistry || processRegistry
+	const activeRegistry = ctx?.routeRegistry || globalThis.__POUNCE_ROUTE_REGISTRY__
 
 	if (!activeRegistry) {
 		throw new Error(
@@ -223,11 +227,10 @@ const DEFAULT_CONFIG = {
 }
 
 function getGlobalConfig() {
-	const g = globalThis as any
-	if (!g[CONFIG_SYMBOL]) {
-		g[CONFIG_SYMBOL] = { ...DEFAULT_CONFIG }
+	if (!globalThis.__POUNCE_CONFIG__) {
+		globalThis.__POUNCE_CONFIG__ = { ...DEFAULT_CONFIG }
 	}
-	return g[CONFIG_SYMBOL]
+	return globalThis.__POUNCE_CONFIG__
 }
 
 /**
@@ -319,24 +322,25 @@ async function runInterceptors(
  * without network overhead. External API calls are tracked and their results
  * injected for client-side hydration.
  */
-function apiClient(
-	input: any,
+function apiClient<P extends string>(
+	input: P | URL | RouteDefinition<P, any> | ApiClientInstance<P>,
 	paramsOrOptions: any = {},
 	maybeOptions: any = {}
-): ApiClientInstance<any> {
-	let url: URL
+): ApiClientInstance<P> {
+	let url: URL | undefined
 	let options = paramsOrOptions
+
+	const ctx = getContext()
 
 	// Handle RouteDefinition overload
 	if (typeof input === 'object' && input !== null && 'buildUrl' in input) {
-		const routeDef = input as RouteDefinition
+		const routeDef = input as RouteDefinition<P, any>
 		const params = paramsOrOptions
 		options = maybeOptions
 		const builtUrl = routeDef.buildUrl(params)
 		
 		// Normalize to URL object
-		const ctx = getContext()
-		const origin = (typeof window !== 'undefined' && window.location) 
+		const origin = (typeof window !== 'undefined' && window.location && window.location.origin)
 			? window.location.origin 
 			: (ctx?.origin || 'http://localhost')
 		
@@ -351,50 +355,44 @@ function apiClient(
 			return input as ApiClientInstance
 		}
 
-		const ctx = getContext()
-		const currentConfig = ctx ? { ...config, ...ctx.config } : config
-		options = paramsOrOptions // Restore options from 2nd arg if not overloaded
-		// ... but wait, in original signature, 2nd arg IS options
-		// so if input IS NOT RouteDefinition, paramsOrOptions IS options.
 	}
 
-	const ctx = getContext()
 	const currentConfig = ctx ? { ...config, ...ctx.config } : config
 	
 	const timeout = options.timeout ?? currentConfig.timeout
 	const maxRetries = options.retries ?? currentConfig.retries
 	const retryDelay = options.retryDelay ?? currentConfig.retryDelay
 
-	if (!url!) { // If not set by RouteDefinition logic
+	if (!url) { // If not set by RouteDefinition logic
 		if (typeof input === 'string') {
-			if (input.startsWith('http://') || input.startsWith('https://')) {
-				// Absolute URL
+			if (input.startsWith('http')) {
 				url = new URL(input)
 			} else if (input.startsWith('/')) {
 				// Site-absolute
-				const ctx = getContext()
-				const origin = (typeof window !== 'undefined' && window.location) 
+				const origin = (typeof window !== 'undefined' && window.location && window.location.origin) 
 					? window.location.origin 
 					: (ctx?.origin || 'http://localhost')
 				url = new URL(input, origin)
 			} else if (input.startsWith('.')) {
 				// Site-relative
-				const ctx = getContext()
-				const base = (typeof window !== 'undefined' && window.location) 
+				const base = (typeof window !== 'undefined' && window.location && window.location.href) 
 					? window.location.href 
 					: (ctx?.origin || 'http://localhost')
 				url = new URL(input, base)
 			} else {
 				// Assume site-absolute if no scheme
-				const ctx = getContext()
-				const origin = (typeof window !== 'undefined' && window.location) 
+				const origin = (typeof window !== 'undefined' && window.location && window.location.origin) 
 					? window.location.origin 
 					: (ctx?.origin || 'http://localhost')
 				url = new URL(`/${input}`, origin)
 			}
-		} else {
+		} else if (input instanceof URL) {
 			url = input
 		}
+	}
+
+	if (!url) {
+		throw new Error(`[pounce-board] apiClient: Invalid input. Could not determine URL from ${typeof input}`)
 	}
 
 	const ssrId = getSSRId(url)
@@ -411,8 +409,8 @@ function apiClient(
 				signal: controller.signal,
 			})
 			return response
-		} catch (error: any) {
-			if (error.name === 'AbortError') {
+		} catch (error: unknown) {
+			if (error instanceof Error && error.name === 'AbortError') {
 				throw new ApiError(408, 'Request Timeout', null, fetchUrl.toString())
 			}
 			throw error
@@ -453,11 +451,10 @@ function apiClient(
 	): Promise<T> {
 		const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
 		const requestHeaders: Record<string, string> = isFormData ? {} : { 'Content-Type': 'application/json' }
-		const requestBody = isFormData ? (body as any) : body !== undefined ? JSON.stringify(body) : undefined
+		const requestBody = isFormData ? (body as FormData) : body !== undefined ? JSON.stringify(body) : undefined
 
 		const doRequest = async (): Promise<T> => {
-			const activeCtx = getContext()
-			const isSSR = activeCtx ? activeCtx.config.ssr ?? config.ssr : config.ssr
+			const isSSR = ctx ? ctx.config.ssr ?? config.ssr : config.ssr
 			
 			if (isSSR && method === 'GET') {
 				const currentSsrId = getSSRId(currentUrl)
@@ -467,24 +464,23 @@ function apiClient(
 				}
 			}
 
-			let lastError: any = null
+			let lastError: unknown = null
 
 			for (let attempt = 0; attempt <= maxRetries; attempt++) {
 				try {
 					const request = new Request(currentUrl.toString(), {
 						method,
 						headers: requestHeaders,
-						body: requestBody,
+						body: requestBody as any, // RequestInit body type is strict
 					})
 
 					const finalHandler = async (req: Request): Promise<PounceResponse> => {
 						let response: Response
 						
-						const activeCtx = getContext()
-						const isSSR = activeCtx ? activeCtx.config.ssr ?? config.ssr : config.ssr
+						const isSSR = ctx ? ctx.config.ssr ?? config.ssr : config.ssr
 						
 						// Only dispatch locally if we are in SSR AND the request targets our own origin
-						const origin = activeCtx?.origin || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost')
+						const origin = ctx?.origin || (typeof window !== 'undefined' && window.location ? window.location.origin : 'http://localhost')
 						const isLocalRequest = isSSR && new URL(req.url).origin === origin
 
 						if (isLocalRequest) {
@@ -514,15 +510,14 @@ function apiClient(
 					}
 
 					const data = (await response.json()) as T
-					const activeCtx = getContext()
-					const isSSR = activeCtx ? activeCtx.config.ssr ?? config.ssr : config.ssr
+					const isSSR = ctx ? ctx.config.ssr ?? config.ssr : config.ssr
 
 					if (isSSR) {
 						const currentSsrId = getSSRId(currentUrl)
 						injectSSRData(currentSsrId, data)
 					}
 					return data
-				} catch (error: any) {
+				} catch (error: unknown) {
 					lastError = error
 					const shouldRetry =
 						attempt < maxRetries &&
@@ -541,8 +536,7 @@ function apiClient(
 		}
 
 		const promise = doRequest()
-		const activeCtx = getContext()
-		if (activeCtx && (activeCtx.config.ssr ?? config.ssr)) {
+		if (ctx && (ctx.config.ssr ?? config.ssr)) {
 			trackSSRPromise(promise)
 		}
 		return promise

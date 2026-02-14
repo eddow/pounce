@@ -10,7 +10,10 @@ export async function runPreview() {
 	
 	const proc = spawn('node', [serverEntry], {
 		stdio: 'inherit',
-		env: process.env
+		env: {
+			...process.env,
+			NODE_ENV: 'production'
+		}
 	})
 	
 	proc.on('close', (code) => {

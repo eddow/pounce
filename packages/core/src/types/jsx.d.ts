@@ -212,6 +212,7 @@ declare global {
 				itemScope?: boolean
 				itemType?: string
 				role?: string
+				innerHTML?: string
 			}
 
 		// Reusable mouse event handlers for DOM elements

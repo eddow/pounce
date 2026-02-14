@@ -58,8 +58,8 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
 
 			// Match the request path
 			const method = c.req.method.toUpperCase()
-			const url = new URL(c.req.url)
-			const match = matchRoute(url.pathname, routeTree, method)
+			const reqUrl = new URL(c.req.url)
+			const match = matchRoute(reqUrl.pathname, routeTree, method)
 
 			const accept = c.req.header('Accept') || ''
 			const prefersHtml = accept.includes('text/html')

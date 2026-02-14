@@ -1,8 +1,16 @@
 # Pounce-Board Project Walkthrough
 
-> **Status:** Implementation in progress (Consumer Apps Phase).
+> **Status:** Implementation phase completed. Core modules reorganized and consumer app types fixed.
 
 ---
+
+## Core Modules
+
+### [Core HTTP Client](file:///home/fmdm/dev/ownk/pounce/packages/board/src/lib/http/client.ts)
+Universal API client for pounce-board. Supports SSR hydration.
+
+### [Context Management](file:///home/fmdm/dev/ownk/pounce/packages/board/src/lib/http/context.ts)
+Typed global context for SSR and request scoped data using AsyncLocalStorage.
 
 ## Dependency Documentation
 

@@ -1,4 +1,4 @@
-import { describe, memoize, project, reactive } from 'mutts'
+import { lift, memoize, project, reactive } from 'mutts'
 import { pounceOptions } from './debug'
 import type { Trait } from './traits'
 
@@ -87,7 +87,7 @@ export function propsInto<P extends Record<string, any>, S extends Record<string
 				configurable: true,
 			}
 	)
-	return describe(descriptors, into) as S & P
+	return lift(() => Object.create(into, descriptors)) as S & P
 }
 
 export function allPrototypeKeys(obj: object): Iterable<string> {
@@ -257,6 +257,24 @@ export const compose: Compose = (...args: readonly ComposeArgument[]): Record<st
 				}
 			}
 			return undefined
+		},
+		getPrototypeOf() {
+			const proto = Object.create(null)
+			for (const arg of reactiveArgs) {
+				if (isFunction(arg)) continue
+				for (const key of Reflect.ownKeys(arg as object)) {
+					if (typeof key === 'string' && !(key in proto)) {
+						const source = arg
+						Object.defineProperty(proto, key, {
+							get: () => (source as any)[key],
+							set: (v: any) => { (source as any)[key] = v },
+							enumerable: true,
+							configurable: true,
+						})
+					}
+				}
+			}
+			return proto
 		},
 	} as ProxyHandler<any>)
 }

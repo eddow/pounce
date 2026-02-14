@@ -150,9 +150,9 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 	 * eg - if terms of condition changed but condition value didn't change (x went from 4 to 5 and condition is x > 3) - then the condition has to be
 	 * re-evaluated, but not the renderers nor the rendered
 	 */
-	const renderers = tag('reconciler::renderers', project.array<Child, PounceElement>(children, function processChild({ value: child }) {
+	const elements = tag('reconciler::renderers', project.array<Child, PounceElement>(children, function processChild({ value: child }) {
 		while (child instanceof ReactiveProp) child = child.get()
-		if (child === undefined || child === null || child === (false as any)) return emptyChild
+		if (child === undefined || child === null) return emptyChild
 		if (isString(child) || isNumber(child))
 			return new PounceElement(function createTextNode() { return document.createTextNode(String(child)) })
 		if (child instanceof Node) 
@@ -162,14 +162,14 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 				tag: 'fragment',
 			})
 		if (child instanceof PounceElement) return child
-		if (child && typeof (child as any).render === 'function') return child as PounceElement
+		//obsolete: if (child && typeof (child as any).render === 'function') return child as PounceElement
 		return emptyChild
 	}))
 
 	const stableAccums = new WeakMap<PounceElement, { ifOccurred: boolean; value?: PounceElement }>()
 
 	const conditioned = tag('reconciler::conditioned', scan(
-		renderers,
+		elements,
 		function processConditions(acc: { ifOccurred: boolean; value?: PounceElement }, child: PounceElement) {
 			if (child.condition || child.if || child.when || child.else) {
 				let hidden = false
@@ -249,6 +249,6 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 	return cleanedBy(flattened, function performCleanup() {
 		conditioned[cleanup]()
 		rendered[cleanup]()
-		renderers[cleanup]()
+		elements[cleanup]()
 	})
 }

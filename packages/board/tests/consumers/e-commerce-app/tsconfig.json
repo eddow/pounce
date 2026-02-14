@@ -11,10 +11,10 @@
 		"jsxImportSource": "@pounce/core",
 		"paths": {
 			"@pounce/board": [
-				"../../../src/index.ts"
+				"../../../src/lib/http/index.ts"
 			],
 			"@pounce/board/*": [
-				"../../../src/*"
+				"../../../src/lib/*"
 			],
 			"@pounce/board/adapters/*": [
 				"../../../src/adapters/*"

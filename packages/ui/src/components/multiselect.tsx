@@ -2,6 +2,15 @@ import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
 import { getVariantTrait } from '../shared/variants'
+import type { Trait } from '@pounce/core'
+
+/**
+ * Helper to get variant traits as array or undefined
+ */
+function getVariantTraits(variant: string | undefined): Trait[] | undefined {
+	const trait = getVariantTrait(variant)
+	return trait ? [trait] : undefined
+}
 
 componentStyle.sass`
 .pounce-multiselect
@@ -80,7 +89,6 @@ export type MultiselectProps<T> = {
 export const Multiselect = <T,>(props: MultiselectProps<T>) => {
 	const adapter = getAdapter('Multiselect')
 	const state = compose({ closeOnSelect: true, variant: 'primary' }, props)
-	const variantTrait = getVariantTrait(state.variant)
 	let detailsEl: HTMLDetailsElement | undefined
 
 	const handleItemClick = (item: T, event: MouseEvent) => {
@@ -102,7 +110,7 @@ export const Multiselect = <T,>(props: MultiselectProps<T>) => {
 	return (
 		<details
 			class={[adapter.classes?.base || 'pounce-multiselect', state.class]}
-			traits={variantTrait ? [variantTrait] : undefined}
+			traits={getVariantTraits(state.variant)}
 			{...state.el}
 			this={detailsEl}
 		>

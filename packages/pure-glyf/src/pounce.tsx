@@ -1,4 +1,5 @@
 import type { DisplayContext } from '@pounce/ui'
+import type { JSX } from '@pounce/core'
 
 /**
  * Creates an iconFactory for @pounce/ui from a pure-glyf icon map.

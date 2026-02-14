@@ -2,7 +2,7 @@
  * Counter Web Component using inline JSX templating (functional standard)
  */
 
-import { effect, why, watch } from 'mutts'
+import { effect, watch } from 'mutts'
 import './Counter.scss'
 import { compose, type Scope } from '../../lib'
 
@@ -23,8 +23,10 @@ export default function CounterWebComponent(
 	},
 	scope: Scope
 ) {
-	why((obj, evolution) => {
-		console.log(obj, evolution)
+	effect(({ reaction }) => {
+		if (reaction) {
+			console.log('Counter component re-running due to reactive change')
+		}
 	})
 	const state = compose(
 		{

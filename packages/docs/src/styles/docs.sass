@@ -48,3 +48,104 @@
 
     h2
       margin-top: 2rem
+
+.docs-search
+  margin-bottom: 1.5rem
+  position: relative
+
+  input
+    width: 100%
+    padding: 0.6rem 1rem
+    border-radius: 2rem
+    border: 1px solid var(--pounce-border, #ddd)
+    background: var(--pounce-bg-muted, #f9f9f9)
+    outline: none
+    transition: border-color 0.2s, box-shadow 0.2s
+    font-size: 0.9rem
+
+    &:focus
+      border-color: var(--pounce-primary, #3b82f6)
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1)
+
+  .search-results
+    position: absolute
+    top: 100%
+    left: 0
+    right: 0
+    background: var(--pounce-bg, #fff)
+    border-radius: 0.5rem
+    border: 1px solid var(--pounce-border, #ddd)
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1)
+    margin-top: 0.5rem
+    padding: 0.5rem 0
+    list-style: none
+    z-index: 100
+    max-height: 300px
+    overflow-y: auto
+
+    [data-theme="dark"] &
+      background: var(--pounce-bg-elevated, #242424)
+      border-color: #333
+
+    li
+      margin: 0
+      padding: 0
+
+      a
+        display: block
+        padding: 0.5rem 1rem
+        text-decoration: none
+        color: var(--pounce-fg, #333)
+        font-size: 0.9rem
+        transition: background 0.1s
+
+        &:hover
+          background: var(--pounce-bg-muted, #f0f0f0)
+          [data-theme="dark"] &
+            background: #333
+
+      &.no-results
+        padding: 0.5rem 1rem
+        color: var(--pounce-fg-muted, #888)
+        font-style: italic
+        font-size: 0.85rem
+
+.mobile-toggle
+  display: none
+  background: none
+  border: none
+  font-size: 1.5rem
+  cursor: pointer
+  padding: 0
+  margin-right: 1rem
+  color: var(--pounce-fg, #333)
+
+@media (max-width: 900px)
+  .docs-layout
+    grid-template-columns: 1fr
+
+  .docs-sidebar
+    position: fixed
+    left: -280px
+    width: 280px
+    z-index: 1000
+    background: var(--pounce-bg, #fff)
+    transition: left 0.3s ease
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1)
+
+    [data-theme="dark"] &
+      background: var(--pounce-bg-elevated, #1a1a1a)
+
+  .mobile-open .docs-sidebar
+    left: 0
+
+  .mobile-toggle
+    display: block
+
+  .docs-main
+    padding-top: 0
+
+  .docs-sidebar h5
+    display: flex
+    justify-content: space-between
+    align-items: center

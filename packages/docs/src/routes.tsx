@@ -16,6 +16,7 @@ import ClientPage from './pages/kit/client'
 import IntlPage from './pages/kit/intl'
 import StoragePage from './pages/kit/storage'
 import CSSPage from './pages/kit/css'
+import KitApiPage from './pages/kit/api'
 import UIPage from './pages/ui/index'
 import ButtonPage from './pages/ui/button'
 import AccordionPage from './pages/ui/accordion'
@@ -31,6 +32,23 @@ import ErrorBoundaryPage from './pages/ui/error-boundary'
 import MenuPage from './pages/ui/menu'
 import TypographyPage from './pages/ui/typography'
 import InfiniteScrollPage from './pages/ui/infinite-scroll'
+import UiDirectivesPage from './pages/ui/directives'
+import CssVariablesPage from './pages/ui/css-variables'
+import DisplayPage from './pages/ui/display'
+import AdaptersIndexPage from './pages/adapters/index'
+import PicoAdapterPage from './pages/adapters/pico'
+import VanillaAdapterPage from './pages/adapters/vanilla'
+import CreatingAdapterPage from './pages/adapters/creating'
+import BoardIndexPage from './pages/board/index'
+import BoardRoutingPage from './pages/board/routing'
+import BoardSsrPage from './pages/board/ssr'
+import BoardMiddlewarePage from './pages/board/middleware'
+import MuttsIndexPage from './pages/mutts/index'
+import MuttsSignalsPage from './pages/mutts/signals'
+import MuttsCollectionsPage from './pages/mutts/collections'
+import MuttsZonesPage from './pages/mutts/zones'
+import PureGlyfIndexPage from './pages/pure-glyf/index'
+import PureGlyfUsagePage from './pages/pure-glyf/usage'
 
 // Route type that includes the view function
 type AppRoute = ClientRouteDefinition & {
@@ -54,6 +72,7 @@ const routes: AppRoute[] = [
   { path: '/kit/intl', view: IntlPage },
   { path: '/kit/storage', view: StoragePage },
   { path: '/kit/css', view: CSSPage },
+  { path: '/kit/api', view: KitApiPage },
   { path: '/ui', view: UIPage },
   { path: '/ui/button', view: ButtonPage },
   { path: '/ui/accordion', view: AccordionPage },
@@ -69,6 +88,23 @@ const routes: AppRoute[] = [
   { path: '/ui/menu', view: MenuPage },
   { path: '/ui/typography', view: TypographyPage },
   { path: '/ui/infinite-scroll', view: InfiniteScrollPage },
+  { path: '/ui/directives', view: UiDirectivesPage },
+  { path: '/ui/css-variables', view: CssVariablesPage },
+  { path: '/ui/display', view: DisplayPage },
+  { path: '/adapters', view: AdaptersIndexPage },
+  { path: '/adapters/pico', view: PicoAdapterPage },
+  { path: '/adapters/vanilla', view: VanillaAdapterPage },
+  { path: '/adapters/creating', view: CreatingAdapterPage },
+  { path: '/board', view: BoardIndexPage },
+  { path: '/board/routing', view: BoardRoutingPage },
+  { path: '/board/ssr', view: BoardSsrPage },
+  { path: '/board/middleware', view: BoardMiddlewarePage },
+  { path: '/mutts', view: MuttsIndexPage },
+  { path: '/mutts/signals', view: MuttsSignalsPage },
+  { path: '/mutts/collections', view: MuttsCollectionsPage },
+  { path: '/mutts/zones', view: MuttsZonesPage },
+  { path: '/pure-glyf', view: PureGlyfIndexPage },
+  { path: '/pure-glyf/usage', view: PureGlyfUsagePage },
 ]
 
 export default routes

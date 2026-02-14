@@ -1,10 +1,16 @@
 import { compose } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
-import { A } from '@pounce/kit'
-import type { Trait } from '@pounce/core'
-import type { Variant } from '../shared/variants'
-import { getVariantTrait } from '../shared/variants'
+import { componentStyle, A } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
+import { getVariantTrait, type Variant } from '../shared/variants'
+import type { Trait } from '@pounce/core'
+
+/**
+ * Helper to get variant traits as array or undefined
+ */
+function getVariantTraits(variant: string | undefined): Trait[] | undefined {
+	const trait = getVariantTrait(variant)
+	return trait ? [trait] : undefined
+}
 
 componentStyle.sass`
 .pounce-heading
@@ -168,13 +174,12 @@ export const Heading = (props: HeadingProps) => {
 	})
 
 	const trait = getVariantTrait(state.variant)
-	const allTraits: Trait[] = trait ? [trait] : []
 
 	return (
 		<dynamic
 			tag={state.tag}
 			{...state.el}
-			traits={allTraits}
+			traits={getVariantTraits(state.variant)}
 			class={[
 				adapter?.classes?.base ?? 'pounce-heading',
 				`pounce-heading-level-${state.level}`,
@@ -207,13 +212,12 @@ export const Text = (props: TextProps) => {
 	)
 
 	const trait = getVariantTrait(state.variant)
-	const allTraits: Trait[] = trait ? [trait] : []
 
 	return (
 		<dynamic
 			tag={state.tag}
 			{...state.el}
-			traits={allTraits}
+			traits={getVariantTraits(state.variant)}
 			class={[
 				adapter?.classes?.base ?? 'pounce-text',
 				`pounce-text-${state.size}`,
@@ -237,12 +241,11 @@ export const Link = (props: LinkProps) => {
 	const state = compose({ variant: 'primary', underline: true }, props)
 
 	const trait = getVariantTrait(state.variant)
-	const allTraits: Trait[] = trait ? [trait] : []
 
 	return (
 		<A
 			{...state}
-			traits={allTraits}
+			traits={getVariantTraits(state.variant)}
 			class={[
 				adapter?.classes?.base ?? 'pounce-link',
 				trait ? undefined : variantFallbackClass('pounce-link-variant', state.variant),

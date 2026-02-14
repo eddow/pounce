@@ -26,7 +26,7 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       name: '@pounce/ui',
-      formats: ['es'],
+      formats: ['es', 'cjs'],
       fileName: 'index'
     },
     sourcemap: true,

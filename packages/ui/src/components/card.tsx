@@ -2,6 +2,15 @@ import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
 import { asVariant, getVariantTrait } from '../shared/variants'
+import type { Trait } from '@pounce/core'
+
+/**
+ * Helper to get variant traits as array or undefined
+ */
+function getVariantTraits(variant: string | undefined): Trait[] | undefined {
+	const trait = getVariantTrait(variant)
+	return trait ? [trait] : undefined
+}
 
 componentStyle.sass`
 .pounce-card
@@ -33,13 +42,12 @@ export type CardProps = {
 const CardBase = (props: CardProps) => {
 	const adapter = getAdapter('Card')
 	const state = compose({ variant: 'primary' }, props)
-	const variantTrait = getVariantTrait(state.variant)
 	const baseTrait = { classes: [adapter.classes?.base || 'pounce-card'] }
 
 	return (
 		<article
 			{...state.el}
-			traits={[baseTrait, variantTrait].filter((t): t is import('@pounce/core').Trait => !!t)}
+			traits={[baseTrait, ...(getVariantTraits(state.variant) || [])]}
 		>
 			{state.children}
 		</article>

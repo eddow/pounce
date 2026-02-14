@@ -2,6 +2,15 @@ import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
 import { asVariant, getVariantTrait } from '../shared/variants'
+import type { Trait } from '@pounce/core'
+
+/**
+ * Helper to get variant traits as array or undefined
+ */
+function getVariantTraits(variant: string | undefined): Trait[] | undefined {
+	const trait = getVariantTrait(variant)
+	return trait ? [trait] : undefined
+}
 
 componentStyle.sass`
 .pounce-progress
@@ -54,14 +63,13 @@ export type ProgressProps = {
 const ProgressBase = (props: ProgressProps) => {
 	const adapter = getAdapter('Progress')
 	const state = compose({ max: 100, variant: 'primary' }, props)
-	const variantTrait = getVariantTrait(state.variant)
 	const baseTrait = { classes: [adapter.classes?.base || 'pounce-progress'] }
 	const isIndeterminate = () => state.value === undefined || state.value === null
 
 	return (
 		<progress
 			{...state.el}
-			traits={[baseTrait, variantTrait].filter((t): t is import('@pounce/core').Trait => !!t)}
+			traits={[baseTrait, ...(getVariantTraits(state.variant) || [])]}
 			value={isIndeterminate() ? undefined : state.value}
 			max={state.max}
 			role="progressbar"

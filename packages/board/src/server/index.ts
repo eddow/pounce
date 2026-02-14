@@ -9,7 +9,6 @@ import { Middleware, RouteResponse } from '@pounce/kit'
 export {
 	buildRouteTree,
 	matchRoute,
-	collectMiddleware,
 	parseSegment,
 	type RouteMatch,
 	type RouteTreeNode,

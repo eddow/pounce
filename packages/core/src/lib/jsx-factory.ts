@@ -53,35 +53,37 @@ export const h = (
 	const categories: Record<PropertyKey, any> = {}
 	const node: Record<string, any> = {}
 
-	//#region Collect meta properties and categories
-	for (const [key, value] of Object.entries(props || {})) {
+	//#region Collect meta properties and forward node props
+	// Single pass: detect meta keys by name pattern (value read only for meta),
+	// forward non-meta keys as getters (no value reads in render effect).
+	// ownKeys trap doesn't trigger get — safe for compose proxies and plain objects alike.
+	// TODO: replace static key snapshot with lift for key dynamics
+	for (const key of untracked(() => Object.keys(props || {}))) {
 		if (typeof key !== 'string') continue
 		switch (key) {
 			case 'this': {
+				const value = props[key]
 				const setComponent = value?.set
 				if (!isFunction(setComponent))
 					throw new DynamicRenderingError('`this` attribute must be an L-value (object property)')
-				const mountEntry = (v: any) => {
-					setComponent(v)
-				}
+				const mountEntry = (v: any) => { setComponent(v) }
 				categories.mount = [mountEntry, ...(categories.mount || [])]
 				break
 			}
 			case 'else': {
+				const value = props[key]
 				if (value !== true)
 					throw new DynamicRenderingError('`else` attribute must not specify a value')
 				categories.else = true
 				break
 			}
 			case 'if': {
-				categories.condition = valuedAttributeGetter(value)
+				categories.condition = valuedAttributeGetter(props[key])
 				break
 			}
 			case 'use': {
-				if (tag === 'for' || tag === 'dynamic' || tag === 'scope' || tag === 'fragment') {
-					node[key] = value
-					break
-				}
+				if (tag === 'for' || tag === 'dynamic' || tag === 'scope' || tag === 'fragment') break
+				const value = props[key]
 				const getter = valuedAttributeGetter(value)
 				const mountEntry = isFunction(value) ? (value.length > 0 ? value : value()) : getter()
 				if (mountEntry !== undefined) {
@@ -94,9 +96,14 @@ export const h = (
 				if (match && match.length === 3 && ['use', 'if', 'when'].includes(match[1])) {
 					const [, category, name] = match
 					categories[category] ??= {}
-					categories[category][name] = valuedAttributeGetter(value)
+					categories[category][name] = valuedAttributeGetter(props[key])
 				} else {
-					node[key] = value
+					Object.defineProperty(node, key, {
+						get: () => props[key],
+						set: (v) => { props[key] = v },
+						enumerable: true,
+						configurable: true,
+					})
 				}
 			}
 		}
@@ -181,16 +188,30 @@ export const h = (
 				element.setAttribute('data-mutts-path', `${projection.depth}:${projection.key ?? '?'}`)
 		}
 		testing.renderingEvent?.('create element', tag, element)
-		if (tag === 'input') node.type ??= 'text'
+		// TODO: input type I don't know but traits shouldn't have their reactivity here, the .get() shouldn't appear in h's effect
+		if (tag === 'input') untracked(() => { node.type ??= 'text' })
 
-		// Step 1: separate event handlers (values) from other props (potential getters)
+		// Step 1: separate event handlers from other props by key name (no value reads)
 		// propsInto treats functions as getters — event handlers must bypass it
-		const { traits: rawTraits, children: _nodeChildren, ...rest } = node
+		const rawTraits = untracked(() => node.traits)
 		const events: Record<string, unknown> = {}
 		const htmlNode: Record<string, unknown> = {}
-		for (const key of Object.keys(rest)) {
-			if (typeof key === 'string' && /^on[A-Z]/.test(key)) events[key] = rest[key]
-			else htmlNode[key] = rest[key]
+		for (const key of Object.keys(node)) {
+			if (key === 'traits' || key === 'children') continue
+			if (typeof key === 'string' && /^on[A-Z]/.test(key)) {
+				Object.defineProperty(events, key, {
+					get: () => node[key],
+					enumerable: true,
+					configurable: true,
+				})
+			} else {
+				Object.defineProperty(htmlNode, key, {
+					get: () => node[key],
+					set: (v) => { node[key] = v },
+					enumerable: true,
+					configurable: true,
+				})
+			}
 		}
 		const htmlAttrs = propsInto(htmlNode)
 

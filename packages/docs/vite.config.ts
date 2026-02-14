@@ -1,16 +1,14 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
-import { pounceCorePackage } from '@pounce/core/plugin'
+import { pounceMinimalPackage } from '@pounce/core/plugin'
 
 export default defineConfig({
   root: resolve(import.meta.dirname, '.'),
   plugins: [
-    ...pounceCorePackage({
-      core: {
-        jsxRuntime: {
-          runtime: 'automatic',
-          importSource: '@pounce/core',
-        },
+    ...pounceMinimalPackage({
+      jsxRuntime: {
+        runtime: 'automatic',
+        importSource: '@pounce/core',
       },
     }),
   ],
@@ -23,6 +21,16 @@ export default defineConfig({
       '@pounce/ui': resolve(import.meta.dirname, '../ui/src'),
       '@pounce/adapter-pico': resolve(import.meta.dirname, '../adapters/pico/src'),
       'mutts': resolve(import.meta.dirname, '../../../mutts/src'),
+    },
+  },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      onwarn(warning, warn) {
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
+        if (warning.message?.includes('node:async_hooks')) return
+        warn(warning)
+      },
     },
   },
   server: {

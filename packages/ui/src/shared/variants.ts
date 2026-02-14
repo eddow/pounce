@@ -23,6 +23,7 @@ export type Variant = string & {}
  * // Component uses variant
  * <Button.danger>  // Looks up adapter.variants['danger']
  * <Button variant="danger">  // Same thing
+ * @todo find a better way to retrieve them than defining a getVariantTraits in each file using it
  */
 export function getVariantTrait(variant: string | undefined): Trait | undefined {
 	if (!variant) return undefined

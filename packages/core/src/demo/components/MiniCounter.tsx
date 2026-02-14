@@ -1,4 +1,4 @@
-import { effect, why, project } from 'mutts'
+import { effect, project } from 'mutts'
 import { compose } from '../../lib'
 
 export interface MiniCounterProps {
@@ -7,8 +7,10 @@ export interface MiniCounterProps {
 }
 
 export function MiniCounter(props: MiniCounterProps) {
-	why((obj, evolution) => {
-		console.log(obj, evolution)
+	effect(({ reaction }) => {
+		if (reaction) {
+			console.log('MiniCounter component re-running due to reactive change')
+		}
 	})
 	const state = compose({ list: [] as string[], addedText: Date.now().toString() }, props)
 	console.log('🎯 Mini counter component mounted!')

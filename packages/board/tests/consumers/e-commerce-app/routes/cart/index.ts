@@ -1,7 +1,7 @@
-import { defineRoute } from '@pounce/board'/server'
+import { type RequestContext } from '@pounce/board'
 
 // Simple in-memory cart
-interface CartItem {
+export export interface CartItem {
     productId: string
     quantity: number
 }

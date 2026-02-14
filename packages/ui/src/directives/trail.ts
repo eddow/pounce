@@ -46,8 +46,8 @@ export function trail(
 	element.addEventListener('scroll', onScroll)
 	observer.observe(element, { childList: true, subtree: true })
 
-	// Initial scroll to bottom
-	requestAnimationFrame(scrollToEnd)
+	// Initial scroll to bottom - avoid as mutation observer will handle it if there is content
+	//requestAnimationFrame(scrollToEnd)
 
 	return () => {
 		element.removeEventListener('scroll', onScroll)

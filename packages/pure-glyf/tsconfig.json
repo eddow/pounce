@@ -16,7 +16,7 @@
 		"noFallthroughCasesInSwitch": true,
 		"skipLibCheck": true,
 		"paths": {
-			"@pounce/core": ["../core/dist/src/lib/index.d.ts"],
+			"@pounce/core": ["../core/dist/jsx.d.ts"],
 			"@pounce/core/*": ["../core/dist/*"],
 			"@pounce/ui": ["../ui/dist/index.d.ts"]
 		},

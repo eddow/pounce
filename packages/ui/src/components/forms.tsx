@@ -1,7 +1,16 @@
-import { compose } from '@pounce/core'
+import { compose, isObject, isString, PounceElement } from '@pounce/core'
 import { componentStyle } from '@pounce/kit/dom'
 import { getAdapter } from '../adapter/registry'
 import { asVariant, getVariantTrait } from '../shared/variants'
+import type { Trait } from '@pounce/core'
+
+/**
+ * Helper to get variant traits as array or undefined
+ */
+function getVariantTraits(variant: string | undefined): Trait[] | undefined {
+	const trait = getVariantTrait(variant)
+	return trait ? [trait] : undefined
+}
 
 componentStyle.sass`
 .pounce-select
@@ -151,8 +160,6 @@ export type SelectProps = JSX.IntrinsicElements['select'] & {
 const SelectBase = (props: SelectProps) => {
 	const adapter = getAdapter('Select')
 	const state = compose({ variant: 'primary', fullWidth: false }, props)
-	const variantTrait = getVariantTrait(state.variant)
-
 	return (
 		<select
 			class={[
@@ -161,7 +168,7 @@ const SelectBase = (props: SelectProps) => {
 				state.fullWidth ? (adapter.classes?.full || 'pounce-select-full') : undefined,
 				state.class,
 			]}
-			traits={variantTrait ? [variantTrait] : undefined}
+			traits={getVariantTraits(state.variant)}
 			{...state}
 		>
 			{state.children}
@@ -197,16 +204,15 @@ const ComboboxBase = (props: ComboboxProps) => {
 		{ variant: 'primary', list: generatedId, options: [] as ComboboxOption[], type: 'text' },
 		props
 	)
-	const variantTrait = getVariantTrait(state.variant)
-
 	return (
-		<div class={[adapter.classes?.base || 'pounce-combobox', toneClass(state.variant), state.class]} traits={variantTrait ? [variantTrait] : undefined}>
+		<div class={[adapter.classes?.base || 'pounce-combobox', toneClass(state.variant), state.class]} traits={getVariantTraits(state.variant)}>
 			<input {...state} />
 			<datalist id={state.list}>
-				{state.options.map((option) => {
-					if (typeof option === 'string') return <option value={option} />
-					return <option value={option.value}>{option.label ?? option.value}</option>
-				})}
+				<for each={state.options}>{(option) =>
+					isString(option)
+						? <option value={option} />
+						: <option value={option.value}>{option.label ?? option.value}</option>
+				}</for>
 				{state.children}
 			</datalist>
 		</div>
@@ -214,11 +220,10 @@ const ComboboxBase = (props: ComboboxProps) => {
 }
 
 type ControlBaseProps = Omit<JSX.IntrinsicElements['input'], 'checked'> & {
-	label?: JSX.Element | string
+	label?: JSX.Element | string | JSX.IntrinsicElements['label']
 	description?: JSX.Element | string
 	variant?: string
-	el?: JSX.IntrinsicElements['label']
-	labelProps?: Omit<JSX.IntrinsicElements['label'], 'children'>
+	el?: JSX.IntrinsicElements['input']
 	children?: JSX.Element | string
 	checked?: boolean
 }
@@ -239,18 +244,20 @@ export type CheckboxProps = ControlBaseProps
 const CheckboxBase = (props: CheckboxProps) => {
 	const adapter = getAdapter('Checkbox')
 	const state = compose({ variant: 'primary', type: 'checkbox' }, props)
-	const variantTrait = getVariantTrait(state.variant)
+
+	const labelAttrs = isObject(state.label) && !(state.label instanceof PounceElement) ? (state.label as any) : {}
+	const labelText = isString(state.label) || state.label instanceof PounceElement ? state.label : state.children
 
 	return (
 		<label
-			{...state.labelProps}
+			{...labelAttrs}
 			class={[
 				adapter.classes?.base || 'pounce-control',
 				'pounce-checkbox',
 				toneClass(state.variant),
-				state.el?.class,
+				labelAttrs.class,
 			]}
-			traits={variantTrait ? [variantTrait] : undefined}
+			traits={getVariantTraits(state.variant)}
 		>
 			<input
 				type="checkbox"
@@ -258,10 +265,11 @@ const CheckboxBase = (props: CheckboxProps) => {
 				name={state.name}
 				disabled={state.disabled}
 				class={[adapter.classes?.input || 'pounce-control-input', state.class]}
+				{...(state.el as any)}
 			/>
 			<span class={adapter.classes?.copy || 'pounce-control-copy'}>
-				<span class={adapter.classes?.label || 'pounce-control-label'} if={state.label ?? state.children}>
-					{state.label ?? state.children}
+				<span class={adapter.classes?.label || 'pounce-control-label'} if={labelText}>
+					{labelText}
 				</span>
 				<span class={adapter.classes?.description || 'pounce-control-description'} if={state.description}>
 					{state.description}
@@ -300,21 +308,23 @@ const RadioBase = (props: RadioProps) => {
 			},
 			set isChecked(v: boolean) {
 				if (v && s.group !== undefined) s.group = s.value
-			}
+			},
 		})
 	)
-	const variantTrait = getVariantTrait(state.variant)
+
+	const labelAttrs = isObject(state.label) && !(state.label instanceof PounceElement) ? (state.label as any) : {}
+	const labelText = isString(state.label) || state.label instanceof PounceElement ? state.label : state.children
 
 	return (
 		<label
-			{...state.labelProps}
+			{...labelAttrs}
 			class={[
 				adapter.classes?.base || 'pounce-control',
 				'pounce-radio',
 				toneClass(state.variant),
-				state.el?.class,
+				labelAttrs.class,
 			]}
-			traits={variantTrait ? [variantTrait] : undefined}
+			traits={getVariantTraits(state.variant)}
 		>
 			<input
 				type="radio"
@@ -323,10 +333,11 @@ const RadioBase = (props: RadioProps) => {
 				value={state.value != null ? String(state.value) : undefined}
 				disabled={state.disabled}
 				class={[adapter.classes?.input || 'pounce-control-input', state.class]}
+				{...(state.el as any)}
 			/>
 			<span class={adapter.classes?.copy || 'pounce-control-copy'}>
-				<span class={adapter.classes?.label || 'pounce-control-label'} if={state.label ?? state.children}>
-					{state.label ?? state.children}
+				<span class={adapter.classes?.label || 'pounce-control-label'} if={labelText}>
+					{labelText}
 				</span>
 				<span class={adapter.classes?.description || 'pounce-control-description'} if={state.description}>
 					{state.description}
@@ -361,22 +372,23 @@ const SwitchBase = (props: SwitchProps) => {
 		(s: any) => ({
 			get isChecked() {
 				return s.checked
-			}
+			},
 		})
 	)
-	const variantTrait = getVariantTrait(state.variant)
+
+	const labelAttrs = isObject(state.label) && !(state.label instanceof PounceElement) ? (state.label as any) : {}
+	const labelText = isString(state.label) || state.label instanceof PounceElement ? state.label : state.children
 
 	return (
 		<label
-			{...state.labelProps}
+			{...labelAttrs}
 			class={[
 				adapter.classes?.base || 'pounce-control',
 				'pounce-switch',
-				toneClass(state.variant),
 				state.labelPosition === 'start' ? 'pounce-switch-label-start' : undefined,
-				state.el?.class,
+				labelAttrs.class,
 			]}
-			traits={variantTrait ? [variantTrait] : undefined}
+			traits={getVariantTraits(state.variant)}
 		>
 			<input
 				role="switch"
@@ -386,11 +398,12 @@ const SwitchBase = (props: SwitchProps) => {
 				disabled={state.disabled}
 				class={[adapter.classes?.input || 'pounce-control-input', 'pounce-switch-input', state.class]}
 				aria-checked={state.isChecked}
+				{...(state.el as any)}
 			/>
 			<span class="pounce-switch-visual" aria-hidden="true" />
-			<span class={adapter.classes?.copy || 'pounce-control-copy'} if={state.label || state.children || state.description}>
-				<span class={adapter.classes?.label || 'pounce-control-label'} if={state.label || state.children}>
-					{state.label ?? state.children}
+			<span class={adapter.classes?.copy || 'pounce-control-copy'} if={labelText || state.description}>
+				<span class={adapter.classes?.label || 'pounce-control-label'} if={labelText}>
+					{labelText}
 				</span>
 				<span class={adapter.classes?.description || 'pounce-control-description'} if={state.description}>
 					{state.description}

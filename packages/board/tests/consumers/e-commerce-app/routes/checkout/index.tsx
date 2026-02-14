@@ -1,12 +1,8 @@
-
 import { api } from '@pounce/board'
 import { reactive } from 'mutts'
 import { paymentApi } from '../../lib/api.js'
+import { type CartItem } from '../cart/index.js'
 
-interface CartItem {
-	productId: string
-	quantity: number
-}
 
 export default function Checkout() {
 	const cartReq = api<CartItem[]>("/cart").get()

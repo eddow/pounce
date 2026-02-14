@@ -37,31 +37,35 @@ export interface RequestScope {
 	config: Partial<ClientConfig>
 	interceptors: InterceptorEntry[]
 	origin?: string
-	routeRegistry?: any
+	routeRegistry?: RouteRegistry
 }
+
+declare global {
+	var __POUNCE_STORAGE__: AsyncLocalStorage<RequestScope> | undefined
+	var __POUNCE_CONTEXT__: RequestScope | null | undefined
+}
+
+import type { RouteRegistry } from './client.js'
 
 // Storage for strict thread-safety in Node.js (AsyncLocalStorage)
 const STORAGE_KEY = Symbol.for('__POUNCE_STORAGE__')
 
 /** @internal */
 export function getStorage(): AsyncLocalStorage<RequestScope> | null {
-	const g = globalThis as any
-	return g[STORAGE_KEY] || null
+	return globalThis.__POUNCE_STORAGE__ || null
 }
 
 export function setStorage(storage: AsyncLocalStorage<RequestScope>) {
-	const g = globalThis as any
-	g[STORAGE_KEY] = storage
+	globalThis.__POUNCE_STORAGE__ = storage
 }
 
 async function ensureStorage(): Promise<AsyncLocalStorage<RequestScope>> {
-	const g = globalThis as any
-	if (g[STORAGE_KEY]) {
-		return g[STORAGE_KEY]
+	if (globalThis.__POUNCE_STORAGE__) {
+		return globalThis.__POUNCE_STORAGE__
 	}
 
 	const s = new AsyncLocalStorage<RequestScope>()
-	g[STORAGE_KEY] = s
+	globalThis.__POUNCE_STORAGE__ = s
 	return s
 }
 
@@ -75,11 +79,11 @@ export function getContext(): RequestScope | null {
 		if (store) return store
 	}
 	// Fallback for browser/single-threaded environments or shared SSR state
-	return (globalThis as any).__POUNCE_CONTEXT__ || null
+	return globalThis.__POUNCE_CONTEXT__ || null
 }
 
 function setGlobalCtx(ctx: RequestScope | null) {
-	;(globalThis as any).__POUNCE_CONTEXT__ = ctx
+	globalThis.__POUNCE_CONTEXT__ = ctx
 }
 
 /**

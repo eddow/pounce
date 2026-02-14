@@ -103,6 +103,16 @@ describe('Checkbox', () => {
 		const input = container.querySelector('input[type="checkbox"]') as HTMLInputElement
 		expect(input?.checked).toBe(true)
 	})
+
+	it('targets input with el and label-wrapper with namespaced label props', () => {
+		render(<Checkbox el={{ id: 'foo', tabIndex: 5 }} {...({ 'label:class': 'custom-label' } as any)}>Label</Checkbox>)
+		const input = container.querySelector('input[type="checkbox"]') as HTMLInputElement
+		expect(input?.id).toBe('foo')
+		expect(input?.tabIndex).toBe(5)
+		const label = container.querySelector('label')
+		expect(label?.classList.contains('custom-label')).toBe(true)
+		expect(label?.textContent).toContain('Label')
+	})
 })
 
 describe('Radio', () => {

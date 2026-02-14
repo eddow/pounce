@@ -4,22 +4,31 @@ import { Container, Heading, Text, ThemeToggle, Toolbar } from '@pounce/ui'
 import { Env, type EnvSettings } from '@pounce/kit/env'
 import { reactive } from 'mutts'
 import PageNav from './components/page-nav'
+import Search from './components/search'
 import routes from './routes'
 
 const envSettings = reactive<EnvSettings>({ theme: 'auto' })
+const uiState = reactive({ mobileOpen: false })
 
 export function DocsApp(_props: {}, _scope: Scope) {
   return (
     <Env settings={envSettings}>
-      <div class="docs-layout">
+      <div class={{ 'docs-layout': true, 'mobile-open': uiState.mobileOpen }}>
         <aside class="docs-sidebar">
           <h5>Pounce</h5>
+          <Search />
           <PageNav />
         </aside>
         <div class="docs-main">
           <header class="docs-header">
             <Container>
               <Toolbar>
+                <button
+                  class="mobile-toggle"
+                  onClick={() => uiState.mobileOpen = !uiState.mobileOpen}
+                >
+                  ☰
+                </button>
                 <Heading level={5}>Pounce Docs</Heading>
                 <Toolbar.Spacer />
                 <ThemeToggle settings={envSettings} simple />
