@@ -38,10 +38,7 @@ export function defaulted<T, D extends Partial<AllOptional<T>>>(
 }
 
 type PropsDesc<P extends Record<string, any>> = {
-	[K in keyof P]:
-		| P[K]
-		| (() => P[K])
-		| ReactiveProp<P[K]>
+	[K in keyof P]: P[K] | (() => P[K]) | ReactiveProp<P[K]>
 }
 
 export function copyObject(into: Record<string, any>, from: Record<string, any>) {
@@ -52,9 +49,10 @@ export function copyObject(into: Record<string, any>, from: Record<string, any>)
 function readonlyProp(key: PropertyKey, value: any) {
 	return () => {
 		if (pounceOptions.writeRoProps !== 'ignore') {
-			const msg = value instanceof ReactiveProp
-				? `Property "${String(key)}" has been given a computed value "${value.get}", but it is not a two-way binding`
-				: `Property "${String(key)}" has been given the fixed value "${value}", but it is not a two-way binding`
+			const msg =
+				value instanceof ReactiveProp
+					? `Property "${String(key)}" has been given a computed value "${value.get}", but it is not a two-way binding`
+					: `Property "${String(key)}" has been given the fixed value "${value}", but it is not a two-way binding`
 			if (pounceOptions.writeRoProps === 'warn') console.warn(msg)
 			else if (pounceOptions.writeRoProps === 'error') throw new Error(msg)
 		}
@@ -65,27 +63,29 @@ export function propsInto<P extends Record<string, any>, S extends Record<string
 	props: PropsDesc<P>,
 	into: S = {} as S
 ): S & P {
-	const descriptors = project(props, ({key, value}): PropertyDescriptor => 
-		(value instanceof ReactiveProp)
-			? {
-				get: value.get,
-				set: value.set || readonlyProp(key, value),
-				enumerable: true,
-				configurable: true
-			}
-		: isFunction(value)
-			? {
-				get: memoize(value as ()=>P[typeof key]),
-				set: readonlyProp(key, value),
-				enumerable: true,
-				configurable: true,
-			}
-		: {
-				get: () => value,
-				set: readonlyProp(key, value),
-				enumerable: true,
-				configurable: true,
-			}
+	const descriptors = project(
+		props,
+		({ key, value }): PropertyDescriptor =>
+			value instanceof ReactiveProp
+				? {
+						get: value.get,
+						set: value.set || readonlyProp(key, value),
+						enumerable: true,
+						configurable: true,
+					}
+				: isFunction(value)
+					? {
+							get: memoize(value as () => P[typeof key]),
+							set: readonlyProp(key, value),
+							enumerable: true,
+							configurable: true,
+						}
+					: {
+							get: () => value,
+							set: readonlyProp(key, value),
+							enumerable: true,
+							configurable: true,
+						}
 	)
 	return lift(() => Object.create(into, descriptors)) as S & P
 }
@@ -112,10 +112,7 @@ function traitWarning(key: string) {
 	}
 }
 
-export function traitLayer(
-	base: Record<string, any> | null,
-	trait: Trait
-): Record<string, any> {
+export function traitLayer(base: Record<string, any> | null, trait: Trait): Record<string, any> {
 	const descriptors: Record<string, PropertyDescriptor> = {}
 	if (trait.attributes) {
 		for (const [key, value] of Object.entries(trait.attributes)) {
@@ -267,7 +264,9 @@ export const compose: Compose = (...args: readonly ComposeArgument[]): Record<st
 						const source = arg
 						Object.defineProperty(proto, key, {
 							get: () => (source as any)[key],
-							set: (v: any) => { (source as any)[key] = v },
+							set: (v: any) => {
+								;(source as any)[key] = v
+							},
 							enumerable: true,
 							configurable: true,
 						})
@@ -280,6 +279,7 @@ export const compose: Compose = (...args: readonly ComposeArgument[]): Record<st
 }
 
 import { ReactiveProp } from './jsx-factory'
+
 export { r } from './jsx-factory'
 
 /**

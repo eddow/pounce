@@ -43,12 +43,12 @@ if (typeof window !== 'undefined') {
 		DocumentFragment: window.DocumentFragment,
 		crypto: window.crypto,
 	}
-	
+
 	// Safely assign properties, skipping read-only ones like crypto in newer Node versions
 	for (const [key, value] of Object.entries(config)) {
 		try {
 			if (key in globalThis) continue
-			// @ts-ignore
+			// @ts-expect-error
 			globalThis[key] = value
 		} catch (e) {
 			// Ignore assignment errors for read-only properties

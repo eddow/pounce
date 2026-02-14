@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { project, reactive } from 'mutts'
+import { describe, expect, it } from 'vitest'
 import { h, rootScope } from '../../lib'
 import TodoWebComponent from './Todo'
 
@@ -21,7 +21,11 @@ describe('TodoWebComponent', () => {
 
 	it('minimal for-each reacts to second push', () => {
 		const items = reactive([] as { id: number; text: string }[])
-		const mount = h('div', {}, h('for', { each: items, children: [(item: any) => h('span', {}, item.text)] }))
+		const mount = h(
+			'div',
+			{},
+			h('for', { each: items, children: [(item: any) => h('span', {}, item.text)] })
+		)
 		const root = mount.render(rootScope) as HTMLElement
 
 		expect(root.querySelectorAll('span').length).toBe(0)

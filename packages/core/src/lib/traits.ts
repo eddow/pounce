@@ -17,7 +17,6 @@ export interface Trait {
 	attributes?: Record<string, string | boolean | number>
 }
 
-
 export const asArray = (item: any): any[] => {
 	if (!item) return []
 	if (Array.isArray(item)) return item

@@ -1,11 +1,27 @@
-import { cleanedBy, cleanup, effect, lift, project, type ScopedCallback, scan, tag, unwrap } from 'mutts'
+import {
+	cleanedBy,
+	cleanup,
+	effect,
+	lift,
+	project,
+	type ScopedCallback,
+	scan,
+	tag,
+	unwrap,
+} from 'mutts'
 import { perf } from '../perf'
 import { document, Node } from '../shared'
 import { perfCounters, testing } from './debug'
-import { type Child, DynamicRenderingError, PounceElement, rootScope, type Scope, emptyChild } from './pounce-element'
-import { isNumber, isString } from './renderer-internal'
-
 import { ReactiveProp } from './jsx-factory'
+import {
+	type Child,
+	DynamicRenderingError,
+	emptyChild,
+	PounceElement,
+	rootScope,
+	type Scope,
+} from './pounce-element'
+import { isNumber, isString } from './renderer-internal'
 
 const latchOwners = new WeakMap<Element, string>()
 
@@ -60,7 +76,11 @@ export function reconcile(
 		}
 		testing.renderingEvent?.(`reconcile (+${added} -${removed})`, parent, newChildren)
 		perf?.mark(`reconcile:${rid}:end`)
-		perf?.measure(`reconcile:${rid}(+${added}-${removed})`, `reconcile:${rid}:start`, `reconcile:${rid}:end`)
+		perf?.measure(
+			`reconcile:${rid}(+${added}-${removed})`,
+			`reconcile:${rid}:start`,
+			`reconcile:${rid}:end`
+		)
 	})
 	// Anchor the redraw effect to the reactive children so GC doesn't collect it.
 	// Root effects use FinalizationRegistry — if nobody holds the cleanup, GC kills the effect.
@@ -83,8 +103,8 @@ export function latch(
 
 	function actuallyLatch() {
 		const element = isString(target)
-			? document.querySelector(target as string) as Element | null
-			: target as Element | null
+			? (document.querySelector(target as string) as Element | null)
+			: (target as Element | null)
 		if (!element) {
 			console.error(`[pounce] latch target not found: ${target}`)
 			return
@@ -93,9 +113,11 @@ export function latch(
 		const tag = element.tagName?.toLowerCase() ?? String(target)
 		const existing = latchOwners.get(element)
 		if (existing) {
-			console.warn(`[pounce] latch conflict on <${tag}>: already latched by "${existing}". Previous content will be replaced.`)
+			console.warn(
+				`[pounce] latch conflict on <${tag}>: already latched by "${existing}". Previous content will be replaced.`
+			)
 		}
-		const label = isString(target) ? target as string : `<${tag}>`
+		const label = isString(target) ? (target as string) : `<${tag}>`
 		latchOwners.set(element, label)
 
 		let nodes: Node | readonly Node[] | undefined
@@ -126,8 +148,8 @@ export function latch(
 	return () => {
 		stop?.()
 		const element = isString(target)
-			? document.querySelector(target as string) as Element | null
-			: target as Element | null
+			? (document.querySelector(target as string) as Element | null)
+			: (target as Element | null)
 		if (element) {
 			latchOwners.delete(element)
 			while (element.firstChild) element.removeChild(element.firstChild)
@@ -150,102 +172,132 @@ export function processChildren(children: readonly Child[], scope: Scope): reado
 	 * eg - if terms of condition changed but condition value didn't change (x went from 4 to 5 and condition is x > 3) - then the condition has to be
 	 * re-evaluated, but not the renderers nor the rendered
 	 */
-	const elements = tag('reconciler::renderers', project.array<Child, PounceElement>(children, function processChild({ value: child }) {
-		while (child instanceof ReactiveProp) child = child.get()
-		if (child === undefined || child === null) return emptyChild
-		if (isString(child) || isNumber(child))
-			return new PounceElement(function createTextNode() { return document.createTextNode(String(child)) })
-		if (child instanceof Node) 
-			return new PounceElement(function wrapNode() { return child as Node })
-		if (Array.isArray(child))
-			return new PounceElement(function renderFragment(s) { return processChildren(child as Child[], s || scope) }, {
-				tag: 'fragment',
-			})
-		if (child instanceof PounceElement) return child
-		//obsolete: if (child && typeof (child as any).render === 'function') return child as PounceElement
-		return emptyChild
-	}))
+	const elements = tag(
+		'reconciler::renderers',
+		project.array<Child, PounceElement>(children, function processChild({ value: child }) {
+			while (child instanceof ReactiveProp) child = child.get()
+			if (child === undefined || child === null) return emptyChild
+			if (isString(child) || isNumber(child))
+				return new PounceElement(function createTextNode() {
+					return document.createTextNode(String(child))
+				})
+			if (child instanceof Node)
+				return new PounceElement(function wrapNode() {
+					return child as Node
+				})
+			if (Array.isArray(child))
+				return new PounceElement(
+					function renderFragment(s) {
+						return processChildren(child as Child[], s || scope)
+					},
+					{
+						tag: 'fragment',
+					}
+				)
+			if (child instanceof PounceElement) return child
+			//obsolete: if (child && typeof (child as any).render === 'function') return child as PounceElement
+			return emptyChild
+		})
+	)
 
 	const stableAccums = new WeakMap<PounceElement, { ifOccurred: boolean; value?: PounceElement }>()
 
-	const conditioned = tag('reconciler::conditioned', scan(
-		elements,
-		function processConditions(acc: { ifOccurred: boolean; value?: PounceElement }, child: PounceElement) {
-			if (child.condition || child.if || child.when || child.else) {
-				let hidden = false
-				if (child.else && acc.ifOccurred) hidden = true
-				else if (child.condition && !child.condition()) hidden = true
-				else if (child.if) {
-					for (const [key, value] of Object.entries(child.if) as [string, any])
-						if (scope[key] !== value()) { hidden = true; break }
-				} else if (child.when) {
-					for (const [key, value] of Object.entries(child.when) as [string, any])
-						if (!scope[key](value())) { hidden = true; break }
-				}
-				// Return stable object when condition result hasn't changed
-				// to avoid unnecessary renderChild re-runs
-				let stable = stableAccums.get(child)
-				const value = hidden ? undefined : child
-				if (stable && stable.value === value) {
-					stable.ifOccurred = !hidden || acc.ifOccurred
+	const conditioned = tag(
+		'reconciler::conditioned',
+		scan(
+			elements,
+			function processConditions(
+				acc: { ifOccurred: boolean; value?: PounceElement },
+				child: PounceElement
+			) {
+				if (child.condition || child.if || child.when || child.else) {
+					let hidden = false
+					if (child.else && acc.ifOccurred) hidden = true
+					else if (child.condition && !child.condition()) hidden = true
+					else if (child.if) {
+						for (const [key, value] of Object.entries(child.if) as [string, any])
+							if (scope[key] !== value()) {
+								hidden = true
+								break
+							}
+					} else if (child.when) {
+						for (const [key, value] of Object.entries(child.when) as [string, any])
+							if (!scope[key](value())) {
+								hidden = true
+								break
+							}
+					}
+					// Return stable object when condition result hasn't changed
+					// to avoid unnecessary renderChild re-runs
+					let stable = stableAccums.get(child)
+					const value = hidden ? undefined : child
+					if (stable && stable.value === value) {
+						stable.ifOccurred = !hidden || acc.ifOccurred
+						return stable
+					}
+					stable = { ifOccurred: !hidden || acc.ifOccurred, value }
+					stableAccums.set(child, stable)
 					return stable
 				}
-				stable = { ifOccurred: !hidden || acc.ifOccurred, value }
+				let stable = stableAccums.get(child)
+				if (stable) {
+					stable.ifOccurred = acc.ifOccurred
+					return stable
+				}
+				stable = { ifOccurred: acc.ifOccurred, value: child }
 				stableAccums.set(child, stable)
 				return stable
-			}
-			let stable = stableAccums.get(child)
-			if (stable) {
-				stable.ifOccurred = acc.ifOccurred
-				return stable
-			}
-			stable = { ifOccurred: acc.ifOccurred, value: child }
-			stableAccums.set(child, stable)
-			return stable
-		},
-		{ ifOccurred: false }
-	))
+			},
+			{ ifOccurred: false }
+		)
+	)
 
 	const lastRenderers = new Map<number, PounceElement>()
 
-	const rendered = tag('reconciler::rendered', project(conditioned, function renderChild(access): Node | readonly Node[] | false | undefined {
-		const accResult = access.value
-		if (!accResult || !accResult.value) {
-			// When hiding a conditional element, invalidate its render cache.
-			// The inner pipeline's effects are destroyed when this project effect cleans up.
-			// Without invalidating, re-showing returns dead cached nodes.
-			// TODO: This seems like a low-level hack who hides a lack functionality or a design misconception. Make sure the whole cache system shouldn't be managed by an intrinsic functionality/contract of mutts
-			const prev = lastRenderers.get(access.key)
-			if (prev) {
-				prev.invalidateCache()
-				lastRenderers.delete(access.key)
+	const rendered = tag(
+		'reconciler::rendered',
+		project(conditioned, function renderChild(access): Node | readonly Node[] | false | undefined {
+			const accResult = access.value
+			if (!accResult || !accResult.value) {
+				// When hiding a conditional element, invalidate its render cache.
+				// The inner pipeline's effects are destroyed when this project effect cleans up.
+				// Without invalidating, re-showing returns dead cached nodes.
+				// TODO: This seems like a low-level hack who hides a lack functionality or a design misconception. Make sure the whole cache system shouldn't be managed by an intrinsic functionality/contract of mutts
+				const prev = lastRenderers.get(access.key)
+				if (prev) {
+					prev.invalidateCache()
+					lastRenderers.delete(access.key)
+				}
+				return
 			}
-			return
-		}
-		const renderer = accResult.value as PounceElement
-		lastRenderers.set(access.key, renderer)
-		if (typeof renderer.render !== 'function') {
-			console.error('[pounce] Invalid renderer detected in child list:', renderer)
-			return
-		}
-		const nodes = renderer.render(scope)
-		if (Array.isArray(nodes) || nodes instanceof Node) return nodes
-		if(nodes) throw new DynamicRenderingError('Render should return Node-s')
-	}))
-
-	const flattened = tag('reconciler::flattened', lift(function flattenNodes() {
-		const next: Node[] = []
-		const push = function pushItem(item: any) {
-			if (Array.isArray(item)) {
-				for (const child of item) push(child)
-			} else if (item instanceof Node) {
-				next.push(item)
+			const renderer = accResult.value as PounceElement
+			lastRenderers.set(access.key, renderer)
+			if (typeof renderer.render !== 'function') {
+				console.error('[pounce] Invalid renderer detected in child list:', renderer)
+				return
 			}
-		}
+			const nodes = renderer.render(scope)
+			if (Array.isArray(nodes) || nodes instanceof Node) return nodes
+			if (nodes) throw new DynamicRenderingError('Render should return Node-s')
+		})
+	)
 
-		push(rendered)
-		return next
-	}))
+	const flattened = tag(
+		'reconciler::flattened',
+		lift(function flattenNodes() {
+			const next: Node[] = []
+			const push = function pushItem(item: any) {
+				if (Array.isArray(item)) {
+					for (const child of item) push(child)
+				} else if (item instanceof Node) {
+					next.push(item)
+				}
+			}
+
+			push(rendered)
+			return next
+		})
+	)
 	return cleanedBy(flattened, function performCleanup() {
 		conditioned[cleanup]()
 		rendered[cleanup]()

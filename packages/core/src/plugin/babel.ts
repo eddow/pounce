@@ -1,5 +1,5 @@
-import { type NodePath, type PluginObj, types as t } from '@babel/core'
-import { type JSXElement } from '@babel/types'
+import type { NodePath, PluginObj, types as t } from '@babel/core'
+import type { JSXElement } from '@babel/types'
 
 interface PounceBabelPluginOptions {
 	types: typeof t
@@ -82,8 +82,14 @@ export function pounceBabelPlugin({
 		return false
 	}
 
-	function ensureComposeImport(path: NodePath, state: PounceBabelPluginState, forceForwardProps = false) {
-		const programPath = path.findParent((p: NodePath) => p.isProgram()) as NodePath<t.Program> | null
+	function ensureComposeImport(
+		path: NodePath,
+		state: PounceBabelPluginState,
+		forceForwardProps = false
+	) {
+		const programPath = path.findParent((p: NodePath) =>
+			p.isProgram()
+		) as NodePath<t.Program> | null
 		if (!programPath) return
 
 		const filename = state.file?.opts.filename
@@ -98,8 +104,9 @@ export function pounceBabelPlugin({
 					t.isImportDeclaration(node) &&
 					node.source.value === normalizedSource &&
 					node.specifiers.some(
-						(specifier: t.ImportSpecifier | t.ImportDefaultSpecifier | t.ImportNamespaceSpecifier) =>
-							t.isImportSpecifier(specifier) && specifier.local.name === name
+						(
+							specifier: t.ImportSpecifier | t.ImportDefaultSpecifier | t.ImportNamespaceSpecifier
+						) => t.isImportSpecifier(specifier) && specifier.local.name === name
 					)
 			)
 			if (alreadyImported) return
@@ -279,7 +286,10 @@ export function pounceBabelPlugin({
 								const expression = attr.value.expression
 								if (!t.isJSXEmptyExpression(expression)) {
 									// Skip if already wrapped by r() (from update: pass)
-									if (t.isCallExpression(expression) && t.isIdentifier(expression.callee, { name: 'r' })) {
+									if (
+										t.isCallExpression(expression) &&
+										t.isIdentifier(expression.callee, { name: 'r' })
+									) {
 										continue
 									}
 									// Check if this is a simple property access for 2-way binding

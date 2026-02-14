@@ -1,6 +1,6 @@
 import {
-	attend,
 	atomic,
+	attend,
 	biDi,
 	cleanedBy,
 	effect,
@@ -15,7 +15,14 @@ import {
 } from 'mutts'
 import { perf } from '../perf'
 import { document } from '../shared'
-import { type ComponentInfo, nf, perfCounters, POUNCE_OWNER, rootComponents, testing } from './debug'
+import {
+	type ComponentInfo,
+	nf,
+	POUNCE_OWNER,
+	perfCounters,
+	rootComponents,
+	testing,
+} from './debug'
 import { restructureProps } from './namespaced'
 import {
 	type Child,
@@ -26,7 +33,7 @@ import {
 	rootScope,
 	type Scope,
 } from './pounce-element'
-import { reconcile, processChildren } from './reconciler'
+import { processChildren, reconcile } from './reconciler'
 import {
 	applyStyleProperties,
 	checkComponentRebuild,
@@ -66,7 +73,9 @@ export const h = (
 				const setComponent = value?.set
 				if (!isFunction(setComponent))
 					throw new DynamicRenderingError('`this` attribute must be an L-value (object property)')
-				const mountEntry = (v: any) => { setComponent(v) }
+				const mountEntry = (v: any) => {
+					setComponent(v)
+				}
 				categories.mount = [mountEntry, ...(categories.mount || [])]
 				break
 			}
@@ -100,7 +109,9 @@ export const h = (
 				} else {
 					Object.defineProperty(node, key, {
 						get: () => props[key],
-						set: (v) => { props[key] = v },
+						set: (v) => {
+							props[key] = v
+						},
 						enumerable: true,
 						configurable: true,
 					})
@@ -173,7 +184,11 @@ export const h = (
 					else rootComponents.delete(info)
 				})
 				perf?.mark(`component:${componentCtor.name}:end`)
-				perf?.measure(`component:${componentCtor.name}`, `component:${componentCtor.name}:start`, `component:${componentCtor.name}:end`)
+				perf?.measure(
+					`component:${componentCtor.name}`,
+					`component:${componentCtor.name}:start`,
+					`component:${componentCtor.name}:end`
+				)
 				return processed
 			},
 			{ tag }
@@ -189,7 +204,10 @@ export const h = (
 		}
 		testing.renderingEvent?.('create element', tag, element)
 		// TODO: input type I don't know but traits shouldn't have their reactivity here, the .get() shouldn't appear in h's effect
-		if (tag === 'input') untracked(() => { node.type ??= 'text' })
+		if (tag === 'input')
+			untracked(() => {
+				node.type ??= 'text'
+			})
 
 		// Step 1: separate event handlers from other props by key name (no value reads)
 		// propsInto treats functions as getters — event handlers must bypass it
@@ -207,7 +225,9 @@ export const h = (
 			} else {
 				Object.defineProperty(htmlNode, key, {
 					get: () => node[key],
-					set: (v) => { node[key] = v },
+					set: (v) => {
+						node[key] = v
+					},
 					enumerable: true,
 					configurable: true,
 				})
@@ -217,8 +237,11 @@ export const h = (
 
 		// Step 2: extend — trait prototype chain
 		const resolvedTraits = rawTraits instanceof ReactiveProp ? rawTraits.get() : rawTraits
-		const { chain: traitChain, classes: traitClasses, styles: traitStyles } =
-			buildTraitChain(resolvedTraits)
+		const {
+			chain: traitChain,
+			classes: traitClasses,
+			styles: traitStyles,
+		} = buildTraitChain(resolvedTraits)
 		const composed = traitChain ? extend(traitChain, htmlAttrs) : htmlAttrs
 
 		// Accumulated class/style getters that merge trait contributions with props
@@ -262,8 +285,7 @@ export const h = (
 							// Read raw value (not through propsInto getter) to avoid calling
 							// function-valued handlers. Fall back to composed for trait events.
 							const rawValue = events[key] ?? composed[key]
-							const handler =
-								rawValue instanceof ReactiveProp ? rawValue.get() : rawValue
+							const handler = rawValue instanceof ReactiveProp ? rawValue.get() : rawValue
 
 							if (handler === undefined) return
 
@@ -282,10 +304,7 @@ export const h = (
 
 					if (key === 'style') {
 						return effect(function styleEffect() {
-							applyStyleProperties(
-								element as HTMLElement,
-								styles(composed.style as StyleInput)
-							)
+							applyStyleProperties(element as HTMLElement, styles(composed.style as StyleInput))
 						})
 					}
 
@@ -303,17 +322,14 @@ export const h = (
 							switch (input.type) {
 								case 'checkbox':
 								case 'radio':
-									if (key === 'checked')
-										listen(element, 'input', () => provide(input.checked))
+									if (key === 'checked') listen(element, 'input', () => provide(input.checked))
 									break
 								case 'number':
 								case 'range':
-									if (key === 'value')
-										listen(element, 'input', () => provide(Number(input.value)))
+									if (key === 'value') listen(element, 'input', () => provide(Number(input.value)))
 									break
 								default:
-									if (key === 'value')
-										listen(element, 'input', () => provide(input.value))
+									if (key === 'value') listen(element, 'input', () => provide(input.value))
 									break
 							}
 						} else if (tag === 'textarea') {
@@ -392,7 +408,11 @@ export const intrinsicComponentAliases: Record<string, Function> = extend(null, 
 			const fid = ++forCount
 			perf?.mark(`for:${fid}:start`)
 			const each = (props as any).each as readonly T[] | undefined
-			if (!each) { perf?.mark(`for:${fid}:end`); perf?.measure(`for:${fid}(0)`, `for:${fid}:start`, `for:${fid}:end`); return [] as any[] }
+			if (!each) {
+				perf?.mark(`for:${fid}:end`)
+				perf?.measure(`for:${fid}(0)`, `for:${fid}:start`, `for:${fid}:end`)
+				return [] as any[]
+			}
 			const result = isNonReactive(each)
 				? (each.map((item: T) => cb(item)) as any[])
 				: (project(each, ({ value: item, old }) => {
@@ -404,7 +424,9 @@ export const intrinsicComponentAliases: Record<string, Function> = extend(null, 
 			perf?.measure(`for:${fid}(${each.length})`, `for:${fid}:start`, `for:${fid}:end`)
 			return result
 		}
-		return new PounceElement(() => processChildren([r(compute) as Child], scope), { tag: 'dynamic' })
+		return new PounceElement(() => processChildren([r(compute) as Child], scope), {
+			tag: 'dynamic',
+		})
 	},
 	dynamic(props: { tag: any; children?: any } & Record<string, any>, scope: Scope) {
 		let dynCount = 0
@@ -415,8 +437,7 @@ export const intrinsicComponentAliases: Record<string, Function> = extend(null, 
 			// Resolve the tag identity to track changes.
 			let tagValue = isFunction(props.tag) && props.tag.length === 0 ? props.tag() : props.tag
 
-			if (tagValue instanceof ReactiveProp)
-				tagValue = tagValue.get()
+			if (tagValue instanceof ReactiveProp) tagValue = tagValue.get()
 
 			const childrenValue = isFunction(props.children) ? props.children() : props.children
 			const childArray: any[] = Array.isArray(childrenValue)

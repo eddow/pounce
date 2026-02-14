@@ -81,12 +81,11 @@ describe('buildTraitChain', () => {
 	})
 
 	it('should handle empty and null traits', () => {
-		const { chain, classes, styles: traitStyles } = buildTraitChain([
-			null as any,
-			undefined as any,
-			{},
-			{ classes: [] },
-		])
+		const {
+			chain,
+			classes,
+			styles: traitStyles,
+		} = buildTraitChain([null as any, undefined as any, {}, { classes: [] }])
 
 		expect(chain).toBeNull()
 		expect(classes).toEqual([])

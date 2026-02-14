@@ -1,6 +1,6 @@
-import { initMini } from './demo/mini'
-import { initDemo } from './demo/main'
 import { initTests } from '../tests/e2e/fixtures/main'
+import { initDemo } from './demo/main'
+import { initMini } from './demo/mini'
 
 /**
  * Entry point that determines whether to load the main demos
@@ -8,7 +8,7 @@ import { initTests } from '../tests/e2e/fixtures/main'
  */
 function entry() {
 	const hash = window.location.hash.slice(1)
-	
+
 	// If there's a hash, we assume it's a test fixture route.
 	// Test fixtures usually start with an uppercase letter or are specific names.
 	if (hash && hash !== 'mini' && hash !== 'app') {

@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { reactive } from 'mutts'
+import { describe, expect, it } from 'vitest'
 import { h, rootScope } from '../../lib'
 import { MiniCounter } from './MiniCounter'
 
@@ -86,7 +86,9 @@ describe('MiniCounter Component', () => {
 		function App() {
 			return (
 				<>
-					<div>List: <span>{state.list.join(', ')}</span></div>
+					<div>
+						List: <span>{state.list.join(', ')}</span>
+					</div>
 					<MiniCounter list={state.list} />
 				</>
 			)
@@ -104,7 +106,9 @@ describe('MiniCounter Component', () => {
 		function App() {
 			return (
 				<>
-					<div>List: <span>{state.list.join(', ')}</span></div>
+					<div>
+						List: <span>{state.list.join(', ')}</span>
+					</div>
 					<MiniCounter list={state.list} />
 				</>
 			)

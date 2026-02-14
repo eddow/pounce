@@ -1,7 +1,17 @@
-import { cleanedBy, effect, type EffectCleanup, formatCleanupReason, named, reactive, type ScopedCallback, stopped, untracked } from 'mutts'
+import {
+	cleanedBy,
+	type EffectCleanup,
+	effect,
+	formatCleanupReason,
+	named,
+	reactive,
+	type ScopedCallback,
+	stopped,
+	untracked,
+} from 'mutts'
 import { perf } from '../perf'
-import { type ComponentInfo, perfCounters, POUNCE_OWNER } from './debug'
-import { ReactiveProp } from './jsx-factory'
+import { type ComponentInfo, POUNCE_OWNER, perfCounters } from './debug'
+import type { ReactiveProp } from './jsx-factory'
 
 export const rootScope: Scope = reactive(Object.create(null))
 
@@ -52,7 +62,10 @@ export class PounceElement {
 	use?: Record<string, () => any>
 
 	// Identity map for render caching — stores result + stop function to detect dead pipelines
-	private static renderCache = new WeakMap<PounceElement, { result: Node | readonly Node[]; stop: EffectCleanup }>()
+	private static renderCache = new WeakMap<
+		PounceElement,
+		{ result: Node | readonly Node[]; stop: EffectCleanup }
+	>()
 
 	constructor(
 		produce: (scope?: Scope) => Node | readonly Node[],
@@ -105,16 +118,18 @@ export class PounceElement {
 		if (cached) PounceElement.renderCache.delete(this)
 		let partial: Node | readonly Node[] | undefined
 		perf?.mark(`render:${tagName}:start`)
-		const stopRender = effect(named(`render:${tagName}`, ({ reaction }) => {
-			if (reaction) {
-				console.warn(
-					`Component ${tagName} rebuild detected.`,
-					...(reaction === true ? ['No reasons given'] : formatCleanupReason(reaction)),
-					'\nIt means the component definition refers a reactive value that has been modified, though the component has not been rebuilt as it is considered forbidden to avoid infinite events loops.'
-				)
-			}
-			partial = this.produce(scope)
-		}))
+		const stopRender = effect(
+			named(`render:${tagName}`, ({ reaction }) => {
+				if (reaction) {
+					console.warn(
+						`Component ${tagName} rebuild detected.`,
+						...(reaction === true ? ['No reasons given'] : formatCleanupReason(reaction)),
+						'\nIt means the component definition refers a reactive value that has been modified, though the component has not been rebuilt as it is considered forbidden to avoid infinite events loops.'
+					)
+				}
+				partial = this.produce(scope)
+			})
+		)
 
 		if (!partial) throw new DynamicRenderingError('Renderer returned no content')
 		PounceElement.renderCache.set(this, { result: partial, stop: stopRender })

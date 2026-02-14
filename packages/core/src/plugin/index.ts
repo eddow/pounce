@@ -1,4 +1,4 @@
-import { transformSync, type PluginItem } from '@babel/core'
+import { type PluginItem, transformSync } from '@babel/core'
 import dts, { type PluginOptions as DtsPluginOptions } from 'vite-plugin-dts'
 import { pounceBabelPlugin } from './babel'
 
@@ -105,7 +105,7 @@ export function pounceCorePlugin(options: PounceCorePluginOptions = {}) {
 					isTSX: id.endsWith('.tsx'),
 				}),
 				sourceFileName: id,
-				inputSourceMap: (inMap && typeof inMap === 'object' && inMap.mappings) ? inMap : undefined,
+				inputSourceMap: inMap && typeof inMap === 'object' && inMap.mappings ? inMap : undefined,
 				sourceMaps: true,
 			})
 
@@ -127,10 +127,7 @@ export interface CorePackageOptions {
 export function pounceCorePackage(options: CorePackageOptions = {}) {
 	const { core: coreOptions = {}, dts: dtsOptions = {} } = options
 
-	return [
-		pounceCorePlugin(coreOptions),
-		createStandardDtsPlugin(dtsOptions),
-	]
+	return [pounceCorePlugin(coreOptions), createStandardDtsPlugin(dtsOptions)]
 }
 
 /**

@@ -1,9 +1,9 @@
 /// <reference path="../types/jsx.d.ts" />
 import { perf } from '../perf'
 import { testing } from './debug'
+import { Fragment, h } from './jsx-factory'
 import { rootScope, type Scope } from './pounce-element'
 import { latch } from './reconciler'
-import { h, Fragment } from './jsx-factory'
 import { isFunction } from './renderer-internal'
 
 // Singleton verification — detects dual-module hazard (e.g. bundled + external copies)
@@ -28,6 +28,7 @@ if (globalScope) {
 export * from '../shared'
 export * from './debug'
 export * from './jsx-factory'
+export type { NameSpacedProps } from './namespaced'
 export * from './platform'
 export * from './pounce-element'
 export * from './reconciler'
@@ -43,11 +44,9 @@ export {
 	setHtmlProperty,
 	valuedAttributeGetter,
 } from './renderer-internal'
-export * from './utils'
-export * from './traits'
-export type { NameSpacedProps } from './namespaced'
 export type { StyleInput } from './styles'
-
+export * from './traits'
+export * from './utils'
 
 // biome-ignore lint/suspicious/noExplicitAny: Centralized global JSX injection for the framework
 const g = globalThis as any
