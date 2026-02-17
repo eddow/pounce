@@ -1,7 +1,7 @@
 import { Section, Code, PackageHeader, ApiTable } from '../../components'
 
 const factorySnippet = `// Browser — auto-configured with fetch
-import { api } from '@pounce/kit/dom'
+import { api } from '@pounce/kit'
 
 // Simple GET with path params
 const user = await api('/users/:id', { id: '123' }).get()
@@ -9,7 +9,7 @@ const user = await api('/users/:id', { id: '123' }).get()
 // POST with body
 const created = await api('/users').post({ name: 'Alice' })`
 
-const interceptorSnippet = `import { intercept } from '@pounce/kit/dom'
+const interceptorSnippet = `import { intercept } from '@pounce/kit'
 
 // Global interceptor for all /api/** requests
 intercept('/api/**', async (req, next) => {

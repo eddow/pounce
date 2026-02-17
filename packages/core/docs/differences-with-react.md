@@ -63,7 +63,7 @@ See [Component Reactivity Rules](./component-reactivity.md) for detailed example
 - **Debug utilities**: `namedEffect(name, fn)` and `onEffectTrigger(cb)` help trace reactive changes during development.
 
 ### App Mounting
-- **Mount without ReactDOM**: Use `bindApp(<App />, '#app')` to render into a container. No `createRoot` or portals.
+- **Mount without ReactDOM**: Use `latch('#app', <App />)` to render into a container. No `createRoot` or portals.
 
 ### Summary Table
 - **State updates**: mutate reactive objects directly vs. React’s `setState`/`useState`.

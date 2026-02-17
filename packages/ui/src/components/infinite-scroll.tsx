@@ -1,6 +1,5 @@
 import { effect, reactive } from 'mutts'
-import { compose } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 import { resize } from '../directives/resize'
 import { scroll } from '../directives/scroll'
 import { getAdapter } from '../adapter/registry'
@@ -116,15 +115,8 @@ export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<
 	const adapter = getAdapter('InfiniteScroll')
 	const variableMode = typeof props.itemHeight === 'function'
 
-	const state = compose(
-		{
-			stickyLast: true,
-			estimatedItemHeight: 40,
-			scroll: { value: 0, max: 0 },
-			size: { width: 0, height: 0 },
-		},
-		props,
-	)
+	const scrollState = reactive({ value: 0, max: 0 })
+	const sizeState = reactive({ width: 0, height: 0 })
 
 	// ── Variable-height offset table ──────────────────────────────────
 
@@ -141,7 +133,7 @@ export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<
 	function estimateHeight(items: T[], index: number): number {
 		const fn = props.itemHeight as (item: T, index: number) => number
 		const item = items[index]
-		return item !== undefined ? fn(item, index) : state.estimatedItemHeight
+		return item !== undefined ? fn(item, index) : (props.estimatedItemHeight ?? 40)
 	}
 
 	/** Sync offset table with current items length. Called from computeVisible effect. */
@@ -170,7 +162,7 @@ export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<
 		rafPending = false
 		if (pendingMeasurements.length === 0) return
 		let minChanged = itemCount
-		const scrollTop = state.scroll.value
+		const scrollTop = scrollState.value
 		const currentStart = itemCount > 0 ? findStartIndex(offsets, scrollTop, itemCount) : 0
 		let totalDeltaAbove = 0
 
@@ -200,10 +192,10 @@ export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<
 
 	function computeVisibleIndices(): number[] {
 		perf?.mark('infinitescroll:compute:start')
-		const items = state.items
+		const items = props.items
 		const n = items.length
-		const scrollTop = state.scroll.value
-		const viewportH = state.size.height || 500
+		const scrollTop = scrollState.value
+		const viewportH = sizeState.height || 500
 		let startNode: number
 		let endNode: number
 
@@ -221,7 +213,7 @@ export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<
 				)
 			}
 		} else {
-			const h = state.itemHeight as number
+			const h = props.itemHeight as number
 			startNode = Math.floor(scrollTop / h)
 			endNode = Math.min(n, startNode + Math.ceil(viewportH / h))
 		}
@@ -240,10 +232,10 @@ export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<
 		let result: number
 		if (variableMode) {
 			void offsetTrigger.v
-			syncOffsets(state.items)
+			syncOffsets(props.items)
 			result = itemCount > 0 ? offsets[itemCount] : 0
 		} else {
-			result = state.items.length * (state.itemHeight as number)
+			result = props.items.length * (props.itemHeight as number)
 		}
 		perf?.mark('infinitescroll:height:end')
 		perf?.measure('infinitescroll:height', 'infinitescroll:height:start', 'infinitescroll:height:end')
@@ -257,16 +249,16 @@ export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<
 	let previousValue = 0
 
 	effect(() => {
-		const value = state.scroll.value
-		const max = state.scroll.max
+		const value = scrollState.value
+		const max = scrollState.max
 		const isAtBottom = max > 0 && Math.abs(value - max) < 5
 
 		if (isAtBottom) {
 			wasAtBottom = true
 		} else {
-			if (wasAtBottom && state.stickyLast) {
+			if (wasAtBottom && (props.stickyLast ?? true)) {
 				if (max > previousMax && Math.abs(value - previousValue) < 1) {
-					state.scroll.value = max
+					scrollState.value = max
 				} else {
 					wasAtBottom = false
 				}
@@ -305,12 +297,12 @@ export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<
 	const fixedItemClass = `${itemClass} pounce-infinite-scroll-item--fixed`
 
 	const renderItem = (index: number) => {
-		const item = state.items[index]
+		const item = props.items[index]
 		const renderer = getRenderer()
 		if (variableMode) {
 			void offsetTrigger.v
 			const top = offsets[index] ?? 0
-			const minH = heightCache[index] ?? state.estimatedItemHeight
+			const minH = heightCache[index] ?? (props.estimatedItemHeight ?? 40)
 			return (
 				<div
 					class={itemClass}
@@ -325,7 +317,7 @@ export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<
 				</div>
 			)
 		}
-		const h = state.itemHeight as number
+		const h = props.itemHeight as number
 		return (
 			<div
 				class={fixedItemClass}
@@ -340,13 +332,13 @@ export const InfiniteScroll = <T,>(props: InfiniteScrollProps<T>, scope: Record<
 
 	return (
 		<div
-			class={[adapter.classes?.base || 'pounce-infinite-scroll', state.el?.class]}
-			{...state.el}
+			class={[adapter.classes?.base || 'pounce-infinite-scroll', props.el?.class]}
+			{...props.el}
 			use:resize={(w: number, h: number) => {
-				state.size.width = w
-				state.size.height = h
+				sizeState.width = w
+				sizeState.height = h
 			}}
-			use:scroll={{ y: state.scroll }}
+			use:scroll={{ y: scrollState }}
 			use={(el: HTMLElement) => { scrollContainerEl = el }}
 		>
 			<div

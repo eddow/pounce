@@ -53,7 +53,7 @@ Create a file `src/app.tsx`:
 
 ```tsx
 import { reactive } from 'mutts'
-import { bindApp } from '@pounce/core'
+import { latch } from '@pounce/core'
 
 // Create reactive state
 const state = reactive({
@@ -73,8 +73,8 @@ function MyApp() {
   )
 }
 
-// Bind to DOM element (bindApp expects a factory function)
-bindApp(() => <MyApp />, '#app')
+// Bind to DOM element (latch expects a selector first)
+latch('#app', () => <MyApp />)
 ```
 
 Create an HTML file with a container:

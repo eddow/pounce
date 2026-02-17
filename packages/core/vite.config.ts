@@ -28,8 +28,6 @@ export default defineConfig({
 	resolve: {
 		conditions: ['browser', 'default', 'import'],
 		alias: {
-			'@pounce/core/jsx-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-runtime.ts'),
-			'@pounce/core/jsx-dev-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-dev-runtime.ts'),
 			'@pounce/core': resolvePath(projectRootDir, 'src/lib/index.ts'),
 			'mutts': resolvePath(projectRootDir, '../../../mutts/src'),
 		},
@@ -38,10 +36,6 @@ export default defineConfig({
 		...pounceCorePackage({
 			core: {
 				projectRoot: projectRootDir,
-				jsxRuntime: {
-					runtime: 'automatic',
-					importSource: '@pounce/core',
-				},
 			},
 			dts: {
 				rollupTypes: true,
@@ -49,8 +43,8 @@ export default defineConfig({
 					// Copy JSX types to dist, rewriting relative imports to point to rolled-up dom.d.ts
 					const jsxSource = readFileSync(join(projectRootDir, 'src/types/jsx.d.ts'), 'utf8')
 					const jsxDist = jsxSource
-						.replace(/from\s+['"]\.\.\/lib(?:\/\w+)?['"]/g, "from './dom'")
-						.replace(/from\s+['"]\.\.\/lib['"]/g, "from './dom'")
+						.replace(/from\s+['"]\.\.\/lib(?:\/\w+)?['"]/g, "from '.'")
+						.replace(/from\s+['"]\.\.\/lib['"]/g, "from '.'")
 					writeFileSync(join(projectRootDir, 'dist/jsx.d.ts'), jsxDist)
 					// Add /// <reference> to dom.d.ts and node.d.ts so consumers get JSX namespace
 					for (const entry of ['dom.d.ts', 'node.d.ts']) {
@@ -74,8 +68,6 @@ export default defineConfig({
 			entry: {
 				dom: resolvePath(projectRootDir, 'src/dom/index.ts'),
 				node: resolvePath(projectRootDir, 'src/node/index.ts'),
-				'jsx-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-runtime.ts'),
-				'jsx-dev-runtime': resolvePath(projectRootDir, 'src/runtime/jsx-dev-runtime.ts'),
 				plugin: resolvePath(projectRootDir, 'src/plugin/index.ts'),
 			},
 			formats: ['es', 'cjs'],

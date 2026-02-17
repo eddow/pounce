@@ -32,29 +32,21 @@ export function createStandardDtsPlugin(options: DtsConfigOptions = {}) {
 	})
 }
 
-export interface JsxRuntimeConfig {
-	runtime: 'automatic'
-	importSource: string
-}
-
 export interface PounceBabelPluginsOptions {
-	projectRoot?: string
-	jsxRuntime: JsxRuntimeConfig
 	isTSX: boolean
 	onlyRemoveTypeImports?: boolean
 }
 
 export function createPounceBabelPlugins(options: PounceBabelPluginsOptions): PluginItem[] {
-	const { jsxRuntime } = options
-
 	return [
-		[pounceBabelPlugin, { projectRoot: options.projectRoot }],
+		[pounceBabelPlugin],
 		['@babel/plugin-proposal-decorators', { version: '2023-05' }],
 		[
 			'@babel/plugin-transform-react-jsx',
 			{
-				runtime: 'automatic',
-				importSource: jsxRuntime.importSource,
+				runtime: 'classic',
+				pragma: 'h',
+				pragmaFrag: 'Fragment',
 				throwIfNamespace: false,
 			},
 		],
@@ -71,7 +63,6 @@ export function createPounceBabelPlugins(options: PounceBabelPluginsOptions): Pl
 
 export interface PounceCorePluginOptions {
 	projectRoot?: string
-	jsxRuntime?: JsxRuntimeConfig
 	onlyRemoveTypeImports?: boolean
 }
 
@@ -80,10 +71,6 @@ export interface PounceCorePluginOptions {
  */
 export function pounceCorePlugin(options: PounceCorePluginOptions = {}) {
 	const resolvedOptions = {
-		jsxRuntime: {
-			runtime: 'automatic' as const,
-			importSource: '@pounce/core',
-		},
 		onlyRemoveTypeImports: true,
 		...options,
 	}
@@ -101,7 +88,7 @@ export function pounceCorePlugin(options: PounceCorePluginOptions = {}) {
 				babelrc: false,
 				configFile: false,
 				plugins: createPounceBabelPlugins({
-					...resolvedOptions,
+					onlyRemoveTypeImports: resolvedOptions.onlyRemoveTypeImports,
 					isTSX: id.endsWith('.tsx'),
 				}),
 				sourceFileName: id,

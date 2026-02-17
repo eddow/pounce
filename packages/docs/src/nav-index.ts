@@ -24,7 +24,6 @@ export const navigation: NavSection[] = [
 			{ title: 'Components', href: '/core/components' },
 			{ title: 'Directives', href: '/core/directives' },
 			{ title: 'Scope', href: '/core/scope' },
-			{ title: 'Compose', href: '/core/compose' },
 			{ title: 'SSR', href: '/core/ssr' },
 		],
 	},

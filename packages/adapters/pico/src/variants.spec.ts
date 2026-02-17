@@ -3,7 +3,6 @@ import { picoVariants } from './variants'
 import { picoAdapter } from './index'
 import { picoComponents } from './components'
 import { picoTransitions } from './transitions'
-import type { Trait } from '@pounce/core'
 
 describe('picoVariants', () => {
 	it('defines all standard variants', () => {
@@ -13,66 +12,53 @@ describe('picoVariants', () => {
 		}
 	})
 
-	it('primary has no classes (Pico default)', () => {
+	it('primary has no class (Pico default)', () => {
 		const primary = picoVariants.primary
-		expect(primary.classes).toBeUndefined()
-		expect(primary.attributes).toEqual({ 'data-variant': 'primary' })
+		expect(primary.class).toBeUndefined()
+		expect(primary['data-variant']).toBe('primary')
 	})
 
 	it('secondary uses Pico built-in class', () => {
 		const secondary = picoVariants.secondary
-		expect(secondary.classes).toEqual(['secondary'])
-		expect(secondary.attributes).toEqual({ 'data-variant': 'secondary' })
+		expect(secondary.class).toBe('secondary')
+		expect(secondary['data-variant']).toBe('secondary')
 	})
 
 	it('contrast uses Pico built-in class', () => {
 		const contrast = picoVariants.contrast
-		expect(contrast.classes).toEqual(['contrast'])
-		expect(contrast.attributes).toEqual({ 'data-variant': 'contrast' })
+		expect(contrast.class).toBe('contrast')
+		expect(contrast['data-variant']).toBe('contrast')
 	})
 
 	it('outline uses Pico built-in class', () => {
 		const outline = picoVariants.outline
-		expect(outline.classes).toEqual(['outline'])
-		expect(outline.attributes).toEqual({ 'data-variant': 'outline' })
+		expect(outline.class).toBe('outline')
+		expect(outline['data-variant']).toBe('outline')
 	})
 
 	it('danger uses custom class and a11y attribute', () => {
 		const danger = picoVariants.danger
-		expect(danger.classes).toEqual(['pounce-pico-danger'])
-		expect(danger.attributes).toEqual({
-			'data-variant': 'danger',
-			'aria-live': 'polite'
-		})
+		expect(danger.class).toBe('pounce-pico-danger')
+		expect(danger['data-variant']).toBe('danger')
+		expect(danger['aria-live']).toBe('polite')
 	})
 
 	it('success uses custom class', () => {
 		const success = picoVariants.success
-		expect(success.classes).toEqual(['pounce-pico-success'])
-		expect(success.attributes).toEqual({ 'data-variant': 'success' })
+		expect(success.class).toBe('pounce-pico-success')
+		expect(success['data-variant']).toBe('success')
 	})
 
 	it('warning uses custom class', () => {
 		const warning = picoVariants.warning
-		expect(warning.classes).toEqual(['pounce-pico-warning'])
-		expect(warning.attributes).toEqual({ 'data-variant': 'warning' })
+		expect(warning.class).toBe('pounce-pico-warning')
+		expect(warning['data-variant']).toBe('warning')
 	})
 
-	it('all variants conform to Trait interface', () => {
-		for (const [, trait] of Object.entries(picoVariants)) {
-			const t = trait as Trait
-			// classes must be string[] or Record<string, boolean> or undefined
-			if (t.classes !== undefined) {
-				expect(Array.isArray(t.classes) || typeof t.classes === 'object').toBe(true)
-			}
-			// attributes must be Record<string, string | boolean | number> or undefined
-			if (t.attributes !== undefined) {
-				expect(typeof t.attributes).toBe('object')
-			}
-			// styles must be Record<string, string | number> or undefined
-			if (t.styles !== undefined) {
-				expect(typeof t.styles).toBe('object')
-			}
+	it('all variants are plain JSX attribute bags', () => {
+		for (const [name, variant] of Object.entries(picoVariants)) {
+			expect(typeof variant).toBe('object')
+			expect(variant['data-variant']).toBe(name)
 		}
 	})
 })

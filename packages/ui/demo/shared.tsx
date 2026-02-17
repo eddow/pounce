@@ -1,5 +1,5 @@
 import type { Scope } from '@pounce/core'
-import { A, Router, type RouteWildcard } from '@pounce/kit/dom'
+import { A, Router, type RouteWildcard } from '@pounce/kit'
 import { AppShell, Container, ErrorBoundary, Heading, Inline, Link, StandardOverlays, Text, ThemeToggle, Toolbar } from '../src'
 import { Env, type EnvSettings } from '@pounce/kit/env'
 import { reactive } from 'mutts'

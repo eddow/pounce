@@ -1,5 +1,5 @@
 import type { Scope } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 import { Icon } from '../components/icon'
 import type { EnvSettings } from '@pounce/kit/env'
 

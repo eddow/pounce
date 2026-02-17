@@ -9,7 +9,7 @@ Framework-agnostic UI component library for Pounce applications. Evolved from `@
 - **Composable**: `setAdapter(...adapters)` accepts variadic `Partial<FrameworkAdapter>`, merges left-to-right (deep merge for variants/components, last-wins for iconFactory/transitions)
 
 ## Key Concepts
-1. **Variants are Trait objects** — `Record<string, Trait>` in the adapter, looked up via `getVariantTrait(name)`. No default variants in UI.
+1. **Variants are JSX attribute bags** — `Record<string, JSX.GlobalHTMLAttributes>` in the adapter, looked up via `variantProps(name)` which returns a spreadable object. No default variants in UI.
 2. **`asVariant(Component)`** — Proxy wrapper enabling `<Button.danger>` dot-syntax flavoring
 3. **Centralized Icon** — Global `iconFactory` in adapter, used via `<Icon name="..." />` component
 4. **Typed adaptations** — `UiComponents` maps each component to its specific adaptation type (`IconAdaptation`, `OverlayAdaptation`, etc.)

@@ -1,4 +1,4 @@
-import { bindApp } from '@pounce/core'
+import { latch } from '@pounce/core'
 import { A, Router, type RouteWildcard } from '../../src/dom/index'
 import { client } from '../../src/dom/client'
 
@@ -73,4 +73,4 @@ const App = () => (
 	</div>
 )
 
-bindApp(<App />, '#app')
+latch('#app', <App />)

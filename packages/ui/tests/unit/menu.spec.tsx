@@ -2,7 +2,7 @@
  * Test Menu component functionality
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { Menu } from '../../src/components/menu'
 import { setAdapter, resetAdapter } from '../../src/adapter/registry'
 
@@ -22,7 +22,7 @@ describe('Menu', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with summary and children', () => {
@@ -110,7 +110,7 @@ describe('Menu.Bar', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default brand', () => {

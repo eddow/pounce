@@ -4,31 +4,28 @@
 
 import { effect, watch } from 'mutts'
 import './Counter.scss'
-import { compose, type Scope } from '../../lib'
+import { extend } from '../../lib'
 
-export default function CounterWebComponent(
-	props: {
-		count: number
-		onCountIncremented?: (newCount: number) => void
-		onCountDecremented?: (newCount: number) => void
-		onCountReset?: () => void
-		onCountChanged?: (newCount: number, oldCount: number) => void
-		maxValue?: number
-		minValue?: number
-		step?: number
-		disabled?: boolean
-		showSlider?: boolean
-		showInput?: boolean
-		label?: string
-	},
-	scope: Scope
-) {
+export default function CounterWebComponent(props: {
+	count: number
+	onCountIncremented?: (newCount: number) => void
+	onCountDecremented?: (newCount: number) => void
+	onCountReset?: () => void
+	onCountChanged?: (newCount: number, oldCount: number) => void
+	maxValue?: number
+	minValue?: number
+	step?: number
+	disabled?: boolean
+	showSlider?: boolean
+	showInput?: boolean
+	label?: string
+}) {
 	effect(({ reaction }) => {
 		if (reaction) {
 			console.log('Counter component re-running due to reactive change')
 		}
 	})
-	const state = compose(
+	const state = extend(
 		{
 			maxValue: 100,
 			minValue: 0,
@@ -41,10 +38,8 @@ export default function CounterWebComponent(
 		props
 	)
 
-	console.log('🎯 Counter component mounted!', {
-		scope,
-	})
 	effect(() => {
+		console.log('🎯 Counter component mounted!')
 		return () => {
 			console.log('👋 Counter component unmounted!', { finalCount: state.count })
 		}

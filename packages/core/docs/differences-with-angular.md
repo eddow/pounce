@@ -32,7 +32,7 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Ang
 - **Native DOM events**: `onClick`, `onInput`, … directly attach to DOM. Angular uses `(click)`, `(input)` and `@Output()` for component events.
 
 ### Application Structure
-- **Mounting**: `bindApp(<App />, '#app')`. Angular bootstraps modules/standalone components with a platform bootstrap and DI.
+- **Mounting**: `latch('#app', <App />)`. Angular bootstraps modules/standalone components with a platform bootstrap and DI.
 
 ### Quick mapping
 - **Derived state**: `memoize` vs Angular `computed` (signals).

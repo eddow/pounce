@@ -6,10 +6,10 @@ export const myAdapter: FrameworkAdapter = {
   // 1. Global Icon system
   iconFactory: (name, size) => <i class={\`my-icon-\${name}\`} />,
 
-  // 2. Map semantic variants to your CSS
+  // 2. Map semantic variants to your CSS (JSX-spreadable attribute bags)
   variants: {
-    primary: { classes: ['my-btn-primary'] },
-    danger: { classes: ['my-bg-red', 'my-text-white'] }
+    primary: { class: 'my-btn-primary', 'data-variant': 'primary' },
+    danger: { class: 'my-bg-red my-text-white', 'data-variant': 'danger' }
   },
 
   // 3. Customize specific components
@@ -43,10 +43,10 @@ export default function CreatingAdapterPage() {
 				</p>
 			</Section>
 
-			<Section title="Variant Traits">
+			<Section title="Variants">
 				<p>
-					The <code>variants</code> object uses the <strong>Trait</strong> system from Pounce Core.
-					A trait can include multiple classes, data attributes, and even ARIA roles.
+					The <code>variants</code> object maps variant names to JSX-spreadable attribute bags.
+					Each bag can include classes, data attributes, and ARIA roles.
 				</p>
 			</Section>
 		</article>

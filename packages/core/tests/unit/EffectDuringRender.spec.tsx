@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { reactive, effect, type CleanupReason } from 'mutts'
-import { bindApp, type Scope, document } from '@pounce/core'
+import { latch, type Scope, document } from '@pounce/core'
 
 describe('Effect during render bug', () => {
 	let container: HTMLElement
@@ -43,7 +43,7 @@ describe('Effect during render bug', () => {
 		}
 
 		// Initial render
-		bindApp(<ParentApp />, container)
+		latch(container, <ParentApp />)
 		expect(parentRenderCount.count).toBe(1)
 		expect(childRenderCount.count).toBe(1)
 
@@ -87,7 +87,7 @@ describe('Effect during render bug', () => {
 			return <div>Count: {state.count}</div>
 		}
 
-		bindApp(<TestComponent />, container)
+		latch(container, <TestComponent />)
 
 		// If why() caught the reactive read during render, it would have logged it
 		console.log('Effects detected during render:', effectsDuringRender)

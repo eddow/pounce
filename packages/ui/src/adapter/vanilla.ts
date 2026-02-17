@@ -1,6 +1,5 @@
 import type { FrameworkAdapter } from './types'
-import type { Trait } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 
 componentStyle.sass`
 .pounce-variant-primary
@@ -60,31 +59,31 @@ componentStyle.sass`
 
 /**
  * Standard variant names used by vanilla pounce-* CSS.
- * Each variant maps to a Trait with the corresponding CSS class and data attribute.
+ * Each variant maps to a JSX-spreadable attribute bag.
  */
-const variantTrait = (name: string): Trait => ({
-	classes: [`pounce-variant-${name}`],
-	attributes: { 'data-variant': name },
+const variantDef = (name: string): JSX.GlobalHTMLAttributes => ({
+	class: `pounce-variant-${name}`,
+	'data-variant': name,
 })
 
-const VANILLA_VARIANTS: Record<string, Trait> = {
-	primary: variantTrait('primary'),
-	secondary: variantTrait('secondary'),
-	success: variantTrait('success'),
-	danger: variantTrait('danger'),
-	warning: variantTrait('warning'),
-	contrast: variantTrait('contrast'),
+const VANILLA_VARIANTS: Record<string, JSX.GlobalHTMLAttributes> = {
+	primary: variantDef('primary'),
+	secondary: variantDef('secondary'),
+	success: variantDef('success'),
+	danger: variantDef('danger'),
+	warning: variantDef('warning'),
+	contrast: variantDef('contrast'),
 }
 
 /**
  * Vanilla adapter for @pounce/ui.
  *
- * Provides standard variant traits (primary, secondary, success, danger, warning, contrast)
+ * Provides standard variants (primary, secondary, success, danger, warning, contrast)
  * that map to the built-in `--pounce-*` CSS variables and `pounce-variant-*` classes.
  *
  * Components work without any adapter (using hardcoded fallback classes), but installing
  * the vanilla adapter enables:
- * - Variant traits on Button, Badge, Pill, Chip (which have no fallback variant classes)
+ * - Variant attribute bags on Button, Badge, Pill, Chip (which have no fallback variant classes)
  * - `data-variant` attributes for CSS targeting
  * - Consistent `--pounce-variant-bg` / `--pounce-variant-color` custom properties
  *

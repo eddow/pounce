@@ -3,11 +3,6 @@ import type { JSXElement } from '@babel/types'
 
 interface PounceBabelPluginOptions {
 	types: typeof t
-	/**
-	 * The project root directory where src/lib/utils is located.
-	 * Defaults to '@pounce/core' if not provided.
-	 */
-	projectRoot?: string
 }
 
 interface PounceBabelPluginState {
@@ -20,57 +15,87 @@ interface PounceBabelPluginState {
 	}
 }
 
-function toPosixPath(filepath: string): string {
-	return filepath.replace(/\\/g, '/')
-}
-
-function splitPathParts(filepath: string): string[] {
-	return filepath.split('/').filter(Boolean)
-}
-
-function computeRelativeImport(fromFilename: string, targetFilename: string): string {
-	const fromParts = splitPathParts(fromFilename)
-	const targetParts = splitPathParts(targetFilename)
-	// Drop the file segment from the source path
-	fromParts.pop()
-	let commonLength = 0
-	while (
-		commonLength < fromParts.length &&
-		commonLength < targetParts.length &&
-		fromParts[commonLength] === targetParts[commonLength]
-	) {
-		commonLength++
-	}
-	const upSegments = new Array(fromParts.length - commonLength).fill('..')
-	const downSegments = targetParts.slice(commonLength)
-	const relativeParts = [...upSegments, ...downSegments]
-	const relativePath = relativeParts.join('/')
-	if (!relativePath) return './'
-	return relativePath.startsWith('.') ? relativePath : `./${relativePath}`
-}
-
-function resolveTargetPath(
-	filename: string | undefined,
-	projectRoot: string | undefined
-): string | null {
-	if (!filename) return null
-
-	// Default: import from the package (for external projects like @pounce/ui, browser-pounce)
-	if (!projectRoot) {
-		return '@pounce/core'
-	}
-
-	// When projectRoot is provided (by @pounce/core itself), use relative path to src/lib/utils
-	const normalizedFilename = toPosixPath(filename)
-	const normalizedTarget = toPosixPath(`${projectRoot}/src/lib/utils`)
-	return computeRelativeImport(normalizedFilename, normalizedTarget)
-}
-
 export function pounceBabelPlugin({
 	types: t,
-	projectRoot,
 }: PounceBabelPluginOptions): PluginObj<PounceBabelPluginState> {
 	const EXTENDS_HELPERS = new Set(['_extends', '__assign'])
+
+	function isSafeExpression(node: t.Expression): boolean {
+		let target = node
+		// unwrapping type assertions
+		while (t.isTSAsExpression(target)) {
+			target = target.expression
+		}
+
+		if (t.isIdentifier(target)) return true
+		if (t.isArrowFunctionExpression(target)) return true
+		if (t.isFunctionExpression(target)) return true
+
+		// Check for literals but exclude TemplateLiteral as requested
+		if (t.isStringLiteral(target)) return true
+		if (t.isNumericLiteral(target)) return true
+		if (t.isBooleanLiteral(target)) return true
+		if (t.isNullLiteral(target)) return true
+
+		// Check for Objects
+		if (t.isObjectExpression(target)) {
+			return target.properties.every((prop) => {
+				if (t.isObjectMethod(prop)) return true
+				if (t.isSpreadElement(prop)) return false // Conservative: spread might be reactive
+				if (t.isObjectProperty(prop)) {
+					if (prop.computed && !isSafeExpression(prop.key as t.Expression)) return false
+					return t.isExpression(prop.value) && isSafeExpression(prop.value as t.Expression)
+				}
+				return false
+			})
+		}
+
+		// Check for Arrays
+		if (t.isArrayExpression(target)) {
+			return target.elements.every((elem) => {
+				if (elem === null) return true // Sparse array hole
+				if (t.isSpreadElement(elem)) return false
+				return t.isExpression(elem) && isSafeExpression(elem as t.Expression)
+			})
+		}
+
+		// Other Literals and Function-likes
+		if (t.isRegExpLiteral(target)) return true
+		if (t.isBigIntLiteral(target)) return true
+		if (t.isClassExpression(target)) return true
+
+		// Recursive Expressions
+		// Unary: !safe, -safe, typeof safe
+		if (t.isUnaryExpression(target)) {
+			return isSafeExpression(target.argument)
+		}
+
+		// Binary: safe + safe, safe * safe
+		if (t.isBinaryExpression(target)) {
+			return (
+				t.isExpression(target.left) &&
+				isSafeExpression(target.left as t.Expression) &&
+				t.isExpression(target.right) &&
+				isSafeExpression(target.right as t.Expression)
+			)
+		}
+
+		// Logical: safe && safe, safe || safe
+		if (t.isLogicalExpression(target)) {
+			return isSafeExpression(target.left) && isSafeExpression(target.right)
+		}
+
+		// Conditional (Ternary): safe ? safe : safe
+		if (t.isConditionalExpression(target)) {
+			return (
+				isSafeExpression(target.test) &&
+				isSafeExpression(target.consequent) &&
+				isSafeExpression(target.alternate)
+			)
+		}
+
+		return false
+	}
 
 	function isAttributesMergeCall(path: NodePath<t.CallExpression>) {
 		const parentPath = path.parentPath
@@ -82,27 +107,20 @@ export function pounceBabelPlugin({
 		return false
 	}
 
-	function ensureComposeImport(
-		path: NodePath,
-		state: PounceBabelPluginState,
-		forceForwardProps = false
-	) {
+	const IMPORT_SOURCE = '@pounce/core'
+
+	function ensureImports(path: NodePath) {
 		const programPath = path.findParent((p: NodePath) =>
 			p.isProgram()
 		) as NodePath<t.Program> | null
 		if (!programPath) return
 
-		const filename = state.file?.opts.filename
-		const composeSource = resolveTargetPath(filename, projectRoot) ?? 'src/lib/utils'
-		const normalizedSource = composeSource === './' ? './utils' : composeSource
-
-		// Helper to inject import if missing
 		const ensureImport = (name: string) => {
 			if (programPath.scope.hasBinding(name)) return
 			const alreadyImported = programPath.node.body.some(
 				(node: t.Statement) =>
 					t.isImportDeclaration(node) &&
-					node.source.value === normalizedSource &&
+					node.source.value === IMPORT_SOURCE &&
 					node.specifiers.some(
 						(
 							specifier: t.ImportSpecifier | t.ImportDefaultSpecifier | t.ImportNamespaceSpecifier
@@ -113,7 +131,7 @@ export function pounceBabelPlugin({
 
 			const importDeclaration = programPath.node.body.find(
 				(node: t.Statement): node is t.ImportDeclaration =>
-					t.isImportDeclaration(node) && node.source.value === normalizedSource
+					t.isImportDeclaration(node) && node.source.value === IMPORT_SOURCE
 			)
 
 			if (importDeclaration) {
@@ -123,7 +141,7 @@ export function pounceBabelPlugin({
 					'body',
 					t.importDeclaration(
 						[t.importSpecifier(t.identifier(name), t.identifier(name))],
-						t.stringLiteral(normalizedSource)
+						t.stringLiteral(IMPORT_SOURCE)
 					)
 				)
 			}
@@ -131,56 +149,27 @@ export function pounceBabelPlugin({
 
 		ensureImport('h')
 		ensureImport('Fragment')
-		ensureImport('compose')
-
-		// Check if forwardProps is used in the program
-		let usesForwardProps = false
-		programPath.traverse({
-			Identifier(path: NodePath<t.Identifier>) {
-				if (path.node.name === 'forwardProps' && path.isReferencedIdentifier()) {
-					usesForwardProps = true
-					path.stop()
-				}
-			},
-		})
-
-		if (usesForwardProps || forceForwardProps) {
-			ensureImport('forwardProps')
-		}
+		ensureImport('c')
 		ensureImport('r')
 	}
 
-	function isExpressionOrSpread(
-		arg: t.CallExpression['arguments'][number]
-	): arg is t.Expression | t.SpreadElement {
-		return t.isSpreadElement(arg) || t.isExpression(arg)
-	}
-
-	function buildComposeCall(args: t.CallExpression['arguments']) {
-		const filteredArgs = args.filter(isExpressionOrSpread)
-		const composeArgs = filteredArgs.map((arg: t.Expression | t.SpreadElement) => {
+	function buildCompositeCall(args: t.CallExpression['arguments']) {
+		const layers: t.Expression[] = []
+		for (const arg of args) {
 			if (t.isSpreadElement(arg)) {
-				return t.arrowFunctionExpression(
-					[],
-					t.objectExpression([
-						t.spreadElement(
-							t.callExpression(t.identifier('forwardProps'), [t.cloneNode(arg.argument)])
-						),
-					])
-				)
+				layers.push(t.cloneNode(arg.argument))
+			} else if (t.isObjectExpression(arg) && arg.properties.length === 0) {
+			} else if (t.isExpression(arg)) {
+				layers.push(t.cloneNode(arg))
 			}
-			return t.arrowFunctionExpression([], t.cloneNode(arg) as t.Expression)
-		})
-		return t.callExpression(
-			t.identifier('compose'),
-			composeArgs as (t.Expression | t.SpreadElement)[]
-		)
+		}
+		return t.callExpression(t.identifier('c'), layers)
 	}
 
 	return {
 		name: 'pounce-babel',
 		visitor: {
-			CallExpression(path: NodePath<t.CallExpression>, state: PounceBabelPluginState) {
+			CallExpression(path: NodePath<t.CallExpression>, _state: PounceBabelPluginState) {
 				if (!path.isCallExpression()) return
 				const callee = path.node.callee
 				let shouldTransform = false
@@ -196,12 +185,11 @@ export function pounceBabelPlugin({
 				if (!shouldTransform) return
 				if (!isAttributesMergeCall(path)) return
 				if (!path.node.arguments.length) return
-				const hasSpread = true // path.node.arguments.some((arg) => t.isSpreadElement(arg))
-				ensureComposeImport(path, state, hasSpread)
-				path.replaceWith(buildComposeCall(path.node.arguments))
+				ensureImports(path)
+				path.replaceWith(buildCompositeCall(path.node.arguments))
 			},
-			JSXElement(path: NodePath<JSXElement>, state: PounceBabelPluginState) {
-				ensureComposeImport(path, state)
+			JSXElement(path: NodePath<JSXElement>, _state: PounceBabelPluginState) {
+				ensureImports(path)
 				// Traverse all JSX children and attributes
 				for (let index = 0; index < path.node.children.length; index++) {
 					const child = path.node.children[index]
@@ -323,11 +311,14 @@ export function pounceBabelPlugin({
 										const bindingObject = t.callExpression(t.identifier('r'), [getter, setter])
 										attr.value = t.jsxExpressionContainer(bindingObject)
 									} else {
-										// One-way binding: rewrite `prop={this.counter}` into `prop={() => this.counter}`
-										const arrowFunction = t.arrowFunctionExpression([], expression)
-										attr.value = t.jsxExpressionContainer(
-											t.callExpression(t.identifier('r'), [arrowFunction])
-										)
+										// One-way binding
+										if (!isSafeExpression(innerExpression as t.Expression)) {
+											// rewrite `prop={this.counter}` into `prop={r(() => this.counter)}`
+											const arrowFunction = t.arrowFunctionExpression([], expression)
+											attr.value = t.jsxExpressionContainer(
+												t.callExpression(t.identifier('r'), [arrowFunction])
+											)
+										}
 									}
 								}
 							}

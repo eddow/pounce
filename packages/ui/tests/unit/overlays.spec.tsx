@@ -2,7 +2,7 @@
  * Test Overlays Coordination (WithOverlays, Dialog, Drawer, Toast, Focus Trap)
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { bindApp, document, type Scope } from '@pounce/core'
+import { latch, document, type Scope } from '@pounce/core'
 import { WithOverlays } from '../../src/overlays/with-overlays'
 import { StandardOverlays } from '../../src/overlays/standard-overlays'
 import { Dialog } from '../../src/overlays/dialog'
@@ -28,7 +28,7 @@ describe('Overlays System', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	const tick = () => new Promise(r => setTimeout(r, 0))
@@ -206,7 +206,7 @@ describe('Overlays System', () => {
 			expect(toast?.textContent).toContain('Notification')
 		})
 
-		it('applies variant trait from adapter', async () => {
+		it('applies variant from adapter', async () => {
 			let push: any
 			const App = (_props: any, scope: Scope) => {
 				push = scope.overlay

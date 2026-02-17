@@ -1,5 +1,5 @@
-import { compose } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { defaults } from '@pounce/core'
+import { componentStyle } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
 
 componentStyle.sass`
@@ -72,7 +72,7 @@ function setupGlobalHandler() {
 			toolbarAncestor && toolbarAncestor.dataset.trapTab === 'true'
 				? toolbarAncestor
 				: groupContainer.classList.contains('pounce-toolbar') &&
-						(groupContainer as HTMLElement).dataset.trapTab === 'true'
+					(groupContainer as HTMLElement).dataset.trapTab === 'true'
 					? groupContainer
 					: null
 		) as HTMLElement | null
@@ -85,7 +85,7 @@ function setupGlobalHandler() {
 			if (next) { next.focus(); return }
 		}
 		const nextFocusable = findNextFocusableOutsideGroup(groupContainer, isShiftTab)
-		;(nextFocusable ?? (document.body as HTMLElement)).focus()
+			; (nextFocusable ?? (document.body as HTMLElement)).focus()
 	})
 }
 
@@ -259,24 +259,24 @@ export type ButtonGroupProps = {
  */
 export const ButtonGroup = (props: ButtonGroupProps) => {
 	const adapter = getAdapter('ButtonGroup')
-	const state = compose({ orientation: 'horizontal' }, props)
+	const p = defaults(props, { orientation: 'horizontal' as const })
 
 	return (
 		<div
 			class={[
 				adapter.classes?.base || 'pounce-buttongroup',
-				adapter.classes?.[state.orientation] || `pounce-buttongroup-${state.orientation}`,
-				state.class,
+				adapter.classes?.[p.orientation] || `pounce-buttongroup-${p.orientation}`,
+				props.class,
 			]}
 			role="group"
-			style={state.style}
+			style={props.style}
 			onKeydown={(e: KeyboardEvent) => {
 				const button = (e.target as HTMLElement).closest('button') as HTMLButtonElement | null
 				if (!button) return
 				handleButtonGroupNavigation(e, button, e.currentTarget as HTMLElement)
 			}}
 		>
-			{state.children}
+			{props.children}
 		</div>
 	)
 }

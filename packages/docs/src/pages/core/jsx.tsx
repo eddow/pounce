@@ -103,7 +103,6 @@ export default function JsxPage() {
           { name: '{obj.prop}', type: 'attribute', description: 'Two-way: r(() => obj.prop, (v) => obj.prop = v)', required: false },
           { name: 'this={ref}', type: 'attribute', description: 'Set-only: r(() => undefined, (v) => ref = v)', required: false },
           { name: 'update:attr', type: 'attribute', description: 'Custom setter paired with base attribute', required: false },
-          { name: 'Object.assign', type: 'h() call', description: 'Converted to compose() for reactive merging', required: false },
         ]} />
       </Section>
     </article>

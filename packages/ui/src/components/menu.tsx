@@ -1,5 +1,5 @@
 import { reactive } from 'mutts'
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 import { A } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
 import { Button } from './button'

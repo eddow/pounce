@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { reactive } from 'mutts'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 
 describe('Directive Re-rendering', () => {
 	let container: HTMLElement
@@ -28,7 +28,7 @@ describe('Directive Re-rendering', () => {
 			<div use:myDir={state.arg} />
 		)
 
-		bindApp(<App />, container, scope)
+		latch(container, <App />, scope)
 		expect(callCount).toBe(1)
 		expect(container.querySelector('div')?.getAttribute('data-arg')).toBe('1')
 
@@ -55,7 +55,7 @@ describe('Directive Re-rendering', () => {
 			return <div id="parent">{staticChild}</div>
 		}
 
-		bindApp(<App />, container, scope)
+		latch(container, <App />, scope)
 		expect(callCount).toBe(1)
 		const child = document.getElementById('child')
 		expect(child?.getAttribute('data-calls')).toBe('1')
@@ -83,7 +83,7 @@ describe('Directive Re-rendering', () => {
 
 		const App = () => <Child />
 
-		bindApp(<App />, container, scope)
+		latch(container, <App />, scope)
 		expect(callCount).toBe(1)
 
 		state.trigger++

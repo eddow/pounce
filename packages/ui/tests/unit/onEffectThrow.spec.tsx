@@ -2,7 +2,7 @@
  * Test caught functionality
  */
 import { describe, it, expect } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { effect, caught, reactive, project } from 'mutts'
 
 describe('caught basic', () => {
@@ -74,7 +74,7 @@ describe('caught basic', () => {
 			})
 
 			// Simulate rendering child
-			bindApp(<ThrowError />, container)
+			latch(container, <ThrowError />)
 		})
 
 		expect(caughtErrors.length).toBe(1)

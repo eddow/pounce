@@ -1,6 +1,6 @@
-import { project, reactive } from 'mutts'
+import { project, Register, reactive } from 'mutts'
 import { describe, expect, it } from 'vitest'
-import { h, rootScope } from '../../lib'
+import { h, rootScope } from '@pounce/core'
 import TodoWebComponent from './Todo'
 
 describe('TodoWebComponent', () => {
@@ -24,7 +24,7 @@ describe('TodoWebComponent', () => {
 		const mount = h(
 			'div',
 			{},
-			h('for', { each: items, children: [(item: any) => h('span', {}, item.text)] })
+			h('for', { each: items }, ((item: any) => h('span', {}, item.text)) as any)
 		)
 		const root = mount.render(rootScope) as HTMLElement
 
@@ -38,7 +38,7 @@ describe('TodoWebComponent', () => {
 	})
 
 	it('adds a second todo to the DOM', () => {
-		const todos = reactive([] as any[])
+		const todos = new Register((t: any) => t.id, [])
 		const mount = h('div', {}, h(TodoWebComponent, { todos }))
 		const root = mount.render(rootScope) as HTMLElement
 
@@ -53,14 +53,14 @@ describe('TodoWebComponent', () => {
 	})
 
 	it('shows correct text after remove and re-add', () => {
-		const todos = reactive([] as any[])
+		const todos = new Register((t: any) => t.id, [])
 		const mount = h('div', {}, h(TodoWebComponent, { todos }))
 		const root = mount.render(rootScope) as HTMLElement
 
 		todos.push({ id: 1, text: 'a', completed: false, createdAt: new Date() })
 		expect(root.querySelector('.todo-item .todo-text')?.textContent).toBe('a')
 
-		todos.splice(0, 1)
+		todos.remove(1)
 		expect(root.querySelectorAll('.todo-item').length).toBe(0)
 
 		todos.push({ id: 2, text: 'b', completed: false, createdAt: new Date() })

@@ -1,4 +1,4 @@
-import { compose, PounceElement } from '@pounce/core'
+import { extend, PounceElement } from '@pounce/core'
 import { lift } from 'mutts'
 import { client } from '../platform/shared.js'
 import { perf } from '../perf.js'
@@ -109,7 +109,7 @@ export const Router = <
 	props: RouterProps<Definition>,
 	scope: Record<PropertyKey, unknown>
 ) => {
-	const state = compose(
+	const state = extend(
 		{
 			get url() {
 				return client.url.pathname
@@ -172,8 +172,8 @@ export const Router = <
 			)
 		}
 	})
-
-	return new PounceElement(() => rendered, { tag: 'Router' })
+	// TODO: Do we really want to `new PounceElement` here? 
+	return new PounceElement(() => rendered, 'Router')
 }
 
 /**

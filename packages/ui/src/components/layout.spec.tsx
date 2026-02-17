@@ -1,6 +1,6 @@
 /// <reference path="../../node_modules/@pounce/core/src/types/jsx.d.ts" />
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { Stack, Inline, Grid, Container, AppShell } from '../../src/components/layout'
 
 describe('Stack', () => {
@@ -18,7 +18,7 @@ describe('Stack', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default props', () => {
@@ -74,7 +74,7 @@ describe('Inline', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default props', () => {
@@ -130,7 +130,7 @@ describe('Grid', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default props', () => {
@@ -192,7 +192,7 @@ describe('Container', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default container class', () => {
@@ -230,7 +230,7 @@ describe('AppShell', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders header and main content', () => {

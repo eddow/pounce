@@ -4,8 +4,6 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   resolve: {
     alias: {
-      'pounce-ts/jsx-runtime': path.resolve(__dirname, '../core/src/runtime/jsx-runtime.ts'),
-      'pounce-ts/jsx-dev-runtime': path.resolve(__dirname, '../core/src/runtime/jsx-dev-runtime.ts'),
       'pounce-ts/server': path.resolve(__dirname, '../core/src/node/index.ts'),
       'pounce-ts': path.resolve(__dirname, '../core/src'),
       'pounce-ui': path.resolve(__dirname, '../ui/src'),

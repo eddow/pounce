@@ -1,11 +1,11 @@
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 import { type OverlaySpec, type PushOverlayFunction } from './manager'
 import { getAdapter } from '../adapter/registry'
 
 declare module './manager' {
-	interface OverlayHelpers {
-		drawer: ReturnType<typeof bindDrawer>
-	}
+    interface OverlayHelpers {
+        drawer: ReturnType<typeof bindDrawer>
+    }
 }
 
 componentStyle.sass`
@@ -67,56 +67,56 @@ componentStyle.sass`
 `
 
 export interface DrawerOptions {
-	title?: JSX.Children
-	children: JSX.Children
-	footer?: JSX.Children
-	side?: 'left' | 'right'
-	dismissible?: boolean
+    title?: JSX.Children
+    children: JSX.Children
+    footer?: JSX.Children
+    side?: 'left' | 'right'
+    dismissible?: boolean
 }
 
 /**
  * Standard Drawer interactor.
  */
 export const Drawer = {
-	show: (options: DrawerOptions): OverlaySpec => {
-		const side = options.side || 'left'
-		const titleId = `pounce-drawer-title-${Math.random().toString(36).substr(2, 5)}`
+    show: (options: DrawerOptions): OverlaySpec => {
+        const side = options.side || 'left'
+        const titleId = `pounce-drawer-title-${Math.random().toString(36).substr(2, 5)}`
 
-		return {
-			mode: `drawer-${side}`,
-			dismissible: options.dismissible ?? true,
-			autoFocus: true,
-			aria: {
-				labelledby: options.title ? titleId : undefined
-			},
-			render: (close) => {
-				const adapter = getAdapter('Drawer')
-				return (
-					<div class={[adapter.classes?.base || 'pounce-drawer', `pounce-drawer-${side}`]}>
-						<div class="pounce-drawer-header" if={options.title}>
-							<h2 class="pounce-drawer-title" id={titleId}>
-								{options.title}
-							</h2>
-							<button class="pounce-drawer-close" onClick={() => close(null)}>
-								✕
-							</button>
-						</div>
-						<div class="pounce-drawer-body">
-							{options.children}
-						</div>
-						<div class="pounce-drawer-footer" if={options.footer}>
-							{options.footer}
-						</div>
-					</div>
-				)
-			}
-		}
-	}
+        return {
+            mode: `drawer-${side}`,
+            dismissible: options.dismissible ?? true,
+            autoFocus: true,
+            aria: {
+                labelledby: options.title ? titleId : undefined
+            },
+            render: (close) => {
+                const adapter = getAdapter('Drawer')
+                return (
+                    <div class={[adapter.classes?.base || 'pounce-drawer', `pounce-drawer-${side}`]}>
+                        <div class="pounce-drawer-header" if={options.title}>
+                            <h2 class="pounce-drawer-title" id={titleId}>
+                                {options.title}
+                            </h2>
+                            <button class="pounce-drawer-close" onClick={() => close(null)}>
+                                ✕
+                            </button>
+                        </div>
+                        <div class="pounce-drawer-body">
+                            {options.children}
+                        </div>
+                        <div class="pounce-drawer-footer" if={options.footer}>
+                            {options.footer}
+                        </div>
+                    </div>
+                )
+            }
+        }
+    }
 }
 
 /**
  * Binds the drawer interactor to a specific overlay dispatcher.
  */
 export function bindDrawer(push: PushOverlayFunction) {
-	return (options: DrawerOptions) => push(Drawer.show(options))
+    return (options: DrawerOptions) => push(Drawer.show(options))
 }

@@ -1,4 +1,3 @@
-import { Trait } from "@pounce/core"
 import type { Scope } from "@pounce/core"
 
 export type DisplayContext = Scope
@@ -130,7 +129,7 @@ export type ComponentAdapter = BaseAdaptation
  * Supports composable adapters - multiple setAdapter() calls merge configurations.
  * Each adapter can fulfill one or more orthogonal concerns:
  * - Icons: Icon rendering system
- * - Variants: Styling + A11y (will use trait system)
+ * - Variants: Styling + A11y (JSX-spreadable attribute bags)
  * - Components: Per-component structure + classes
  * - Transitions: Animation system
  * 
@@ -144,8 +143,8 @@ export type FrameworkAdapter = {
 	 */
 	iconFactory?: (name: string, size: string | number | undefined, context: DisplayContext) => JSX.Element
 
-	/** Global variant traits (classes + ARIA roles) */
-	variants?: Record<string, Trait>
+	/** Global variant attribute bags (class, style, data-*, aria-*, …) */
+	variants?: Record<string, JSX.GlobalHTMLAttributes>
 
 	/** Global transition defaults (can be overridden per-component) */
 	transitions?: TransitionConfig

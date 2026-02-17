@@ -1,16 +1,7 @@
-import { compose } from '@pounce/core'
-import { componentStyle, A } from '@pounce/kit/dom'
+import { defaults } from '@pounce/core'
+import { componentStyle, A } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
-import { getVariantTrait, type Variant } from '../shared/variants'
-import type { Trait } from '@pounce/core'
-
-/**
- * Helper to get variant traits as array or undefined
- */
-function getVariantTraits(variant: string | undefined): Trait[] | undefined {
-	const trait = getVariantTrait(variant)
-	return trait ? [trait] : undefined
-}
+import { variantProps, type Variant } from '../shared/variants'
 
 componentStyle.sass`
 .pounce-heading
@@ -157,38 +148,26 @@ export type HeadingProps = {
 
 export const Heading = (props: HeadingProps) => {
 	const adapter = getAdapter('Heading')
-	const defaults = { level: 2, variant: 'primary', align: 'start' as HeadingAlign }
-	const state = compose(defaults, props, () => {
-		const resolvedLevel = () => Math.min(6, Math.max(1, props.level ?? defaults.level))
-		return {
-			get level() {
-				return resolvedLevel() as 1 | 2 | 3 | 4 | 5 | 6
-			},
-			get tag() {
-				return props.tag ?? `h${resolvedLevel()}`
-			},
-			get align() {
-				return props.align ?? defaults.align
-			},
-		}
-	})
-
-	const trait = getVariantTrait(state.variant)
+	const p = defaults(props, { align: 'start' as HeadingAlign })
+	const resolvedLevel = () => Math.min(6, Math.max(1, props.level ?? 2)) as 1 | 2 | 3 | 4 | 5 | 6
+	const state = {
+		get level() { return resolvedLevel() },
+		get tag() { return props.tag ?? `h${resolvedLevel()}` },
+	}
 
 	return (
 		<dynamic
 			tag={state.tag}
-			{...state.el}
-			traits={getVariantTraits(state.variant)}
+			{...variantProps(props.variant)}
+			{...props.el}
 			class={[
 				adapter?.classes?.base ?? 'pounce-heading',
 				`pounce-heading-level-${state.level}`,
-				trait ? undefined : variantFallbackClass('pounce-heading-variant', state.variant),
-				state.align ? `pounce-heading-align-${state.align}` : undefined,
-				state.el?.class,
+				Object.keys(variantProps(props.variant)).length > 0 ? undefined : variantFallbackClass('pounce-heading-variant', props.variant),
+				p.align ? `pounce-heading-align-${p.align}` : undefined,
 			]}
 		>
-			{state.children}
+			{props.children}
 		</dynamic>
 	)
 }
@@ -206,27 +185,20 @@ export type TextProps = {
 
 export const Text = (props: TextProps) => {
 	const adapter = getAdapter('Text')
-	const state = compose(
-		{ tag: 'p', variant: 'primary', size: 'md' as TextSize, muted: false },
-		props
-	)
-
-	const trait = getVariantTrait(state.variant)
 
 	return (
 		<dynamic
-			tag={state.tag}
-			{...state.el}
-			traits={getVariantTraits(state.variant)}
+			tag={props.tag ?? 'p'}
+			{...variantProps(props.variant)}
+			{...props.el}
 			class={[
 				adapter?.classes?.base ?? 'pounce-text',
-				`pounce-text-${state.size}`,
-				trait ? undefined : variantFallbackClass('pounce-text-variant', state.variant),
-				state.muted ? 'pounce-text-muted' : undefined,
-				state.el?.class,
+				`pounce-text-${props.size ?? 'md'}`,
+				Object.keys(variantProps(props.variant)).length > 0 ? undefined : variantFallbackClass('pounce-text-variant', props.variant),
+				(props.muted ?? false) ? 'pounce-text-muted' : undefined,
 			]}
 		>
-			{state.children}
+			{props.children}
 		</dynamic>
 	)
 }
@@ -238,22 +210,18 @@ export type LinkProps = JSX.IntrinsicElements['a'] & {
 
 export const Link = (props: LinkProps) => {
 	const adapter = getAdapter('Link')
-	const state = compose({ variant: 'primary', underline: true }, props)
-
-	const trait = getVariantTrait(state.variant)
 
 	return (
 		<A
-			{...state}
-			traits={getVariantTraits(state.variant)}
+			{...variantProps(props.variant)}
+			{...props}
 			class={[
 				adapter?.classes?.base ?? 'pounce-link',
-				trait ? undefined : variantFallbackClass('pounce-link-variant', state.variant),
-				state.underline ? undefined : 'pounce-link-no-underline',
-				state.class,
+				Object.keys(variantProps(props.variant)).length > 0 ? undefined : variantFallbackClass('pounce-link-variant', props.variant),
+				(props.underline ?? true) ? undefined : 'pounce-link-no-underline',
 			]}
 		>
-			{state.children}
+			{props.children}
 		</A>
 	)
 }

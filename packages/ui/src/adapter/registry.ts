@@ -1,5 +1,4 @@
 import type { ComponentName, FrameworkAdapter, UiComponents } from './types'
-import type { Trait } from '@pounce/core'
 import { validateAdapter } from './validation'
 
 let currentAdapter: FrameworkAdapter = { components: {} }
@@ -41,7 +40,7 @@ export function getGlobalAdapter(): Pick<FrameworkAdapter, 'iconFactory' | 'vari
 	}
 }
 
-export function getGlobalVariants(): Record<string, Trait> | undefined {
+export function getGlobalVariants(): Record<string, JSX.GlobalHTMLAttributes> | undefined {
 	return currentAdapter.variants
 }
 

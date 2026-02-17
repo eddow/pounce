@@ -4,20 +4,23 @@ Complete reference for Pounce-TS APIs and utilities.
 
 ## Core APIs
 
-### `bindApp(app, selector?)`
+### `latch(target, content, scope?)`
 
-Automated app initialization helper. Handles the common pattern of waiting for DOMContentLoaded and binding to a container element.
+Latch reactive content onto a DOM element. Polymorph: accepts PounceElement, Child[], Node, Node[], or undefined. Processes content through the appropriate pipeline, then reconciles into the target. Includes DOMContentLoaded guard and conflict detection.
 
 **Parameters:**
-- `app` - The JSX app object (before calling `.render()`)
-- `container` - CSS selector, HTMLElement, or function returning HTMLElement (defaults to `'#app'`)
+- `target` - CSS selector or HTMLElement to latch onto
+- `content` - The JSX content or PounceElement to render
+- `scope` - Optional scope object (defaults to rootScope)
 
-**Returns:** Function that can be used to re-bind the app
+**Returns:** Cleanup function that unmounts the content
 
 **Example:**
 ```tsx
 const app = <MyApp />
-bindApp(app, '#my-container')
+const unmount = latch('#my-container', app)
+// Later cleanup
+unmount()
 ```
 
 ### `bindChildren(parent, newChildren)`

@@ -14,7 +14,7 @@ export { createGlyfIconFactory } from './icons'
  * PicoCSS framework adapter for @pounce/ui.
  *
  * Provides:
- * - Variant Traits mapped to PicoCSS class conventions
+ * - Variant attribute bags mapped to PicoCSS class conventions
  * - Per-component class/transition configs
  * - Global transition defaults
  *

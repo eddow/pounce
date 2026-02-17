@@ -4,9 +4,7 @@ import { pounceCorePlugin } from '@pounce/core/plugin';
 
 export default defineConfig({
   plugins: [
-    pounceCorePlugin({
-      jsxRuntime: { runtime: 'automatic', importSource: '@pounce/core' },
-    }),
+    pounceCorePlugin(),
     dts({
       insertTypesEntry: true,
       beforeWriteFile(filePath, content) {

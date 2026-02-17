@@ -1,8 +1,8 @@
-import { bindApp } from '@pounce/core'
+import { latch } from '@pounce/core'
 import { reactive } from 'mutts'
 import { Accordion } from '@pounce/ui'
 import { Code } from './code'
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 
 componentStyle.sass`
 .demo-component
@@ -56,7 +56,7 @@ export function Demo({ component, source, title = "Example" }: DemoProps) {
 	// Mount the live demo, return cleanup for teardown
 	const mountDemo = (el: HTMLElement) => {
 		if (el) {
-			unmount = bindApp(component, el)
+			unmount = latch(el, component)
 		}
 		return () => { unmount?.() }
 	}
@@ -64,12 +64,12 @@ export function Demo({ component, source, title = "Example" }: DemoProps) {
 	return (
 		<div class="demo-component">
 			<h4>{title}</h4>
-			
+
 			{/* Live demo */}
 			<div use={mountDemo} class="demo-live" />
-			
+
 			{/* Accordion for source code */}
-			<Accordion 
+			<Accordion
 				open={showCode.open}
 				onToggle={(open) => showCode.open = open}
 				summary="View Source Code"

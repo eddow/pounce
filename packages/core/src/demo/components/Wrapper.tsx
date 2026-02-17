@@ -1,8 +1,5 @@
-/**
- * Wrapper Component to demonstrate children usage
- */
-
-import { compose } from '../../lib'
+import { memoize } from 'mutts'
+import { extend } from '../../lib'
 import './Wrapper.scss'
 
 export default function WrapperComponent(props: {
@@ -14,7 +11,7 @@ export default function WrapperComponent(props: {
 	children?: JSX.Element | JSX.Element[]
 	tag?: JSX.HTMLElementTag
 }) {
-	const state = compose(
+	const state = extend(
 		{
 			title: 'Wrapper Component',
 			description: 'This wrapper contains children:',
@@ -25,18 +22,20 @@ export default function WrapperComponent(props: {
 		props
 	)
 
-	const childrenArray = Array.isArray(state.children)
-		? state.children
-		: state.children
-			? [state.children]
-			: []
-	const childrenToShow = () =>
-		state.maxChildren ? childrenArray.slice(0, state.maxChildren) : childrenArray
+	const computed = memoize({
+		get childrenArray() {
+			return Array.isArray(state.children) ? state.children : state.children ? [state.children] : []
+		},
+		get childrenToShow() {
+			return state.maxChildren ? this.childrenArray.slice(0, state.maxChildren) : this.childrenArray
+		},
+	})
+
 	return (
 		<dynamic tag={state.tag} class={state.class}>
 			<h3>{state.title}</h3>
 			<p>{state.description}</p>
-			{state.showChildren && <div class="children">{childrenToShow()}</div>}
+			{state.showChildren && <div class="children">{computed.childrenToShow}</div>}
 		</dynamic>
 	)
 }

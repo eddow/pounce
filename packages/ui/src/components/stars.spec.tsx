@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { Stars } from '../../src/components/stars'
 import { resetAdapter } from '../../src/adapter/registry'
 
@@ -19,7 +19,7 @@ describe('Stars', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders 5 stars by default', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { reactive } from 'mutts'
 
 describe('if={condition} on intrinsic elements', () => {
@@ -18,33 +18,33 @@ describe('if={condition} on intrinsic elements', () => {
 
 	it('hides element when condition is false', () => {
 		const state = reactive({ show: false })
-		unmount = bindApp(
+		unmount = latch(
+			container,
 			<div>
 				<span if={state.show} class="target">visible</span>
-			</div>,
-			container
+			</div>
 		)
 		expect(container.querySelector('.target')).toBeNull()
 	})
 
 	it('shows element when condition is true', () => {
 		const state = reactive({ show: true })
-		unmount = bindApp(
+		unmount = latch(
+			container,
 			<div>
 				<span if={state.show} class="target">visible</span>
-			</div>,
-			container
+			</div>
 		)
 		expect(container.querySelector('.target')).not.toBeNull()
 	})
 
 	it('reactively shows/hides element when condition changes', () => {
 		const state = reactive({ show: false })
-		unmount = bindApp(
+		unmount = latch(
+			container,
 			<div>
 				<span if={state.show} class="target">visible</span>
-			</div>,
-			container
+			</div>
 		)
 		expect(container.querySelector('.target')).toBeNull()
 		state.show = true
@@ -57,11 +57,12 @@ describe('if={condition} on intrinsic elements', () => {
 		const stack = reactive<{ mode: string }[]>([])
 		const hasBackdrop = () => stack.some(e => e.mode === 'modal')
 
-		unmount = bindApp(
+		unmount = latch(
+			container,
 			<div>
 				<div if={hasBackdrop()} class="backdrop">backdrop</div>
-			</div>,
-			container
+				<fragment>children</fragment>
+			</div>
 		)
 		expect(container.querySelector('.backdrop')).toBeNull()
 		stack.push({ mode: 'modal' })
@@ -72,12 +73,12 @@ describe('if={condition} on intrinsic elements', () => {
 
 	it('works with if/else pair', () => {
 		const state = reactive({ show: true })
-		unmount = bindApp(
+		unmount = latch(
+			container,
 			<div>
 				<span if={state.show} class="yes">yes</span>
 				<span else class="no">no</span>
-			</div>,
-			container
+			</div>
 		)
 		expect(container.querySelector('.yes')).not.toBeNull()
 		expect(container.querySelector('.no')).toBeNull()
@@ -90,7 +91,8 @@ describe('if={condition} on intrinsic elements', () => {
 		const stack = reactive<{ mode: string }[]>([])
 		const hasBackdrop = () => stack.some(e => e.mode === 'modal')
 
-		unmount = bindApp(
+		unmount = latch(
+			container,
 			<fragment>
 				<div>children</div>
 				<div class="overlay-manager">
@@ -101,8 +103,7 @@ describe('if={condition} on intrinsic elements', () => {
 					/>
 					<div class="layer">layers</div>
 				</div>
-			</fragment>,
-			container
+			</fragment>
 		)
 		expect(container.querySelector('.backdrop')).toBeNull()
 		expect(container.querySelector('.layer')).not.toBeNull()
@@ -116,18 +117,22 @@ describe('if={condition} on intrinsic elements', () => {
 
 	it('if={} with sibling elements preserves siblings', () => {
 		const state = reactive({ show: false })
-		unmount = bindApp(
+		unmount = latch(
+			container,
 			<div>
 				<div if={state.show} class="conditional">cond</div>
-				<div class="always">always</div>
-			</div>,
-			container
+				<div class="sibling1">sibling1</div>
+				<div class="sibling2">sibling2</div>
+			</div>
 		)
 		expect(container.querySelector('.conditional')).toBeNull()
-		expect(container.querySelector('.always')).not.toBeNull()
+		expect(container.querySelector('.sibling1')).not.toBeNull()
+		expect(container.querySelector('.sibling2')).not.toBeNull()
 
 		state.show = true
 		expect(container.querySelector('.conditional')).not.toBeNull()
+		expect(container.querySelector('.sibling1')).not.toBeNull()
+		expect(container.querySelector('.sibling2')).not.toBeNull()
 		expect(container.querySelector('.always')).not.toBeNull()
 	})
 })

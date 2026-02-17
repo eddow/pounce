@@ -1,6 +1,6 @@
 import { reactive } from 'mutts'
 import { describe, expect, it } from 'vitest'
-import { h, rootScope } from '../../lib'
+import { h, rootScope } from '@pounce/core'
 import { MiniCounter } from './MiniCounter'
 
 describe('MiniCounter Component', () => {
@@ -113,7 +113,7 @@ describe('MiniCounter Component', () => {
 				</>
 			)
 		}
-		const mount = h('div', {}, h(App, {}))
+		const mount = <App />
 		const root = mount.render(rootScope) as HTMLElement
 
 		expect(root.querySelector('button.remove-all')).toBeFalsy()

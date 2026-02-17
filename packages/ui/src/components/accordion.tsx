@@ -1,16 +1,6 @@
-import { compose } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
-import { asVariant, getVariantTrait } from '../shared/variants'
-import type { Trait } from '@pounce/core'
-
-/**
- * Helper to get variant traits as array or undefined
- */
-function getVariantTraits(variant: string | undefined): Trait[] | undefined {
-	const trait = getVariantTrait(variant)
-	return trait ? [trait] : undefined
-}
+import { asVariant, variantProps } from '../shared/variants'
 
 componentStyle.sass`
 .pounce-accordion
@@ -82,24 +72,22 @@ export type AccordionProps = {
 
 const AccordionBase = (props: AccordionProps) => {
 	const adapter = getAdapter('Accordion')
-	const state = compose({ open: false, variant: 'primary' }, props)
-	const baseTrait = { classes: [adapter.classes?.base || 'pounce-accordion'] }
-
 	return (
 		<details
-			{...state.el}
-			traits={[baseTrait, ...(getVariantTraits(state.variant) || [])]}
-			open={state.open}
+			{...variantProps(props.variant)}
+			{...props.el}
+			class={adapter.classes?.base || 'pounce-accordion'}
+			open={props.open}
 			onToggle={(e: Event) => {
 				const details = e.currentTarget as HTMLDetailsElement
-				state.onToggle?.(details.open)
+				props.onToggle?.(details.open)
 			}}
 		>
 			<summary class={adapter.classes?.summary || 'pounce-accordion-summary'}>
-				{state.summary}
+				{props.summary}
 			</summary>
 			<div class={adapter.classes?.content || 'pounce-accordion-content'}>
-				{state.children}
+				{props.children}
 			</div>
 		</details>
 	)

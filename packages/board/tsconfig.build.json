@@ -11,8 +11,9 @@
 		"declarationMap": true,
 		"outDir": "./dist",
 		"baseUrl": ".",
-		"jsx": "react-jsx",
-		"jsxImportSource": "@pounce/core",
+		"jsx": "react",
+		"jsxFactory": "h",
+		"jsxFragmentFactory": "Fragment",
 		"lib": [
 			"ES2022",
 			"DOM",
@@ -67,15 +68,6 @@
 			],
 			"mutts": [
 				"../../../mutts/src/index.ts"
-			],
-			"mutts/*": [
-				"../../../mutts/src/*"
-			],
-			"npc-script": [
-				"../../../npcs/src/index.ts"
-			],
-			"omni18n": [
-				"../../../omni18n/src/client.ts"
 			]
 		}
 	},

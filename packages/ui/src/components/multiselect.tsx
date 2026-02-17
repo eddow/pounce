@@ -1,16 +1,6 @@
-import { compose } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
-import { getVariantTrait } from '../shared/variants'
-import type { Trait } from '@pounce/core'
-
-/**
- * Helper to get variant traits as array or undefined
- */
-function getVariantTraits(variant: string | undefined): Trait[] | undefined {
-	const trait = getVariantTrait(variant)
-	return trait ? [trait] : undefined
-}
+import { variantProps } from '../shared/variants'
 
 componentStyle.sass`
 .pounce-multiselect
@@ -88,20 +78,19 @@ export type MultiselectProps<T> = {
  */
 export const Multiselect = <T,>(props: MultiselectProps<T>) => {
 	const adapter = getAdapter('Multiselect')
-	const state = compose({ closeOnSelect: true, variant: 'primary' }, props)
 	let detailsEl: HTMLDetailsElement | undefined
 
 	const handleItemClick = (item: T, event: MouseEvent) => {
 		event.preventDefault()
 		event.stopPropagation()
 
-		if (state.value.has(item)) {
-			state.value.delete(item)
+		if (props.value.has(item)) {
+			props.value.delete(item)
 		} else {
-			state.value.add(item)
+			props.value.add(item)
 		}
 
-		if (state.closeOnSelect && detailsEl) {
+		if ((props.closeOnSelect ?? true) && detailsEl) {
 			detailsEl.open = false
 			detailsEl.removeAttribute('open')
 		}
@@ -109,9 +98,9 @@ export const Multiselect = <T,>(props: MultiselectProps<T>) => {
 
 	return (
 		<details
-			class={[adapter.classes?.base || 'pounce-multiselect', state.class]}
-			traits={getVariantTraits(state.variant)}
-			{...state.el}
+			{...variantProps(props.variant)}
+			{...props.el}
+			class={[adapter.classes?.base || 'pounce-multiselect', props.class]}
 			this={detailsEl}
 		>
 			<summary
@@ -122,13 +111,13 @@ export const Multiselect = <T,>(props: MultiselectProps<T>) => {
 					if (details) details.open = !details.open
 				}}
 			>
-				{state.children}
+				{props.children}
 			</summary>
 			<ul role="listbox" aria-multiselectable="true" class={adapter.classes?.menu || 'pounce-multiselect-menu'}>
-				<for each={state.items}>
+				<for each={props.items}>
 					{(item: T) => {
-						const checked = state.value.has(item)
-						const rendered = state.renderItem(item, checked)
+						const checked = props.value.has(item)
+						const rendered = props.renderItem(item, checked)
 						if (rendered === false) return null
 						return (
 							<li

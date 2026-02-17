@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document, rootScope, type Scope } from '@pounce/core'
+import { latch, document, rootScope, type Scope } from '@pounce/core'
 import { reactive } from 'mutts'
 import { Env, type EnvSettings } from './index'
 
@@ -18,7 +18,7 @@ describe('Env', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders a container with display: contents', () => {

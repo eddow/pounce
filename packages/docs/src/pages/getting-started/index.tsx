@@ -44,7 +44,7 @@ const indexHtml = `<!DOCTYPE html>
 </body>
 </html>`
 
-const mainTsx = `import { bindApp } from '@pounce/core'
+const mainTsx = `import { latch } from '@pounce/core'
 import { setAdapter } from '@pounce/ui'
 import { picoAdapter } from '@pounce/adapter-pico'
 
@@ -59,7 +59,7 @@ function App() {
   )
 }
 
-bindApp(<App />, '#app')`
+latch('#app', <App />)`
 
 export default function GettingStartedPage() {
   return (

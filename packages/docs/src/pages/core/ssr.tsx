@@ -3,11 +3,11 @@ import { Code, Section } from '../../components'
 const dualEntry = `// @pounce/core has two entry points:
 //
 // Browser (dom):
-import { bindApp } from '@pounce/core'
+import { latch } from '@pounce/core'
 // → uses real document, window, etc.
 //
 // Node (node):
-import { bindApp } from '@pounce/core/node'
+import { latch } from '@pounce/core/node'
 // → uses JSDOM + AsyncLocalStorage proxies
 //
 // Both export the same API. The difference is how
@@ -19,9 +19,9 @@ const nodeEntry = `// In Node.js, @pounce/core/node sets up:
 //    gets its own isolated DOM context.
 
 import '@pounce/core/node'
-import { bindApp } from '@pounce/core'
+import { latch } from '@pounce/core'
 
-// Now bindApp() works in Node.js — renders to a JSDOM document.
+// Now latch() works in Node.js — renders to a JSDOM document.
 // Each concurrent request gets its own document via ALS.`
 
 const boardSSR = `// @pounce/board handles SSR automatically.

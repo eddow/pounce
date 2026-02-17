@@ -14,8 +14,9 @@
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noEmit": true,
-		"jsx": "react-jsx",
-		"jsxImportSource": "@pounce/core",
+		"jsx": "react",
+		"jsxFactory": "h",
+		"jsxFragmentFactory": "Fragment",
 		"strict": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
@@ -38,14 +39,8 @@
 			"@pounce/core/test": [
 				"../core/src/test/dom.ts"
 			],
-			"@pounce/core/jsx-runtime": [
-				"../core/dist/jsx-runtime.d.ts"
-			],
-			"@pounce/core/jsx-dev-runtime": [
-				"../core/dist/jsx-dev-runtime.d.ts"
-			],
 			"@pounce/kit": [
-				"../kit/src/index.ts"
+				"../kit/src/dom/index.ts"
 			],
 			"@pounce/kit/dom": [
 				"../kit/src/dom/index.ts"

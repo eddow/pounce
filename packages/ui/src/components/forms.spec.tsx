@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { Select, Combobox, Checkbox, Radio, Switch } from '../../src/components/forms'
 import { resetAdapter } from '../../src/adapter/registry'
 
@@ -19,7 +19,7 @@ describe('Select', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default class', () => {
@@ -56,7 +56,7 @@ describe('Combobox', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with input and datalist', () => {
@@ -86,7 +86,7 @@ describe('Checkbox', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with label', () => {
@@ -131,7 +131,7 @@ describe('Radio', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with label', () => {
@@ -160,7 +160,7 @@ describe('Switch', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with switch role', () => {

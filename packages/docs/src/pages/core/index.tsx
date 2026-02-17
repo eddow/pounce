@@ -1,20 +1,20 @@
 import { A } from '@pounce/kit'
 import { PackageHeader, Section, Code } from '../../components'
 
-const bindAppExample = `import { bindApp } from '@pounce/core'
+const bindAppExample = `import { latch } from '@pounce/core'
 
 function App() {
-  return <h1>Hello!</h1>
+  return <h1>Hello World</h1>
 }
 
 // Mount to a CSS selector (default: '#app')
-bindApp(<App />)
+latch('#app', <App />)
 
 // Or to a specific element
-bindApp(<App />, document.getElementById('root')!)
+latch(document.getElementById('root'), <App />)
 
 // Returns a cleanup function
-const unmount = bindApp(<App />, '#app')
+const unmount = latch('#app', <App />)
 unmount() // removes the app`
 
 export default function CorePage() {
@@ -34,7 +34,7 @@ export default function CorePage() {
 
       <Section title="Entry Point">
         <p>
-          <code>bindApp()</code> mounts a Pounce component tree into the DOM.
+          <code>latch()</code> mounts a Pounce component tree into the DOM.
           It sets up the root scope and starts the reactive rendering pipeline.
         </p>
         <Code code={bindAppExample} lang="tsx" />
@@ -57,7 +57,6 @@ export default function CorePage() {
           <li><A href="/core/components">Components</A> — <code>PounceElement</code>, render lifecycle, mount/use callbacks</li>
           <li><A href="/core/directives">Directives</A> — <code>if</code>, <code>when</code>, <code>for</code>, <code>dynamic</code></li>
           <li><A href="/core/scope">Scope</A> — prototype chain, <code>extend()</code>, <code>{'<scope>'}</code> element</li>
-          <li><A href="/core/compose">Compose</A> — <code>compose()</code>, <code>forwardProps()</code>, <code>propsInto()</code></li>
           <li><A href="/core/ssr">SSR</A> — Node entry point, JSDOM, AsyncLocalStorage</li>
         </ul>
       </Section>

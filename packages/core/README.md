@@ -75,7 +75,7 @@ Here's a simple counter component:
 
 ```tsx
 import { reactive } from 'mutts'
-import { bindApp } from '@pounce/core'
+import { latch } from '@pounce/core'
 
 function Counter() {
   const state = reactive({ count: 0 })
@@ -89,7 +89,7 @@ function Counter() {
   )
 }
 
-bindApp(() => <Counter />, '#app')
+latch('#app', () => <Counter />)
 ```
 
 ## 🎯 Key Concepts

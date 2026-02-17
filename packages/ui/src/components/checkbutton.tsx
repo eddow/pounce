@@ -1,7 +1,8 @@
-import { compose } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { reactive } from 'mutts'
+import { defaults } from '@pounce/core'
+import { componentStyle } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
-import { asVariant, getVariantTrait } from '../shared/variants'
+import { asVariant, variantProps } from '../shared/variants'
 import { Icon } from './icon'
 
 componentStyle.sass`
@@ -62,68 +63,62 @@ export type CheckButtonProps = {
 const CheckButtonBase = (props: CheckButtonProps) => {
 	const adapter = getAdapter('CheckButton')
 
-	const state = compose(
-		{ variant: 'primary', iconPosition: 'start', checked: false },
-		props,
-		(s) => ({
-			get iconElement() {
-				if (s.icon === undefined) return null
-				return (
-					<span
-						class={adapter.classes?.icon || 'pounce-checkbutton-icon'}
-						aria-hidden={typeof s.icon === 'string' ? true : undefined}
-					>
-						{typeof s.icon === 'string' ? <Icon name={s.icon} size="18px" /> : s.icon}
-					</span>
-				)
-			},
-			get hasLabel() {
-				return !!s.children && (!Array.isArray(s.children) || s.children.some((e: unknown) => !!e))
-			},
-			get isIconOnly() {
-				return !!s.icon && !this.hasLabel
-			},
-			get baseTrait() {
-				const classes = [
-					adapter.classes?.base || 'pounce-checkbutton',
-					s.checked ? (adapter.classes?.checked || 'pounce-checkbutton-checked') : null,
-					this.isIconOnly ? (adapter.classes?.iconOnly || 'pounce-checkbutton-icon-only') : null,
-				].filter((c): c is string => !!c)
-				return { classes }
-			},
-			get variantTrait() {
-				return getVariantTrait(s.variant)
-			},
-			get allTraits() {
-				return [this.baseTrait, this.variantTrait].filter((t): t is import('@pounce/core').Trait => !!t)
-			},
-		})
-	)
+	const local = reactive({ checked: props.checked ?? false })
+
+	const p = defaults(props, { iconPosition: 'start' as const })
+
+	const state = {
+		get iconElement() {
+			if (props.icon === undefined) return null
+			return (
+				<span
+					class={adapter.classes?.icon || 'pounce-checkbutton-icon'}
+					aria-hidden={typeof props.icon === 'string' ? true : undefined}
+				>
+					{typeof props.icon === 'string' ? <Icon name={props.icon} size="18px" /> : props.icon}
+				</span>
+			)
+		},
+		get hasLabel() {
+			return !!props.children && (!Array.isArray(props.children) || props.children.some((e: unknown) => !!e))
+		},
+		get isIconOnly() {
+			return !!props.icon && !this.hasLabel
+		},
+		get baseClass() {
+			return [
+				adapter.classes?.base || 'pounce-checkbutton',
+				local.checked ? (adapter.classes?.checked || 'pounce-checkbutton-checked') : null,
+				this.isIconOnly ? (adapter.classes?.iconOnly || 'pounce-checkbutton-icon-only') : null,
+			]
+		},
+	}
 
 	const handleClick = (e: MouseEvent) => {
-		if (state.el?.onClick) {
-			(state.el.onClick as (e: MouseEvent) => void)(e)
+		if (props.el?.onClick) {
+			(props.el.onClick as (e: MouseEvent) => void)(e)
 		}
 		if (e.defaultPrevented) return
-		state.checked = !state.checked
-		state.onCheckedChange?.(state.checked)
+		local.checked = !local.checked
+		props.onCheckedChange?.(local.checked)
 	}
 
 	return (
 		<button
-			{...state.el}
 			type="button"
+			{...variantProps(props.variant)}
+			{...props.el}
 			role="checkbox"
-			traits={state.allTraits}
-			aria-checked={`${state.checked ?? false}`}
+			class={state.baseClass}
+			aria-checked={`${local.checked}`}
 			aria-label={state.isIconOnly ? (props['aria-label'] ?? 'Toggle') : props['aria-label']}
 			onClick={handleClick}
 		>
-			{state.iconPosition === 'start' ? state.iconElement : null}
+			{p.iconPosition === 'start' ? state.iconElement : null}
 			<span if={state.hasLabel} class={adapter.classes?.label || 'pounce-checkbutton-label'}>
-				{state.children}
+				{props.children}
 			</span>
-			{state.iconPosition === 'end' ? state.iconElement : null}
+			{p.iconPosition === 'end' ? state.iconElement : null}
 		</button>
 	)
 }

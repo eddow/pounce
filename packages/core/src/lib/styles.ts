@@ -1,6 +1,4 @@
-function isObject(value: any): value is object {
-	return typeof value === 'object' && value !== null
-}
+import { isObject } from 'mutts'
 
 function isString(value: any): value is string {
 	return typeof value === 'string'
@@ -35,11 +33,6 @@ export function classNames(input: ClassInput, classes: string[] = []): string {
 
 	return classes.join(' ')
 }
-
-/**
- * Alternative function name for convenience
- */
-export const cn = classNames
 
 /**
  * Utility for generating inline style objects
@@ -81,10 +74,8 @@ function parseCssText(cssText: string): StyleRecord {
  * Merge style inputs into a single object. Later inputs override earlier ones.
  * - Accepts objects, arrays (nested), falsy values (ignored), and CSS text strings.
  */
-export function styles<T extends Record<string, any> = Record<string, any>>(
-	...inputs: StyleInput[]
-): T {
-	const result: Record<string, StylePrimitive> = {}
+export function styles(...inputs: StyleInput[]): StyleRecord {
+	const result: StyleRecord = {}
 
 	function apply(input: StyleInput): void {
 		if (!input) return
@@ -92,24 +83,14 @@ export function styles<T extends Record<string, any> = Record<string, any>>(
 			for (const item of input) apply(item)
 			return
 		}
-		if (isString(input)) {
-			const parsed = parseCssText(input)
-			for (const [k, v] of Object.entries(parsed))
-				if (v !== false && v != null) result[k] = v as StylePrimitive
-			return
-		}
-		if (isObject(input)) {
+		if (isString(input)) input = parseCssText(input)
+		if (isObject(input))
 			for (const [k, v] of Object.entries(input))
-				if (v !== false && v != null) result[k] = v as StylePrimitive
-		}
+				if (v !== false && v !== null) result[k] = v as StylePrimitive
+				else delete result[k]
 	}
 
 	for (const input of inputs) apply(input)
 
-	return result as T
+	return result
 }
-
-/**
- * Alias for ergonomics (similar to `cn` for classNames)
- */
-export const sx = styles

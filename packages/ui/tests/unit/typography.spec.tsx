@@ -1,6 +1,6 @@
 /// <reference path="../../node_modules/@pounce/core/src/types/jsx.d.ts" />
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { Heading, Text, Link } from '../../src/components/typography'
 import { installTestAdapter, resetAdapter } from '../test-adapter'
 
@@ -21,7 +21,7 @@ describe('Heading', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default level 2', () => {
@@ -98,7 +98,7 @@ describe('Heading', () => {
 		expect(heading?.tagName).toBe('H2')
 	})
 
-	it('applies variant trait from adapter', () => {
+	it('applies variant from adapter', () => {
 		installTestAdapter()
 		render(<Heading variant="success">Success</Heading>)
 		const heading = container.querySelector('.test-heading')
@@ -131,7 +131,7 @@ describe('Text', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default props', () => {
@@ -191,7 +191,7 @@ describe('Text', () => {
 		expect(text).toBeTruthy()
 	})
 
-	it('applies variant trait from adapter', () => {
+	it('applies variant from adapter', () => {
 		installTestAdapter()
 		render(<Text variant="danger">Error</Text>)
 		const text = container.querySelector('.test-text')
@@ -217,7 +217,7 @@ describe('Link', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default props', () => {
@@ -272,7 +272,7 @@ describe('Link', () => {
 		expect(link).toBeTruthy()
 	})
 
-	it('applies variant trait from adapter', () => {
+	it('applies variant from adapter', () => {
 		installTestAdapter()
 		render(<Link href="/test" variant="warning">Warning</Link>)
 		const link = container.querySelector('.test-link')

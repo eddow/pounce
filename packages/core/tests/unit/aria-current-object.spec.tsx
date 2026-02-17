@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document, r, ReactiveProp } from '@pounce/core'
-import { jsx } from '@pounce/core/jsx-runtime'
+import { latch, document, r, ReactiveProp } from '@pounce/core'
 
 describe('aria-current [object Object] bug', () => {
 	let container: HTMLElement
@@ -30,7 +29,8 @@ describe('aria-current [object Object] bug', () => {
 			)
 		}
 
-		unmount = bindApp(
+		unmount = latch(
+			'#app',
 			<div>
 				<MyLink href="/active" data-testid="active">Active</MyLink>
 				<MyLink href="/other" data-testid="other">Other</MyLink>
@@ -54,16 +54,16 @@ describe('aria-current [object Object] bug', () => {
 		const pathname = '/active'
 
 		function ACompiledStyle(props: Record<string, any>) {
-			return jsx("a" as any, {
+			return h("a", {
 				...props,
 				"aria-current": r(() => props['aria-current'] ?? (pathname === props.href ? 'page' : undefined)),
-				children: r(() => props.children),
-			})
+			}, r(() => props.children))
 		}
 
 		// Caller: <ACompiledStyle href="/active" data-testid="compiled-active">Link</ACompiledStyle>
 		// The caller's babel wraps: href={r(() => "/active")}, children={r(() => "Link")}
-		unmount = bindApp(
+		unmount = latch(
+			'#app',
 			<div>
 				<ACompiledStyle href="/active" data-testid="compiled-active">Active</ACompiledStyle>
 				<ACompiledStyle href="/other" data-testid="compiled-other">Other</ACompiledStyle>
@@ -97,7 +97,7 @@ describe('aria-current [object Object] bug', () => {
 			const resolved = props['aria-current'] ?? 'fallback'
 			console.log('resolved via ??:', resolved, typeof resolved)
 
-			return jsx("span" as any, {
+			return h("span", {
 				'data-testid': 'check-result',
 				'data-resolved': r(() => {
 					const val = props['aria-current'] ?? 'fallback'
@@ -106,7 +106,8 @@ describe('aria-current [object Object] bug', () => {
 			})
 		}
 
-		unmount = bindApp(
+		unmount = latch(
+			'#app',
 			<div>
 				<CheckComponent href="/active" data-testid="check" />
 			</div>,

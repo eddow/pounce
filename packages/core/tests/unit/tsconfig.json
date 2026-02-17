@@ -9,12 +9,6 @@
 			"mutts/*": [
 				"../../../../../mutts/*"
 			],
-			"@pounce/core/jsx-runtime": [
-				"src/runtime/jsx-runtime.ts"
-			],
-			"@pounce/core/jsx-dev-runtime": [
-				"src/runtime/jsx-dev-runtime.ts"
-			],
 			"@pounce/core": [
 				"src/lib/node/index.ts",
 			]

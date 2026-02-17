@@ -11,10 +11,6 @@ export default defineConfig({
     ...pounceCorePackage({
       core: {
         projectRoot: projectRootDir,
-        jsxRuntime: {
-          runtime: 'automatic',
-          importSource: '@pounce/core',
-        },
       },
       dts: {
         rollupTypes: true,

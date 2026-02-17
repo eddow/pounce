@@ -11,8 +11,6 @@ export default defineConfig({
 			'@pounce/board/client': resolve(__dirname, '../../../src/client/index.ts'),
 			'@pounce/board/server': resolve(__dirname, '../../../src/server/index.ts'),
 			'@pounce/board': resolve(__dirname, '../../../src/index.ts'),
-			'@pounce/core/jsx-runtime': resolve(__dirname, '../../../../core/src/runtime/jsx-runtime.ts'),
-			'@pounce/core/jsx-dev-runtime': resolve(__dirname, '../../../../core/src/runtime/jsx-dev-runtime.ts'),
 			'@pounce/core/server': resolve(__dirname, '../../../../core/src/lib/server.ts'),
 			'@pounce/core': resolve(__dirname, '../../../../core/src/lib/index.ts'),
 			'mutts': resolve(__dirname, '../../../../mutts/src/index.ts'),
@@ -39,8 +37,9 @@ export default defineConfig({
 						[
 							'@babel/plugin-transform-react-jsx',
 							{
-								runtime: 'automatic',
-								importSource: '@pounce/core',
+								runtime: 'classic',
+								pragma: 'h',
+								pragmaFrag: 'Fragment',
 								throwIfNamespace: false,
 							},
 						],

@@ -32,7 +32,7 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Vue
 - **Native DOM events**: `onClick`, `onInput`, … directly attach to DOM; no synthetic system. Vue uses event modifiers and emits for component events.
 
 ### Application Structure
-- **Mounting**: `bindApp(<App />, '#app')` vs `createApp(App).mount('#app')`.
+- **Mounting**: `latch('#app', <App />)` vs `createApp(App).mount('#app')`.
 - **No DI/runtime**: Pounce has no DI container; Vue has plugin system and app instance.
 
 ### Quick mapping

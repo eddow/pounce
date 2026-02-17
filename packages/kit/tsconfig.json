@@ -4,8 +4,9 @@
 		"module": "ESNext",
 		"moduleResolution": "bundler",
 		"strict": true,
-		"jsx": "react-jsx",
-		"jsxImportSource": "@pounce/core",
+		"jsx": "react",
+		"jsxFactory": "h",
+		"jsxFragmentFactory": "Fragment",
 		"lib": [
 			"ESNext",
 			"DOM",
@@ -27,9 +28,6 @@
 			],
 			"@pounce/core/*": [
 				"../core/src/*"
-			],
-			"@pounce/core/jsx-runtime": [
-				"../core/src/runtime/jsx-runtime.ts"
 			],
 			"mutts": [
 				"../../../mutts/dist/index.d.ts"

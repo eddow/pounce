@@ -6,14 +6,7 @@ import { pureGlyfPlugin } from 'pure-glyf/plugin'
 export default defineConfig({
 	root: resolve(import.meta.dirname, '.'),
 	plugins: [
-		...pounceCorePackage({
-			core: {
-				jsxRuntime: {
-					runtime: 'automatic',
-					importSource: '@pounce/core',
-				},
-			}
-		}),
+		...pounceCorePackage(),
 		pureGlyfPlugin({
 			icons: { tabler: resolve(import.meta.dirname, '..', 'node_modules', '@tabler', 'icons', 'icons', 'outline') },
 			dts: resolve(import.meta.dirname, 'pure-glyf.d.ts'),

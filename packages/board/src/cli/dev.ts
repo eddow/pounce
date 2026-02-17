@@ -49,8 +49,6 @@ export async function runDevServer(options: DevServerOptions = {}) {
 		appType: 'custom',
 		resolve: {
 			alias: {
-				'@pounce/core/jsx-runtime': path.resolve(__dirname, '../../../core/src/runtime/jsx-runtime.ts'),
-				'@pounce/core/jsx-dev-runtime': path.resolve(__dirname, '../../../core/src/runtime/jsx-dev-runtime.ts'),
 				'@pounce/core': path.resolve(__dirname, '../../../core/src/lib'),
 				'mutts': path.resolve(__dirname, '../../../../mutts/src'),
 				'@pounce/board/client': path.resolve(__dirname, '../lib/http/client.ts'),

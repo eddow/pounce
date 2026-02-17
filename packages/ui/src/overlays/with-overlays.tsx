@@ -1,7 +1,7 @@
 import { type Scope } from '@pounce/core'
 import { reactive } from 'mutts'
 import { type OverlayEntry, type PushOverlayFunction } from './manager'
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 import { perf } from '../perf'
 import { getTransitionConfig, applyTransition } from '../shared/transitions'
 import type { ComponentName } from '../adapter/types'
@@ -145,7 +145,7 @@ export const WithOverlays = (props: WithOverlaysProps, scope: Scope) => {
 
 	const push: PushOverlayFunction = (spec) => {
 		perf?.mark('overlay:show')
-		
+
 		return new Promise((resolve) => {
 			const entry: OverlayEntry = {
 				...spec,

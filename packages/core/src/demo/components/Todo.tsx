@@ -2,13 +2,13 @@
  * Todo Web Component using inline JSX templating
  */
 
-import { memoize } from 'mutts'
+import { memoize, type Register } from 'mutts'
 import './Todo.scss'
-import { array, compose } from '../../lib/utils'
+import { extend } from '../../lib/utils'
 
 //import { Scope } from '../lib'
 
-interface Todo {
+export interface Todo {
 	id: number
 	text: string
 	completed: boolean
@@ -22,13 +22,13 @@ export default function TodoWebComponent(
 		showClearCompleted?: boolean
 		maxTodos?: number
 		allowEmptyTodos?: boolean
-		todos: Todo[]
+		todos: Register<Todo, number>
 		filter?: 'all' | 'active' | 'completed'
 		newTodoText?: string
 	}
 	//scope: Scope
 ) {
-	const state = compose(
+	const state = extend(
 		{
 			placeholder: 'Add a new todo...',
 			showFilters: true,
@@ -45,7 +45,7 @@ export default function TodoWebComponent(
 
 		// Validate based on typed props
 		if (!text && !allowEmptyTodos) return
-		if (maxTodos && state.todos.length >= maxTodos) return
+		if (maxTodos && props.todos.length >= maxTodos) return
 
 		const newTodo: Todo = {
 			id: Date.now(),
@@ -54,34 +54,37 @@ export default function TodoWebComponent(
 			createdAt: new Date(),
 		}
 
-		state.todos.push(newTodo)
+		props.todos.push(newTodo)
 		state.newTodoText = ''
 	}
 
 	function deleteTodo(id: number) {
-		array.filter(state.todos, (t) => t.id !== id)
+		props.todos.remove(id)
 	}
 
 	function clearCompleted() {
-		array.filter(state.todos, (todo) => !todo.completed)
+		props.todos.keep((todo) => !todo.completed)
 	}
 
-	const activeCount = () => state.todos.filter((todo) => !todo.completed).length
-	const completedCount = () => state.todos.filter((todo) => todo.completed).length
-
-	const filteredTodos = memoize(() => {
-		switch (state.filter) {
-			case 'active':
-				return state.todos.filter((todo) => !todo.completed)
-			case 'completed':
-				return state.todos.filter((todo) => todo.completed)
-			default:
-				return state.todos
-		}
+	const computed = memoize({
+		get activeCount() {
+			return props.todos.reduce((count, todo) => count + (todo.completed ? 0 : 1), 0)
+		},
+		get completedCount() {
+			return props.todos.reduce((count, todo) => count + (todo.completed ? 1 : 0), 0)
+		},
+		get filteredTodos() {
+			switch (state.filter) {
+				case 'active':
+					return props.todos.filter((todo) => !todo.completed)
+				case 'completed':
+					return props.todos.filter((todo) => todo.completed)
+				default:
+					// Return array to be consistent with other branches and <for> expectations
+					return props.todos.toArray()
+			}
+		},
 	})
-	function setFilter(filter: 'all' | 'active' | 'completed') {
-		state.filter = filter
-	}
 	return (
 		<>
 			<h2>Todo Component (JSX)</h2>
@@ -104,28 +107,28 @@ export default function TodoWebComponent(
 			<div if={state.showFilters} class="filters">
 				<button
 					class={['filter-button', { active: state.filter === 'all' }]}
-					onClick={() => setFilter('all')}
+					onClick={() => (state.filter = 'all')}
 				>
 					All
 				</button>
 				<button
 					class={['filter-button', { active: state.filter === 'active' }]}
-					onClick={() => setFilter('active')}
+					onClick={() => (state.filter = 'active')}
 				>
-					Active ({activeCount()})
+					Active ({computed.activeCount})
 				</button>
 				<button
 					class={['filter-button', { active: state.filter === 'completed' }]}
-					onClick={() => setFilter('completed')}
+					onClick={() => (state.filter = 'completed')}
 				>
-					Completed ({completedCount()})
+					Completed ({computed.completedCount})
 				</button>
 			</div>
 
 			{/* Todo list */}
 			<>
-				<div if={filteredTodos().length > 0} class="todo-list">
-					<for each={filteredTodos()}>
+				<div if={computed.filteredTodos.length > 0} class="todo-list">
+					<for each={computed.filteredTodos}>
 						{(todo) => (
 							<div class="todo-item">
 								<input type="checkbox" checked={todo.completed} />
@@ -138,14 +141,14 @@ export default function TodoWebComponent(
 					</for>
 				</div>
 				<div else class="empty-message">
-					{state.todos.length === 0 ? 'No todos yet. Add one above!' : `No ${state.filter} todos.`}
+					{props.todos.length === 0 ? 'No todos yet. Add one above!' : `No ${state.filter} todos.`}
 				</div>
 			</>
 
 			{/* Clear completed section */}
-			<div if={state.showClearCompleted && completedCount() > 0} class="clear-section">
+			<div if={state.showClearCompleted && computed.completedCount > 0} class="clear-section">
 				<button class="clear-button" onClick={clearCompleted}>
-					Clear {completedCount()} completed
+					Clear {computed.completedCount} completed
 				</button>
 			</div>
 		</>

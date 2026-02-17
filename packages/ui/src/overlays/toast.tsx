@@ -1,12 +1,12 @@
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 import { type OverlaySpec, type PushOverlayFunction } from './manager'
-import { getVariantTrait } from '../shared/variants'
+import { variantProps } from '../shared/variants'
 import { getAdapter } from '../adapter/registry'
 
 declare module './manager' {
-	interface OverlayHelpers {
-		toast: ReturnType<typeof bindToast>
-	}
+    interface OverlayHelpers {
+        toast: ReturnType<typeof bindToast>
+    }
 }
 
 componentStyle.sass`
@@ -88,8 +88,8 @@ export const Toast = {
 
                 return (
                     <div
+                        {...variantProps(opts.variant)}
                         class={adapter.classes?.base || 'pounce-toast'}
-                        traits={getVariantTrait(opts.variant)}
                         role={opts.variant === 'danger' ? 'alert' : 'status'}
                     >
                         <div class="pounce-toast-content">

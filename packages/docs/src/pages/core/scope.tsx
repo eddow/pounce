@@ -56,13 +56,13 @@ function App() {
 const rootScope = `import { rootScope } from '@pounce/core'
 
 // rootScope is the top-level scope object.
-// bindApp() passes it (or a child of it) to the root component.
+// latch() passes it (or a child of it) to the root component.
 // You can pre-populate it before mounting:
 
 rootScope.apiUrl = '/api/v2'
 rootScope.debug = true
 
-bindApp(<App />, '#app')
+latch('#app', <App />)
 // App's scope inherits from rootScope`
 
 export default function ScopePage() {

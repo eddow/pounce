@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { InfiniteScroll } from '../../src/components/infinite-scroll'
 import { installTestAdapter, resetAdapter } from '../../tests/test-adapter'
 
@@ -20,7 +20,7 @@ describe('InfiniteScroll', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders scroll container with adapter base class', () => {

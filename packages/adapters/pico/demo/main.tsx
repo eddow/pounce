@@ -1,4 +1,4 @@
-import { bindApp } from '@pounce/core'
+import { latch } from '@pounce/core'
 import { mount, tablerSun, tablerMoon, tablerChevronDown, tablerCheck, tablerX, tablerPlus, tablerMinus, tablerSearch, tablerMenu, tablerAlertTriangle, tablerInfoCircle, tablerEye, tablerEyeOff, tablerSettings, tablerUser, tablerLogout, tablerBell, tablerStar, tablerHeart, tablerTrash, tablerEdit, tablerCopy, tablerClipboard, tablerArrowLeft, tablerArrowRight, tablerArrowUp, tablerArrowDown } from 'pure-glyf/icons'
 import { setAdapter } from '../../../ui/src'
 import { createGlyfIconFactory, picoAdapter } from '../src'
@@ -49,4 +49,4 @@ const App = DemoApp({
 	],
 })
 
-bindApp(<App />, '#app')
+latch('#app', <App />)

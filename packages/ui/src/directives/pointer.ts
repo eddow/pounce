@@ -1,3 +1,5 @@
+import { isObject } from "mutts"
+
 export type PointerState = {
 	x: number
 	y: number
@@ -6,10 +8,6 @@ export type PointerState = {
 
 export type PointerOptions = {
 	value: PointerState | undefined
-}
-
-function isObject(value: any): value is Record<PropertyKey, any> {
-	return value && typeof value === 'object'
 }
 
 export function pointer(target: Node | Node[], value: any, _scope: Record<PropertyKey, any>) {

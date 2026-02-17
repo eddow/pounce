@@ -2,7 +2,7 @@
  * Reusable test adapter for @pounce/ui unit tests.
  * 
  * Provides a minimal but complete FrameworkAdapter covering all orthogonal concerns:
- * - Variants (as Trait objects with classes, attributes, styles)
+ * - Variants (as JSX-spreadable attribute bags)
  * - Transitions (global defaults + per-component overrides)
  * - Component adaptations (class overrides for key components)
  * 
@@ -12,31 +12,32 @@
  *   afterEach(() => resetAdapter())
  */
 import type { FrameworkAdapter } from '../src/adapter/types'
-import type { Trait } from '@pounce/core'
 import { setAdapter, resetAdapter } from '../src/adapter/registry'
 
-// --- Variant Traits ---
+// --- Variants ---
 
-export const TEST_VARIANTS: Record<string, Trait> = {
+export const TEST_VARIANTS: Record<string, JSX.GlobalHTMLAttributes> = {
 	primary: {
-		classes: ['test-primary'],
-		attributes: { 'data-variant': 'primary' },
+		class: 'test-primary',
+		'data-variant': 'primary',
 	},
 	secondary: {
-		classes: ['test-secondary'],
-		attributes: { 'data-variant': 'secondary' },
+		class: 'test-secondary',
+		'data-variant': 'secondary',
 	},
 	success: {
-		classes: ['test-success'],
-		attributes: { 'data-variant': 'success', 'aria-live': 'polite' },
+		class: 'test-success',
+		'data-variant': 'success',
+		'aria-live': 'polite',
 	},
 	danger: {
-		classes: ['test-danger'],
-		attributes: { 'data-variant': 'danger', 'aria-live': 'assertive' },
+		class: 'test-danger',
+		'data-variant': 'danger',
+		'aria-live': 'assertive',
 	},
 	warning: {
-		classes: ['test-warning'],
-		attributes: { 'data-variant': 'warning' },
+		class: 'test-warning',
+		'data-variant': 'warning',
 	},
 }
 

@@ -1,17 +1,10 @@
-import { type EffectOptions, effect, reactiveOptions } from 'mutts'
+import { reactiveOptions } from 'mutts'
 import { window } from '../shared'
 
 export * from './debug-helpers'
 
 // ... (rest of imports)
 
-export function nf<T extends Function>(name: string, fn: T): T {
-	if (!fn.name) Object.defineProperty(fn, 'name', { value: name })
-	return fn
-}
-export function namedEffect(name: string, fn: () => void, options?: EffectOptions): () => void {
-	return effect(nf(name, fn), options)
-}
 export class AssertionError extends Error {
 	constructor(message: string) {
 		super(`Assertion failure: ${message}`)

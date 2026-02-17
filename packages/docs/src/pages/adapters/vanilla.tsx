@@ -21,7 +21,7 @@ export default function VanillaAdapterPage() {
 				<ul>
 					<li><strong>Variants</strong>: Connects <code>variant="primary"</code> to <code>.pounce-variant-primary</code> CSS classes.</li>
 					<li><strong>Transitions</strong>: Provides default fade-in/out animations for overlays and lists.</li>
-					<li><strong>A11y</strong>: Maps design traits to the correct ARIA attributes automatically.</li>
+					<li><strong>A11y</strong>: Maps variant attributes to the correct ARIA attributes automatically.</li>
 				</ul>
 			</Section>
 

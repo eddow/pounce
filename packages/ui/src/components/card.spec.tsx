@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { Card } from '../../src/components/card'
 import { installTestAdapter, resetAdapter } from '../../tests/test-adapter'
 
@@ -20,7 +20,7 @@ describe('Card', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders as <article> with adapter base class', () => {

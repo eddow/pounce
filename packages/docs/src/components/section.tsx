@@ -1,4 +1,4 @@
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 
 componentStyle.sass`
 .doc-section

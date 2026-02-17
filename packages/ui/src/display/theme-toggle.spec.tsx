@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { Env, type EnvSettings } from '@pounce/kit/env'
 import { reactive } from 'mutts'
 import { ThemeToggle } from './theme-toggle'
@@ -22,7 +22,7 @@ describe('ThemeToggle', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	const makeSettings = (overrides: EnvSettings = {}): EnvSettings =>

@@ -1,6 +1,6 @@
 /// <reference path="../../node_modules/@pounce/core/src/types/jsx.d.ts" />
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { Toolbar } from '../../src/components/toolbar'
 import { setAdapter, resetAdapter } from '../../src/adapter/registry'
 
@@ -20,7 +20,7 @@ describe('Toolbar', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default props', () => {
@@ -91,7 +91,7 @@ describe('Toolbar.Spacer', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders invisible spacer by default', () => {

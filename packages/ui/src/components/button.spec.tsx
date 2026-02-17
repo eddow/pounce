@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { Button } from '../../src/components/button'
 import { setAdapter, resetAdapter } from '../../src/adapter/registry'
 import { vanillaAdapter } from '../../src/adapter/vanilla'
@@ -21,7 +21,7 @@ describe('Button', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	// Basic Rendering Tests (inspired by Pico's basic rendering tests)

@@ -1,7 +1,6 @@
 import { reactive } from 'mutts'
-import { bindApp } from '@pounce/core'
+import { latch } from '@pounce/core'
 import { testing } from '../../../src/lib/debug'
-import ForwardPropsTests from './ForwardPropsTests'
 import DynamicTests from './DynamicTests'
 
 declare global {
@@ -43,10 +42,6 @@ async function loadFixtureFixture() {
 	try {
 		const fixtures = import.meta.glob('./*Tests.tsx') as Record<string, () => Promise<{ default: any }>>
 		// Manual override ensuring it is set
-		fixtures['./ForwardPropsTests.tsx'] = async () => {
-			console.log('Loading Manual ForwardPropsTests')
-			return { default: ForwardPropsTests }
-		}
 		fixtures['./DynamicTests.tsx'] = async () => {
 			console.log('Loading Manual DynamicTests')
 			return { default: DynamicTests }
@@ -125,6 +120,6 @@ export function initTests() {
 	window.addEventListener('hashchange', loadFixtureFixture)
 	loadFixtureFixture()
 
-	bindApp(<TestRouter />, '#tests')
+	latch('#tests', <TestRouter />)
 }
 

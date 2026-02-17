@@ -9,17 +9,11 @@ export default defineConfig({
   plugins: [
     pounceCorePlugin({
       projectRoot: boardDir,
-      jsxRuntime: {
-        runtime: 'automatic',
-        importSource: '@pounce/core',
-      },
     }),
   ],
   esbuild: false,
   resolve: {
     alias: {
-      'pounce-ts/jsx-runtime': resolve(boardDir, '../core/src/runtime/jsx-runtime.ts'),
-      'pounce-ts/jsx-dev-runtime': resolve(boardDir, '../core/src/runtime/jsx-dev-runtime.ts'),
       'pounce-ts/server': resolve(boardDir, '../core/src/node/index.ts'),
       'pounce-ts': resolve(boardDir, '../core/src'),
       'pounce-ui': resolve(boardDir, '../ui/src'),

@@ -180,7 +180,7 @@ Applied as attributes on any element or component:
 ```tsx
 import { compose } from '@pounce/core'
 import { effect } from 'mutts'
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 
 // CSS injection (processed at build time by Vite plugin)
 componentStyle.sass`
@@ -362,7 +362,7 @@ Syntax: `[param]`, `[param:format]` (uuid, integer, etc.), `[...catchAll]`, opti
 ### 4.4 CSS Injection
 
 ```tsx
-import { css, sass, componentStyle, baseStyle } from '@pounce/kit/dom'
+import { css, sass, componentStyle, baseStyle } from '@pounce/kit'
 
 // Template tag — processed at build time by Vite plugin
 componentStyle.sass`
@@ -379,7 +379,7 @@ componentStyle.sass`
 ### 4.5 localStorage Persistence
 
 ```ts
-import { stored } from '@pounce/kit/dom'
+import { stored } from '@pounce/kit'
 
 const prefs = stored({ theme: 'light', fontSize: 14 })
 // Reactive object synced to localStorage
@@ -507,7 +507,7 @@ const MyContent = (props, scope) => {
 
 ```tsx
 import { compose } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 import { getAdapter } from '@pounce/ui'
 import { asVariant, getVariantTrait } from '@pounce/ui'
 

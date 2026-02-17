@@ -56,7 +56,7 @@ baseStyle.css`.pounce-reset { box-sizing: border-box; }`
 ### SSR CSS Collection
 
 ```typescript
-import { getSSRStyles } from '@pounce/kit/dom'
+import { getSSRStyles } from '@pounce/kit'
 
 // Returns <style data-hydrated-hashes="...">...</style> for injection into <head>
 const styleTag = getSSRStyles()

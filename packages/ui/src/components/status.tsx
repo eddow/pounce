@@ -1,17 +1,9 @@
-import { compose } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { reactive } from 'mutts'
+import { defaults } from '@pounce/core'
+import { componentStyle } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
-import { asVariant, getVariantTrait } from '../shared/variants'
+import { asVariant, variantProps } from '../shared/variants'
 import { Icon } from './icon'
-import type { Trait } from '@pounce/core'
-
-/**
- * Helper to get variant traits as array or undefined
- */
-function getVariantTraits(variant: string | undefined): Trait[] | undefined {
-	const trait = getVariantTrait(variant)
-	return trait ? [trait] : undefined
-}
 
 componentStyle.sass`
 .pounce-badge,
@@ -117,17 +109,15 @@ export type BadgeProps = {
 
 const BadgeBase = (props: BadgeProps) => {
 	const adapter = getAdapter('Badge')
-	const state = compose({ tag: 'span', variant: 'primary' }, props)
-	const baseTrait = { classes: [adapter.classes?.base || 'pounce-badge'] }
-
 	return (
 		<dynamic
-			tag={state.tag}
-			{...state.el}
-			traits={[baseTrait, ...(getVariantTraits(state.variant) || [])]}
+			tag={props.tag ?? 'span'}
+			{...variantProps(props.variant)}
+			{...props.el}
+			class={adapter.classes?.base || 'pounce-badge'}
 		>
-			{renderIcon(state.icon, '14px')}
-			<span class={adapter.classes?.label || 'pounce-token-label'}>{state.children}</span>
+			{renderIcon(props.icon, '14px')}
+			<span class={adapter.classes?.label || 'pounce-token-label'}>{props.children}</span>
 		</dynamic>
 	)
 }
@@ -164,18 +154,16 @@ export type PillProps = {
 
 const PillBase = (props: PillProps) => {
 	const adapter = getAdapter('Pill')
-	const state = compose({ tag: 'span', variant: 'primary' }, props)
-	const baseTrait = { classes: [adapter.classes?.base || 'pounce-pill'] }
-
 	return (
 		<dynamic
-			tag={state.tag}
-			{...state.el}
-			traits={[baseTrait, ...(getVariantTraits(state.variant) || [])]}
+			tag={props.tag ?? 'span'}
+			{...variantProps(props.variant)}
+			{...props.el}
+			class={adapter.classes?.base || 'pounce-pill'}
 		>
-			{renderIcon(state.icon)}
-			<span class={adapter.classes?.label || 'pounce-token-label'}>{state.children}</span>
-			{renderIcon(state.trailingIcon)}
+			{renderIcon(props.icon)}
+			<span class={adapter.classes?.label || 'pounce-token-label'}>{props.children}</span>
+			{renderIcon(props.trailingIcon)}
 		</dynamic>
 	)
 }
@@ -215,52 +203,52 @@ export type ChipProps = {
 
 const ChipBase = (props: ChipProps) => {
 	const adapter = getAdapter('Chip')
-	const state = compose(
-		{ tag: 'button', variant: 'secondary', dismissible: false, open: true },
-		props
-	)
-	const baseTrait = { classes: [adapter.classes?.base || 'pounce-chip'] }
-
+	const local = reactive({ open: true })
 	function close() {
-		state.open = false
-		state.onDismiss?.()
+		local.open = false
+		props.onDismiss?.()
 	}
 
-	const containerTag =
-		(state.tag === 'button' || state.tag === undefined) && state.dismissible ? 'div' : state.tag
-	const containerRole = containerTag === 'div' && state.dismissible ? 'group' : undefined
+	const p = defaults(props, { tag: 'button' as JSX.HTMLElementTag, dismissible: false })
+	const state = {
+		get containerTag() { return (p.tag === 'button') && p.dismissible ? 'div' as const : p.tag },
+		get containerRole() { return this.containerTag === 'div' && p.dismissible ? 'group' as const : undefined },
+	}
+	const baseClass = adapter.classes?.base || 'pounce-chip'
 
 	return (
 		<dynamic
-			tag={containerTag}
-			role={containerRole}
-			{...state.el}
-			traits={[baseTrait, ...(getVariantTraits(state.variant) || [])]}
+			tag={state.containerTag}
+			role={state.containerRole}
+			{...variantProps(props.variant)}
+			{...props.el}
+			class={baseClass}
 		>
 			<dynamic
-				if={state.open}
-				tag={containerTag}
-				type={containerTag === 'button' ? 'button' : undefined}
-				{...state.el}
-				role={containerRole}
-				traits={[baseTrait, ...(getVariantTraits(state.variant) || [])]}
+				if={local.open}
+				tag={state.containerTag}
+				type={state.containerTag === 'button' ? 'button' : undefined}
+				{...props.el}
+				role={state.containerRole}
+				{...variantProps(props.variant)}
+				class={baseClass}
 			>
-			{renderIcon(state.icon)}
-			<span class={adapter.classes?.label || 'pounce-token-label'}>{state.children}</span>
-			<button
-				if={state.dismissible}
-				type="button"
-				class={adapter.classes?.dismiss || 'pounce-chip-dismiss'}
-				aria-label={state.dismissLabel ?? 'Remove'}
-				onClick={(event) => {
-					event.stopPropagation()
-					close()
-				}}
-			>
-				<Icon name="x" size="14px" />
-			</button>
+				{renderIcon(props.icon)}
+				<span class={adapter.classes?.label || 'pounce-token-label'}>{props.children}</span>
+				<button
+					if={p.dismissible}
+					type="button"
+					class={adapter.classes?.dismiss || 'pounce-chip-dismiss'}
+					aria-label={props.dismissLabel ?? 'Remove'}
+					onClick={(event) => {
+						event.stopPropagation()
+						close()
+					}}
+				>
+					<Icon name="x" size="14px" />
+				</button>
+			</dynamic>
 		</dynamic>
-	</dynamic>
 	)
 }
 

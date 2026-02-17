@@ -9,6 +9,12 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
 *   **No VDOM**: `h()` returns a "Mountable" object with a `render(scope)` method, not a virtual node description.
 *   **Direct Updates**: Components render once. Updates happen via reactive effects attached to DOM elements.
 *   **Scope**: Components receive a `scope` object (in addition to props) which allows dependency injection down the tree.
+*   **Reconciliation (`processChildren`)**:
+    *   **Two-Stage Pipeline**: 
+        1.  `morph` subscribes to array mutations and handles element creation/conditional rendering.
+        2.  `lift` flattens nested arrays of nodes.
+    *   **Lazy Evaluation**: Wrapped in `ReactiveProp` so the pipeline only activates when children are actually needed.
+    *   **Caching**: `weakCached` ensures elements aren't re-created unnecessarily.
 
 > [!IMPORTANT]
 > **NO MANUAL CALLBACKS IN JSX EXPRESSIONS**
@@ -39,6 +45,9 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
     *   **Writing**: Assigning `props.value = x` calls the underlying setter (updates the source state). props are NOT read-only!
     *   **Implication**: When passing props to custom components, the binding object is passed through. If the custom component uses `compose` and spreads state to an underlying native element (e.g., `<input {...state} />`), the binding is propagated, enabling implicit two-way binding without manual event handlers.
 *   **Destructuring Hazard**: `const { value } = props` will read the property immediately. If done outside a tracking context (like an effect), it breaks reactivity for that variable. *Always access props usage-side or keep them in the props object.*
+*   **Body Access Hazard**: Reading `props.foo` directly in the component function body (outside an effect/memo) creates a dependency on that prop for the *entire component*. If `props.foo` changes, the component function re-runs (re-renders), which is often unnecessary for fine-grained reactivity.
+    *   **Bad**: `const x = props.foo; return <div>{x}</div>` (Component re-runs when `foo` changes).
+    *   **Good**: `const computed = { get x() { return props.foo; } }; return <div>{computed.x}</div>` (Only the binding updates).
 
 ### 4. Directives (`use`)
 *   **`use={handler}`**: The `handler` is called during the **render phase** (untracked) with the mounted element/component instance.
@@ -141,9 +150,11 @@ The vitest base config (`test/vitest.config.base.ts`) includes `pounceCorePlugin
 
 ### 10. Dual-Module Hazard — Library Build Externals
 
-`@pounce/core` uses `instanceof ReactiveProp` in critical paths (`propsInto`, `valuedAttributeGetter`, event handlers, reconciler). If a library build (e.g. `@pounce/kit`) aliases `@pounce/core/jsx-runtime` to **source** but externalizes `@pounce/core`, the built dist will bundle a **second copy** of `ReactiveProp` — breaking all `instanceof` checks at runtime (manifests as `[object Object]` in DOM attributes).
+`@pounce/core` uses `instanceof ReactiveProp` in critical paths (`propsInto`, `valuedAttributeGetter`, event handlers, reconciler). If a library build bundles a **second copy** of `ReactiveProp` — all `instanceof` checks break at runtime (manifests as `[object Object]` in DOM attributes).
 
-**Rule**: Library builds that externalize `@pounce/core` MUST externalize ALL subpaths: use `/^@pounce\/core/` regex, never list individual subpaths. A singleton guard in `src/lib/index.ts` throws if two instances load.
+**Rule**: Library builds that externalize `@pounce/core` MUST externalize ALL subpaths: use `/^@pounce\/core/` regex. A singleton guard in `src/lib/index.ts` throws if two instances load.
+
+**JSX Runtime**: Pounce uses the **classic** JSX transform (`pragma: h`, `pragmaFrag: Fragment`). There is no `jsx-runtime` module — babel emits direct `h()` calls. The `h` and `Fragment` functions are set as globals in `src/lib/index.ts`.
 
 ### 11. `latch()` — Latching Content onto Elements
 
@@ -166,7 +177,8 @@ unlatch()
 - **Polymorph**: accepts `PounceElement`, `Child[]`, `Node`, `Node[]`, or `undefined`
 - **DOMContentLoaded guard**: defers if document is still loading
 - **Conflict detection**: warns if two latches target the same element
-- **`bindApp()`** is a thin wrapper around `latch()` with perf markers
+- **`latch()`** is the core primitive for mounting reactive content onto DOM elements
+- **`bindApp()`** was a thin wrapper around `latch()` with perf markers (now removed)
 - **`reconcile()`** is the internal primitive (not exported for consumers) — syncs `Node[]` into a parent
 
 ### 12. Known Issue: Premature Effect Cleanup in `jsx-factory`

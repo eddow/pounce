@@ -1,5 +1,5 @@
 import { Code } from './code'
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 
 componentStyle.sass`
 .package-header

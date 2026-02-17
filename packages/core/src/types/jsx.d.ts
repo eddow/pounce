@@ -1,13 +1,11 @@
-import type { PounceElement, Scope } from '../lib'
-import type { NameSpacedProps } from '../lib/namespaced'
+import type { Children as SourceChildren, PounceElement, Scope } from '../lib/pounce-element'
 import type { StyleInput } from '../lib/styles'
-import type { Trait } from '../lib/traits'
 
 declare global {
 	var h: (type: any, props?: any, ...children: any[]) => JSX.Element
 	var Fragment: (props: any, scope?: any) => any
 	const window: never // Prevent accidental window usage in SSR - import from @pounce/core instead
-	type ComponentFunction = (props: any, scope: Scope) => JSX.Element | null | undefined
+	type ComponentFunction = (props: any, scope: Scope) => SourceChildren
 	namespace JSX {
 		// biome-ignore lint/suspicious/noConfusingVoidType: Void ends up automatically
 		type Child =
@@ -33,8 +31,6 @@ declare global {
 			MouseReactiveHTMLAttributes & {
 				children?: Children
 				autoFocus?: boolean
-				// Trait support
-				traits?: Trait | Trait[]
 				// Additional common non-mouse events
 				onFocus?: (event: FocusEvent) => void
 				onBlur?: (event: FocusEvent) => void
@@ -52,9 +48,6 @@ declare global {
 		}
 		type ElementType = string | ComponentFunction
 
-		type WithNameSpacedProps<Props> =
-			Props extends Record<string, any> ? NameSpacedProps<Props> : Props
-
 		type ExtractComponentProps<C, Props> = C extends { props: infer ExplicitProps }
 			? ExplicitProps
 			: C extends (props: infer InferredProps, ...args: any[]) => any
@@ -62,7 +55,7 @@ declare global {
 				: Props
 
 		type LibraryManagedAttributes<Component, Props> = ComponentIntrinsicAttributes<Component> &
-			(Props extends Record<string, any> ? NameSpacedProps<Props> : Props)
+			Props
 
 		type RenderOutput<T> = T extends JSX.Element ? ReturnType<T['render']> : T
 
@@ -92,9 +85,8 @@ declare global {
 					// PounceElement class - encapsulates JSX element creation and rendering
 					this?: ThisBinding<N>
 					if?: any
-					use?: (target: N) => void
 					else?: true
-					when?: any
+					use?: (target: N) => void
 			  } & {
 					// TODO: Try to un-any all these? (type inference somehow, especially update:)
 					[K in `use:${string}`]: any
@@ -114,12 +106,14 @@ declare global {
 		// Custom class type for conditional classes
 		type ClassValue = string | ClassValue[] | Record<string, boolean> | null | undefined
 
-		type Booleanish = boolean | 'true' | 'false'
+		// JSX string attributes (attr="value") are always widened to `string` by TypeScript.
+		// (string & {}) accepts any string while preserving IDE autocomplete for known values.
+		type Booleanish = boolean | 'true' | 'false' | (string & {})
 
 		type AriaAttributesBase = {
 			'aria-activeDescendant'?: string
 			'aria-atomic'?: Booleanish
-			'aria-autoComplete'?: 'none' | 'inline' | 'list' | 'both'
+			'aria-autoComplete'?: 'none' | 'inline' | 'list' | 'both' | (string & {})
 			'aria-brailleLabel'?: string
 			'aria-brailleRoleDescription'?: string
 			'aria-busy'?: Booleanish
@@ -129,34 +123,34 @@ declare global {
 			'aria-colIndexText'?: string
 			'aria-colSpan'?: number
 			'aria-controls'?: string
-			'aria-current'?: Booleanish | 'page' | 'step' | 'location' | 'date' | 'time'
+			'aria-current'?: Booleanish | 'page' | 'step' | 'location' | 'date' | 'time' | (string & {})
 			'aria-describedBy'?: string
 			'aria-description'?: string
 			'aria-details'?: string
 			'aria-disabled'?: Booleanish
-			'aria-dropEffect'?: 'none' | 'copy' | 'execute' | 'link' | 'move' | 'popup'
+			'aria-dropEffect'?: 'none' | 'copy' | 'execute' | 'link' | 'move' | 'popup' | (string & {})
 			'aria-errorMessage'?: string
 			'aria-expanded'?: Booleanish
 			'aria-flowTo'?: string
 			'aria-grabbed'?: Booleanish
-			'aria-hasPopup'?: Booleanish | 'menu' | 'listbox' | 'tree' | 'grid' | 'dialog'
+			'aria-hasPopup'?: Booleanish | 'menu' | 'listbox' | 'tree' | 'grid' | 'dialog' | (string & {})
 			'aria-hidden'?: Booleanish
-			'aria-invalid'?: Booleanish | 'grammar' | 'spelling'
+			'aria-invalid'?: Booleanish | 'grammar' | 'spelling' | (string & {})
 			'aria-keyShortcuts'?: string
 			'aria-label'?: string
 			'aria-labelledBy'?: string
 			'aria-level'?: number
-			'aria-live'?: 'off' | 'assertive' | 'polite'
+			'aria-live'?: 'off' | 'assertive' | 'polite' | (string & {})
 			'aria-modal'?: Booleanish
 			'aria-multiLine'?: Booleanish
 			'aria-multiSelectable'?: Booleanish
-			'aria-orientation'?: 'horizontal' | 'vertical'
+			'aria-orientation'?: 'horizontal' | 'vertical' | (string & {})
 			'aria-owns'?: string
 			'aria-placeholder'?: string
 			'aria-posInSet'?: number
-			'aria-pressed'?: Booleanish | 'mixed'
+			'aria-pressed'?: Booleanish | 'mixed' | (string & {})
 			'aria-readOnly'?: Booleanish
-			'aria-relevant'?: 'additions' | 'additions text' | 'all' | 'removals' | 'text'
+			'aria-relevant'?: 'additions' | 'additions text' | 'all' | 'removals' | 'text' | (string & {})
 			'aria-required'?: Booleanish
 			'aria-roleDescription'?: string
 			'aria-rowCount'?: number
@@ -165,7 +159,7 @@ declare global {
 			'aria-rowSpan'?: number
 			'aria-selected'?: Booleanish
 			'aria-setSize'?: number
-			'aria-sort'?: 'none' | 'ascending' | 'descending' | 'other'
+			'aria-sort'?: 'none' | 'ascending' | 'descending' | 'other' | (string & {})
 			'aria-valueMax'?: number
 			'aria-valueMin'?: number
 			'aria-valueNow'?: number
@@ -193,18 +187,42 @@ declare global {
 				style?: string | StyleInput
 				title?: string
 				lang?: string
-				dir?: 'ltr' | 'rtl' | 'auto'
+				dir?: 'ltr' | 'rtl' | 'auto' | (string & {})
 				hidden?: boolean
 				tabIndex?: number
 				accessKey?: string
-				contentEditable?: boolean | 'true' | 'false' | 'inherit'
+				contentEditable?: boolean | 'true' | 'false' | 'inherit' | (string & {})
 				spellCheck?: boolean | 'true' | 'false'
-				translate?: 'yes' | 'no'
-				autoCapitalize?: 'off' | 'none' | 'on' | 'sentences' | 'words' | 'characters'
-				autoCorrect?: 'on' | 'off'
+				translate?: 'yes' | 'no' | (string & {})
+				autoCapitalize?:
+					| 'off'
+					| 'none'
+					| 'on'
+					| 'sentences'
+					| 'words'
+					| 'characters'
+					| (string & {})
+				autoCorrect?: 'on' | 'off' | (string & {})
 				autoComplete?: string
-				enterKeyHint?: 'enter' | 'done' | 'go' | 'next' | 'previous' | 'search' | 'send'
-				inputMode?: 'none' | 'text' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal' | 'search'
+				enterKeyHint?:
+					| 'enter'
+					| 'done'
+					| 'go'
+					| 'next'
+					| 'previous'
+					| 'search'
+					| 'send'
+					| (string & {})
+				inputMode?:
+					| 'none'
+					| 'text'
+					| 'tel'
+					| 'url'
+					| 'email'
+					| 'numeric'
+					| 'decimal'
+					| 'search'
+					| (string & {})
 				is?: string
 				itemId?: string
 				itemProp?: string
@@ -230,7 +248,7 @@ declare global {
 		}
 
 		interface InputNumber {
-			type: 'number' | 'range'
+			type: 'number' | 'range' | (string & {})
 			value?: number
 			min?: number
 			max?: number
@@ -257,11 +275,12 @@ declare global {
 				| 'submit'
 				| 'reset'
 				| 'button'
+				| (string & {})
 			value?: string
 			'update:value'?(value: string): void
 		}
 		interface InputBoolean {
-			type: 'checkbox' | 'radio'
+			type: 'checkbox' | 'radio' | (string & {})
 			checked?: boolean
 			value?: string
 			'update:checked'?(checked?: boolean): void
@@ -278,7 +297,7 @@ declare global {
 
 		interface IntrinsicElements extends HTMLTagElementsMap {
 			dynamic: BaseHTMLAttributes<HTMLElement> & {
-				tag: HTMLElementTag | ComponentFunction
+				tag: HTMLElementTag | ComponentFunction | (string & {})
 				children?: Children
 				[key: string]: any
 			}
@@ -297,9 +316,7 @@ declare global {
 					form?: string
 					formAction?: string
 					formEncType?: string
-					formMethod?: 'get' | 'post' | 'dialog'
-					formNoValidate?: boolean
-					formTarget?: string
+					formMethod?: 'get' | 'post' | 'dialog' | (string & {})
 					placeholder?: string
 					disabled?: boolean
 					required?: boolean
@@ -311,11 +328,18 @@ declare global {
 					multiple?: boolean
 					accept?: string
 					list?: string
-					capture?: boolean | 'user' | 'environment'
+					capture?: boolean | 'user' | 'environment' | (string & {})
 					autoComplete?: string
-					autoCorrect?: 'on' | 'off'
-					autoCapitalize?: 'off' | 'none' | 'on' | 'sentences' | 'words' | 'characters'
-					spellCheck?: boolean | 'true' | 'false'
+					autoCorrect?: 'on' | 'off' | (string & {})
+					autoCapitalize?:
+						| 'off'
+						| 'none'
+						| 'on'
+						| 'sentences'
+						| 'words'
+						| 'characters'
+						| (string & {})
+					spellCheck?: boolean | 'true' | 'false' | (string & {})
 					pattern?: string
 					maxLength?: number
 					minLength?: number
@@ -327,7 +351,17 @@ declare global {
 					onInvalid?: (event: Event) => void
 					onReset?: (event: Event) => void
 					onSearch?: (event: Event) => void
+					[key: string]: any
 				}
+			fragment: ElementIntrinsicAttributes<Node | Node[]> & {
+				children?: Children
+			}
+			for: ElementIntrinsicAttributes<Node[]> & ForElementProps
+			// Form Elements
+			input:
+				| (BaseHTMLAttributes<HTMLInputElement> & InputNumber & InputExtraAttributes)
+				| (BaseHTMLAttributes<HTMLInputElement> & InputString & InputExtraAttributes)
+				| (BaseHTMLAttributes<HTMLInputElement> & InputBoolean & InputExtraAttributes)
 
 			textarea: BaseHTMLAttributes<HTMLTextAreaElement> & {
 				value?: string
@@ -342,11 +376,18 @@ declare global {
 				maxLength?: number
 				minLength?: number
 				dirName?: string
-				wrap?: 'soft' | 'hard' | 'off'
+				wrap?: 'soft' | 'hard' | 'off' | (string & {})
 				autoComplete?: string
-				autoCorrect?: 'on' | 'off'
-				autoCapitalize?: 'off' | 'none' | 'on' | 'sentences' | 'words' | 'characters'
-				spellCheck?: boolean | 'true' | 'false'
+				autoCorrect?: 'on' | 'off' | (string & {})
+				autoCapitalize?:
+					| 'off'
+					| 'none'
+					| 'on'
+					| 'sentences'
+					| 'words'
+					| 'characters'
+					| (string & {})
+				spellCheck?: boolean | 'true' | 'false' | (string & {})
 				// Events
 				onInput?: (event: Event) => void
 				onChange?: (event: Event) => void
@@ -370,7 +411,7 @@ declare global {
 			}
 
 			button: BaseHTMLAttributes<HTMLButtonElement> & {
-				type?: 'button' | 'submit' | 'reset'
+				type?: 'button' | 'submit' | 'reset' | (string & {})
 				disabled?: boolean
 				autoFocus?: boolean
 				form?: string
@@ -385,7 +426,7 @@ declare global {
 
 			form: BaseHTMLAttributes<HTMLFormElement> & {
 				action?: string
-				method?: 'get' | 'post' | 'put' | 'delete' | 'patch'
+				method?: 'get' | 'post' | 'put' | 'delete' | 'patch' | (string & {})
 				enctype?: string
 				autoComplete?: string
 				noValidate?: boolean
@@ -418,11 +459,11 @@ declare global {
 				alt?: string
 				width?: number | string
 				height?: number | string
-				crossOrigin?: 'anonymous' | 'use-credentials'
+				crossOrigin?: 'anonymous' | 'use-credentials' | (string & {})
 				useMap?: string
 				isMap?: boolean
-				loading?: 'lazy' | 'eager'
-				decoding?: 'sync' | 'async' | 'auto'
+				loading?: 'lazy' | 'eager' | (string & {})
+				decoding?: 'sync' | 'async' | 'auto' | (string & {})
 				// Events
 				onLoad?: (event: Event) => void
 				onError?: (event: Event) => void
@@ -432,14 +473,14 @@ declare global {
 			video: BaseHTMLAttributes<HTMLVideoElement> & {
 				src?: string
 				poster?: string
-				preload?: 'none' | 'metadata' | 'auto'
+				preload?: 'none' | 'metadata' | 'auto' | (string & {})
 				autoplay?: boolean
 				loop?: boolean
 				muted?: boolean
 				controls?: boolean
 				width?: number | string
 				height?: number | string
-				crossOrigin?: 'anonymous' | 'use-credentials'
+				crossOrigin?: 'anonymous' | 'use-credentials' | (string & {})
 				playsInline?: boolean
 				// Events
 				onLoadstart?: (event: Event) => void
@@ -468,12 +509,12 @@ declare global {
 
 			audio: BaseHTMLAttributes<HTMLAudioElement> & {
 				src?: string
-				preload?: 'none' | 'metadata' | 'auto'
+				preload?: 'none' | 'metadata' | 'auto' | (string & {})
 				autoplay?: boolean
 				loop?: boolean
 				muted?: boolean
 				controls?: boolean
-				crossOrigin?: 'anonymous' | 'use-credentials'
+				crossOrigin?: 'anonymous' | 'use-credentials' | (string & {})
 				// Events
 				onLoadstart?: (event: Event) => void
 				onLoadeddata?: (event: Event) => void
@@ -524,7 +565,7 @@ declare global {
 
 			track: BaseHTMLAttributes<HTMLTrackElement> & {
 				default?: boolean
-				kind?: 'subtitles' | 'captions' | 'descriptions' | 'chapters' | 'metadata'
+				kind?: 'subtitles' | 'captions' | 'descriptions' | 'chapters' | 'metadata' | (string & {})
 				src?: string
 				srclang?: string
 				label?: string
@@ -536,7 +577,7 @@ declare global {
 				async?: boolean
 				defer?: boolean
 				nomodule?: boolean
-				crossOrigin?: 'anonymous' | 'use-credentials'
+				crossOrigin?: 'anonymous' | 'use-credentials' | (string & {})
 				integrity?: string
 				referrerPolicy?: string
 				onLoad?: (event: Event) => void
@@ -551,7 +592,7 @@ declare global {
 				height?: number | string
 				allow?: string
 				sandbox?: string
-				loading?: 'eager' | 'lazy'
+				loading?: 'eager' | 'lazy' | (string & {})
 				referrerPolicy?: string
 				allowFullScreen?: boolean
 				onLoad?: (event: Event) => void
@@ -561,7 +602,7 @@ declare global {
 			ol: BaseHTMLAttributes<HTMLOListElement> & {
 				reversed?: boolean
 				start?: number
-				type?: '1' | 'a' | 'A' | 'i' | 'I'
+				type?: '1' | 'a' | 'A' | 'i' | 'I' | (string & {})
 			}
 
 			option: BaseHTMLAttributes<HTMLOptionElement> & {
@@ -594,9 +635,9 @@ declare global {
 				rel?: string
 				href?: string
 				as?: string
-				crossOrigin?: 'anonymous' | 'use-credentials'
+				crossOrigin?: 'anonymous' | 'use-credentials' | (string & {})
 				disabled?: boolean
-				fetchPriority?: 'high' | 'low' | 'auto'
+				fetchPriority?: 'high' | 'low' | 'auto' | (string & {})
 				imageSizes?: string
 				imageSrcSet?: string
 				media?: string
@@ -622,7 +663,7 @@ declare global {
 				download?: string | boolean
 				href?: string
 				rel?: string
-				shape?: 'rect' | 'circle' | 'poly' | 'default'
+				shape?: 'rect' | 'circle' | 'poly' | 'default' | (string & {})
 				target?: string
 				referrerPolicy?: string
 			}
@@ -644,7 +685,7 @@ declare global {
 				colSpan?: number
 				rowSpan?: number
 				headers?: string
-				scope?: 'row' | 'col' | 'rowgroup' | 'colgroup' | 'auto'
+				scope?: 'row' | 'col' | 'rowgroup' | 'colgroup' | 'auto' | (string & {})
 			}
 			td: BaseHTMLAttributes<HTMLTableCellElement> & {
 				colSpan?: number

@@ -1,8 +1,8 @@
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 import { Button } from '../components/button'
 import { Icon } from '../components/icon'
 import { type OverlaySpec } from './manager'
-import { getVariantTrait } from '../shared/variants'
+import { variantProps } from '../shared/variants'
 import { getAdapter } from '../adapter/registry'
 
 declare module './manager' {
@@ -104,50 +104,51 @@ export const Dialog = {
 			render: (close) => {
 				const adapter = getAdapter('Dialog')
 				return (
-				<div 
-					class={[adapter.classes?.base || 'pounce-dialog', opts.size ? `pounce-size-${opts.size}` : '']}
-					traits={getVariantTrait(opts.variant)}
-				>
-					<header if={opts.title}>
-						<h3 id={titleId}>{opts.title}</h3>
-						<Button.contrast
-							el={{
-								class: 'pounce-dialog-close',
-								style: 'padding: 0.25rem; min-width: auto; height: auto;'
-							}}
-							onClick={() => close(null)}
-							ariaLabel="Close"
-						>
-							<Icon name="close" />
-						</Button.contrast>
-					</header>
-					<main id={descId}>
-						{typeof opts.message === 'string' ? <p>{opts.message}</p> : opts.message}
-					</main>
-					<footer if={opts.buttons}>
-						<for each={Object.entries(opts.buttons || {})}>
-							{([key, spec]) => {
-								const btn = typeof spec === 'string' ? { text: spec } : spec
-								return (
-									<Button
-										variant={btn.variant || 'secondary'}
-										disabled={btn.disabled}
-										onClick={() => {
-											if (btn.onClick) btn.onClick()
-											close(key)
-										}}
-									>
-										{btn.text}
-									</Button>
-								)
-							}}
-						</for>
-					</footer>
-					<footer else>
-						<Button.primary onClick={() => close('ok')}>OK</Button.primary>
-					</footer>
-				</div>
-			)}
+					<div
+						{...variantProps(opts.variant)}
+						class={[adapter.classes?.base || 'pounce-dialog', opts.size ? `pounce-size-${opts.size}` : '']}
+					>
+						<header if={opts.title}>
+							<h3 id={titleId}>{opts.title}</h3>
+							<Button.contrast
+								el={{
+									class: 'pounce-dialog-close',
+									style: 'padding: 0.25rem; min-width: auto; height: auto;'
+								}}
+								onClick={() => close(null)}
+								ariaLabel="Close"
+							>
+								<Icon name="close" />
+							</Button.contrast>
+						</header>
+						<main id={descId}>
+							{typeof opts.message === 'string' ? <p>{opts.message}</p> : opts.message}
+						</main>
+						<footer if={opts.buttons}>
+							<for each={Object.entries(opts.buttons || {})}>
+								{([key, spec]) => {
+									const btn = typeof spec === 'string' ? { text: spec } : spec
+									return (
+										<Button
+											variant={btn.variant || 'secondary'}
+											disabled={btn.disabled}
+											onClick={() => {
+												if (btn.onClick) btn.onClick()
+												close(key)
+											}}
+										>
+											{btn.text}
+										</Button>
+									)
+								}}
+							</for>
+						</footer>
+						<footer else>
+							<Button.primary onClick={() => close('ok')}>OK</Button.primary>
+						</footer>
+					</div>
+				)
+			}
 		}
 	}
 }

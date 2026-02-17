@@ -2,7 +2,7 @@
  * E2E test fixture entry point for @pounce/ui.
  * Hash-based router loads fixture components on demand.
  */
-import { bindApp } from '@pounce/core'
+import { latch } from '@pounce/core'
 import { reactive } from 'mutts'
 import { setAdapter } from '../../../src/adapter/registry'
 import { TEST_ADAPTER } from '../../test-adapter'
@@ -44,4 +44,4 @@ const App = () => (
 
 window.addEventListener('hashchange', loadFixture)
 loadFixture()
-bindApp(<App />, '#app')
+latch('#app', <App />)

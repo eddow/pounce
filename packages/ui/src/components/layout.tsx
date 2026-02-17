@@ -1,6 +1,6 @@
 import { effect, reactive } from 'mutts'
-import { compose } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { defaults } from '@pounce/core'
+import { componentStyle } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
 
 componentStyle.sass`
@@ -82,11 +82,9 @@ export type ContainerProps = JSX.IntrinsicElements['div'] & {
 
 export const Container = (props: ContainerProps) => {
 	const adapter = getAdapter('Layout')
-	const state = compose({ tag: 'div' }, props)
-
 	return (
-		<dynamic class={[state.fluid ? (adapter.classes?.containerFluid || 'container-fluid') : (adapter.classes?.container || 'container'), state.class]} {...state}>
-			{state.children}
+		<dynamic class={[props.fluid ? (adapter.classes?.containerFluid || 'container-fluid') : (adapter.classes?.container || 'container'), props.class]} tag={props.tag ?? 'div'} {...props}>
+			{props.children}
 		</dynamic>
 	)
 }
@@ -133,17 +131,17 @@ export type StackProps = JSX.IntrinsicElements['div'] & {
 
 export const Stack = (props: StackProps) => {
 	const adapter = getAdapter('Layout')
-	const state = compose({ gap: 'md' }, props)
+	const p = defaults(props, { gap: 'md' as SpacingToken })
 
 	return (
 		<div
-			{...state}
-			class={[adapter.classes?.base || 'pounce-stack', state.class]}
+			{...props}
+			class={[adapter.classes?.base || 'pounce-stack', props.class]}
 			style={[
-				state.style,
-				state.gap ? { gap: spacingValue(state.gap) } : undefined,
-				state.align ? { alignItems: alignItemsMap[state.align] ?? state.align } : undefined,
-				state.justify ? { justifyContent: justifyMap[state.justify] ?? state.justify } : undefined,
+				props.style,
+				{ gap: spacingValue(p.gap) },
+				props.align ? { alignItems: alignItemsMap[props.align] ?? props.align } : undefined,
+				props.justify ? { justifyContent: justifyMap[props.justify] ?? props.justify } : undefined,
 			]}
 		>
 			{props.children}
@@ -161,21 +159,21 @@ export type InlineProps = JSX.IntrinsicElements['div'] & {
 
 export const Inline = (props: InlineProps) => {
 	const adapter = getAdapter('Layout')
-	const state = compose({ gap: 'sm', align: 'center' as keyof typeof alignItemsMap }, props)
+	const p = defaults(props, { gap: 'sm' as SpacingToken, align: 'center' as keyof typeof alignItemsMap })
 
 	return (
 		<div
-			{...state}
-			class={[adapter.classes?.inline || 'pounce-inline', state.scrollable ? 'pounce-inline--scrollable' : undefined, state.class]}
+			{...props}
+			class={[adapter.classes?.inline || 'pounce-inline', props.scrollable ? 'pounce-inline--scrollable' : undefined, props.class]}
 			style={[
-				state.style,
-				state.gap ? { gap: spacingValue(state.gap) } : undefined,
-				state.align ? { alignItems: alignItemsMap[state.align] ?? state.align } : undefined,
-				state.justify ? { justifyContent: justifyMap[state.justify] ?? state.justify } : undefined,
-				state.wrap ? { flexWrap: 'wrap' } : { flexWrap: 'nowrap' },
+				props.style,
+				{ gap: spacingValue(p.gap) },
+				{ alignItems: alignItemsMap[p.align] ?? p.align },
+				props.justify ? { justifyContent: justifyMap[props.justify] ?? props.justify } : undefined,
+				props.wrap ? { flexWrap: 'wrap' } : { flexWrap: 'nowrap' },
 			]}
 		>
-			{state.children}
+			{props.children}
 		</div>
 	)
 }
@@ -190,30 +188,29 @@ export type GridProps = JSX.IntrinsicElements['div'] & {
 
 export const Grid = (props: GridProps) => {
 	const adapter = getAdapter('Layout')
+	const p = defaults(props, { gap: 'md' as SpacingToken })
 	function template(columns?: number | string, minItemWidth?: string) {
 		if (columns !== undefined && columns !== null && columns !== '')
 			return typeof columns === 'number' ? `repeat(${columns}, minmax(0, 1fr))` : columns
 		if (minItemWidth) return `repeat(auto-fit, minmax(${minItemWidth}, 1fr))`
 		return undefined
 	}
-	const state = compose({ gap: 'md' }, props)
-
 	return (
 		<div
-			{...state}
-			class={[adapter.classes?.grid || 'pounce-grid', state.class]}
+			{...props}
+			class={[adapter.classes?.grid || 'pounce-grid', props.class]}
 			style={[
-				state.style,
-				state.gap ? { gap: spacingValue(state.gap) } : undefined,
+				props.style,
+				{ gap: spacingValue(p.gap) },
 				(() => {
-					const columns = template(state.columns, state.minItemWidth)
+					const columns = template(props.columns, props.minItemWidth)
 					return columns ? { gridTemplateColumns: columns } : undefined
 				})(),
-				state.align ? { alignItems: state.align } : undefined,
-				state.justify ? { justifyItems: state.justify } : undefined,
+				props.align ? { alignItems: props.align } : undefined,
+				props.justify ? { justifyItems: props.justify } : undefined,
 			].filter(Boolean)}
 		>
-			{state.children}
+			{props.children}
 		</div>
 	)
 }

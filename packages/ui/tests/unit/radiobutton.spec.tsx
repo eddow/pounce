@@ -2,7 +2,7 @@
  * Test RadioButton component functionality
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { RadioButton } from '../../src/components/radiobutton'
 import { setAdapter, resetAdapter } from '../../src/adapter/registry'
 import { vanillaAdapter } from '../../src/adapter/vanilla'
@@ -25,7 +25,7 @@ describe('RadioButton', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default props', () => {

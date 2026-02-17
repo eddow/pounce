@@ -1,5 +1,5 @@
-import { compose } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { defaults } from '@pounce/core'
+import { componentStyle } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
 
 componentStyle.sass`
@@ -98,17 +98,15 @@ export type ToolbarProps = {
 }
 
 const ToolbarComponent = (props: ToolbarProps) => {
-	const state = compose({ orientation: 'horizontal' }, props)
 	const adapter = getAdapter('Toolbar')
-
+	const p = defaults(props, { orientation: 'horizontal' as const })
 	const baseClass = adapter?.classes?.root ?? 'pounce-toolbar'
-	const orientationClass = adapter?.classes?.orientation
-		? adapter.classes.orientation(state.orientation)
-		: `pounce-toolbar-${state.orientation}`
 
 	return (
-		<div class={[baseClass, orientationClass, state.class]} role="toolbar" style={state.style}>
-			{state.children}
+		<div class={[baseClass, adapter?.classes?.orientation
+			? adapter.classes.orientation(p.orientation)
+			: `pounce-toolbar-${p.orientation}`, props.class]} role="toolbar" style={props.style}>
+			{props.children}
 		</div>
 	)
 }
@@ -120,18 +118,14 @@ export type ToolbarSpacerProps = {
 }
 
 const ToolbarSpacer = (props: ToolbarSpacerProps) => {
-	const state = compose({ visible: false }, props)
 	const adapter = getAdapter('Toolbar')
 
 	const baseClass = adapter?.classes?.spacer ?? 'pounce-toolbar-spacer'
-	const visibleClass = state.visible
-		? (adapter?.classes?.spacerVisible ?? 'pounce-toolbar-spacer-visible')
-		: undefined
 
 	return (
 		<span
-			class={[baseClass, visibleClass, state.class]}
-			style={state.width ? `width: ${state.width}; flex: none;` : undefined}
+			class={[baseClass, props.visible ? (adapter?.classes?.spacerVisible ?? 'pounce-toolbar-spacer-visible') : undefined, props.class]}
+			style={props.width ? `width: ${props.width}; flex: none;` : undefined}
 		/>
 	)
 }

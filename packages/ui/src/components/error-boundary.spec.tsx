@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { reset } from 'mutts'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { ErrorBoundary, ProductionErrorBoundary } from '../../src/components/error-boundary'
 
 describe('ErrorBoundary', () => {
@@ -22,7 +22,7 @@ describe('ErrorBoundary', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders children when no error occurs', () => {
@@ -127,7 +127,7 @@ describe('ProductionErrorBoundary', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders children when no error occurs', () => {

@@ -9,7 +9,7 @@ Pounce is designed to make testing straightforward. thanks to its isomorphic nat
 You don't need special wrappers or "careful handling" to test Pounce components. Simply import your components and the canonical globals (`document`, `window`, etc.) directly from `@pounce/core`:
 
 ```tsx
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { MyComponent } from './MyComponent'
 
 // It just works
@@ -38,11 +38,11 @@ export default defineConfig({
 
 ### Writing a Test
 
-Use `bindApp` to mount components. Always clean up in `afterEach` to keep your environment pristine.
+Use `latch` to mount components. Always clean up in `afterEach` to keep your environment pristine.
 
 ```tsx
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { Button } from './Button'
 
 describe('Button', () => {
@@ -60,7 +60,7 @@ describe('Button', () => {
   })
 
   it('renders children', () => {
-    unmount = bindApp(<Button>Click Me</Button>, container)
+    unmount = latch(container, <Button>Click Me</Button>)
     expect(container.textContent).toBe('Click Me')
   })
 })

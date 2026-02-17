@@ -3,7 +3,7 @@
  * Tests the pattern: checked={state.value === 'a'}
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { Radio } from '../../src/components/forms'
 import { setAdapter, resetAdapter } from '../../src/adapter/registry'
 import { vanillaAdapter } from '../../src/adapter/vanilla'
@@ -26,7 +26,7 @@ describe('Radio with reactive checked prop', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('should handle reactive group binding without warnings', () => {

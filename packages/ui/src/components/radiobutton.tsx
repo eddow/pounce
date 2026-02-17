@@ -1,9 +1,9 @@
+import { defaults } from '@pounce/core'
 import type { Scope } from '@pounce/core'
-import { compose } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
 
-import { asVariant, getVariantTrait } from '../shared/variants'
+import { asVariant, variantProps } from '../shared/variants'
 import { Icon } from './icon'
 
 // Default RadioButton Styles (SASS)
@@ -66,100 +66,85 @@ export type RadioButtonProps<Value = any> = {
 const RadioButtonBase = (props: RadioButtonProps, scope: Scope) => {
 	const adapter = getAdapter('RadioButton')
 
-	const state = compose(
-		{
-			variant: 'primary',
-			iconPosition: 'start',
-			disabled: false,
-			onClick: () => { },
+	const p = defaults(props, { iconPosition: 'start' as const, disabled: false })
+
+	const state = {
+		get checked() {
+			return props.group !== undefined && props.value !== undefined && props.group === props.value
 		},
-		props,
-		(s: any) => ({
-			get checked() {
-				return s.group !== undefined && s.value !== undefined && s.group === s.value
-			},
-			get iconElement() {
-				if (!s.icon) return null
-
-				if (typeof s.icon === 'string') {
-					return (
-						<span class="pounce-radiobutton-icon" aria-hidden="true">
-							<Icon name={s.icon} />
-						</span>
-					)
-				}
-
-				return <span class="pounce-radiobutton-icon" aria-hidden="true">{s.icon}</span>
-			},
-			get hasLabel() {
-				return !!s.children && (!Array.isArray(s.children) || s.children.some((e: any) => !!e))
-			},
-			get isIconOnly() {
-				return !!s.icon && !this.hasLabel
-			},
-			get baseTrait() {
-				const classes = [
-					adapter.classes?.base || 'pounce-radiobutton',
-					this.checked ? (adapter.classes?.checked || 'pounce-radiobutton-checked') : null,
-					this.isIconOnly ? (adapter.classes?.iconOnly || 'pounce-radiobutton-icon-only') : null
-				].filter((c): c is string => !!c)
-				return { classes }
-			},
-			get variantTrait() {
-				return getVariantTrait(s.variant)
-			},
-			get allTraits() {
-				return [this.baseTrait, this.variantTrait].filter((t): t is import('@pounce/core').Trait => !!t)
-			},
-		})
-	)
+		get iconElement() {
+			if (!props.icon) return null
+			if (typeof props.icon === 'string') {
+				return (
+					<span class="pounce-radiobutton-icon" aria-hidden="true">
+						<Icon name={props.icon} />
+					</span>
+				)
+			}
+			return <span class="pounce-radiobutton-icon" aria-hidden="true">{props.icon}</span>
+		},
+		get hasLabel() {
+			return !!props.children && (!Array.isArray(props.children) || props.children.some((e: any) => !!e))
+		},
+		get isIconOnly() {
+			return !!props.icon && !this.hasLabel
+		},
+		get baseClass() {
+			return [
+				adapter.classes?.base || 'pounce-radiobutton',
+				this.checked ? (adapter.classes?.checked || 'pounce-radiobutton-checked') : null,
+				this.isIconOnly ? (adapter.classes?.iconOnly || 'pounce-radiobutton-icon-only') : null
+			]
+		},
+	}
 
 	const handleClick = (e: MouseEvent) => {
-		if (state.disabled) return
-		if (state.onClick) state.onClick(e)
+		if (p.disabled) return
+		if (props.onClick) props.onClick(e)
 	}
 
 	if (adapter.renderStructure) {
 		return adapter.renderStructure({
 			props,
 			state: state as Record<string, unknown>,
-			children: state.children,
+			children: props.children,
 			ariaProps: {
 				'role': 'radio',
 				'aria-checked': `${state.checked}`,
 				'aria-label': state.isIconOnly
-					? (state.ariaLabel ?? (typeof state.value === 'string' ? state.value : 'Option'))
-					: state.ariaLabel,
-				'aria-disabled': state.disabled || undefined,
+					? (props.ariaLabel ?? (typeof props.value === 'string' ? props.value : 'Option'))
+					: props.ariaLabel,
+				'aria-disabled': p.disabled || undefined,
 			},
 		}, scope)
 	}
 
 	return (
 		<button
-			{...state.el}
+			{...variantProps(props.variant)}
+			{...props.el}
 			type="button"
 			role="radio"
-			traits={state.allTraits}
+			class={state.baseClass}
 			aria-checked={`${state.checked}`}
 			aria-label={
 				state.isIconOnly
-					? (state.ariaLabel ?? state.el?.['aria-label'] ?? (typeof state.value === 'string' ? state.value : 'Option'))
-					: (state.ariaLabel ?? state.el?.['aria-label'])
+					? (props.ariaLabel ?? props.el?.['aria-label'] ?? (typeof props.value === 'string' ? props.value : 'Option'))
+					: (props.ariaLabel ?? props.el?.['aria-label'])
 			}
-			disabled={state.disabled}
+			disabled={p.disabled}
 			onClick={handleClick}
 		>
-			<span if={state.iconPosition === 'start'} class="pounce-radiobutton-icon-wrapper">
+			<span if={p.iconPosition === 'start'} class="pounce-radiobutton-icon-wrapper">
 				{state.iconElement}
 			</span>
 			<fragment>
 				<span if={state.hasLabel} class="pounce-radiobutton-label">
-					{state.children}
+					{props.children}
 				</span>
-				<fragment else>{state.children}</fragment>
+				<fragment else>{props.children}</fragment>
 			</fragment>
-			<span if={state.iconPosition === 'end'} class="pounce-radiobutton-icon-wrapper">
+			<span if={p.iconPosition === 'end'} class="pounce-radiobutton-icon-wrapper">
 				{state.iconElement}
 			</span>
 		</button>

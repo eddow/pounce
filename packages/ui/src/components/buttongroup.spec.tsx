@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { ButtonGroup } from '../../src/components/buttongroup'
 import { Button } from '../../src/components/button'
 import { resetAdapter } from '../../src/adapter/registry'
@@ -20,7 +20,7 @@ describe('ButtonGroup', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders horizontal group by default', () => {

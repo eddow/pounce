@@ -15,7 +15,14 @@
     "biome": "biome check --write src",
     "prepack": "rm -rf dist/src/demo dist/src/entry.d.ts && find dist -name '*.spec.d.ts' -delete"
   },
-  "keywords": ["pounce", "reactive", "jsx", "ui", "framework", "fine-grained"],
+  "keywords": [
+    "pounce",
+    "reactive",
+    "jsx",
+    "ui",
+    "framework",
+    "fine-grained"
+  ],
   "author": "fmdm",
   "license": "MIT",
   "repository": {
@@ -38,16 +45,6 @@
       "types": "./dist/dom.d.ts",
       "import": "./dist/dom.js",
       "default": "./dist/dom.js"
-    },
-    "./jsx-runtime": {
-      "types": "./dist/jsx-runtime.d.ts",
-      "import": "./dist/jsx-runtime.js",
-      "default": "./dist/jsx-runtime.js"
-    },
-    "./jsx-dev-runtime": {
-      "types": "./dist/jsx-dev-runtime.d.ts",
-      "import": "./dist/jsx-dev-runtime.js",
-      "default": "./dist/jsx-dev-runtime.js"
     },
     "./src": {
       "types": "./src/index.ts",
@@ -84,7 +81,7 @@
     }
   },
   "dependencies": {
-		"mutts": "link:../mutts",
+    "mutts": "link:../mutts",
     "@babel/core": "^7.28.4",
     "@babel/plugin-proposal-decorators": "^7.28.6",
     "@babel/plugin-transform-react-jsx": "^7.25.9",
@@ -99,7 +96,6 @@
     "!src/lib/*.spec.ts",
     "src/dom",
     "src/node",
-    "src/runtime",
     "src/types",
     "src/shared.ts",
     "src/index.ts",

@@ -14,11 +14,11 @@ const adapterStructure = `import type { FrameworkAdapter } from '@pounce/ui'
 
 // An adapter is a Partial<FrameworkAdapter> with:
 const myAdapter: Partial<FrameworkAdapter> = {
-  // Variant traits — CSS class bundles per variant name:
+  // Variants — JSX-spreadable attribute bags per variant name:
   variants: {
-    primary: { classes: ['btn-primary'] },
-    danger: { classes: ['btn-danger'], styles: { color: 'red' } },
-    success: { classes: ['btn-success'] },
+    primary: { class: 'btn-primary', 'data-variant': 'primary' },
+    danger: { class: 'btn-danger', 'data-variant': 'danger' },
+    success: { class: 'btn-success', 'data-variant': 'success' },
   },
 
   // Component-specific configs:
@@ -45,7 +45,7 @@ const picoDetails = `// @pounce/adapter-pico maps Pounce's CSS variables to Pico
 //   --pounce-border     → --pico-border-color
 //   etc.
 //
-// It also provides variant Traits that map to PicoCSS's
+// It also provides variant attribute bags that map to PicoCSS's
 // data-attribute-based theming (e.g., [data-variant="primary"]).
 
 import '@picocss/pico/css/pico.min.css'
@@ -53,7 +53,7 @@ import { picoAdapter } from '@pounce/adapter-pico'
 setAdapter(picoAdapter)`
 
 const customAdapter = `// To create a custom adapter:
-// 1. Define variant Traits (CSS class bundles)
+// 1. Define variants (JSX-spreadable attribute bags)
 // 2. Define component configs (base classes, sub-element classes)
 // 3. Optionally define transitions and icon factory
 // 4. Call setAdapter() with your adapter
@@ -62,8 +62,8 @@ import { setAdapter } from '@pounce/ui'
 
 setAdapter({
   variants: {
-    primary: { classes: ['bg-blue-500', 'text-white'] },
-    danger: { classes: ['bg-red-500', 'text-white'] },
+    primary: { class: 'bg-blue-500 text-white', 'data-variant': 'primary' },
+    danger: { class: 'bg-red-500 text-white', 'data-variant': 'danger' },
   },
   components: {
     Button: { classes: { base: 'px-4 py-2 rounded' } },
@@ -86,7 +86,7 @@ export default function AdapterPage() {
 
       <Section title="Adapter Structure">
         <p>
-          An adapter provides variant traits, component configs, transitions, and an icon factory.
+          An adapter provides variants, component configs, transitions, and an icon factory.
         </p>
         <Code code={adapterStructure} lang="tsx" />
       </Section>

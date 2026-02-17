@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { reactive } from 'mutts'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 
 const gc = typeof globalThis.gc === 'function' ? globalThis.gc : undefined
 const itGC = gc ? it : it.skip
@@ -38,7 +38,7 @@ describe('Render effect GC safety', () => {
 			<button onClick={() => { state.clicks++ }}>click</button>
 		)
 
-		bindApp(<App />, container)
+		latch(container, <App />)
 
 		const button = container.querySelector('button')!
 		expect(button).toBeTruthy()
@@ -68,7 +68,7 @@ describe('Render effect GC safety', () => {
 			</div>
 		)
 
-		bindApp(<App />, container)
+		latch(container, <App />)
 
 		const button = container.querySelector('button')!
 		button.click()

@@ -1,5 +1,4 @@
-/** @jsxImportSource @pounce/core */
-import { bindApp } from '@pounce/core'
+import { latch } from '@pounce/core'
 import { intercept } from '@pounce/board'
 import Home from './routes/index.tsx'
 import UserDetail from './routes/users/[id]/index.tsx'
@@ -14,10 +13,10 @@ intercept('**', async (req: Request, next: (req: Request) => Promise<any>) => {
 const path = window.location.pathname
 
 if (path === '/') {
-	bindApp(<Home />, document.getElementById('root')!)
+	latch(document.getElementById('root')!, <Home />)
 } else if (path === '/users/list') {
-	bindApp(<UserList />, document.getElementById('root')!)
+	latch(document.getElementById('root')!, <UserList />)
 } else if (path.startsWith('/users/')) {
 	const id = path.split('/')[2]
-	bindApp(<UserDetail params={{ id }} />, document.getElementById('root')!)
+	latch(document.getElementById('root')!, <UserDetail params={{ id }} />)
 }

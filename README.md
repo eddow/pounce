@@ -39,7 +39,7 @@ npm install @pounce/board
 
 ```tsx
 import { reactive } from 'mutts'
-import { bindApp } from '@pounce/core'
+import { latch } from '@pounce/core'
 
 function Counter() {
   const state = reactive({ count: 0 })
@@ -52,7 +52,7 @@ function Counter() {
   )
 }
 
-bindApp(() => <Counter />, '#app')
+latch('#app', () => <Counter />)
 ```
 
 ## Development

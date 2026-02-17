@@ -5,17 +5,10 @@ import { pounceMinimalPackage } from '@pounce/core/plugin'
 export default defineConfig({
   root: resolve(import.meta.dirname, '.'),
   plugins: [
-    ...pounceMinimalPackage({
-      jsxRuntime: {
-        runtime: 'automatic',
-        importSource: '@pounce/core',
-      },
-    }),
+    ...pounceMinimalPackage(),
   ],
   resolve: {
     alias: {
-      '@pounce/core/jsx-runtime': resolve(import.meta.dirname, '../core/src/runtime/jsx-runtime.ts'),
-      '@pounce/core/jsx-dev-runtime': resolve(import.meta.dirname, '../core/src/runtime/jsx-dev-runtime.ts'),
       '@pounce/core': resolve(import.meta.dirname, '../core/src'),
       '@pounce/kit': resolve(import.meta.dirname, '../kit/src'),
       '@pounce/ui': resolve(import.meta.dirname, '../ui/src'),

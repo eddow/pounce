@@ -19,6 +19,52 @@ function Counter(props) {
 }
 ```
 
+### ❌ Anti-Pattern: Capturing Defaults in the Body
+```typescript
+function MyComponent(props) {
+  // BAD: Captures the value of props.variant ONCE. Never updates.
+  const variant = props.variant ?? 'primary'
+  const gap = props.gap ?? 'md'
+
+  // These bindings use stale, dead values:
+  return <div class={`variant-${variant}`} style={{ gap }} />
+}
+```
+Instead, inline in JSX (babel wraps in `r()`, so the read is deferred):
+```typescript
+function MyComponent(props) {
+  return <div class={`variant-${props.variant ?? 'primary'}`} style={{ gap: props.gap ?? 'md' }} />
+}
+```
+Or use a getter object when the value is referenced multiple times or by derived state.
+
+### ✅ Pattern: `defaults()` Proxy
+For components with several defaulted props, `defaults()` creates a lazy proxy — no reads happen until a property is accessed from JSX (wrapped in `r()`) or a getter.
+
+```typescript
+import { defaults } from '@pounce/core'
+
+function MyLayout(props) {
+  const p = defaults(props, { gap: 'md', orientation: 'horizontal' })
+
+  // p.gap → props.gap ?? 'md'  (deferred, reactive)
+  // p.orientation → same pattern
+  // p.children → props.children (passthrough for keys not in defs)
+  return <div style={{ gap: p.gap }} class={`layout-${p.orientation}`}>{props.children}</div>
+}
+```
+
+Combine with a getter object when you also have derived state:
+```typescript
+function MyButton(props) {
+  const p = defaults(props, { disabled: false, tag: 'button' })
+  const state = {
+    get isIconOnly() { return !!props.icon && !props.children },
+    get baseClass() { return ['btn', this.isIconOnly ? 'btn-icon' : null] },
+  }
+  return <dynamic tag={p.tag} disabled={p.disabled} class={state.baseClass} />
+```
+
 ### ✅ Pattern: Lazy Computed (Lightweight)
 For simple derivations that are cheap to calculate, use a getter object. The calculation happens only when the *binding* (in the JSX) reads the value.
 
@@ -46,7 +92,7 @@ import { memoize } from 'mutts';
 function TodoList(props) {
   const computed = memoize({
     get activeTodos() {
-      console.log('Filtering...'); // Only runs when props.todos chages
+      console.log('Filtering...'); // Only runs when props.todos changes
       return props.todos.filter(t => !t.completed);
     },
     get count() {

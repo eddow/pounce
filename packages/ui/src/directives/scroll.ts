@@ -1,13 +1,9 @@
-import { biDi } from 'mutts'
+import { biDi, isObject } from 'mutts'
 
 export type ScrollAxis = number | { value: number; max: number }
 export type ScrollOptions = {
 	x?: ScrollAxis
 	y?: ScrollAxis
-}
-
-function isObject(value: any): value is Record<PropertyKey, any> {
-	return value && typeof value === 'object'
 }
 
 export function scroll(

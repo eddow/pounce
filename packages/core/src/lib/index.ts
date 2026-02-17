@@ -1,10 +1,5 @@
 /// <reference path="../types/jsx.d.ts" />
-import { perf } from '../perf'
-import { testing } from './debug'
 import { Fragment, h } from './jsx-factory'
-import { rootScope, type Scope } from './pounce-element'
-import { latch } from './reconciler'
-import { isFunction } from './renderer-internal'
 
 // Singleton verification — detects dual-module hazard (e.g. bundled + external copies)
 const GLOBAL_POUNCE_KEY = '__POUNCE_CORE_INSTANCE__'
@@ -18,17 +13,16 @@ if (globalScope) {
 			`[Pounce] Multiple instances of @pounce/core detected!\n` +
 				`First loaded: ${JSON.stringify(existing)}\n` +
 				`This causes instanceof checks to fail (e.g. ReactiveProp). ` +
-				`Ensure @pounce/core is fully externalized in library builds ` +
-				`(including /jsx-runtime and /jsx-dev-runtime subpaths).`
+				`Ensure @pounce/core is fully externalized in library builds.`
 		)
 	}
 	globalScope[GLOBAL_POUNCE_KEY] = stamp
 }
 
 export * from '../shared'
+export * from './composite-attributes'
 export * from './debug'
 export * from './jsx-factory'
-export type { NameSpacedProps } from './namespaced'
 export * from './platform'
 export * from './pounce-element'
 export * from './reconciler'
@@ -37,35 +31,16 @@ export {
 	checkComponentRebuild,
 	isFunction,
 	isNumber,
-	isObject,
 	isString,
 	isSymbol,
 	listen,
 	setHtmlProperty,
-	valuedAttributeGetter,
 } from './renderer-internal'
-export type { StyleInput } from './styles'
-export * from './traits'
+export { type StyleInput, styles } from './styles'
 export * from './utils'
 
 // biome-ignore lint/suspicious/noExplicitAny: Centralized global JSX injection for the framework
 const g = globalThis as any
+// TODO: either globalise all (h, r, c) or none
 g.h = h
 g.Fragment = Fragment
-
-export function bindApp(
-	app: JSX.Element,
-	container: string | HTMLElement | (() => HTMLElement) = '#app',
-	scope: Scope = rootScope
-) {
-	const target = isFunction(container) ? container() : container
-	perf?.mark('app:mount:start')
-	testing.renderingEvent?.('latch app root', target)
-	perf?.mark('app:render:start')
-	const unlatch = latch(target as string | Element, app, scope)
-	perf?.mark('app:render:end')
-	perf?.measure('app:render', 'app:render:start', 'app:render:end')
-	perf?.mark('app:mount:end')
-	perf?.measure('app:mount', 'app:mount:start', 'app:mount:end')
-	return unlatch
-}

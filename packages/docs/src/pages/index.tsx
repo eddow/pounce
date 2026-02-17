@@ -1,23 +1,27 @@
 import { A } from '@pounce/kit'
 import { Code, Section } from '../components'
 
-const helloApp = `import { bindApp } from '@pounce/core'
+const helloApp = `import { latch } from '@pounce/core'
 import { setAdapter } from '@pounce/ui'
 import { picoAdapter } from '@pounce/adapter-pico'
 import '@picocss/pico/css/pico.min.css'
+import { reactive } from 'mutts'
 
 setAdapter(picoAdapter)
 
-const Counter = () => {
+function Counter() {
   const state = reactive({ count: 0 })
+  
   return (
-    <button onClick={() => state.count++}>
-      Clicked {state.count} times
-    </button>
+    <main class="container">
+      <h1>Counter: {state.count}</h1>
+      <button onClick={() => state.count++}>+</button>
+      <button onClick={() => state.count--}>-</button>
+    </main>
   )
 }
 
-bindApp(<Counter />, '#app')`
+latch('#app', <Counter />)`
 
 export default function IndexPage() {
   return (

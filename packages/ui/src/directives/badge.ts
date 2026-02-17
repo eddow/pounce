@@ -1,6 +1,6 @@
-import { bindApp, h, Fragment } from '@pounce/core'
+import { latch, h, Fragment } from '@pounce/core'
 import type { Variant } from '../shared/variants'
-import { getVariantTrait } from '../shared/variants'
+import { variantProps } from '../shared/variants'
 
 export type BadgePosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
 
@@ -45,20 +45,25 @@ export function badge(target: Node | Node[], input: BadgeInput) {
 		}
 	}
 	if (variant) {
-		const trait = getVariantTrait(variant)
-		if (trait?.classes) {
-			if (Array.isArray(trait.classes)) {
-				for (const cls of trait.classes) {
-					if (cls) badgeElement.classList.add(cls)
+		const vp = variantProps(variant)
+		const { class: cls, style: _style, ...attrs } = vp
+		if (cls) {
+			if (Array.isArray(cls)) {
+				for (const c of cls) {
+					if (typeof c === 'string' && c) badgeElement.classList.add(c)
 				}
-			} else {
-				for (const [cls, enabled] of Object.entries(trait.classes)) {
-					if (enabled && cls) badgeElement.classList.add(cls)
+			} else if (typeof cls === 'string') {
+				for (const c of cls.split(' ')) {
+					if (c) badgeElement.classList.add(c)
+				}
+			} else if (cls && typeof cls === 'object') {
+				for (const [c, enabled] of Object.entries(cls)) {
+					if (enabled && c) badgeElement.classList.add(c)
 				}
 			}
 		}
-		if (trait?.attributes) {
-			for (const [k, v] of Object.entries(trait.attributes)) badgeElement.setAttribute(k, String(v))
+		for (const [k, v] of Object.entries(attrs)) {
+			if (v != null) badgeElement.setAttribute(k, String(v))
 		}
 	}
 
@@ -71,7 +76,7 @@ export function badge(target: Node | Node[], input: BadgeInput) {
 	const jsxContent = typeof content === 'object' && content !== null && 'render' in content
 		? content as JSX.Element
 		: h(Fragment, {}, String(content)) as JSX.Element
-	const unbind = bindApp(jsxContent, badgeElement)
+	const unbind = latch(badgeElement, jsxContent)
 
 	return () => {
 		if (typeof unbind === 'function') unbind()

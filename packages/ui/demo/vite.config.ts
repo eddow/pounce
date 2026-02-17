@@ -6,14 +6,7 @@ import { pounceUIPlugin } from '../vite-plugin-pounce-ui'
 export default defineConfig({
 	root: resolve(import.meta.dirname, '.'),
 	plugins: [
-		...pounceCorePackage({
-			core: {
-				jsxRuntime: {
-					runtime: 'automatic',
-					importSource: '@pounce/core',
-				},
-			}
-		}),
+		...pounceCorePackage(),
 		pounceUIPlugin()
 	],
 	server: {

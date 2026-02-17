@@ -18,7 +18,7 @@ Application-level toolkit for Pounce apps — reactive client state, routing, AP
 import { client, api, Router, A, css, stored } from '@pounce/kit'
 
 // Explicit browser
-import { client, api, Router, A, css, stored } from '@pounce/kit/dom'
+import { client, api, Router, A, css, stored } from '@pounce/kit'
 
 // SSR / Node
 import { client, api, withSSR, serverRouter } from '@pounce/kit/node'

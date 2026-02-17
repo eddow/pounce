@@ -2,10 +2,10 @@
  * Main entry point for Pounce-TS application
  */
 
-import { bindApp } from '@pounce/core'
-import { reactive } from 'mutts'
+import { latch } from '@pounce/core'
+import { Register, reactive } from 'mutts'
 import CounterComponent from './components/Counter'
-import TodoComponent from './components/Todo'
+import TodoComponent, { type Todo } from './components/Todo'
 import WrapperComponent from './components/Wrapper'
 
 // Create a reactive state for 2-way binding demo
@@ -15,7 +15,7 @@ const state = reactive({
 })
 
 // biome-ignore lint/style/useConst: set in the props
-let todos = reactive([])
+const todos = new Register<Todo, number>((t) => t.id)
 // Build the app virtual tree and render to a DocumentFragment
 const refs = reactive({
 	input: undefined as HTMLInputElement | undefined,
@@ -95,7 +95,7 @@ const App = () => (
 	</>
 )
 
-// Initialize the app using the automated bindApp helper
+// Initialize the app using the automated latch helper
 export function initDemo() {
-	bindApp(<App />, '#app')
+	latch('#app', <App />)
 }

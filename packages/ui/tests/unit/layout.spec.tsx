@@ -2,7 +2,7 @@
  * Tests for Layout components: Stack, Inline, Grid, Container, AppShell
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { Stack, Inline, Grid, Container, AppShell } from '../../src/components/layout'
 import { installTestAdapter, resetAdapter } from '../test-adapter'
 
@@ -24,7 +24,7 @@ describe('Stack', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default class', () => {
@@ -88,7 +88,7 @@ describe('Inline', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default class', () => {
@@ -149,7 +149,7 @@ describe('Grid', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default class', () => {
@@ -212,7 +212,7 @@ describe('Container', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders with default container class', () => {
@@ -260,7 +260,7 @@ describe('AppShell', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	it('renders header and main', () => {

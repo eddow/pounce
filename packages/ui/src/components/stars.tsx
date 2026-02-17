@@ -1,6 +1,5 @@
-import { project } from 'mutts'
-import { compose } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { project, reactive } from 'mutts'
+import { componentStyle } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
 import { Icon } from './icon'
 
@@ -74,45 +73,32 @@ export type StarsProps = {
 export const Stars = (props: StarsProps) => {
 	const adapter = getAdapter('Stars')
 
-	const state = compose(
-		{
-			value: 0 as number | readonly [number, number],
-			maximum: 5,
-			readonly: false,
-			size: '1.5rem',
-			inside: undefined as string | undefined,
-			after: 'star-outline',
-			before: 'star-filled',
-			zeroElement: undefined as string | undefined,
-		},
-		props
-	)
-
-	const internal = compose({ draggingEnd: null as 'min' | 'max' | null })
+	const local = reactive({ value: props.value ?? (0 as number | readonly [number, number]) })
+	const internal = reactive({ draggingEnd: null as 'min' | 'max' | null })
 
 	function set(val: number | readonly [number, number]) {
 		if (
-			state.value !== val &&
+			local.value !== val &&
 			(typeof val === 'number' ||
-				typeof state.value === 'number' ||
-				val[0] !== state.value[0] ||
-				val[1] !== state.value[1])
+				typeof local.value === 'number' ||
+				val[0] !== local.value[0] ||
+				val[1] !== local.value[1])
 		) {
-			state.value = val
-			state.onChange?.(val)
+			local.value = val
+			props.onChange?.(val)
 		}
 	}
 
 	const handleInteraction = (index: number, e: MouseEvent) => {
-		if (state.readonly) return
+		if (props.readonly) return
 		const isLeftClick = e.type === 'mousedown' && e.button === 0
 		const isLeftDrag = e.type === 'mousemove' && (e.buttons & 1) === 1
 		if (!isLeftClick && !isLeftDrag) return
 
 		let val: number | readonly [number, number] = index + 1
 
-		if (Array.isArray(state.value)) {
-			const [min, max] = state.value
+		if (Array.isArray(local.value)) {
+			const [min, max] = local.value
 			if (!internal.draggingEnd) {
 				if (val < min) {
 					internal.draggingEnd = 'min'
@@ -146,8 +132,8 @@ export const Stars = (props: StarsProps) => {
 	}
 
 	const handleDblClick = (index: number) => {
-		if (state.readonly) return
-		if (Array.isArray(state.value)) {
+		if (props.readonly) return
+		if (Array.isArray(local.value)) {
 			const val = index + 1
 			set([val, val])
 		}
@@ -157,7 +143,7 @@ export const Stars = (props: StarsProps) => {
 
 	const renderStarItem = (index: number) => {
 		const status = () => {
-			const [min, max] = Array.isArray(state.value) ? state.value : [state.value, state.value]
+			const [min, max] = Array.isArray(local.value) ? local.value : [local.value, local.value]
 			const val = index + 1
 			if (val === 0) return 'zero'
 			if (val <= min) return 'before'
@@ -175,14 +161,14 @@ export const Stars = (props: StarsProps) => {
 				<Icon
 					name={
 						index === -1
-							? state.zeroElement!
+							? props.zeroElement!
 							: status() === 'inside'
-								? (state.inside ?? state.before)
+								? (props.inside ?? (props.before ?? 'star-filled'))
 								: status() === 'before'
-									? state.before
-									: state.after
+									? (props.before ?? 'star-filled')
+									: (props.after ?? 'star-outline')
 					}
-					size={state.size}
+					size={props.size ?? '1.5rem'}
 				/>
 			</span>
 		)
@@ -190,12 +176,12 @@ export const Stars = (props: StarsProps) => {
 
 	return (
 		<div
-			class={[adapter.classes?.base || 'pounce-stars', state.readonly ? 'pounce-readonly' : undefined]}
+			class={[adapter.classes?.base || 'pounce-stars', props.readonly ? 'pounce-readonly' : undefined]}
 			onMouseup={handleMouseUp}
 			onMouseleave={handleMouseUp}
 		>
-			{state.zeroElement && renderStarItem(-1)}
-			{project(Array.from({ length: state.maximum }).map((_, i) => i), ({ value }) => renderStarItem(value))}
+			{props.zeroElement && renderStarItem(-1)}
+			{project(Array.from({ length: props.maximum ?? 5 }).map((_, i) => i), ({ value }) => renderStarItem(value))}
 		</div>
 	)
 }

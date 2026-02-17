@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 import { perf } from '../../src/perf'
 import { Button } from '../../src/components/button'
 import { setAdapter, resetAdapter } from '../../src/adapter/registry'
@@ -26,7 +26,7 @@ describe('UI Performance Tests', () => {
 	})
 
 	const render = (element: JSX.Element) => {
-		unmount = bindApp(element, container)
+		unmount = latch(container, element)
 	}
 
 	describe('Button Performance', () => {

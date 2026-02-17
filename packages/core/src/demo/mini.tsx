@@ -1,4 +1,4 @@
-import { bindApp, type Scope } from '@pounce/core'
+import { latch, type Scope } from '@pounce/core'
 import { reactive } from 'mutts'
 import { MiniCounter } from './components/MiniCounter'
 
@@ -78,7 +78,7 @@ const MicroApp = () => (
 	</>
 )*/
 
-// Initialize the app using the automated bindApp helper
+// Initialize the app using the automated latch helper
 export function initMini() {
-	bindApp(<App />, '#mini')
+	latch('#mini', <App />)
 }

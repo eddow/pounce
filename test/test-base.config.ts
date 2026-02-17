@@ -12,21 +12,15 @@ export const createBaseConfig = (packageDir: string) => {
 		plugins: [
 			pounceCorePlugin({
 				projectRoot: packageDir,
-				jsxRuntime: {
-					runtime: 'automatic',
-					importSource: '@pounce/core',
-				},
 			}),
 		],
 		esbuild: false,
 		resolve: {
 			alias: {
 				'mutts': resolve(rootDir, isBrowser
-					? '../../mutts/src/entry-browser.ts'
-					: '../../mutts/src/index.ts'),
+					? '../../mutts/src/entry-browser.dev.ts'
+					: '../../mutts/src/entry-node.dev.ts'),
 				'pure-glyf': resolve(rootDir, '../packages/pure-glyf/src/index.ts'),
-				'@pounce/core/jsx-runtime': resolve(rootDir, '../packages/core/src/runtime/jsx-runtime.ts'),
-				'@pounce/core/jsx-dev-runtime': resolve(rootDir, '../packages/core/src/runtime/jsx-dev-runtime.ts'),
 				'@pounce/core/node': resolve(rootDir, '../packages/core/src/node/index.ts'),
 				'@pounce/core': resolve(rootDir, isBrowser
 					? '../packages/core/src/dom/index.ts'

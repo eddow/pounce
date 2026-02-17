@@ -10,8 +10,8 @@ import {
 } from 'dockview-core'
 import 'dockview-core/dist/styles/dockview.css'
 import { biDi, effect, reactive, type ScopedCallback, unreactive } from 'mutts'
-import { bindApp, extend } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { latch, extend } from '@pounce/core'
+import { componentStyle } from '@pounce/kit'
 import { getAdapter } from '../adapter'
 import { Button } from './button'
 
@@ -97,7 +97,7 @@ function contentRenderer(
 				api.onDidParametersChange((payload: any) => {
 					Object.assign(params, payload)
 				}).dispose,
-				bindApp(<Widget {...props as DockviewWidgetProps} />, element, extend(scope, { panelApi: unreactive(api) }))
+				latch(element, <Widget {...props as DockviewWidgetProps} />, extend(scope, { panelApi: unreactive(api) }))
 			)
 		},
 		layout: (width: number, height: number) => {
@@ -122,7 +122,7 @@ function tabRenderer(
 	return {
 		element,
 		init: ({ api }: GroupPanelPartInitParameters) => {
-			cleanup = bindApp(<Widget {...props as DockviewWidgetProps} />, element, extend(scope, { panelApi: unreactive(api) }))
+			cleanup = latch(element, <Widget {...props as DockviewWidgetProps} />, extend(scope, { panelApi: unreactive(api) }))
 		},
 		dispose() {
 			cleanup?.()
@@ -141,7 +141,7 @@ function headerActionRenderer(
 	return {
 		element,
 		init() {
-			cleanup = bindApp(<Widget group={group} />, element, scope)
+			cleanup = latch(element, <Widget group={group} />, scope)
 		},
 		dispose() {
 			cleanup?.()

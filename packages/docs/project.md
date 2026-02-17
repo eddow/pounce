@@ -143,7 +143,6 @@ const ButtonPage = () => (
 /core/jsx                           JSX factory, r(), two-way binding, this=
 /core/directives                    if, when, for, dynamic, fragment
 /core/scope                         Scope chain, <scope>, injection
-/core/compose                       compose(), forwardProps(), propsInto()
 /core/ssr                           Node entry, JSDOM, AsyncLocalStorage
 
 /kit                                @pounce/kit overview
@@ -197,7 +196,7 @@ packages/docs/
 ├── vite.config.ts
 ├── index.html
 ├── src/
-│   ├── main.tsx            # Entry: bindApp, setAdapter, Router, DisplayProvider
+│   ├── main.tsx            # Entry: latch, setAdapter, Router, DisplayProvider
 │   ├── layout.tsx          # AppShell: sidebar nav + main content + ThemeToggle
 │   ├── routes.ts           # Route definitions (flat array, one per page)
 │   ├── components/

@@ -1,9 +1,9 @@
+import { defaults } from '@pounce/core'
 import type { Scope } from '@pounce/core'
-import { compose } from '@pounce/core'
-import { componentStyle } from '@pounce/kit/dom'
+import { componentStyle } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
 
-import { asVariant, getVariantTrait } from '../shared/variants'
+import { asVariant, variantProps } from '../shared/variants'
 import { Icon } from './icon'
 import { perf } from '../perf'
 
@@ -66,100 +66,83 @@ export type ButtonProps = {
 const ButtonBase = (props: ButtonProps, scope: Scope) => {
 	const adapter = getAdapter('Button')
 
-	const state = compose(
-		{
-			variant: 'primary',
-			iconPosition: 'start',
-			disabled: false,
-			onClick: () => { },
-			ariaLabel: undefined as string | undefined,
-			tag: 'button' as const,
+	const p = defaults(props, { iconPosition: 'start' as const, disabled: false, tag: 'button' as const })
+
+	const state = {
+		get onClick() {
+			const original = props.onClick ?? (() => { })
+			if (!original || p.disabled) return undefined
+			return (e: MouseEvent) => {
+				perf?.mark('button:click:start')
+				original(e)
+				perf?.mark('button:click:end')
+				perf?.measure('button:click', 'button:click:start', 'button:click:end')
+			}
 		},
-		props,
-		(s: any) => ({
-			get onClick() {
-				const original = s.onClick
-				if (!original || s.disabled) return undefined
-				return (e: MouseEvent) => {
-					perf?.mark('button:click:start')
-					original(e)
-					perf?.mark('button:click:end')
-					perf?.measure('button:click', 'button:click:start', 'button:click:end')
-				}
-			},
-			get iconElement() {
-				if (!s.icon) return null
-
-				if (typeof s.icon === 'string') {
-					return (
-						<span class="pounce-button-icon" aria-hidden="true">
-							<Icon name={s.icon} />
-						</span>
-					)
-				}
-
-				return <span class="pounce-button-icon" aria-hidden="true">{s.icon}</span>
-			},
-			get hasLabel() {
-				return !!s.children && (!Array.isArray(s.children) || s.children.some((e: any) => !!e))
-			},
-			get isIconOnly() {
-				return !!s.icon && !this.hasLabel
-			},
-			get baseTrait() {
-				const classes = [
-					adapter.classes?.base || 'pounce-button',
-					this.isIconOnly ? (adapter.classes?.iconOnly || 'pounce-button-icon-only') : null
-				].filter((c): c is string => !!c)
-				return { classes }
-			},
-			get variantTrait() {
-				return getVariantTrait(s.variant)
-			},
-			get allTraits() {
-				return [this.baseTrait, this.variantTrait].filter((t): t is import('@pounce/core').Trait => !!t)
-			},
-		})
-	)
+		get iconElement() {
+			if (!props.icon) return null
+			if (typeof props.icon === 'string') {
+				return (
+					<span class="pounce-button-icon" aria-hidden="true">
+						<Icon name={props.icon} />
+					</span>
+				)
+			}
+			return <span class="pounce-button-icon" aria-hidden="true">{props.icon}</span>
+		},
+		get hasLabel() {
+			return !!props.children && (!Array.isArray(props.children) || props.children.some((e: any) => !!e))
+		},
+		get isIconOnly() {
+			return !!props.icon && !this.hasLabel
+		},
+		get baseClass() {
+			return [
+				adapter.classes?.base || 'pounce-button',
+				this.isIconOnly ? (adapter.classes?.iconOnly || 'pounce-button-icon-only') : null
+			]
+		},
+	}
 
 	// Custom render structure from adapter
 	if (adapter.renderStructure) {
 		return adapter.renderStructure({
 			props,
 			state: state as Record<string, unknown>,
-			children: state.children,
+			children: props.children,
 			ariaProps: {
 				'aria-label': state.isIconOnly
-					? (state.ariaLabel ?? state.el?.['aria-label'] ?? 'Action')
-					: (state.ariaLabel ?? state.el?.['aria-label']),
-				'aria-disabled': state.disabled || undefined,
+					? (props.ariaLabel ?? props.el?.['aria-label'] ?? 'Action')
+					: (props.ariaLabel ?? props.el?.['aria-label']),
+				'aria-disabled': p.disabled || undefined,
 			},
 		}, scope)
 	}
 
 	return (
 		<dynamic
-			tag={state.tag}
-			{...state.el}
-			traits={state.allTraits}
+			tag={p.tag}
+			{...variantProps(props.variant)}
+			{...props.el}
+			class={state.baseClass}
 			onClick={state.onClick}
-			disabled={state.disabled}
+			disabled={p.disabled}
 			aria-label={
 				state.isIconOnly
-					? (state.ariaLabel ?? state.el?.['aria-label'] ?? 'Action')
-					: (state.ariaLabel ?? state.el?.['aria-label'])
+					? (props.ariaLabel ?? props.el?.['aria-label'] ?? 'Action')
+					: (props.ariaLabel ?? props.el?.['aria-label'])
 			}
 		>
-			<span if={state.iconPosition === 'start'} class="pounce-button-icon-wrapper">
+			<span if={p.iconPosition === 'start'} class="pounce-button-icon-wrapper">
 				{state.iconElement}
 			</span>
 			<fragment>
 				<span if={state.hasLabel} class="pounce-button-label">
-					{state.children}
+					{props.children}
 				</span>
-				<fragment else>{state.children}</fragment>
+				<fragment else>{props.children}</fragment>
 			</fragment>
-			<span if={state.iconPosition === 'end'} class="pounce-button-icon-wrapper">
+			<span if={p.iconPosition === 'end'} class="pounce-button-icon-wrapper">
 				{state.iconElement}
 			</span>
 		</dynamic>

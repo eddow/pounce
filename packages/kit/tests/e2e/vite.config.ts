@@ -14,18 +14,12 @@ export default defineConfig({
 	plugins: [
 		pounceCorePlugin({
 			projectRoot: dir,
-			jsxRuntime: {
-				runtime: 'automatic',
-				importSource: '@pounce/core',
-			},
 		}),
 	],
 	esbuild: false,
 	resolve: {
 		conditions: ['browser', 'default', 'import'],
 		alias: {
-			'@pounce/core/jsx-runtime': resolve(coreRoot, 'src/runtime/jsx-runtime.ts'),
-			'@pounce/core/jsx-dev-runtime': resolve(coreRoot, 'src/runtime/jsx-dev-runtime.ts'),
 			'@pounce/core': resolve(coreRoot, 'src/lib/index.ts'),
 			mutts: resolve(muttsRoot, 'src'),
 		},

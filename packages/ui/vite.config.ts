@@ -10,12 +10,6 @@ export default defineConfig({
   plugins: [
     pounceUIPlugin(),
     ...pounceCorePackage({
-      core: {
-        jsxRuntime: {
-          runtime: 'automatic',
-          importSource: '@pounce/core',
-        },
-      },
       dts: {
         rollupTypes: true,
       }

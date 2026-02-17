@@ -31,7 +31,7 @@ export * from './overlays/index'
 
 /**
  * Initializes the UI library with vanilla defaults.
- * Installs the vanilla adapter (standard variant traits + transition config).
+ * Installs the vanilla adapter (standard variants + transition config).
  * 
  * Equivalent to `setAdapter(vanillaAdapter)`.
  */

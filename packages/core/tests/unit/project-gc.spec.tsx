@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { reactive, project } from 'mutts'
-import { bindApp, document } from '@pounce/core'
+import { latch, document } from '@pounce/core'
 
 const gc = typeof globalThis.gc === 'function' ? globalThis.gc : undefined
 const itGC = gc ? it : it.skip
@@ -44,7 +44,7 @@ describe('Project effect GC safety', () => {
 			</div>
 		)
 
-		bindApp(<App />, container)
+		latch(container, <App />)
 
 		const buttons = container.querySelectorAll('button')
 		expect(buttons.length).toBe(2)

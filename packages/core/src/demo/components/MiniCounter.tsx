@@ -1,5 +1,5 @@
-import { effect, project } from 'mutts'
-import { compose } from '../../lib'
+import { effect } from 'mutts'
+import { extend } from '../../lib'
 
 export interface MiniCounterProps {
 	list?: string[]
@@ -7,14 +7,12 @@ export interface MiniCounterProps {
 }
 
 export function MiniCounter(props: MiniCounterProps) {
+	const state = extend({ list: [] as string[], addedText: Date.now().toString() }, props)
 	effect(({ reaction }) => {
 		if (reaction) {
 			console.log('MiniCounter component re-running due to reactive change')
 		}
-	})
-	const state = compose({ list: [] as string[], addedText: Date.now().toString() }, props)
-	console.log('🎯 Mini counter component mounted!')
-	effect(() => {
+		console.log('🎯 Mini counter component mounted!')
 		return () => {
 			console.log('🎯 Counter component unmounted!', { finalList: state.list.join(', ') })
 		}
@@ -29,11 +27,13 @@ export function MiniCounter(props: MiniCounterProps) {
 	return (
 		<>
 			<div>
-				{project(state.list, ({ get, key }) => (
-					<button class="remove" onClick={() => state.list.splice(key, 1)}>
-						{get()}
-					</button>
-				))}
+				<for each={state.list}>
+					{(v: string) => (
+						<button class="remove" onClick={() => state.list.splice(state.list.indexOf(v), 1)}>
+							{v}
+						</button>
+					)}
+				</for>
 			</div>
 			<div>
 				<input type="text" value={state.addedText} />
