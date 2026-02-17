@@ -154,31 +154,38 @@ export class CompositeAttributes {
 	 */
 	asProps(): any {
 		return new Proxy(this, {
-			get: (target, prop, receiver) => {
-				if (typeof prop === 'string') return target.get(prop)
-				return Reflect.get(target, prop, receiver)
+			get: (target, prop) => {
+				if (prop === Symbol.toStringTag) return 'Properties'
+				if (typeof prop === 'string') return collapse(target.get(prop))
+			},
+			set: (target, prop, value) => {
+				if (typeof prop === 'string') {
+					const rp = target.get(prop)
+					if (rp instanceof ReactiveProp && rp.set) {
+						rp.set(value)
+						return true
+					}
+				}
+				return false
 			},
 
-			has: (target, prop) => {
-				if (typeof prop === 'string') {
-					if (target.masked.has(prop)) return false
-					return target.keys.has(prop)
-				}
-				return Reflect.has(target, prop)
-			},
+			has: (target, prop) => typeof prop === 'string' && target.keys.has(prop),
 			ownKeys: (target) => {
 				return Array.from(target.keys)
-			},
+			},/*
 			getOwnPropertyDescriptor: (target, prop) => {
 				if (typeof prop === 'string' && target.keys.has(prop)) {
 					return {
 						enumerable: true,
 						configurable: true,
-						get: () => target.get(prop),
+						get: () => collapse(target.get(prop)),
+						set: (v) => {
+							target.get(prop).set(v)
+						}
 					}
 				}
 				return undefined
-			},
+			},*/
 			getPrototypeOf: () => this,
 		})
 	}

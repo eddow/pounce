@@ -148,17 +148,6 @@ export function latch(
 	}
 }
 
-// TODO: use flat if possible
-type Tree<T> = T | readonly Tree<T>[]
-function myFlat<T>(arr: readonly Tree<T>[], r: {v: T[]} = {v: [] as T[]}): T[] {
-	if(isReactive(arr)) r.v = reactive(r.v)
-	for(const item of arr) {
-		if(Array.isArray(item)) myFlat(item, r)
-		else r.v.push(item as T)
-	}
-	return r.v
-}
-
 /**
  * Process children into a flat array of DOM nodes.
  *
@@ -218,7 +207,7 @@ export function processChildren(children: Children, scope: Scope): Node | readon
 		conditioned,
 		weakCached((e: PounceElement) => e.render(scope))
 	)
-	return cleanedBy(lift(() => myFlat(rendered) as Node[]), () => {
+	return cleanedBy(lift(() => rendered.flat(Infinity) as Node[]), () => {
 		flatInput[cleanup]?.()
 		flatElements[cleanup]?.()
 		conditioned[cleanup]?.()

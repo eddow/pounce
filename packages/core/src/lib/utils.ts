@@ -1,4 +1,4 @@
-import { arrayDiff, effect, isReactive, reactive, tag, unreactive } from 'mutts'
+import { reactive } from 'mutts'
 import { isWeakKey } from './renderer-internal'
 
 /**
