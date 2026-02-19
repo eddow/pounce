@@ -15,7 +15,7 @@ import { perf } from '../perf'
 import { document, Node } from '../shared'
 import { collapse, ReactiveProp } from './composite-attributes'
 import { perfCounters, testing } from './debug'
-import { type Child, type Children, PounceElement, rootEnv, type Env } from './pounce-element'
+import { type Child, type Children, type Env, PounceElement, rootEnv } from './pounce-element'
 import { weakCached } from './utils'
 
 const latchOwners = new WeakMap<Element, string>()
@@ -185,18 +185,28 @@ export function latch(
 export function processChildren(children: Children, env: Env): Node | readonly Node[] {
 	if (!Array.isArray(children)) return pounceElement(children, env).render(env)
 	//Idea: keep reactivity for as late as possible
-	const flatInput: Child[] & { [cleanup]?: ScopedCallback } =
-		tag('flatInput', isReactive(children) || children.some((c) => isReactive(c))
-			? lift(named('lift:flatInput', () => unwrap(children.flat(Infinity).filter(Boolean) as Child[])))
-			: children.flat(Infinity).filter(Boolean))
-	const flatElements: readonly PounceElement[] & { [cleanup]?: ScopedCallback } =
-		tag('flatElements', isReactive(flatInput) || flatInput.some((c) => c instanceof ReactiveProp)
-			? morph(flatInput, named('morph:flatElements', (c) => pounceElement(collapse(c), env)), {
-					pure: (c) => !(c instanceof ReactiveProp),
-				})
+	const flatInput: Child[] & { [cleanup]?: ScopedCallback } = tag(
+		'flatInput',
+		isReactive(children) || children.some((c) => isReactive(c))
+			? lift(
+					named('lift:flatInput', () => unwrap(children.flat(Infinity).filter(Boolean) as Child[]))
+				)
+			: children.flat(Infinity).filter(Boolean)
+	)
+	const flatElements: readonly PounceElement[] & { [cleanup]?: ScopedCallback } = tag(
+		'flatElements',
+		isReactive(flatInput) || flatInput.some((c) => c instanceof ReactiveProp)
+			? morph(
+					flatInput,
+					named('morph:flatElements', (c) => pounceElement(collapse(c), env)),
+					{
+						pure: (c) => !(c instanceof ReactiveProp),
+					}
+				)
 			: (flatInput.map((c) => pounceElement(c, env)) as readonly PounceElement[] & {
 					[cleanup]?: never
-				}))
+				})
+	)
 
 	const conditioned = tag(
 		'conditioned',

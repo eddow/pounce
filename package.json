@@ -17,7 +17,7 @@
 		"playwright": "^1.58.2",
 		"pure-glyf": "workspace:*",
 		"turbo": "^2.8.4",
-		"typescript": "5.9.3",
+		"typescript": "^5.9.3",
 		"vitest": "^4.0.18"
 	},
 	"pnpm": {
@@ -28,5 +28,5 @@
 			"mutts": "link:../mutts"
 		}
 	},
-	"packageManager": "pnpm@10.28.2"
+	"packageManager": "pnpm@10.30.0"
 }

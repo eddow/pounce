@@ -310,7 +310,9 @@ export function pounceBabelPlugin({
 										// For type assertions, use the original expression in getter (with cast) but inner expression in setter (without cast)
 										t.isMemberExpression(innerExpression) ||
 										// Mutable identifier: 2-way binding
-										(t.isIdentifier(innerExpression) && isMutableBinding(path, innerExpression.name))) {
+										(t.isIdentifier(innerExpression) &&
+											isMutableBinding(path, innerExpression.name))
+									) {
 										const getter = t.arrowFunctionExpression([], expression)
 										const setter = t.arrowFunctionExpression(
 											[t.identifier('val')],

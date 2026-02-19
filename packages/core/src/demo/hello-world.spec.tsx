@@ -5,10 +5,10 @@ import { HelloWorld } from './hello-world'
 describe('HelloWorld Component', () => {
 	it('renders with default props', () => {
 		const mount = h(HelloWorld, {})
-		const root = (mount.render(rootEnv) as HTMLElement[])
+		const rootElement = mount.render(rootEnv) as HTMLElement
 
-		const greetingElement = root.querySelector('.greeting')
-		const messageElement = root.querySelector('.message')
+		const greetingElement = rootElement.querySelector('.greeting')
+		const messageElement = rootElement.querySelector('.message')
 
 		expect(greetingElement?.textContent).toBe('Hello, World!')
 		expect(messageElement?.textContent).toBe('Welcome to Pounce components')
@@ -16,29 +16,29 @@ describe('HelloWorld Component', () => {
 
 	it('renders with custom name', () => {
 		const mount = h(HelloWorld, { name: 'Alice' })
-		const root = (mount.render(rootEnv) as HTMLElement[])
+		const rootElement = mount.render(rootEnv) as HTMLElement
 
-		const greetingElement = root.querySelector('.greeting')
+		const greetingElement = rootElement.querySelector('.greeting')
 		expect(greetingElement?.textContent).toBe('Hello, Alice!')
 	})
 
 	it('renders with custom greeting', () => {
 		const mount = h(HelloWorld, { greeting: 'Hi', name: 'Bob' })
-		const root = (mount.render(rootEnv) as HTMLElement[])
+		const rootElement = mount.render(rootEnv) as HTMLElement
 
-		const greetingElement = root.querySelector('.greeting')
+		const greetingElement = rootElement.querySelector('.greeting')
 		expect(greetingElement?.textContent).toBe('Hi, Bob!')
 	})
 
 	it('has correct CSS classes', () => {
 		const mount = h(HelloWorld, {})
-		const root = (mount.render(rootEnv) as HTMLElement[])
+		const rootElement = mount.render(rootEnv) as HTMLElement
 
 		// The root element itself should have the hello-world class
-		expect(root.classList.contains('hello-world')).toBe(true)
+		expect(rootElement.classList.contains('hello-world')).toBe(true)
 
-		const greetingElement = root.querySelector('.greeting')
-		const messageElement = root.querySelector('.message')
+		const greetingElement = rootElement.querySelector('.greeting')
+		const messageElement = rootElement.querySelector('.message')
 
 		expect(greetingElement).toBeTruthy()
 		expect(messageElement).toBeTruthy()
@@ -46,10 +46,10 @@ describe('HelloWorld Component', () => {
 
 	it('renders h1 and p elements with correct tags', () => {
 		const mount = h(HelloWorld, {})
-		const root = (mount.render(rootEnv) as HTMLElement[])
+		const rootElement = mount.render(rootEnv) as HTMLElement
 
-		const h1Element = root.querySelector('h1')
-		const pElement = root.querySelector('p')
+		const h1Element = rootElement.querySelector('h1')
+		const pElement = rootElement.querySelector('p')
 
 		expect(h1Element?.tagName).toBe('H1')
 		expect(pElement?.tagName).toBe('P')

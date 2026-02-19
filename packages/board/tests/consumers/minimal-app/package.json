@@ -23,5 +23,6 @@
 		"jsdom": "^27.4.0",
 		"tsx": "latest",
 		"vite": "latest"
-	}
+	},
+	"packageManager": "pnpm@10.30.0"
 }

@@ -1,4 +1,4 @@
-import { latch, type Env } from '@pounce/core'
+import { type Env, latch } from '@pounce/core'
 import { reactive } from 'mutts'
 import { MiniCounter } from './components/MiniCounter'
 
@@ -6,15 +6,9 @@ function isFunction(value: any): value is Function {
 	return typeof value === 'function'
 }
 
-type ResizeValue =
-	| { width: number; height: number }
-	| ((w: number, h: number) => void)
+type ResizeValue = { width: number; height: number } | ((w: number, h: number) => void)
 
-function resize(
-	target: Node | Node[],
-	value: ResizeValue,
-	_env: Env
-) {
+function resize(target: Node | Node[], value: ResizeValue, _env: Env) {
 	const element = Array.isArray(target) ? target[0] : target
 	if (!(element instanceof HTMLElement)) return
 	const observer = new ResizeObserver((entries) => {
@@ -26,7 +20,7 @@ function resize(
 			// - callback: (w, h) => void
 			// - getter: () => { width, height }
 			//TODO: for this to `collapse` the argument directly, we should add an effect per mount
-			(value)(width, height)
+			value(width, height)
 		} else if (value && typeof value === 'object') {
 			value.width = width
 			value.height = height
@@ -35,7 +29,6 @@ function resize(
 	observer.observe(element)
 	return () => observer.disconnect()
 }
-
 
 function ResizeSandbox(_props: {}, env: Env) {
 	const size = reactive({ width: 0, height: 0 })

@@ -5,7 +5,10 @@ declare global {
 	var h: (type: any, props?: any, ...children: any[]) => JSX.Element
 	var Fragment: (props: any, env?: any) => any
 	const window: never // Prevent accidental window usage in SSR - import from @pounce/core instead
-	type ComponentFunction<P extends Record<string, any> = any, E extends Env = Env> = (props: P, env: E) => SourceChildren
+	type ComponentFunction<P extends Record<string, any> = any, E extends Env = Env> = (
+		props: P,
+		env: E
+	) => SourceChildren
 
 	interface ComponentInfo {
 		id: string
@@ -117,8 +120,7 @@ declare global {
 			[K in string & keyof M as `when:${K}`]?: M[K] extends (value: infer V) => boolean ? V : never
 		}
 
-		type ElementIntrinsicAttributes<N extends Node | readonly Node[]> =
-			IntrinsicThisAttributes<N>
+		type ElementIntrinsicAttributes<N extends Node | readonly Node[]> = IntrinsicThisAttributes<N>
 
 		type IntrinsicAttributes = IntrinsicThisAttributes<Node | readonly Node[]>
 
@@ -286,14 +288,7 @@ declare global {
 			capture?: boolean | 'user' | 'environment' | (string & {})
 			autoComplete?: string
 			autoCorrect?: 'on' | 'off' | (string & {})
-			autoCapitalize?:
-				| 'off'
-				| 'none'
-				| 'on'
-				| 'sentences'
-				| 'words'
-				| 'characters'
-				| (string & {})
+			autoCapitalize?: 'off' | 'none' | 'on' | 'sentences' | 'words' | 'characters' | (string & {})
 			spellCheck?: boolean | 'true' | 'false' | (string & {})
 			pattern?: string
 			maxLength?: number
@@ -370,7 +365,7 @@ declare global {
 				children?: Children
 			}
 			for: ElementIntrinsicAttributes<Node[]> & ForElementProps
-			
+
 			// Form Elements
 			input:
 				| (BaseHTMLAttributes<HTMLInputElement> & InputNumber)

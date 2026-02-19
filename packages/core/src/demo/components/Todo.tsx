@@ -13,18 +13,16 @@ export interface Todo {
 	createdAt: Date
 }
 
-export default function TodoWebComponent(
-	props: {
-		placeholder?: string
-		showFilters?: boolean
-		showClearCompleted?: boolean
-		maxTodos?: number
-		allowEmptyTodos?: boolean
-		todos: Register<Todo, number>
-		filter?: 'all' | 'active' | 'completed'
-		newTodoText?: string
-	}
-) {
+export default function TodoWebComponent(props: {
+	placeholder?: string
+	showFilters?: boolean
+	showClearCompleted?: boolean
+	maxTodos?: number
+	allowEmptyTodos?: boolean
+	todos: Register<Todo, number>
+	filter?: 'all' | 'active' | 'completed'
+	newTodoText?: string
+}) {
 	const state = extend(
 		{
 			placeholder: 'Add a new todo...',

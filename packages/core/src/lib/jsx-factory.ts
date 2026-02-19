@@ -5,9 +5,9 @@ import {
 	CompositeAttributes,
 	type CompositeAttributesMeta,
 	collapse,
+	fromAttribute,
 	type PerhapsReactive,
 	ReactiveProp,
-	fromAttribute,
 } from './composite-attributes'
 import { POUNCE_OWNER, perfCounters, rootComponents, testing } from './debug'
 import {
@@ -15,8 +15,8 @@ import {
 	type Children,
 	type ComponentNode,
 	DynamicRenderingError,
-	PounceElement,
 	type Env,
+	PounceElement,
 } from './pounce-element'
 import { processChildren, reconcile } from './reconciler'
 import { attachAttributes, checkComponentRebuild, isString } from './renderer-internal'
@@ -34,7 +34,7 @@ export const intrinsicComponentAliases: Record<string, ComponentFunction> = exte
 			each: PerhapsReactive<readonly T[]>
 			children: any
 		},
-		env: Env,
+		env: Env
 	) {
 		if (Array.isArray(props.children) && props.children.length !== 1)
 			throw new DynamicRenderingError(
@@ -139,10 +139,7 @@ function produceComponent(
 			testing.renderingEvent?.('render component', componentCtor.name)
 
 			// Component gets the flattened props proxy, potentially restructured for namespaces
-			const result = componentCtor(
-				defaults({ children }, inAttrs.asProps()),
-				info.env
-			)
+			const result = componentCtor(defaults({ children }, inAttrs.asProps()), info.env)
 			const processed = processChildren(result, info.env)
 
 			cleanedBy(processed, () => {

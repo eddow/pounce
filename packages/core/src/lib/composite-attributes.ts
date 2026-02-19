@@ -1,4 +1,4 @@
-import { type EffectCleanup, isReactive, memoize, stringKeys } from 'mutts'
+import { type EffectCleanup, isReactive, stringKeys } from 'mutts'
 import { styles } from './styles'
 
 export class ReactiveProp<T> {
@@ -52,20 +52,20 @@ const propsProxy: ProxyHandler<CompositeAttributes> & Record<symbol, unknown> = 
 		return Array.from(target.keys)
 	},
 	getOwnPropertyDescriptor(target, prop) {
-		if(typeof prop !== 'string' || !target.keys.has(prop)) return
+		if (typeof prop !== 'string' || !target.keys.has(prop)) return
 		const value = target.get(prop)
 		return {
 			enumerable: true,
 			configurable: true,
-			...(
-				value instanceof ReactiveProp ? {
-					get: ()=> value.get(),
-					set: value.set && ((v)=> value.set!(v))
-				} : {
-					writable: false,
-					value
-				}
-			)
+			...(value instanceof ReactiveProp
+				? {
+						get: () => value.get(),
+						set: value.set && ((v) => value.set!(v)),
+					}
+				: {
+						writable: false,
+						value,
+					}),
 		}
 	},
 }

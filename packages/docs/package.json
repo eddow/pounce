@@ -21,7 +21,8 @@
   "devDependencies": {
     "@types/node": "^25",
     "sass": "^1.93",
-    "typescript": "^5.9",
+    "typescript": "^5.9.3",
     "vite": "^7"
-  }
+  },
+  "packageManager": "pnpm@10.30.0"
 }
