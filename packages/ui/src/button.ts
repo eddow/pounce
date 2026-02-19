@@ -76,7 +76,7 @@ export function useButton(props: ButtonProps, env: Env): ButtonState {
 			return props.tag ?? 'button'
 		},
 		get iconPosition() {
-			if (props.icon) return relativeSide(env.dc, props.iconPosition)
+			return props.icon ? relativeSide(env.dc, props.iconPosition) : undefined
 		},
 		get ariaProps() {
 			return {

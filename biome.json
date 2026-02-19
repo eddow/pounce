@@ -88,7 +88,10 @@
 			"a11y": {
 				"useButtonType": "off",
 				"noStaticElementInteractions": "off",
-				"useValidAnchor": "off"
+				"useValidAnchor": "off",
+				"useSemanticElements": "off",
+				"useKeyWithClickEvents": "off",
+				"useAriaPropsSupportedByRole": "off"
 			}
 		}
 	}

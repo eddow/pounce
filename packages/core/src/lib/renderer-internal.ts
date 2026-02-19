@@ -197,7 +197,7 @@ export function attachAttributes(
 	element: HTMLElement,
 	attributes: CompositeAttributes
 ): ScopedCallback | undefined {
-	let cleanups: Record<string, ScopedCallback | undefined> = {}
+	const cleanups: Record<string, ScopedCallback | undefined> = {}
 	const cleanAll = () => {
 		for (const cleanup of Object.values(cleanups)) cleanup?.()
 	}

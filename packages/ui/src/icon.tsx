@@ -1,6 +1,6 @@
 import type { Env } from '@pounce/core'
-import { options } from './options'
 import { lift } from 'mutts'
+import { options } from './options'
 
 export type IconComponentProps = {
 	name: string
@@ -22,5 +22,5 @@ export type IconComponentProps = {
  */
 export function Icon(props: IconComponentProps, env: Env): JSX.Element {
 	if (!options.iconFactory) return <span data-icon={props.name}>{props.name}</span>
-	return lift(()=> [options.iconFactory!(props.name, props.size, props.el ?? {}, env.dc)])
+	return lift(() => [options.iconFactory!(props.name, props.size, props.el ?? {}, env.dc)])
 }

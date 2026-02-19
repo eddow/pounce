@@ -95,7 +95,7 @@ export const Stars = (props: StarsProps) => {
 		const isLeftDrag = e.type === 'mousemove' && (e.buttons & 1) === 1
 		if (!isLeftClick && !isLeftDrag) return
 
-		let val: number | readonly [number, number] = index + 1
+		const val: number | readonly [number, number] = index + 1
 
 		if (Array.isArray(local.value)) {
 			const [min, max] = local.value

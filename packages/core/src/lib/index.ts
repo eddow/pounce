@@ -3,7 +3,6 @@ import { Fragment, h } from './jsx-factory'
 
 // Singleton verification — detects dual-module hazard (e.g. bundled + external copies)
 const GLOBAL_POUNCE_KEY = '__POUNCE_CORE_INSTANCE__'
-// biome-ignore lint/suspicious/noExplicitAny: global scope detection across environments
 const globalScope = (typeof globalThis !== 'undefined' ? globalThis : false) as any
 if (globalScope) {
 	const stamp = { version: '1.0.0', timestamp: Date.now() }
@@ -39,8 +38,7 @@ export {
 export { type StyleInput, styles } from './styles'
 export * from './utils'
 
-// biome-ignore lint/suspicious/noExplicitAny: Centralized global JSX injection for the framework
+// TODO: either globalize all (h, r, c) or none
 const g = globalThis as any
-// TODO: either globalise all (h, r, c) or none
 g.h = h
 g.Fragment = Fragment

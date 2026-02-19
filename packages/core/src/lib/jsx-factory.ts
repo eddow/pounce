@@ -40,7 +40,7 @@ export const intrinsicComponentAliases: Record<string, ComponentFunction> = exte
 			throw new DynamicRenderingError(
 				`[pounce] Invalid children for 'for' component: ${JSON.stringify(props.children)}. Children must evaluate to one function.`
 			)
-		let body = collapse(Array.isArray(props.children) ? props.children[0] : props.children)
+		const body = collapse(Array.isArray(props.children) ? props.children[0] : props.children)
 		if (typeof body !== 'function') {
 			throw new DynamicRenderingError(
 				`[pounce] Invalid children for 'for' component: ${JSON.stringify(props.children)}. Children must evaluate to a function.`

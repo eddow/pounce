@@ -14,7 +14,6 @@ const state = reactive({
 	parentMessage: 'Parent controls this counter',
 })
 
-// biome-ignore lint/style/useConst: set in the props
 const todos = new Register<Todo, number>((t) => t.id)
 // Build the app virtual tree and render to a DocumentFragment
 const refs = reactive({

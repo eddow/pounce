@@ -1,6 +1,7 @@
 import { document, latch } from '@pounce/core'
 import { reactive, reset } from 'mutts'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+
 // TODO: we shouldn't latch in <head> ! latching override the whole content!! We should make an additive version of latch or make latch always additive - to analyze
 describe('latch(document.head, ...) — head injection', () => {
 	let originalHeadHTML: string

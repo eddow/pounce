@@ -7,6 +7,7 @@ import type {
 	VariantProps,
 } from './shared/types'
 
+// TODO: both for checkbox and radio: allow 3-state? (radio: impeach set checked=false)
 // ── Shared prop base ────────────────────────────────────────────────────────
 
 type ControlBaseProps = VariantProps &
@@ -133,9 +134,9 @@ export function useRadio(props: RadioProps): RadioState {
 			return props.group === props.value
 		},
 		set checked(v) {
-			if(v) props.group = props.value
+			if (v) props.group = props.value
 			else props.group = undefined
-		}
+		},
 	}
 }
 

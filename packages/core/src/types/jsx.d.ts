@@ -21,7 +21,6 @@ declare global {
 		elements: Set<Node>
 	}
 	namespace JSX {
-		// biome-ignore lint/suspicious/noConfusingVoidType: Void ends up automatically
 		type Child =
 			| Node
 			| string

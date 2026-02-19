@@ -95,7 +95,7 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
 				if (contentType?.includes('text/html')) {
 					const html = await c.res.text()
 					// Inject content (API, styles, etc.) into the HTML body
-					let finalHtml = await injectSSRContent(html)
+					const finalHtml = await injectSSRContent(html)
 
 					// Create new response with injected HTML
 

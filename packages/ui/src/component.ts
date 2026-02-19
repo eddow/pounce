@@ -55,7 +55,6 @@ export function uiComponent<const V extends string>(
 				props.variant !== undefined &&
 				!(variants as readonly string[]).includes(props.variant)
 			) {
-				// biome-ignore lint/suspicious/noConsole: dev-mode warning by design
 				throw new Error(
 					`[pounce/ui] <${ctor.name}> unknown variant "${props.variant}". Known: ${variants.join(', ')}`
 				)

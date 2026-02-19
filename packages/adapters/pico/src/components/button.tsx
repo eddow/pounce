@@ -31,11 +31,7 @@ export const Button = picoComponent(function Button(props: ButtonProps, env: Env
 			{/* Icon on the left */}
 			{state.iconPosition === 'left' && (
 				<span style={{ marginRight: state.isIconOnly ? undefined : '0.5em' }}>
-					{typeof props.icon === 'string' ? (
-						<Icon name={props.icon} />	
-					) : (
-						props.icon
-					)}
+					{typeof props.icon === 'string' ? <Icon name={props.icon} /> : props.icon}
 				</span>
 			)}
 
@@ -45,11 +41,7 @@ export const Button = picoComponent(function Button(props: ButtonProps, env: Env
 			{/* Icon on the right (or icon-only) */}
 			{(state.iconPosition === 'right' || state.isIconOnly) && (
 				<span style={{ marginLeft: state.isIconOnly ? undefined : '0.5em' }}>
-					{typeof props.icon === 'string' ? (
-						<Icon name={props.icon} />	
-					) : (
-						props.icon
-					)}
+					{typeof props.icon === 'string' ? <Icon name={props.icon} /> : props.icon}
 				</span>
 			)}
 		</button>
