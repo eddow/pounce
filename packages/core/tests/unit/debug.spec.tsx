@@ -11,10 +11,10 @@ describe('Component association debug tools', () => {
 	test('should maintain association in reactive updates', async () => {
 		const state = reactive({ show: true })
 
-		const Conditional = () => h('div', {}, r(() => state.show ? h('span', { id: 'true-branch' }, 'True') : h('span', { id: 'false-branch' }, 'False')))
+		const Conditional = () => <div>{state.show ? <span id="true-branch">True</span> : <span id="false-branch">False</span>}</div>
 
 		const mount = h(Conditional, {})
-		const root = (mount.render() as HTMLElement[])[0]
+		const root = (mount.render() as HTMLElement)
 
 		const trueSpan = root.querySelector('#true-branch') as HTMLElement
 		expect(getComponentInstance(trueSpan)?.name).toBe('Conditional')
@@ -35,7 +35,7 @@ describe('Component association debug tools', () => {
 		)
 
 		const mount = h(ListComponent, {})
-		const root = (mount.render() as HTMLElement[])[0]
+		const root = (mount.render() as HTMLElement)
 
 		const items = root.querySelectorAll('.item')
 		expect(items.length).toBe(2)

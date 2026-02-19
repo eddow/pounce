@@ -17,6 +17,7 @@ export const createBaseConfig = (packageDir: string) => {
 		esbuild: false,
 		resolve: {
 			alias: {
+				'mutts/debug': resolve(rootDir, '../../mutts/debug/index.ts'),
 				'mutts': resolve(rootDir, isBrowser
 					? '../../mutts/src/entry-browser.dev.ts'
 					: '../../mutts/src/entry-node.dev.ts'),

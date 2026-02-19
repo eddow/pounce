@@ -39,7 +39,7 @@ function MyComponent(props) {
 Or use a getter object when the value is referenced multiple times or by derived state.
 
 ### ✅ Pattern: `defaults()` Proxy
-For components with several defaulted props, `defaults()` creates a lazy proxy — no reads happen until a property is accessed from JSX (wrapped in `r()`) or a getter.
+For components with several defaults props, `defaults()` creates a lazy proxy — no reads happen until a property is accessed from JSX (wrapped in `r()`) or a getter.
 
 ```typescript
 import { defaults } from '@pounce/core'

@@ -1,7 +1,6 @@
 import { cleanedBy, effect, formatCleanupReason, named, reactive } from 'mutts'
 import { perf } from '../perf'
 import { type CompositeAttributesMeta, collapse, ReactiveProp } from './composite-attributes'
-export { ReactiveProp }
 import { POUNCE_OWNER } from './debug'
 
 export const rootEnv: Env = reactive(Object.create(null))
@@ -89,7 +88,7 @@ export class PounceElement {
 	/**
 	 * Render the element - executes the produce function with caching
 	 */
-	render(meta: Env = Object.create(rootEnv)): Node | readonly Node[] {
+	render(env: Env = Object.create(rootEnv)): Node | readonly Node[] {
 		const tagName = typeof this.tag === 'string' ? this.tag : this.tag?.name || 'anonymous'
 		let partial: Node | readonly Node[] | undefined
 		perf?.mark(`render:${tagName}:start`)
@@ -101,10 +100,12 @@ export class PounceElement {
 						...(reaction === true ? ['No reasons given'] : formatCleanupReason(reaction)),
 						'\nIt means the component definition refers a reactive value that has been modified, though the component has not been rebuilt as it is considered forbidden to avoid infinite events loops.'
 					)
+					//throw new Error(`Component <${tagName}> rebuild detected.`)
 					debugger
+				} else {
+					partial = this.produce(env)
+					this.mountCallbacks(partial, env)
 				}
-				partial = this.produce(meta)
-				this.mountCallbacks(partial, meta)
 			})
 		)
 

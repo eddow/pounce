@@ -202,7 +202,7 @@ Folders wrapped in parentheses are **not included in the URL** but allow shared 
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "jsx": "react-jsx",
+    "jsx": "react",
     "jsxImportSource": "pounce-ts",
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "types": ["vite/client"]

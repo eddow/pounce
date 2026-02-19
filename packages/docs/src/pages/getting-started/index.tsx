@@ -22,7 +22,7 @@ const tsconfig = `{
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "jsx": "react-jsx",
+    "jsx": "react",
     "jsxImportSource": "@pounce/core",
     "strict": true,
     "skipLibCheck": true

@@ -45,17 +45,17 @@ Conditional rendering with env
 
 ## Default Props
 
-Use the `defaulted()` utility to provide default values for props:
+Use the `defaults()` utility to provide default values for props:
 
 ```tsx
-import { defaulted } from '../lib/utils'
+import { defaults } from '../lib/utils'
 
 function Button(props: {
   label?: string
   onClick?: () => void
   disabled?: boolean
 }) {
-  const state = defaulted(props, {
+  const state = defaults(props, {
     label: 'Click me',
     disabled: false
   })
@@ -263,7 +263,7 @@ function TodoList(props: { todos: Todo[] }) {
 
 1. **Keep components small**: Focus on single responsibility
 2. **Use TypeScript types**: Define prop types for better IDE support
-3. **Provide defaults**: Use `defaulted()` for optional props
+3. **Provide defaults**: Use `defaults()` for optional props
 4. **Handle events properly**: Use optional chaining for callbacks
 5. **Clean up effects**: Return cleanup functions from `effect()`
 

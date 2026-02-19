@@ -1,11 +1,11 @@
-import type { Children as SourceChildren, PounceElement, Env, Meta } from '../lib/pounce-element'
+import type { Children as SourceChildren, PounceElement, Env } from '../lib/pounce-element'
 import type { StyleInput } from '../lib/styles'
 
 declare global {
 	var h: (type: any, props?: any, ...children: any[]) => JSX.Element
 	var Fragment: (props: any, env?: any) => any
 	const window: never // Prevent accidental window usage in SSR - import from @pounce/core instead
-	type ComponentFunction<P = any, M = Meta> = (props: P, meta: M) => SourceChildren
+	type ComponentFunction<P extends Record<string, any> = any, E extends Env = Env> = (props: P, env: E) => SourceChildren
 
 	interface ComponentInfo {
 		id: string

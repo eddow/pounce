@@ -15,6 +15,26 @@ describe('aria-current [object Object] bug', () => {
 		container.remove()
 	})
 
+	it('minimal via babel plugin (normal JSX)', () => {
+		function MyLink(props: JSX.IntrinsicElements['a']) {
+			return (
+				<a
+					{...props}
+					aria-current={
+						props['aria-current'] ?? (props.href === '/active' ? 'page' : undefined)
+					}
+					data-testval="value"
+				>
+					{props.children}
+				</a>
+			)
+		}
+		const active = (<MyLink href="/active" data-testid="active">Active</MyLink>).render() as HTMLElement
+		expect(active.dataset.testval).toBe('value')
+		expect(active.dataset.testid).toBe('active')
+		expect(active.getAttribute('aria-current')).toBe('page')
+	})
+
 	it('via babel plugin (normal JSX)', () => {
 		function MyLink(props: JSX.IntrinsicElements['a']) {
 			return (
@@ -30,16 +50,15 @@ describe('aria-current [object Object] bug', () => {
 		}
 
 		unmount = latch(
-			'#app',
+			container,
 			<div>
 				<MyLink href="/active" data-testid="active">Active</MyLink>
 				<MyLink href="/other" data-testid="other">Other</MyLink>
-			</div>,
-			container
+			</div>
 		)
 
-		const active = container.querySelector('[data-testid="active"]') as HTMLElement
-		const other = container.querySelector('[data-testid="other"]') as HTMLElement
+		const active = container.querySelector('[data-testid="active"]')!
+		const other = container.querySelector('[data-testid="other"]')!
 		expect(active.getAttribute('aria-current')).toBe('page')
 		expect(other.getAttribute('aria-current')).toBeNull()
 	})
@@ -63,12 +82,11 @@ describe('aria-current [object Object] bug', () => {
 		// Caller: <ACompiledStyle href="/active" data-testid="compiled-active">Link</ACompiledStyle>
 		// The caller's babel wraps: href={r(() => "/active")}, children={r(() => "Link")}
 		unmount = latch(
-			'#app',
+			container,
 			<div>
 				<ACompiledStyle href="/active" data-testid="compiled-active">Active</ACompiledStyle>
 				<ACompiledStyle href="/other" data-testid="compiled-other">Other</ACompiledStyle>
-			</div>,
-			container
+			</div>
 		)
 
 		const active = container.querySelector('[data-testid="compiled-active"]') as HTMLElement
@@ -107,11 +125,10 @@ describe('aria-current [object Object] bug', () => {
 		}
 
 		unmount = latch(
-			'#app',
+			container,
 			<div>
 				<CheckComponent href="/active" data-testid="check" />
-			</div>,
-			container
+			</div>
 		)
 
 		const el = container.querySelector('[data-testid="check-result"]') as HTMLElement

@@ -1,4 +1,4 @@
-import { type EffectCleanup, isReactive } from 'mutts'
+import { type EffectCleanup, isReactive, memoize, stringKeys } from 'mutts'
 import { styles } from './styles'
 
 export class ReactiveProp<T> {
@@ -16,7 +16,7 @@ export type PerhapsReactive<T> = T | ReactiveProp<T>
  * establishes tracking in a reactive context); if plain, returned as-is.
  */
 export const collapse = <T>(v: PerhapsReactive<T>): T => (v instanceof ReactiveProp ? v.get() : v)
-
+export const fromAttribute = Symbol('from attributes')
 export interface CompositeAttributesMeta {
 	this?: ReactiveProp<Node | readonly Node[]>
 	condition?: ReactiveProp<any>
@@ -29,23 +29,64 @@ export interface CompositeAttributesMeta {
 		PerhapsReactive<(mounted: Node | readonly Node[], value: unknown) => EffectCleanup>
 	>
 }
+const propsProxy: ProxyHandler<CompositeAttributes> & Record<symbol, unknown> = {
+	[Symbol.toStringTag]: 'Properties',
+	get(target, prop) {
+		if (prop === fromAttribute) return target
+		if (typeof prop === 'string') return collapse(target.get(prop))
+	},
+	set(target, prop, value) {
+		if (typeof prop === 'string') {
+			const rp = target.get(prop)
+			if (rp instanceof ReactiveProp && rp.set) {
+				rp.set(value)
+				return true
+			}
+		}
+		console.warn(`Cannot set property ${String(prop)}`)
+		return false
+	},
+
+	has: (target, prop) => typeof prop === 'string' && target.keys.has(prop),
+	ownKeys(target) {
+		return Array.from(target.keys)
+	},
+	getOwnPropertyDescriptor(target, prop) {
+		if(typeof prop !== 'string' || !target.keys.has(prop)) return
+		const value = target.get(prop)
+		return {
+			enumerable: true,
+			configurable: true,
+			...(
+				value instanceof ReactiveProp ? {
+					get: ()=> value.get(),
+					set: value.set && ((v)=> value.set!(v))
+				} : {
+					writable: false,
+					value
+				}
+			)
+		}
+	},
+}
 
 export class CompositeAttributes {
-	private layers: object[]
+	public layers: object[]
 	private masked: Set<string> = new Set()
 
-	constructor(...layers: object[]) {
-		this.layers = layers.filter((l) => l != null)
+	constructor(...layers: any[]) {
+		this.layers = layers.filter(Boolean)
 	}
 
 	mask(key: string) {
 		this.masked.add(key)
 	}
 
+	//@memoize
 	get keys(): Set<string> {
 		const keys = new Set<string>()
 		for (const layer of this.layers) {
-			for (const key of Reflect.ownKeys(layer)) {
+			for (const key of stringKeys(layer)) {
 				if (typeof key === 'string') {
 					const colonIndex = key.indexOf(':')
 					const rootKey = colonIndex > 0 ? key.slice(0, colonIndex) : key
@@ -153,42 +194,7 @@ export class CompositeAttributes {
 	 * This is useful for passing to components that expect a single props object.
 	 */
 	asProps(): any {
-		return new Proxy(this, {
-			get: (target, prop) => {
-				if (prop === Symbol.toStringTag) return 'Properties'
-				if (typeof prop === 'string') return collapse(target.get(prop))
-			},
-			set: (target, prop, value) => {
-				if (typeof prop === 'string') {
-					const rp = target.get(prop)
-					if (rp instanceof ReactiveProp && rp.set) {
-						rp.set(value)
-						return true
-					}
-				}
-				console.warn(`Cannot set property ${String(prop)}`)
-				return false
-			},
-
-			has: (target, prop) => typeof prop === 'string' && target.keys.has(prop),
-			ownKeys: (target) => {
-				return Array.from(target.keys)
-			} /*
-			getOwnPropertyDescriptor: (target, prop) => {
-				if (typeof prop === 'string' && target.keys.has(prop)) {
-					return {
-						enumerable: true,
-						configurable: true,
-						get: () => collapse(target.get(prop)),
-						set: (v) => {
-							target.get(prop).set(v)
-						}
-					}
-				}
-				return undefined
-			},*/,
-			getPrototypeOf: () => this,
-		})
+		return new Proxy(this, propsProxy)
 	}
 
 	mergeClasses() {

@@ -1,4 +1,4 @@
-import { defaulted } from '@pounce/core'
+import { defaults } from '@pounce/core'
 import { effect } from 'mutts'
 import { captureLineage } from 'mutts/debug'
 
@@ -8,7 +8,7 @@ export interface MiniCounterProps {
 }
 
 export function MiniCounter(props: MiniCounterProps) {
-	const vm = defaulted(props, { list: [] as string[], addedText: Date.now().toString() })
+	const vm = defaults(props, { list: [] as string[], addedText: Date.now().toString() })
 	effect(({ reaction }) => {
 		if (reaction) {
 			console.log('MiniCounter component re-running due to reactive change')

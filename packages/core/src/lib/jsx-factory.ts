@@ -7,6 +7,7 @@ import {
 	collapse,
 	type PerhapsReactive,
 	ReactiveProp,
+	fromAttribute,
 } from './composite-attributes'
 import { POUNCE_OWNER, perfCounters, rootComponents, testing } from './debug'
 import {
@@ -15,12 +16,11 @@ import {
 	type ComponentNode,
 	DynamicRenderingError,
 	PounceElement,
-	rootEnv,
 	type Env,
 } from './pounce-element'
 import { processChildren, reconcile } from './reconciler'
 import { attachAttributes, checkComponentRebuild, isString } from './renderer-internal'
-import { extend } from './utils'
+import { defaults, extend } from './utils'
 
 export const intrinsicComponentAliases: Record<string, ComponentFunction> = extend(null, {
 	env(props: { children?: any; [key: string]: any }, env: Env) {
@@ -58,7 +58,8 @@ export const intrinsicComponentAliases: Record<string, ComponentFunction> = exte
 		)
 	},
 	dynamic(props: { tag: any; children?: any } & Record<string, any>, _env: Env) {
-		return lift(() => produceDOM(props.tag, Object.getPrototypeOf(props), props.children, {}))
+		// @ts-expect-error `fromAttribute` is not registered in the type
+		return lift(() => produceDOM(props.tag, props[fromAttribute], props.children, {}))
 	},
 	fragment(props: { children: PounceElement[] }, env: Env) {
 		return new PounceElement(() => processChildren(props.children, env), 'fragment')
@@ -139,7 +140,7 @@ function produceComponent(
 
 			// Component gets the flattened props proxy, potentially restructured for namespaces
 			const result = componentCtor(
-				extend(inAttrs.asProps(), { children }),
+				defaults({ children }, inAttrs.asProps()),
 				info.env
 			)
 			const processed = processChildren(result, info.env)

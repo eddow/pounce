@@ -102,18 +102,8 @@ describe('MiniCounter Component', () => {
 	})
 
 	it('shows Remove All when triggered via button click', () => {
-		const state = reactive({ list: [] as string[] })
-		function App() {
-			return (
-				<>
-					<div>
-						List: <span>{state.list.join(', ')}</span>
-					</div>
-					<MiniCounter list={state.list} />
-				</>
-			)
-		}
-		const mount = <App />
+		let list = reactive<string[]>([])
+		const mount = <div><MiniCounter {...{list}} /></div>
 		const root = mount.render(rootEnv) as HTMLElement
 
 		expect(root.querySelector('button.remove-all')).toBeFalsy()

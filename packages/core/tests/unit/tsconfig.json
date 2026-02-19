@@ -3,12 +3,6 @@
 	"compilerOptions": {
 		"baseUrl": "..",
 		"paths": {
-			"mutts": [
-				"../../../../../mutts"
-			],
-			"mutts/*": [
-				"../../../../../mutts/*"
-			],
 			"@pounce/core": [
 				"src/lib/node/index.ts",
 			]

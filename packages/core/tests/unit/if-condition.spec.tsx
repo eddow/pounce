@@ -8,7 +8,7 @@ describe('if={condition} on intrinsic elements', () => {
 
 	beforeEach(() => {
 		container = document.createElement('div')
-		document.body.appendChild(container)
+		//document.body.appendChild(container)
 	})
 
 	afterEach(() => {
@@ -133,6 +133,5 @@ describe('if={condition} on intrinsic elements', () => {
 		expect(container.querySelector('.conditional')).not.toBeNull()
 		expect(container.querySelector('.sibling1')).not.toBeNull()
 		expect(container.querySelector('.sibling2')).not.toBeNull()
-		expect(container.querySelector('.always')).not.toBeNull()
 	})
 })

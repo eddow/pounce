@@ -175,16 +175,16 @@ const doubled = memoize(() => items.map(x => x * 2))
 
 ### Defaulted Props
 
-Use `defaulted()` to provide default values for props:
+Use `defaults()` to provide default values for props:
 
 ```tsx
-import { defaulted } from '../lib/utils'
+import { defaults } from '../lib/utils'
 
 function Button(props: {
   label?: string
   onClick?: () => void
 }) {
-  const state = defaulted(props, {
+  const state = defaults(props, {
     label: 'Click me'
   })
   
