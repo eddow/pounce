@@ -1,8 +1,8 @@
 import { latch } from '@pounce/core'
-import { reactive } from 'mutts'
-import { Accordion } from '@pounce/ui'
-import { Code } from './code'
 import { componentStyle } from '@pounce/kit'
+import { Accordion } from '@pounce/ui'
+import { reactive } from 'mutts'
+import { Code } from './code'
 
 componentStyle.sass`
 .demo-component
@@ -49,7 +49,7 @@ export type DemoProps = {
 	title?: string
 }
 
-export function Demo({ component, source, title = "Example" }: DemoProps) {
+export function Demo({ component, source, title = 'Example' }: DemoProps) {
 	const showCode = reactive({ open: false })
 	let unmount: (() => void) | undefined
 
@@ -58,7 +58,9 @@ export function Demo({ component, source, title = "Example" }: DemoProps) {
 		if (el) {
 			unmount = latch(el, component)
 		}
-		return () => { unmount?.() }
+		return () => {
+			unmount?.()
+		}
 	}
 
 	return (
@@ -71,7 +73,7 @@ export function Demo({ component, source, title = "Example" }: DemoProps) {
 			{/* Accordion for source code */}
 			<Accordion
 				open={showCode.open}
-				onToggle={(open) => showCode.open = open}
+				onToggle={(open) => (showCode.open = open)}
 				summary="View Source Code"
 			>
 				<Code code={source} lang="tsx" />

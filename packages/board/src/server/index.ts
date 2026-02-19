@@ -3,71 +3,62 @@
  * Use: import { buildRouteTree } from 'pounce-board/server'
  */
 
-import { Middleware, RouteResponse } from '@pounce/kit'
-
+// Adapters
+export { clearRouteTreeCache, createPounceApp, createPounceMiddleware } from '../adapters/hono.js'
+// HTTP client (works on server too for SSR dispatch)
+export {
+	api,
+	clearInterceptors,
+	clearRouteRegistry,
+	clearSSRData,
+	config,
+	disableSSR,
+	enableSSR,
+	intercept,
+	setRouteRegistry,
+} from '../lib/http/client.js'
+// Context
+export {
+	createScope,
+	flushSSRPromises,
+	getContext,
+	type RequestScope,
+	runWithContext,
+	trackSSRPromise,
+} from '../lib/http/context.js'
+// HTTP core
+export {
+	ApiError,
+	addSecurityHeaders,
+	compressResponse,
+	createErrorResponse,
+	createJsonResponse,
+	type HttpMethod,
+	type Middleware,
+	type RequestContext,
+	type RouteHandler,
+	type RouteResponse,
+	runMiddlewares,
+} from '../lib/http/core.js'
+// Proxy
+export { defineProxy, type ProxyConfig, type ProxyEndpointConfig } from '../lib/http/proxy.js'
+export { defineRoute, type RouteDefinition } from '../lib/router/defs.js'
 // Router
 export {
 	buildRouteTree,
 	matchRoute,
 	parseSegment,
 	type RouteMatch,
-	type RouteTreeNode,
 	type RouteParams,
+	type RouteTreeNode,
 } from '../lib/router/index.js'
-
-export { defineRoute, type RouteDefinition } from '../lib/router/defs.js'
-
-// HTTP core
-export {
-	runMiddlewares,
-	createJsonResponse,
-	createErrorResponse,
-	addSecurityHeaders,
-	compressResponse,
-	ApiError,
-	type Middleware,
-	type RouteHandler,
-	type RequestContext,
-	type RouteResponse,
-	type HttpMethod,
-} from '../lib/http/core.js'
-
-// HTTP client (works on server too for SSR dispatch)
-export {
-	api,
-	config,
-	enableSSR,
-	disableSSR,
-	clearSSRData,
-	setRouteRegistry,
-	clearRouteRegistry,
-	intercept,
-	clearInterceptors,
-} from '../lib/http/client.js'
-
 // SSR injection
 export {
-	withSSRContext,
-	injectSSRData,
-	getCollectedSSRResponses,
-	injectApiResponses,
 	escapeJson,
+	getCollectedSSRResponses,
 	getSSRId,
+	injectApiResponses,
+	injectSSRData,
 	type SSRDataMap,
+	withSSRContext,
 } from '../lib/ssr/utils.js'
-
-// Context
-export {
-	getContext,
-	runWithContext,
-	createScope,
-	trackSSRPromise,
-	flushSSRPromises,
-	type RequestScope,
-} from '../lib/http/context.js'
-
-// Proxy
-export { defineProxy, type ProxyConfig, type ProxyEndpointConfig } from '../lib/http/proxy.js'
-
-// Adapters
-export { createPounceApp, createPounceMiddleware, clearRouteTreeCache } from '../adapters/hono.js'

@@ -1,4 +1,4 @@
-import { Section, Code, PackageHeader, ApiTable } from '../../components'
+import { ApiTable, Code, PackageHeader, Section } from '../../components'
 
 const basicUsage = `import { ThemeToggle } from '@pounce/ui'
 import { settings } from './settings' // Your EnvSettings object
@@ -36,24 +36,43 @@ export default function DisplayPage() {
 
 			<Section title="Theme Toggle">
 				<p>
-					The <code>ThemeToggle</code> component provides a UI for switching between Light, Dark, and Auto (system) themes.
-					It integrates with the <code>EnvSettings</code> from <code>@pounce/kit</code>.
+					The <code>ThemeToggle</code> component provides a UI for switching between Light, Dark,
+					and Auto (system) themes. It integrates with the <code>EnvSettings</code> from{' '}
+					<code>@pounce/kit</code>.
 				</p>
 				<Code code={basicUsage} lang="tsx" />
 
 				<ApiTable
 					props={[
-						{ name: 'settings', type: 'EnvSettings', description: 'The reactive settings object to read/write theme.' },
-						{ name: 'simple', type: 'boolean', description: 'If true, shows a simple toggle (light/dark) without the dropdown for Auto.' },
-						{ name: 'icons', type: 'Record<string, JSX.Element | string>', description: 'Custom icons for themes.' },
-						{ name: 'themes', type: 'string[]', description: 'Additional custom theme names to show in the dropdown.' },
+						{
+							name: 'settings',
+							type: 'EnvSettings',
+							description: 'The reactive settings object to read/write theme.',
+						},
+						{
+							name: 'simple',
+							type: 'boolean',
+							description:
+								'If true, shows a simple toggle (light/dark) without the dropdown for Auto.',
+						},
+						{
+							name: 'icons',
+							type: 'Record<string, JSX.Element | string>',
+							description: 'Custom icons for themes.',
+						},
+						{
+							name: 'themes',
+							type: 'string[]',
+							description: 'Additional custom theme names to show in the dropdown.',
+						},
 					]}
 				/>
 			</Section>
 
 			<Section title="Reactive Theme State">
 				<p>
-					The UI package maintains a global reactive <code>ui</code> object that reflects the currently active theme (resolved from settings or system).
+					The UI package maintains a global reactive <code>ui</code> object that reflects the
+					currently active theme (resolved from settings or system).
 				</p>
 				<Code code={themeState} lang="tsx" />
 			</Section>
@@ -65,8 +84,8 @@ export default function DisplayPage() {
 				</p>
 				<Code code={envSnippet} lang="tsx" />
 				<blockquote>
-					[!NOTE]
-					The older <code>DisplayProvider</code> pattern has been unified into the <code>Env</code> component for better integration with SSR and global settings.
+					[!NOTE] The older <code>DisplayProvider</code> pattern has been unified into the{' '}
+					<code>Env</code> component for better integration with SSR and global settings.
 				</blockquote>
 			</Section>
 		</article>

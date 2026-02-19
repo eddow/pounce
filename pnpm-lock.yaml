@@ -9,11 +9,15 @@ overrides:
   rollup: 4.57.1
   vite: 7.3.1
   mutts: link:../mutts
+  typescript: 5.9.3
 
 importers:
 
   .:
     devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.3.13
+        version: 2.3.13
       '@vitest/browser':
         specifier: ^4.0.18
         version: 4.0.18(vite@7.3.1(@types/node@25.1.0)(sass@1.97.3)(terser@5.46.0)(tsx@4.21.0))(vitest@4.0.18)
@@ -30,7 +34,7 @@ importers:
         specifier: ^2.8.4
         version: 2.8.4
       typescript:
-        specifier: ^5.9.3
+        specifier: 5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.0.18
@@ -63,7 +67,7 @@ importers:
         specifier: ^1.93.2
         version: 1.97.3
       typescript:
-        specifier: ^5.9.3
+        specifier: 5.9.3
         version: 5.9.3
       vite:
         specifier: 7.3.1
@@ -102,9 +106,6 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
     devDependencies:
-      '@biomejs/biome':
-        specifier: ^2.0.6
-        version: 2.3.13
       '@playwright/test':
         specifier: ^1.49.1
         version: 1.58.1
@@ -118,7 +119,7 @@ importers:
         specifier: ^27.4.0
         version: 27.4.0
       typescript:
-        specifier: ^5.9.3
+        specifier: 5.9.3
         version: 5.9.3
       vite:
         specifier: 7.3.1
@@ -154,9 +155,6 @@ importers:
         specifier: ^4.5.3
         version: 4.5.4(@types/node@25.1.0)(rollup@4.57.1)(typescript@5.9.3)(vite@7.3.1(@types/node@25.1.0)(sass@1.97.3)(terser@5.46.0)(tsx@4.21.0))
     devDependencies:
-      '@biomejs/biome':
-        specifier: ^2.2.7
-        version: 2.3.13
       '@playwright/test':
         specifier: ^1.56.1
         version: 1.58.1
@@ -179,7 +177,7 @@ importers:
         specifier: ^1.93.2
         version: 1.97.3
       typescript:
-        specifier: ^5.9.3
+        specifier: 5.9.3
         version: 5.9.3
       vite:
         specifier: 7.3.1
@@ -222,7 +220,7 @@ importers:
         specifier: ^1.93
         version: 1.97.3
       typescript:
-        specifier: ^5.9.3
+        specifier: 5.9.3
         version: 5.9.3
       vite:
         specifier: 7.3.1
@@ -240,9 +238,6 @@ importers:
         specifier: link:../../../mutts
         version: link:../../../mutts
     devDependencies:
-      '@biomejs/biome':
-        specifier: ^2.3.13
-        version: 2.3.13
       '@playwright/test':
         specifier: ^1.58.1
         version: 1.58.1
@@ -256,7 +251,7 @@ importers:
         specifier: 4.57.1
         version: 4.57.1
       typescript:
-        specifier: ^5.9.3
+        specifier: 5.9.3
         version: 5.9.3
       vite:
         specifier: 7.3.1
@@ -286,7 +281,7 @@ importers:
         specifier: ^4.21.0
         version: 4.21.0
       typescript:
-        specifier: ^5.9.3
+        specifier: 5.9.3
         version: 5.9.3
       vite:
         specifier: 7.3.1
@@ -300,42 +295,18 @@ importers:
       '@pounce/core':
         specifier: workspace:*
         version: link:../core
-      '@pounce/kit':
-        specifier: workspace:*
-        version: link:../kit
-      dockview-core:
-        specifier: ^4.13.1
-        version: 4.13.1
       mutts:
         specifier: link:../../../mutts
         version: link:../../../mutts
     devDependencies:
-      '@axe-core/playwright':
-        specifier: ^4.10.0
-        version: 4.11.0(playwright-core@1.58.2)
-      '@biomejs/biome':
-        specifier: ^2.2.7
-        version: 2.3.13
-      '@playwright/test':
-        specifier: ^1.56.1
-        version: 1.58.1
       '@types/node':
         specifier: 25.1.0
         version: 25.1.0
-      arktype:
-        specifier: ^2.1.29
-        version: 2.1.29
       jsdom:
         specifier: ^27.4.0
         version: 27.4.0
-      magic-string:
-        specifier: ^0.30.21
-        version: 0.30.21
-      sass:
-        specifier: ^1.93.2
-        version: 1.97.3
       typescript:
-        specifier: ^5.9.3
+        specifier: 5.9.3
         version: 5.9.3
       vite:
         specifier: 7.3.1
@@ -366,11 +337,6 @@ packages:
 
   '@asamuzakjp/nwsapi@2.3.9':
     resolution: {integrity: sha512-n8GuYSrI9bF7FFZ/SjhwevlHc8xaVlb/7HmHelnc/PZXBD2ZR49NnN9sMMuDdEGPeeRQ5d0hqlSlEpgCX3Wl0Q==}
-
-  '@axe-core/playwright@4.11.0':
-    resolution: {integrity: sha512-70vBT/Ylqpm65RQz2iCG2o0JJCEG/WCNyefTr2xcOcr1CoSee60gNQYUMZZ7YukoKkFLv26I/jjlsvwwp532oQ==}
-    peerDependencies:
-      playwright-core: '>= 1.0.0'
 
   '@babel/code-frame@7.29.0':
     resolution: {integrity: sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw==}
@@ -1605,7 +1571,7 @@ packages:
   '@vue/language-core@2.2.0':
     resolution: {integrity: sha512-O1ZZFaaBGkKbsRfnVH1ifOK1/1BUkyK+3SQsfnh6PmMmD4qJcTU8godCeA96jjDRTL6zgnK7YzCHfaUlH2r0Mw==}
     peerDependencies:
-      typescript: '*'
+      typescript: 5.9.3
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -1662,10 +1628,6 @@ packages:
 
   ast-v8-to-istanbul@0.3.11:
     resolution: {integrity: sha512-Qya9fkoofMjCBNVdWINMjB5KZvkYfaO9/anwkWnjxibpWUxo5iHl2sOdP7/uAqaRuUYuoo8rDwnbaaKVFxoUvw==}
-
-  axe-core@4.11.1:
-    resolution: {integrity: sha512-BASOg+YwO2C+346x3LZOeoovTIoTrRqEsqMa6fmfAV0P+U9mFr9NsyOEpiYvFjbc64NMrSswhV50WdXzdb/Z5A==}
-    engines: {node: '>=4'}
 
   babel-plugin-polyfill-corejs2@0.4.15:
     resolution: {integrity: sha512-hR3GwrRwHUfYwGfrisXPIDP3JcYfBrW7wKE7+Au6wDYl7fm/ka1NEII6kORzxNU556JjfidZeBsO10kYvtV1aw==}
@@ -1785,9 +1747,6 @@ packages:
   diff@8.0.3:
     resolution: {integrity: sha512-qejHi7bcSD4hQAZE0tNAawRK1ZtafHDmMTMkrrIGgSLl7hTnQHmKCeB45xAcbfTqK2zowkM3j3bHt/4b/ARbYQ==}
     engines: {node: '>=0.3.1'}
-
-  dockview-core@4.13.1:
-    resolution: {integrity: sha512-+7vR0ZEoL8CNck6NqDVUMqBT22niwBu5CMMI137dZ3c8NDc7c5Si+3dGEqQgM4lNtHBLAtvypo1C4p21J2wkiQ==}
 
   electron-to-chromium@1.5.283:
     resolution: {integrity: sha512-3vifjt1HgrGW/h76UEeny+adYApveS9dH2h3p57JYzBSXJIKUJAvtmIytDKjcSCt9xHfrNCFJ7gts6vkhuq++w==}
@@ -2324,11 +2283,6 @@ packages:
     resolution: {integrity: sha512-yf0DFQBoR0DCOg11pYRAX5/CvXwTUwJsIFTHTOpHbUy3GnEpGBfE5E4440nmn8g6FpXXpy8Im2UEpmmv0fz67g==}
     hasBin: true
 
-  typescript@5.8.2:
-    resolution: {integrity: sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
     engines: {node: '>=14.17'}
@@ -2372,7 +2326,7 @@ packages:
   vite-plugin-dts@4.5.4:
     resolution: {integrity: sha512-d4sOM8M/8z7vRXHHq/ebbblfaxENjogAAekcfcDCCwAyvGqnPrc7f4NZbvItS+g4WTgerW0xDwSz5qz11JT3vg==}
     peerDependencies:
-      typescript: '*'
+      typescript: 5.9.3
       vite: 7.3.1
     peerDependenciesMeta:
       vite:
@@ -2539,11 +2493,6 @@ snapshots:
       lru-cache: 11.2.5
 
   '@asamuzakjp/nwsapi@2.3.9': {}
-
-  '@axe-core/playwright@4.11.0(playwright-core@1.58.2)':
-    dependencies:
-      axe-core: 4.11.1
-      playwright-core: 1.58.2
 
   '@babel/code-frame@7.29.0':
     dependencies:
@@ -3439,7 +3388,7 @@ snapshots:
       resolve: 1.22.11
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.8.2
+      typescript: 5.9.3
     transitivePeerDependencies:
       - '@types/node'
 
@@ -3910,8 +3859,6 @@ snapshots:
       estree-walker: 3.0.3
       js-tokens: 10.0.0
 
-  axe-core@4.11.1: {}
-
   babel-plugin-polyfill-corejs2@0.4.15(@babel/core@7.29.0):
     dependencies:
       '@babel/compat-data': 7.29.0
@@ -4026,8 +3973,6 @@ snapshots:
     optional: true
 
   diff@8.0.3: {}
-
-  dockview-core@4.13.1: {}
 
   electron-to-chromium@1.5.283: {}
 
@@ -4567,8 +4512,6 @@ snapshots:
       turbo-linux-arm64: 2.8.4
       turbo-windows-64: 2.8.4
       turbo-windows-arm64: 2.8.4
-
-  typescript@5.8.2: {}
 
   typescript@5.9.3: {}
 

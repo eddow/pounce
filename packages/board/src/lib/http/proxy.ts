@@ -3,9 +3,9 @@
  * Allows defining typed proxies for external APIs with transformation and validation
  */
 
-import { ApiError } from './core.js'
-import { config as globalConfig } from './client.js'
 import type { z } from 'zod'
+import { config as globalConfig } from './client.js'
+import { ApiError } from './core.js'
 
 export type ProxyEndpointConfig<
 	Schema extends z.ZodSchema = z.ZodSchema,
@@ -20,9 +20,9 @@ export type ProxyEndpointConfig<
 	schema?: Schema
 	raw?: boolean
 	mock?: (params: Record<string, string>) => TransformReturn
-	/** Caching configuration for this endpoint. 
-	 * boolean: true enables default cache (1min). 
-	 * number: enables cache with specified TTL in ms. 
+	/** Caching configuration for this endpoint.
+	 * boolean: true enables default cache (1min).
+	 * number: enables cache with specified TTL in ms.
 	 * object: full control over TTL and cache key generation. */
 	cache?: boolean | number | { ttl: number; key?: (params: Record<string, unknown>) => string }
 	/** Number of retries for this endpoint. Overrides proxy and global config. */
@@ -126,7 +126,10 @@ export function defineProxy<Endpoints extends Record<string, ProxyEndpointConfig
 						// Build URL with path parameter substitution
 						let path = endpoint.path
 						for (const [key, value] of Object.entries(params)) {
-							path = path.replace(new RegExp(`\\{${key}\\}`, 'g'), encodeURIComponent(String(value)))
+							path = path.replace(
+								new RegExp(`\\{${key}\\}`, 'g'),
+								encodeURIComponent(String(value))
+							)
 						}
 
 						const url = new URL(path, config.baseUrl)

@@ -68,17 +68,23 @@ export function ApiTable({ props }: ApiTableProps) {
 					</tr>
 				</thead>
 				<tbody>
-					<for each={props}>{(prop: PropDef) =>
-						<tr>
-							<td>
-								<span class="api-name">{prop.name}</span>
-								{prop.required ? <span class="api-required">*</span> : null}
-							</td>
-							<td><span class="api-type">{prop.type}</span></td>
-							<td><span class="api-default">{prop.default ?? '—'}</span></td>
-							<td>{prop.description}</td>
-						</tr>
-					}</for>
+					<for each={props}>
+						{(prop: PropDef) => (
+							<tr>
+								<td>
+									<span class="api-name">{prop.name}</span>
+									{prop.required ? <span class="api-required">*</span> : null}
+								</td>
+								<td>
+									<span class="api-type">{prop.type}</span>
+								</td>
+								<td>
+									<span class="api-default">{prop.default ?? '—'}</span>
+								</td>
+								<td>{prop.description}</td>
+							</tr>
+						)}
+					</for>
 				</tbody>
 			</table>
 		</div>

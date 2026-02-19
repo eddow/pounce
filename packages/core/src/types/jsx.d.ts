@@ -205,7 +205,7 @@ declare global {
 				// Global attributes
 				id?: string
 				class?: ClassValue
-				style?: string | StyleInput
+				style?: StyleInput
 				title?: string
 				lang?: string
 				dir?: 'ltr' | 'rtl' | 'auto' | (string & {})

@@ -5,22 +5,20 @@
 
 // API client
 export {
-	api,
 	type ApiClientInstance,
+	api,
+	del,
 	get,
+	type InterceptorMiddleware,
+	intercept,
+	patch,
 	post,
 	put,
-	del,
-	patch,
-	intercept,
-	type InterceptorMiddleware,
 } from '../lib/http/client.js'
 
 // Types
 export { ApiError } from '../lib/http/core.js'
 export { PounceResponse } from '../lib/http/response.js'
-
+export { defineRoute, type RouteDefinition } from '../lib/router/defs.js'
 // SSR hydration (client-side consumption)
 export { getSSRData, getSSRId } from '../lib/ssr/utils.js'
-
-export { defineRoute, type RouteDefinition } from '../lib/router/defs.js'

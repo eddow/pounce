@@ -13,7 +13,7 @@ export default defineConfig({
         projectRoot: projectRootDir,
       },
       dts: {
-        rollupTypes: true,
+        rollupTypes: false,
         insertTypesEntry: true,
         compilerOptions: {
           preserveSymlinks: false,

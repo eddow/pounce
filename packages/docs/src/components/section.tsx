@@ -24,11 +24,21 @@ export interface SectionProps {
 }
 
 export function Section({ title, id, children }: SectionProps) {
-	const anchor = id ?? title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '')
+	const anchor =
+		id ??
+		title
+			.toLowerCase()
+			.replace(/\s+/g, '-')
+			.replace(/[^\w-]/g, '')
 
 	return (
 		<section class="doc-section" id={anchor}>
-			<h2>{title}<a class="anchor" href={`#${anchor}`}>#</a></h2>
+			<h2>
+				{title}
+				<a class="anchor" href={`#${anchor}`}>
+					#
+				</a>
+			</h2>
 			{children}
 		</section>
 	)

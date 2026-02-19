@@ -1,4 +1,5 @@
-node_modules/
 dist/
-sandbox/
-*.tsbuildinfo
+node_modules/
+demo/dist/
+.DS_Store
+*.log

@@ -27,9 +27,15 @@ export function createTestAdapter(url?: string | URL): PlatformAdapter {
 		language: 'en-US',
 		timezone: 'UTC',
 		direction: 'ltr' as const,
-		navigate: () => { throw new Error('client.navigate() is not available in test context') },
-		replace: () => { throw new Error('client.replace() is not available in test context') },
-		reload: () => { throw new Error('client.reload() is not available in test context') },
+		navigate: () => {
+			throw new Error('client.navigate() is not available in test context')
+		},
+		replace: () => {
+			throw new Error('client.replace() is not available in test context')
+		},
+		reload: () => {
+			throw new Error('client.reload() is not available in test context')
+		},
 		dispose: () => {},
 		prefersDark: false,
 	}) as Client

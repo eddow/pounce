@@ -108,57 +108,56 @@ function App(_props: {}, env: any) {
 // Dashboard and all descendants can read env.theme and env.user`
 
 export default function DirectivesPage() {
-  return (
-    <article>
-      <h1>Directives</h1>
-      <p>
-        Built-in JSX directives for conditional rendering, list rendering,
-        and dynamic component switching. These are handled at the reconciler
-        level — not as components.
-      </p>
+	return (
+		<article>
+			<h1>Directives</h1>
+			<p>
+				Built-in JSX directives for conditional rendering, list rendering, and dynamic component
+				switching. These are handled at the reconciler level — not as components.
+			</p>
 
-      <Section title="if= / else">
-        <p>
-          Conditionally render an element. When the condition is falsy, the element
-          is removed from the DOM entirely (not hidden). An adjacent <code>else</code>
-          element renders when the preceding <code>if=</code> is falsy.
-        </p>
-        <Code code={ifDirective} lang="tsx" />
-      </Section>
+			<Section title="if= / else">
+				<p>
+					Conditionally render an element. When the condition is falsy, the element is removed from
+					the DOM entirely (not hidden). An adjacent <code>else</code>
+					element renders when the preceding <code>if=</code> is falsy.
+				</p>
+				<Code code={ifDirective} lang="tsx" />
+			</Section>
 
-      <Section title="when= (dynamic switch)">
-        <p>
-          <code>{'<dynamic when={...}>'}</code> renders one branch from a map of
-          key → factory functions. Only the active branch exists in the DOM.
-          Switching is reactive — change the key and the DOM updates.
-        </p>
-        <Code code={whenDirective} lang="tsx" />
-      </Section>
+			<Section title="when= (dynamic switch)">
+				<p>
+					<code>{'<dynamic when={...}>'}</code> renders one branch from a map of key → factory
+					functions. Only the active branch exists in the DOM. Switching is reactive — change the
+					key and the DOM updates.
+				</p>
+				<Code code={whenDirective} lang="tsx" />
+			</Section>
 
-      <Section title="for (list rendering)">
-        <p>
-          <code>{'<for each={array}>'}</code> renders a child for each item in a
-          reactive array. Mutations (push, splice, reassign) update only the
-          affected DOM nodes — no full list re-render.
-        </p>
-        <Code code={forDirective} lang="tsx" />
-      </Section>
+			<Section title="for (list rendering)">
+				<p>
+					<code>{'<for each={array}>'}</code> renders a child for each item in a reactive array.
+					Mutations (push, splice, reassign) update only the affected DOM nodes — no full list
+					re-render.
+				</p>
+				<Code code={forDirective} lang="tsx" />
+			</Section>
 
-      <Section title="dynamic">
-        <Code code={dynamicDirective} lang="tsx" />
-      </Section>
+			<Section title="dynamic">
+				<Code code={dynamicDirective} lang="tsx" />
+			</Section>
 
-      <Section title="fragment">
-        <Code code={fragmentDirective} lang="tsx" />
-      </Section>
+			<Section title="fragment">
+				<Code code={fragmentDirective} lang="tsx" />
+			</Section>
 
-      <Section title="env">
-        <p>
-          <code>{'<env>'}</code> injects values into the env chain without
-          adding a DOM wrapper element. All descendants inherit the injected values.
-        </p>
-        <Code code={scopeDirective} lang="tsx" />
-      </Section>
-    </article>
-  )
+			<Section title="env">
+				<p>
+					<code>{'<env>'}</code> injects values into the env chain without adding a DOM wrapper
+					element. All descendants inherit the injected values.
+				</p>
+				<Code code={scopeDirective} lang="tsx" />
+			</Section>
+		</article>
+	)
 }

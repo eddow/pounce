@@ -2,10 +2,10 @@
  * Unit tests for Hono adapter
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { Hono } from 'hono'
 import * as path from 'node:path'
-import { createPounceMiddleware, clearRouteTreeCache } from './hono.js'
+import { Hono } from 'hono'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { clearRouteTreeCache, createPounceMiddleware } from './hono.js'
 
 // Test routes directory (uses minimal-app routes)
 const TEST_ROUTES_DIR = path.resolve(__dirname, '../../tests/consumers/minimal-app/routes')

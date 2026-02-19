@@ -1,6 +1,6 @@
 import { Date as IntlDate, type IntlDateProps } from './date'
-import { Number as IntlNumber, type IntlNumberProps } from './number'
 import { List as IntlList, type IntlListProps } from './list'
+import { Number as IntlNumber, type IntlNumberProps } from './number'
 
 type IntlValue = Date | number | string | Array<string>
 

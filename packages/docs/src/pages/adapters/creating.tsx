@@ -1,4 +1,4 @@
-import { Section, Code, PackageHeader } from '../../components'
+import { Code, PackageHeader, Section } from '../../components'
 
 const customAdapter = `import { FrameworkAdapter } from '@pounce/ui'
 
@@ -38,15 +38,16 @@ export default function CreatingAdapterPage() {
 
 			<Section title="Component-Specific Customization">
 				<p>
-					Each component in <code>@pounce/ui</code> exposes a specific adaptation type via the <code>UiComponents</code> registry.
-					For example, <code>Button</code> accepts <code>IconAdaptation</code>, giving you control over icon placement and class names.
+					Each component in <code>@pounce/ui</code> exposes a specific adaptation type via the{' '}
+					<code>UiComponents</code> registry. For example, <code>Button</code> accepts{' '}
+					<code>IconAdaptation</code>, giving you control over icon placement and class names.
 				</p>
 			</Section>
 
 			<Section title="Variants">
 				<p>
-					The <code>variants</code> object maps variant names to JSX-spreadable attribute bags.
-					Each bag can include classes, data attributes, and ARIA roles.
+					The <code>variants</code> object maps variant names to JSX-spreadable attribute bags. Each
+					bag can include classes, data attributes, and ARIA roles.
 				</p>
 			</Section>
 		</article>

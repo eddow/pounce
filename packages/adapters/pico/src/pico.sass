@@ -1,0 +1,68 @@
+// Import PicoCSS
+@import '@picocss/pico/css/pico.css'
+
+// Pounce-specific customizations for PicoCSS
+:root
+  // Additional spacing scale
+  --pounce-spacing-xs: calc(var(--pico-spacing) * 0.5)
+  --pounce-spacing-sm: calc(var(--pico-spacing) * 0.75)
+  --pounce-spacing-lg: calc(var(--pico-spacing) * 1.5)
+  --pounce-spacing-xl: calc(var(--pico-spacing) * 2)
+  
+  // Border radius variations
+  --pounce-border-radius-sm: calc(var(--pico-border-radius) * 0.5)
+  --pounce-border-radius-lg: calc(var(--pico-border-radius) * 1.5)
+  
+  // Component-specific variables
+  --pounce-card-padding: var(--pounce-spacing)
+  --pounce-card-gap: var(--pounce-spacing)
+  
+  // Animation durations
+  --pounce-transition-fast: 150ms
+  --pounce-transition-normal: 250ms
+
+// Button variant styles (PicoCSS already handles most)
+.btn
+  font-weight: 500
+  transition: all var(--pounce-transition-fast) ease-in-out
+  
+  &.btn-ghost
+    background: transparent
+    border-color: transparent
+    
+    &:hover
+      background: var(--pico-background-color)
+      border-color: var(--pico-border-color)
+
+// Card component
+.card
+  background: var(--pico-background-color)
+  border: 1px solid var(--pico-border-color)
+  border-radius: var(--pounce-border-radius)
+  padding: var(--pounce-card-padding)
+  
+  &__header
+    border-bottom: 1px solid var(--pico-border-color)
+    margin-bottom: var(--pounce-card-gap)
+    padding-bottom: var(--pounce-card-gap)
+    
+  &__footer
+    border-top: 1px solid var(--pico-border-color)
+    margin-top: var(--pounce-card-gap)
+    padding-top: var(--pounce-card-gap)
+
+// Form controls enhancements
+input[type="checkbox"],
+input[type="radio"]
+  cursor: pointer
+  
+  &:disabled
+    cursor: not-allowed
+
+// Focus improvements
+.btn:focus,
+input:focus,
+textarea:focus,
+select:focus
+  outline: 2px solid var(--pico-primary-color)
+  outline-offset: 2px

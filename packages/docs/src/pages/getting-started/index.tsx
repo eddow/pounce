@@ -62,48 +62,62 @@ function App() {
 latch('#app', <App />)`
 
 export default function GettingStartedPage() {
-  return (
-    <article>
-      <h1>Getting Started</h1>
-      <p>Set up a new Pounce application from scratch.</p>
+	return (
+		<article>
+			<h1>Getting Started</h1>
+			<p>Set up a new Pounce application from scratch.</p>
 
-      <Section title="Installation">
-        <p>Create a new project and install the core packages:</p>
-        <Code code={`mkdir my-app && cd my-app
+			<Section title="Installation">
+				<p>Create a new project and install the core packages:</p>
+				<Code
+					code={`mkdir my-app && cd my-app
 pnpm init
 pnpm add @pounce/core @pounce/kit @pounce/ui @pounce/adapter-pico @picocss/pico mutts
-pnpm add -D vite typescript sass`} lang="bash" />
-      </Section>
+pnpm add -D vite typescript sass`}
+					lang="bash"
+				/>
+			</Section>
 
-      <Section title="Vite Configuration">
-        <p>
-          Pounce uses a Babel plugin to transform JSX and enable two-way binding.
-          The plugin is bundled with <code>@pounce/core/plugin</code>.
-        </p>
-        <Code code={viteConfig} lang="typescript" />
-      </Section>
+			<Section title="Vite Configuration">
+				<p>
+					Pounce uses a Babel plugin to transform JSX and enable two-way binding. The plugin is
+					bundled with <code>@pounce/core/plugin</code>.
+				</p>
+				<Code code={viteConfig} lang="typescript" />
+			</Section>
 
-      <Section title="TypeScript Configuration">
-        <Code code={tsconfig} lang="json" />
-      </Section>
+			<Section title="TypeScript Configuration">
+				<Code code={tsconfig} lang="json" />
+			</Section>
 
-      <Section title="HTML Entry Point">
-        <Code code={indexHtml} lang="html" />
-      </Section>
+			<Section title="HTML Entry Point">
+				<Code code={indexHtml} lang="html" />
+			</Section>
 
-      <Section title="Your First Component">
-        <p>Create <code>src/main.tsx</code>:</p>
-        <Code code={mainTsx} lang="tsx" />
-        <p>Run <code>pnpm vite</code> and open the browser.</p>
-      </Section>
+			<Section title="Your First Component">
+				<p>
+					Create <code>src/main.tsx</code>:
+				</p>
+				<Code code={mainTsx} lang="tsx" />
+				<p>
+					Run <code>pnpm vite</code> and open the browser.
+				</p>
+			</Section>
 
-      <Section title="Next Steps">
-        <ul>
-          <li><A href="/getting-started/concepts">Core Concepts</A> — env, reactivity, components, directives</li>
-          <li><A href="/core">@pounce/core</A> — JSX factory, PounceElement, reconciler</li>
-          <li><A href="/ui">@pounce/ui</A> — component library with adapter pattern</li>
-        </ul>
-      </Section>
-    </article>
-  )
+			<Section title="Next Steps">
+				<ul>
+					<li>
+						<A href="/getting-started/concepts">Core Concepts</A> — env, reactivity, components,
+						directives
+					</li>
+					<li>
+						<A href="/core">@pounce/core</A> — JSX factory, PounceElement, reconciler
+					</li>
+					<li>
+						<A href="/ui">@pounce/ui</A> — component library with adapter pattern
+					</li>
+				</ul>
+			</Section>
+		</article>
+	)
 }

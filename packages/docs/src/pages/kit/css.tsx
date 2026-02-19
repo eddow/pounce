@@ -1,4 +1,4 @@
-import { Section, Code } from '../../components'
+import { Code, Section } from '../../components'
 
 const cssTag = `import { css, sass, scss } from '@pounce/kit'
 
@@ -59,44 +59,44 @@ const stylesHtml = getSSRStyles()
 // and skips re-injection.`
 
 export default function CSSPage() {
-  return (
-    <article>
-      <h1>CSS Utilities</h1>
-      <p>
-        Template tag functions for injecting CSS, SASS, and SCSS into the document.
-        Processed through Vite's PostCSS pipeline with automatic deduplication and SSR support.
-      </p>
+	return (
+		<article>
+			<h1>CSS Utilities</h1>
+			<p>
+				Template tag functions for injecting CSS, SASS, and SCSS into the document. Processed
+				through Vite's PostCSS pipeline with automatic deduplication and SSR support.
+			</p>
 
-      <Section title="css / sass / scss Tags">
-        <p>
-          Three template tag functions that inject styles into <code>{'<head>'}</code>.
-          Each invocation is hashed and deduplicated — calling the same style twice is a no-op.
-        </p>
-        <Code code={cssTag} lang="tsx" />
-      </Section>
+			<Section title="css / sass / scss Tags">
+				<p>
+					Three template tag functions that inject styles into <code>{'<head>'}</code>. Each
+					invocation is hashed and deduplicated — calling the same style twice is a no-op.
+				</p>
+				<Code code={cssTag} lang="tsx" />
+			</Section>
 
-      <Section title="componentStyle">
-        <p>
-          Wraps styles in <code>@layer pounce.components</code>. Use for component-env-based styles.
-        </p>
-        <Code code={componentStyleExample} lang="tsx" />
-      </Section>
+			<Section title="componentStyle">
+				<p>
+					Wraps styles in <code>@layer pounce.components</code>. Use for component-env-based styles.
+				</p>
+				<Code code={componentStyleExample} lang="tsx" />
+			</Section>
 
-      <Section title="baseStyle">
-        <p>
-          Wraps styles in <code>@layer pounce.base</code>. Use for foundational styles.
-        </p>
-        <Code code={baseStyleExample} lang="tsx" />
-      </Section>
+			<Section title="baseStyle">
+				<p>
+					Wraps styles in <code>@layer pounce.base</code>. Use for foundational styles.
+				</p>
+				<Code code={baseStyleExample} lang="tsx" />
+			</Section>
 
-      <Section title="SSR Support">
-        <p>
-          During SSR, styles are collected in memory. <code>getSSRStyles()</code> returns
-          the HTML for a <code>{'<style>'}</code> tag. On hydration, the client detects
-          pre-hydrated styles and skips re-injection.
-        </p>
-        <Code code={ssrStyles} lang="tsx" />
-      </Section>
-    </article>
-  )
+			<Section title="SSR Support">
+				<p>
+					During SSR, styles are collected in memory. <code>getSSRStyles()</code> returns the HTML
+					for a <code>{'<style>'}</code> tag. On hydration, the client detects pre-hydrated styles
+					and skips re-injection.
+				</p>
+				<Code code={ssrStyles} lang="tsx" />
+			</Section>
+		</article>
+	)
 }

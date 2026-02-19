@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { RequestContext } from '../http/core.js'
 import {
+	buildRouteTree,
 	type Middleware,
 	matchRoute,
-	buildRouteTree,
 	parseSegment,
 	type RouteHandler,
 	type RouteTreeNode,

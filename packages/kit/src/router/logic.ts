@@ -15,7 +15,14 @@
 export type RouteWildcard = string
 
 /** Supported parameter format types. Built-in or custom-registered name, or inline RegExp. */
-export type RouteParamFormat = 'string' | 'number' | 'integer' | 'float' | 'uuid' | (string & {}) | RegExp
+export type RouteParamFormat =
+	| 'string'
+	| 'number'
+	| 'integer'
+	| 'float'
+	| 'uuid'
+	| (string & {})
+	| RegExp
 
 /** Validator for a custom format: receives the raw string value, returns true if valid. */
 export type FormatValidator = (value: string) => boolean

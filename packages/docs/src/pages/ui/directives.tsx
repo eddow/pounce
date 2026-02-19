@@ -1,4 +1,4 @@
-import { Section, Code, PackageHeader } from '../../components'
+import { Code, PackageHeader, Section } from '../../components'
 
 const installSnippet = `import { rootEnv } from '@pounce/core'
 import { directives } from '@pounce/ui'
@@ -72,16 +72,18 @@ export default function UiDirectivesPage() {
 
 			<Section title="Installation">
 				<p>
-					UI directives must be registered in the env to be available in JSX via the <code>use:name</code> syntax.
-					The easiest way is to assign the <code>directives</code> namespace export into the root env.
+					UI directives must be registered in the env to be available in JSX via the{' '}
+					<code>use:name</code> syntax. The easiest way is to assign the <code>directives</code>{' '}
+					namespace export into the root env.
 				</p>
 				<Code code={installSnippet} lang="tsx" />
 			</Section>
 
 			<Section title="loading">
 				<p>
-					Sets <code>aria-busy="true"</code>, adds loading classes, and automatically disables form elements (buttons, inputs, etc.) when the value is true.
-					It's compatible with PicoCSS's native spinner.
+					Sets <code>aria-busy="true"</code>, adds loading classes, and automatically disables form
+					elements (buttons, inputs, etc.) when the value is true. It's compatible with PicoCSS's
+					native spinner.
 				</p>
 				<Code code={loadingSnippet} lang="tsx" />
 			</Section>
@@ -95,35 +97,37 @@ export default function UiDirectivesPage() {
 
 			<Section title="intersect">
 				<p>
-					Wraps <code>IntersectionObserver</code> to track when an element enters or leaves the viewport.
+					Wraps <code>IntersectionObserver</code> to track when an element enters or leaves the
+					viewport.
 				</p>
 				<Code code={intersectSnippet} lang="tsx" />
 			</Section>
 
 			<Section title="resize">
 				<p>
-					Wraps <code>ResizeObserver</code>. Supports bi-directional binding to a reactive object or a callback function.
+					Wraps <code>ResizeObserver</code>. Supports bi-directional binding to a reactive object or
+					a callback function.
 				</p>
 				<Code code={resizeSnippet} lang="tsx" />
 			</Section>
 
 			<Section title="pointer">
-				<p>
-					Tracks pointer (mouse/touch) coordinates and button state relative to the element.
-				</p>
+				<p>Tracks pointer (mouse/touch) coordinates and button state relative to the element.</p>
 				<Code code={pointerSnippet} lang="tsx" />
 			</Section>
 
 			<Section title="scroll">
 				<p>
-					Provides reactive scroll position tracking and bi-directional scroll control. Can also track the maximum scrollable range.
+					Provides reactive scroll position tracking and bi-directional scroll control. Can also
+					track the maximum scrollable range.
 				</p>
 				<Code code={scrollSnippet} lang="tsx" />
 			</Section>
 
 			<Section title="trail">
 				<p>
-					Auto-scrolls a container to the bottom when content grows (e.g. for chat logs), unless the user has scrolled up to read history.
+					Auto-scrolls a container to the bottom when content grows (e.g. for chat logs), unless the
+					user has scrolled up to read history.
 				</p>
 				<Code code={trailSnippet} lang="tsx" />
 			</Section>

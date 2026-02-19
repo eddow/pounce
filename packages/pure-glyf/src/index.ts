@@ -1,1 +1,1 @@
-export { injectCSS, sheet, mount, onInject, extractCriticalCSS } from './inject'
+export { extractCriticalCSS, injectCSS, mount, onInject, sheet } from './inject'

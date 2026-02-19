@@ -1,6 +1,5 @@
 import { cachedListFormat } from './cache'
 import { resolveLocale } from './locale'
-import { document } from '@pounce/core'
 
 /** Props for `<Intl.List>`. Extends all `Intl.ListFormatOptions`. */
 export interface IntlListProps extends Intl.ListFormatOptions {

@@ -1,2 +1,12 @@
-export type { Client, ClientState, ClientUrl, ClientViewport, ClientHistoryState, Direction, VisibilityState, NavigateOptions, PlatformAdapter } from './types.js'
-export { setPlatform, client } from './shared.js'
+export { client, setPlatform } from './shared.js'
+export type {
+	Client,
+	ClientHistoryState,
+	ClientState,
+	ClientUrl,
+	ClientViewport,
+	Direction,
+	NavigateOptions,
+	PlatformAdapter,
+	VisibilityState,
+} from './types.js'

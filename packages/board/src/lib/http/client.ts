@@ -4,17 +4,17 @@
  * Handles SSR data injection and hydration
  */
 
+import type { z } from 'zod'
 import { clearSSRData as clearSSRState, getSSRData, getSSRId, injectSSRData } from '../ssr/utils.js'
+import type { ExtractPathParams } from '../types/inference.js'
 import {
-    ApiError,
+	ApiError,
 	type HttpMethod,
 	type Middleware,
 	type RequestContext,
 	type RouteHandler,
 	runMiddlewares,
 } from './core.js'
-import type { ExtractPathParams } from '../types/inference.js'
-import { z } from 'zod'
 
 declare global {
 	var __POUNCE_ROUTE_REGISTRY__: RouteRegistry | null | undefined
@@ -29,8 +29,7 @@ export type InterceptorMiddleware = (
 ) => Promise<PounceResponse>
 
 import { addContextInterceptor, getContext, trackSSRPromise } from '../http/context.js'
-import { timeout } from 'hono/timeout'
-import { type RouteDefinition } from '../router/defs.js'
+import type { RouteDefinition } from '../router/defs.js'
 
 interface InterceptorEntry {
 	pattern: string | RegExp
@@ -76,7 +75,7 @@ export function clearInterceptors(): void {
 function matchPattern(urlString: string, pattern: string | RegExp): boolean {
 	if (pattern instanceof RegExp) return pattern.test(urlString)
 	if (pattern === '**') return true
-	
+
 	// Extract pathname for matching
 	let pathname = urlString
 	try {
@@ -87,7 +86,7 @@ function matchPattern(urlString: string, pattern: string | RegExp): boolean {
 	} catch {
 		// keep original string if parsing fails
 	}
-	
+
 	if (pattern === '*') return !pathname.slice(1).includes('/')
 
 	// Simple glob: ends with /**
@@ -98,7 +97,7 @@ function matchPattern(urlString: string, pattern: string | RegExp): boolean {
 		}
 		return pathname.startsWith(base)
 	}
-	
+
 	// Exact match
 	if (typeof pattern === 'string' && pattern.startsWith('http')) {
 		return urlString === pattern
@@ -275,8 +274,6 @@ export function clearSSRData(): void {
 	clearSSRState()
 }
 
-
-
 /**
  * Run interceptors for a request
  */
@@ -285,9 +282,9 @@ async function runInterceptors(
 	finalHandler: (req: Request) => Promise<PounceResponse>
 ): Promise<PounceResponse> {
 	const url = initialRequest.url
-	
+
 	// Filter matching interceptors
-	
+
 	const ctx = getContext()
 	const contextInterceptors = ctx ? ctx.interceptors : []
 	const allInterceptors = [...interceptorRegistry, ...contextInterceptors]
@@ -338,12 +335,13 @@ function apiClient<P extends string>(
 		const params = paramsOrOptions
 		options = maybeOptions
 		const builtUrl = routeDef.buildUrl(params)
-		
+
 		// Normalize to URL object
-		const origin = (typeof window !== 'undefined' && window.location && window.location.origin)
-			? window.location.origin 
-			: (ctx?.origin || 'http://localhost')
-		
+		const origin =
+			typeof window !== 'undefined' && window.location && window.location.origin
+				? window.location.origin
+				: ctx?.origin || 'http://localhost'
+
 		if (builtUrl.startsWith('http')) {
 			url = new URL(builtUrl)
 		} else {
@@ -354,36 +352,39 @@ function apiClient<P extends string>(
 		if (typeof input === 'object' && input !== null && !(input instanceof URL)) {
 			return input as ApiClientInstance
 		}
-
 	}
 
 	const currentConfig = ctx ? { ...config, ...ctx.config } : config
-	
+
 	const timeout = options.timeout ?? currentConfig.timeout
 	const maxRetries = options.retries ?? currentConfig.retries
 	const retryDelay = options.retryDelay ?? currentConfig.retryDelay
 
-	if (!url) { // If not set by RouteDefinition logic
+	if (!url) {
+		// If not set by RouteDefinition logic
 		if (typeof input === 'string') {
 			if (input.startsWith('http')) {
 				url = new URL(input)
 			} else if (input.startsWith('/')) {
 				// Site-absolute
-				const origin = (typeof window !== 'undefined' && window.location && window.location.origin) 
-					? window.location.origin 
-					: (ctx?.origin || 'http://localhost')
+				const origin =
+					typeof window !== 'undefined' && window.location && window.location.origin
+						? window.location.origin
+						: ctx?.origin || 'http://localhost'
 				url = new URL(input, origin)
 			} else if (input.startsWith('.')) {
 				// Site-relative
-				const base = (typeof window !== 'undefined' && window.location && window.location.href) 
-					? window.location.href 
-					: (ctx?.origin || 'http://localhost')
+				const base =
+					typeof window !== 'undefined' && window.location && window.location.href
+						? window.location.href
+						: ctx?.origin || 'http://localhost'
 				url = new URL(input, base)
 			} else {
 				// Assume site-absolute if no scheme
-				const origin = (typeof window !== 'undefined' && window.location && window.location.origin) 
-					? window.location.origin 
-					: (ctx?.origin || 'http://localhost')
+				const origin =
+					typeof window !== 'undefined' && window.location && window.location.origin
+						? window.location.origin
+						: ctx?.origin || 'http://localhost'
 				url = new URL(`/${input}`, origin)
 			}
 		} else if (input instanceof URL) {
@@ -392,7 +393,9 @@ function apiClient<P extends string>(
 	}
 
 	if (!url) {
-		throw new Error(`[pounce-board] apiClient: Invalid input. Could not determine URL from ${typeof input}`)
+		throw new Error(
+			`[pounce-board] apiClient: Invalid input. Could not determine URL from ${typeof input}`
+		)
 	}
 
 	const ssrId = getSSRId(url)
@@ -450,12 +453,18 @@ function apiClient<P extends string>(
 		body?: unknown
 	): Promise<T> {
 		const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
-		const requestHeaders: Record<string, string> = isFormData ? {} : { 'Content-Type': 'application/json' }
-		const requestBody = isFormData ? (body as FormData) : body !== undefined ? JSON.stringify(body) : undefined
+		const requestHeaders: Record<string, string> = isFormData
+			? {}
+			: { 'Content-Type': 'application/json' }
+		const requestBody = isFormData
+			? (body as FormData)
+			: body !== undefined
+				? JSON.stringify(body)
+				: undefined
 
 		const doRequest = async (): Promise<T> => {
-			const isSSR = ctx ? ctx.config.ssr ?? config.ssr : config.ssr
-			
+			const isSSR = ctx ? (ctx.config.ssr ?? config.ssr) : config.ssr
+
 			if (isSSR && method === 'GET') {
 				const currentSsrId = getSSRId(currentUrl)
 				const existingData = getSSRData(currentSsrId)
@@ -476,11 +485,15 @@ function apiClient<P extends string>(
 
 					const finalHandler = async (req: Request): Promise<PounceResponse> => {
 						let response: Response
-						
-						const isSSR = ctx ? ctx.config.ssr ?? config.ssr : config.ssr
-						
+
+						const isSSR = ctx ? (ctx.config.ssr ?? config.ssr) : config.ssr
+
 						// Only dispatch locally if we are in SSR AND the request targets our own origin
-						const origin = ctx?.origin || (typeof window !== 'undefined' && window.location ? window.location.origin : 'http://localhost')
+						const origin =
+							ctx?.origin ||
+							(typeof window !== 'undefined' && window.location
+								? window.location.origin
+								: 'http://localhost')
 						const isLocalRequest = isSSR && new URL(req.url).origin === origin
 
 						if (isLocalRequest) {
@@ -510,7 +523,7 @@ function apiClient<P extends string>(
 					}
 
 					const data = (await response.json()) as T
-					const isSSR = ctx ? ctx.config.ssr ?? config.ssr : config.ssr
+					const isSSR = ctx ? (ctx.config.ssr ?? config.ssr) : config.ssr
 
 					if (isSSR) {
 						const currentSsrId = getSSRId(currentUrl)
@@ -543,9 +556,7 @@ function apiClient<P extends string>(
 	}
 
 	return {
-		get<T>(
-			...args: [params?: any]
-		): HydratedPromise<T> {
+		get<T>(...args: [params?: any]): HydratedPromise<T> {
 			const params = args[0] as Record<string, string> | undefined
 			const currentUrl = new URL(url)
 			if (params) {
@@ -557,14 +568,14 @@ function apiClient<P extends string>(
 			const currentSsrId = getSSRId(currentUrl)
 
 			const activeCtx = getContext()
-			const isSSR = activeCtx ? activeCtx.config.ssr ?? config.ssr : config.ssr
+			const isSSR = activeCtx ? (activeCtx.config.ssr ?? config.ssr) : config.ssr
 			let cachedData: T | undefined
 
 			// 1. Check for hydration data first (client only)
 			if (!isSSR) {
 				cachedData = getSSRData<T>(currentSsrId)
 			}
-			
+
 			const promise = (async () => {
 				if (cachedData !== undefined) return cachedData
 				return requestWithRetry<T>('GET', currentUrl)
@@ -581,9 +592,7 @@ function apiClient<P extends string>(
 			return requestWithRetry<T>('PUT', url, body)
 		},
 
-		async del<T>(
-			...args: [params?: any]
-		): Promise<T> {
+		async del<T>(...args: [params?: any]): Promise<T> {
 			const params = args[0] as Record<string, string> | undefined
 			const currentUrl = new URL(url)
 			if (params) {
@@ -628,9 +637,6 @@ export const api = new Proxy(apiClient, {
 		return (target as any)[prop]
 	},
 }) as unknown as ApiClient & ApiClientInstance
-
-
-
 
 export interface ApiClient {
 	<P extends string>(

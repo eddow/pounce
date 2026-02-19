@@ -1,5 +1,4 @@
-import { getContext, type RequestScope, runWithContext, createScope } from '../http/context.js'
-
+import { createScope, getContext, type RequestScope, runWithContext } from '../http/context.js'
 
 export type SSRDataMap = Record<string, { id: string; data: unknown }>
 
@@ -20,10 +19,10 @@ export async function withSSRContext<T>(
 	scope.origin = origin || existing?.origin
 	scope.routeRegistry = existing?.routeRegistry
 	// We do NOT inherit responses by default to maintain isolation as per tests
-	
+
 	return runWithContext(scope, async () => {
 		// Enable SSR by default if using this legacy wrapper, as it implies SSR usage
-		scope.config.ssr = true 
+		scope.config.ssr = true
 		const result = await fn()
 		return { result, context: scope }
 	})
@@ -35,7 +34,7 @@ export async function withSSRContext<T>(
  */
 export function getSSRId(url: string | URL): string {
 	const path = typeof url === 'string' ? url : url.pathname + url.search
-	
+
 	// Use base64 encoding for the path to ensure it's predictable and reversible
 	// We use 'btoa' which is universal (available in Node 16+ and browsers)
 	const pathHash = btoa(path).replace(/[=/+]/g, '')
@@ -76,9 +75,9 @@ export function clearSSRData(): void {
 		ctx.ssr.responses.clear()
 		ctx.ssr.counter = 0
 	} else if (typeof window !== 'undefined') {
-        globalClientCounter = 0
+		globalClientCounter = 0
 		clientHydrationCache.clear()
-    }
+	}
 }
 
 // Injector Registry
@@ -97,14 +96,14 @@ export function registerInjector(fn: Injector): void {
 registerInjector((ctx) => {
 	if (!ctx.config.ssr) return ''
 	const scripts = []
-	
+
 	// Inject collected SSR responses
 	for (const [id, data] of ctx.ssr.responses.entries()) {
 		scripts.push(
 			`<script type="application/json" id="${id}">${escapeJson(JSON.stringify(data))}</script>`
 		)
 	}
-	
+
 	return scripts.join('\n')
 })
 
@@ -114,17 +113,17 @@ registerInjector((ctx) => {
  */
 export async function injectSSRContent(html: string): Promise<string> {
 	const ctx = getContext()
-	
+
 	let injectedContent = ''
-	
+
 	// Always run injectors if context exists (they check config.ssr internally if needed)
 	if (ctx) {
 		for (const injector of injectors) {
-			injectedContent += await injector(ctx) + '\n'
+			injectedContent += `${await injector(ctx)}\n`
 		}
 	} else {
 		// Fallback for when context is lost but we have collected responses (rare/legacy)
-        // logic moved to injectors, so strictly we need context now.
+		// logic moved to injectors, so strictly we need context now.
 	}
 
 	if (!injectedContent.trim()) return html
@@ -174,7 +173,7 @@ export function getSSRData<T>(id: string): T | undefined {
 		return ctx.ssr.responses.get(id) as T | undefined
 	}
 
-		// 2. Client-side or Test check (DOM + Cache)
+	// 2. Client-side or Test check (DOM + Cache)
 	// If a document is present but no context, we are either on the client or in a unit test.
 	if (typeof document !== 'undefined') {
 		// Check cache first

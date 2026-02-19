@@ -39,6 +39,13 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
     *   **Element Binding**: `this={expr}` -> transformed to `{ set: (v) => expr = v }` (pure setter, no getter).
     *   **Explicit Update**: `update:attr={(v) => ...}` combined with `attr={...}` creates the get/set pair.
 
+> [!TIP]
+> **Attribute Merging (Cumulation)**:
+> For `class` and `style` attributes, Pounce **merges** values across layers (e.g., when using spread operators `{...attrs}`) instead of replacing them:
+> *   **Classes**: Cumulate into a single space-separated string. Supports strings, arrays, and objects.
+> *   **Styles**: Merge into a single style object. Later layers override earlier ones for the same property, but distinct properties accumulate.
+> *   **Other attributes**: Standard `Object.assign` behavior (last one wins).
+
 ### 3. Components & Props
 *   **Props are Reactive Proxies**: The `props` object passed to a component is a reactive proxy.
     *   **Reading**: Accessing `props.value` reads the underlying value (calls the getter).

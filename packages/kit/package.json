@@ -65,7 +65,6 @@
 		"build": "vite build",
 		"test": "vitest run",
 		"test:e2e": "playwright test",
-		"biome": "biome check --write src",
 		"prepack": "find dist -name '*.spec.d.ts' -delete 2>/dev/null; true",
 		"perf": "VITE_PERF=true VITE_PERF_LOG=true pnpm run test:e2e"
 	},
@@ -75,7 +74,6 @@
 		"mutts": "link:../../../mutts"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.3.13",
 		"@playwright/test": "^1.58.1",
 		"@types/node": "25.1.0",
 		"jsdom": "^27.4.0",

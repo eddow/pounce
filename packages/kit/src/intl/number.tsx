@@ -1,6 +1,5 @@
 import { cachedNumberFormat } from './cache'
 import { resolveLocale } from './locale'
-import { document } from '@pounce/core'
 
 /** Props for `<Intl.Number>`. Extends all `Intl.NumberFormatOptions`. */
 export interface IntlNumberProps extends Intl.NumberFormatOptions {

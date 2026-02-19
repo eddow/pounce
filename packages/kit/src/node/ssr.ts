@@ -10,11 +10,10 @@ export {
 	injectSSRData,
 	type SSRDataMap,
 } from '../api/ssr-hydration.js'
-
-// Re-export platform adapter types for SSR engines to implement
-export type { PlatformAdapter } from '../platform/types.js'
 export { setPlatform } from '../platform/shared.js'
 export { createTestAdapter } from '../platform/test.js'
+// Re-export platform adapter types for SSR engines to implement
+export type { PlatformAdapter } from '../platform/types.js'
 
 /**
  * Run a function within an SSR context.

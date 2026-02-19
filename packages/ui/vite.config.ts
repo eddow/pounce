@@ -1,38 +1,26 @@
 import { defineConfig } from 'vite'
-import { resolve } from 'path'
-import { fileURLToPath } from 'node:url'
-import { pounceCorePackage } from '@pounce/core/plugin'
-import { pounceUIPlugin } from './vite-plugin-pounce-ui'
-
-const __dirname = fileURLToPath(new URL('.', import.meta.url))
+import dts from 'vite-plugin-dts'
+import { resolve } from 'node:path'
 
 export default defineConfig({
-  plugins: [
-    pounceUIPlugin(),
-    ...pounceCorePackage({
-      dts: {
-        rollupTypes: true,
-      }
-    }),
-  ],
-  esbuild: false,
-  build: {
-    lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
-      name: '@pounce/ui',
-      formats: ['es', 'cjs'],
-      fileName: 'index'
-    },
-    sourcemap: true,
-    minify: false,
-    rollupOptions: {
-      external: [
-        /^@pounce\/core/,
-        /^@pounce\/kit/,
-        'mutts',
-        'dockview-core',
-        'pure-glyf'
-      ],
-    }
-  }
+	build: {
+		lib: {
+			entry: {
+				index: resolve(__dirname, 'src/index.ts'),
+				'button/index': resolve(__dirname, 'src/button/index.ts'),
+				'checkbox/index': resolve(__dirname, 'src/checkbox/index.ts'),
+				'forms/index': resolve(__dirname, 'src/forms/index.ts'),
+			},
+			formats: ['es'],
+		},
+		rollupOptions: {
+			external: [/^@pounce\/core/, /^mutts/],
+		},
+	},
+	plugins: [
+		dts({
+			include: ['src/**/*.ts', 'src/**/*.tsx'],
+			exclude: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
+		}),
+	],
 })

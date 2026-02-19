@@ -1,4 +1,4 @@
-import { Section, Code, ApiTable } from '../../components'
+import { ApiTable, Code, Section } from '../../components'
 
 const setup = `import { StandardOverlays } from '@pounce/ui'
 
@@ -79,95 +79,215 @@ interface OverlaySpec {
 // a reactive stack and manages transitions + focus trap.`
 
 export default function OverlaysPage() {
-  return (
-    <article>
-      <h1>Overlays</h1>
-      <p>
-        Dialog, Toast, and Drawer — all using a shared overlay system
-        injected via env by <code>StandardOverlays</code>.
-      </p>
+	return (
+		<article>
+			<h1>Overlays</h1>
+			<p>
+				Dialog, Toast, and Drawer — all using a shared overlay system injected via env by{' '}
+				<code>StandardOverlays</code>.
+			</p>
 
-      <Section title="Setup">
-        <p>
-          <code>StandardOverlays</code> is a wrapper component that binds
-          <code>env.dialog</code>, <code>env.toast</code>, and <code>env.drawer</code>.
-        </p>
-        <Code code={setup} lang="tsx" />
-      </Section>
+			<Section title="Setup">
+				<p>
+					<code>StandardOverlays</code> is a wrapper component that binds
+					<code>env.dialog</code>, <code>env.toast</code>, and <code>env.drawer</code>.
+				</p>
+				<Code code={setup} lang="tsx" />
+			</Section>
 
-      <Section title="Dialog">
-        <p>
-          Imperative modal dialog. <code>env.dialog()</code> returns a <code>Promise</code> that
-          resolves with the clicked button key (or <code>null</code> on dismiss).
-        </p>
-        <Code code={dialogExample} lang="tsx" />
-      </Section>
+			<Section title="Dialog">
+				<p>
+					Imperative modal dialog. <code>env.dialog()</code> returns a <code>Promise</code> that
+					resolves with the clicked button key (or <code>null</code> on dismiss).
+				</p>
+				<Code code={dialogExample} lang="tsx" />
+			</Section>
 
-      <Section title="Toast">
-        <p>
-          Notification toasts with auto-dismiss. Variant helpers:
-          <code>success</code>, <code>error</code>, <code>warn</code>, <code>info</code>.
-        </p>
-        <Code code={toastExample} lang="tsx" />
-      </Section>
+			<Section title="Toast">
+				<p>
+					Notification toasts with auto-dismiss. Variant helpers:
+					<code>success</code>, <code>error</code>, <code>warn</code>, <code>info</code>.
+				</p>
+				<Code code={toastExample} lang="tsx" />
+			</Section>
 
-      <Section title="Drawer">
-        <p>
-          Slide-out panel from left or right edge. Uses <code>side</code> prop
-          (not <code>position</code>).
-        </p>
-        <Code code={drawerExample} lang="tsx" />
-      </Section>
+			<Section title="Drawer">
+				<p>
+					Slide-out panel from left or right edge. Uses <code>side</code> prop (not{' '}
+					<code>position</code>).
+				</p>
+				<Code code={drawerExample} lang="tsx" />
+			</Section>
 
-      <Section title="OverlaySpec">
-        <p>
-          All overlay types share a common <code>OverlaySpec</code> interface.
-          You can push custom overlays via <code>env.overlay(spec)</code>.
-        </p>
-        <Code code={overlaySpec} lang="tsx" />
-      </Section>
+			<Section title="OverlaySpec">
+				<p>
+					All overlay types share a common <code>OverlaySpec</code> interface. You can push custom
+					overlays via <code>env.overlay(spec)</code>.
+				</p>
+				<Code code={overlaySpec} lang="tsx" />
+			</Section>
 
-      <Section title="API Reference">
-        <h4>DialogOptions</h4>
-        <ApiTable props={[
-          { name: 'title', type: 'JSX.Children', description: 'Dialog header title', required: false },
-          { name: 'message', type: 'JSX.Children', description: 'Dialog body content. Strings are wrapped in <p>', required: false },
-          { name: 'size', type: "'sm' | 'md' | 'lg'", description: 'Dialog width preset', required: false },
-          { name: 'buttons', type: 'Record<string, string | DialogButton>', description: 'Footer buttons. Key is the resolve value. Omit for a default OK button', required: false },
-          { name: 'dismissible', type: 'boolean', description: 'Allow backdrop click / Escape to close. Default: true', required: false },
-          { name: 'variant', type: 'string', description: 'Visual variant applied to the dialog container', required: false },
-        ]} />
-        <h4>DialogButton</h4>
-        <ApiTable props={[
-          { name: 'text', type: 'string', description: 'Button label', required: true },
-          { name: 'variant', type: 'string', description: "Button variant. Default: 'secondary'", required: false },
-          { name: 'disabled', type: 'boolean', description: 'Disable the button', required: false },
-          { name: 'onClick', type: '() => any', description: 'Side-effect callback before closing', required: false },
-        ]} />
-        <h4>ToastOptions</h4>
-        <ApiTable props={[
-          { name: 'message', type: 'JSX.Children', description: 'Toast content', required: true },
-          { name: 'variant', type: "'success' | 'danger' | 'warning' | 'primary' | 'secondary'", description: 'Color variant', required: false },
-          { name: 'duration', type: 'number', description: 'Auto-dismiss delay in ms. Default: 3000. Set 0 to disable', required: false },
-        ]} />
-        <h4>DrawerOptions</h4>
-        <ApiTable props={[
-          { name: 'children', type: 'JSX.Children', description: 'Drawer body content', required: true },
-          { name: 'title', type: 'JSX.Children', description: 'Drawer header title', required: false },
-          { name: 'footer', type: 'JSX.Children', description: 'Drawer footer content', required: false },
-          { name: 'side', type: "'left' | 'right'", description: "Slide-in direction. Default: 'left'", required: false },
-          { name: 'dismissible', type: 'boolean', description: 'Allow backdrop click / Escape to close. Default: true', required: false },
-        ]} />
-        <h4>OverlaySpec</h4>
-        <ApiTable props={[
-          { name: 'mode', type: 'string', description: "Stacking mode: 'modal', 'toast', 'drawer-left', 'drawer-right'", required: true },
-          { name: 'render', type: '(close: (value) => void) => JSX.Children', description: 'Render function for the overlay content', required: true },
-          { name: 'dismissible', type: 'boolean', description: 'Allow backdrop click / Escape to close', required: false },
-          { name: 'autoFocus', type: 'boolean | string', description: "Auto-focus behavior. true = first focusable, string = CSS selector", required: false },
-          { name: 'id', type: 'string', description: 'Unique ID for tracking. Auto-generated if omitted', required: false },
-          { name: 'aria', type: '{ label?, labelledby?, describedby? }', description: 'Accessibility labels', required: false },
-        ]} />
-      </Section>
-    </article>
-  )
+			<Section title="API Reference">
+				<h4>DialogOptions</h4>
+				<ApiTable
+					props={[
+						{
+							name: 'title',
+							type: 'JSX.Children',
+							description: 'Dialog header title',
+							required: false,
+						},
+						{
+							name: 'message',
+							type: 'JSX.Children',
+							description: 'Dialog body content. Strings are wrapped in <p>',
+							required: false,
+						},
+						{
+							name: 'size',
+							type: "'sm' | 'md' | 'lg'",
+							description: 'Dialog width preset',
+							required: false,
+						},
+						{
+							name: 'buttons',
+							type: 'Record<string, string | DialogButton>',
+							description: 'Footer buttons. Key is the resolve value. Omit for a default OK button',
+							required: false,
+						},
+						{
+							name: 'dismissible',
+							type: 'boolean',
+							description: 'Allow backdrop click / Escape to close. Default: true',
+							required: false,
+						},
+						{
+							name: 'variant',
+							type: 'string',
+							description: 'Visual variant applied to the dialog container',
+							required: false,
+						},
+					]}
+				/>
+				<h4>DialogButton</h4>
+				<ApiTable
+					props={[
+						{ name: 'text', type: 'string', description: 'Button label', required: true },
+						{
+							name: 'variant',
+							type: 'string',
+							description: "Button variant. Default: 'secondary'",
+							required: false,
+						},
+						{
+							name: 'disabled',
+							type: 'boolean',
+							description: 'Disable the button',
+							required: false,
+						},
+						{
+							name: 'onClick',
+							type: '() => any',
+							description: 'Side-effect callback before closing',
+							required: false,
+						},
+					]}
+				/>
+				<h4>ToastOptions</h4>
+				<ApiTable
+					props={[
+						{ name: 'message', type: 'JSX.Children', description: 'Toast content', required: true },
+						{
+							name: 'variant',
+							type: "'success' | 'danger' | 'warning' | 'primary' | 'secondary'",
+							description: 'Color variant',
+							required: false,
+						},
+						{
+							name: 'duration',
+							type: 'number',
+							description: 'Auto-dismiss delay in ms. Default: 3000. Set 0 to disable',
+							required: false,
+						},
+					]}
+				/>
+				<h4>DrawerOptions</h4>
+				<ApiTable
+					props={[
+						{
+							name: 'children',
+							type: 'JSX.Children',
+							description: 'Drawer body content',
+							required: true,
+						},
+						{
+							name: 'title',
+							type: 'JSX.Children',
+							description: 'Drawer header title',
+							required: false,
+						},
+						{
+							name: 'footer',
+							type: 'JSX.Children',
+							description: 'Drawer footer content',
+							required: false,
+						},
+						{
+							name: 'side',
+							type: "'left' | 'right'",
+							description: "Slide-in direction. Default: 'left'",
+							required: false,
+						},
+						{
+							name: 'dismissible',
+							type: 'boolean',
+							description: 'Allow backdrop click / Escape to close. Default: true',
+							required: false,
+						},
+					]}
+				/>
+				<h4>OverlaySpec</h4>
+				<ApiTable
+					props={[
+						{
+							name: 'mode',
+							type: 'string',
+							description: "Stacking mode: 'modal', 'toast', 'drawer-left', 'drawer-right'",
+							required: true,
+						},
+						{
+							name: 'render',
+							type: '(close: (value) => void) => JSX.Children',
+							description: 'Render function for the overlay content',
+							required: true,
+						},
+						{
+							name: 'dismissible',
+							type: 'boolean',
+							description: 'Allow backdrop click / Escape to close',
+							required: false,
+						},
+						{
+							name: 'autoFocus',
+							type: 'boolean | string',
+							description: 'Auto-focus behavior. true = first focusable, string = CSS selector',
+							required: false,
+						},
+						{
+							name: 'id',
+							type: 'string',
+							description: 'Unique ID for tracking. Auto-generated if omitted',
+							required: false,
+						},
+						{
+							name: 'aria',
+							type: '{ label?, labelledby?, describedby? }',
+							description: 'Accessibility labels',
+							required: false,
+						},
+					]}
+				/>
+			</Section>
+		</article>
+	)
 }

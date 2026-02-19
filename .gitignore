@@ -11,3 +11,4 @@ pure-glyf.d.ts
 *.tsbuildinfo
 .turbo
 .vscode
+.git/hooks/

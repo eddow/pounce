@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"allowJs": true,
+		"strict": true,
+		"noEmit": true,
+		"types": ["vite/client"],
+		"jsx": "react",
+		"jsxFactory": "h",
+		"jsxFragmentFactory": "Fragment",
+		"paths": {
+			"@pounce/core": ["./core/src"],
+			"@pounce/ui": ["./ui/src"],
+			"@pounce/kit": ["./kit/src"],
+			"mutts": ["../mutts/src"]
+		}
+	},
+	"exclude": ["node_modules", "dist", "build"]
+}

@@ -1,6 +1,6 @@
 import { A } from '@pounce/kit'
 import { reactive } from 'mutts'
-import { navigation, type NavLink } from '../nav-index'
+import { type NavLink, navigation } from '../nav-index'
 
 interface SearchState {
 	query: string
@@ -17,17 +17,14 @@ export default function Search() {
 
 			for (const section of navigation) {
 				for (const link of section.links) {
-					if (
-						link.title.toLowerCase().includes(q) ||
-						section.title.toLowerCase().includes(q)
-					) {
+					if (link.title.toLowerCase().includes(q) || section.title.toLowerCase().includes(q)) {
 						matches.push(link)
 					}
 				}
 			}
 
 			return matches.slice(0, 8)
-		}
+		},
 	})
 
 	return (
@@ -41,8 +38,12 @@ export default function Search() {
 			{state.query && (
 				<ul class="search-results">
 					{state.results.length > 0 ? (
-						state.results.map(result => (
-							<li><A href={result.href} onClick={() => state.query = ''}>{result.title}</A></li>
+						state.results.map((result) => (
+							<li>
+								<A href={result.href} onClick={() => (state.query = '')}>
+									{result.title}
+								</A>
+							</li>
 						))
 					) : (
 						<li class="no-results">No results found</li>

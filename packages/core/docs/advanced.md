@@ -279,6 +279,43 @@ function MyComponent() {
 }
 ```
 
+## Attribute Merging (Class & Style)
+
+Unlike React, where the last defined attribute typically replaces earlier ones, Pounce-TS **merges** `class` and `style` attributes across all definition layers. This is particularly useful when components spread external props onto their root elements.
+
+### Class Merging
+
+All `class` definitions are combined into a single space-separated string.
+
+```tsx
+function MyButton(props: { class?: any }) {
+  // 'base-btn' will accumulate with whatever class is passed in {...props}
+  return <button class="base-btn" {...props}>Click me</button>
+}
+
+// Usage:
+// Result: <button class="base-btn primary large">...</button>
+<MyButton class={['primary', 'large']} />
+```
+
+### Style Merging
+
+Style attributes are merged into a single object. If the same property is defined multiple times, the **last one wins**, but distinct properties from different layers are all preserved.
+
+```tsx
+function Box(props: { style?: any }) {
+  return <div style={{ display: 'flex', padding: '10px' }} {...props}>Box</div>
+}
+
+// Usage:
+// Result: <div style="display: flex; padding: 20px; color: blue;">...</div>
+<Box style={{ padding: '20px', color: 'blue' }} />
+```
+
+### Other Attributes
+
+For all other attributes (like `id`, `title`, etc.), Pounce-TS follows standard `Object.assign` behavior: the last defined value replaces any previous values.
+
 ## Debug Mode
 
 Enable debug mode to see reactive changes:

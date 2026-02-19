@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { cac } from 'cac'
-import { runDevServer } from './dev.js'
 import { runBuild } from './build.js'
+import { runDevServer } from './dev.js'
 import { runPreview } from './preview.js'
 
 const cli = cac('pounce')
@@ -27,14 +27,15 @@ cli
 		}
 	})
 
-cli.command('build', 'Build for production')
+cli
+	.command('build', 'Build for production')
 	.option('--out <dir>', 'Output directory', { default: './dist' })
 	.action(async (options) => {
 		try {
 			await runBuild({
 				routesDir: options.routes,
 				outDir: options.out,
-				entryHtml: options.html
+				entryHtml: options.html,
 			})
 		} catch (error) {
 			console.error('Build failed:', error)
@@ -43,12 +44,12 @@ cli.command('build', 'Build for production')
 	})
 
 cli.command('preview', 'Preview production build').action(async () => {
-    try {
-        await runPreview()
-    } catch (error) {
-        console.error('Preview failed:', error)
-        process.exit(1)
-    }
+	try {
+		await runPreview()
+	} catch (error) {
+		console.error('Preview failed:', error)
+		process.exit(1)
+	}
 })
 
 cli.help()

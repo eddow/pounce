@@ -14,7 +14,10 @@ export const setPlatform = (impl: PlatformAdapter) => {
 }
 
 function ensure(operation: string): PlatformAdapter {
-	if (!_platform) throw new Error(`[@pounce/kit] No platform adapter set (${operation}). Import @pounce/kit/dom (browser) or call setPlatform() with an SSR/test adapter.`)
+	if (!_platform)
+		throw new Error(
+			`[@pounce/kit] No platform adapter set (${operation}). Import @pounce/kit/dom (browser) or call setPlatform() with an SSR/test adapter.`
+		)
 	return _platform
 }
 
@@ -24,5 +27,7 @@ export const client: Client = new Proxy({} as Client, {
 		if (!_platform) return undefined
 		return Reflect.get(_platform.client, prop, receiver)
 	},
-	set(_, prop, value) { return Reflect.set(ensure('client.set').client, prop, value) },
+	set(_, prop, value) {
+		return Reflect.set(ensure('client.set').client, prop, value)
+	},
 })

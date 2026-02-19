@@ -166,7 +166,3 @@ function Counter(props: { value: number, onReset?(): void }) {
 ## 📝 License
 
 MIT
-
-# TODOs
-
-- cf `@pounce/ui` - ensure debug actions work correctly

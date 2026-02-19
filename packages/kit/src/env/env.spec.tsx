@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { latch, document, rootEnv, type Env as EnvType, h } from '@pounce/core'
+import { document, type Env as EnvType, h, latch, rootEnv } from '@pounce/core'
 import { reactive } from 'mutts'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { Env, type EnvSettings } from './index'
 
 describe('Env', () => {

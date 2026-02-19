@@ -68,61 +68,68 @@ const directivesExample = `// Conditional rendering
 }</for>`
 
 export default function ConceptsPage() {
-  return (
-    <article>
-      <h1>Core Concepts</h1>
-      <p>The mental model behind Pounce: reactivity, components, env, and directives.</p>
+	return (
+		<article>
+			<h1>Core Concepts</h1>
+			<p>The mental model behind Pounce: reactivity, components, env, and directives.</p>
 
-      <Section title="Reactivity">
-        <p>
-          Pounce's reactivity comes from <code>mutts</code>. Wrap an object
-          in <code>reactive()</code> and any property access is tracked. When a
-          tracked property changes, only the specific DOM nodes or effects that
-          read it are updated — no diffing, no re-renders.
-        </p>
-        <Code code={reactivityExample} lang="tsx" />
-      </Section>
+			<Section title="Reactivity">
+				<p>
+					Pounce's reactivity comes from <code>mutts</code>. Wrap an object in{' '}
+					<code>reactive()</code> and any property access is tracked. When a tracked property
+					changes, only the specific DOM nodes or effects that read it are updated — no diffing, no
+					re-renders.
+				</p>
+				<Code code={reactivityExample} lang="tsx" />
+			</Section>
 
-      <Section title="Components">
-        <p>
-          A Pounce component is a plain function that receives <code>props</code> and <code>env</code>
-          and returns JSX. <strong>Components render once.</strong> The Babel plugin wraps
-          JSX expressions in <code>r()</code> calls that create fine-grained reactive subscriptions.
-        </p>
-        <Code code={componentExample} lang="tsx" />
-        <p>
-          Because the component body runs only once, you can safely declare local state,
-          set up effects, and attach event handlers without worrying about stale closures.
-        </p>
-      </Section>
+			<Section title="Components">
+				<p>
+					A Pounce component is a plain function that receives <code>props</code> and{' '}
+					<code>env</code>
+					and returns JSX. <strong>Components render once.</strong> The Babel plugin wraps JSX
+					expressions in <code>r()</code> calls that create fine-grained reactive subscriptions.
+				</p>
+				<Code code={componentExample} lang="tsx" />
+				<p>
+					Because the component body runs only once, you can safely declare local state, set up
+					effects, and attach event handlers without worrying about stale closures.
+				</p>
+			</Section>
 
-      <Section title="Two-Way Binding">
-        <p>
-          The Babel plugin detects member expressions in JSX attributes and generates
-          both a getter and a setter. For <code>value={'{'}form.email{'}'}</code>, it produces
-          a <code>ReactiveProp</code> with <code>get: () =&gt; form.email</code> and <code>set: (v) =&gt; form.email = v</code>.
-          The DOM element reads the getter and writes back via the setter on user input.
-        </p>
-        <Code code={twoWayExample} lang="tsx" />
-      </Section>
+			<Section title="Two-Way Binding">
+				<p>
+					The Babel plugin detects member expressions in JSX attributes and generates both a getter
+					and a setter. For{' '}
+					<code>
+						value={'{'}form.email{'}'}
+					</code>
+					, it produces a <code>ReactiveProp</code> with <code>get: () =&gt; form.email</code> and{' '}
+					<code>set: (v) =&gt; form.email = v</code>. The DOM element reads the getter and writes
+					back via the setter on user input.
+				</p>
+				<Code code={twoWayExample} lang="tsx" />
+			</Section>
 
-      <Section title="Env">
-        <p>
-          Env is a prototype-chained reactive object passed as the second argument to every component.
-          Use <code>extend(env, {'{ ... }'})</code> to inject values that any descendant can read — no
-          Context providers, no prop drilling.
-        </p>
-        <Code code={scopeExample} lang="tsx" />
-      </Section>
+			<Section title="Env">
+				<p>
+					Env is a prototype-chained reactive object passed as the second argument to every
+					component. Use <code>extend(env, {'{ ... }'})</code> to inject values that any descendant
+					can read — no Context providers, no prop drilling.
+				</p>
+				<Code code={scopeExample} lang="tsx" />
+			</Section>
 
-      <Section title="Directives">
-        <p>
-          Pounce provides built-in JSX directives for control flow. These are
-          handled at the reconciler level, not as components.
-        </p>
-        <Code code={directivesExample} lang="tsx" />
-        <p>See <A href="/core/directives">Directives</A> for the full reference.</p>
-      </Section>
-    </article>
-  )
+			<Section title="Directives">
+				<p>
+					Pounce provides built-in JSX directives for control flow. These are handled at the
+					reconciler level, not as components.
+				</p>
+				<Code code={directivesExample} lang="tsx" />
+				<p>
+					See <A href="/core/directives">Directives</A> for the full reference.
+				</p>
+			</Section>
+		</article>
+	)
 }

@@ -1,4 +1,4 @@
-import { Section, Code, ApiTable } from '../../components'
+import { Code, Section } from '../../components'
 
 const numberExample = `import { Number } from '@pounce/kit/intl'
 
@@ -71,45 +71,45 @@ setLocaleResolver(() => 'fr-FR')
 resolveLocale() // → "fr-FR"`
 
 export default function IntlPage() {
-  return (
-    <article>
-      <h1>Intl Components</h1>
-      <p>
-        Six Intl formatting components that render text nodes directly — no wrapper elements.
-        Import from <code>@pounce/kit/intl</code>.
-      </p>
+	return (
+		<article>
+			<h1>Intl Components</h1>
+			<p>
+				Six Intl formatting components that render text nodes directly — no wrapper elements. Import
+				from <code>@pounce/kit/intl</code>.
+			</p>
 
-      <Section title="Number">
-        <Code code={numberExample} lang="tsx" />
-      </Section>
+			<Section title="Number">
+				<Code code={numberExample} lang="tsx" />
+			</Section>
 
-      <Section title="Date">
-        <Code code={dateExample} lang="tsx" />
-      </Section>
+			<Section title="Date">
+				<Code code={dateExample} lang="tsx" />
+			</Section>
 
-      <Section title="RelativeTime">
-        <Code code={relativeTimeExample} lang="tsx" />
-      </Section>
+			<Section title="RelativeTime">
+				<Code code={relativeTimeExample} lang="tsx" />
+			</Section>
 
-      <Section title="List">
-        <Code code={listExample} lang="tsx" />
-      </Section>
+			<Section title="List">
+				<Code code={listExample} lang="tsx" />
+			</Section>
 
-      <Section title="Plural">
-        <Code code={pluralExample} lang="tsx" />
-      </Section>
+			<Section title="Plural">
+				<Code code={pluralExample} lang="tsx" />
+			</Section>
 
-      <Section title="DisplayNames">
-        <Code code={displayNamesExample} lang="tsx" />
-      </Section>
+			<Section title="DisplayNames">
+				<Code code={displayNamesExample} lang="tsx" />
+			</Section>
 
-      <Section title="Locale Configuration">
-        <p>
-          By default, all components use <code>navigator.language</code>.
-          Override with <code>setLocaleResolver()</code>.
-        </p>
-        <Code code={localeConfig} lang="tsx" />
-      </Section>
-    </article>
-  )
+			<Section title="Locale Configuration">
+				<p>
+					By default, all components use <code>navigator.language</code>. Override with{' '}
+					<code>setLocaleResolver()</code>.
+				</p>
+				<Code code={localeConfig} lang="tsx" />
+			</Section>
+		</article>
+	)
 }

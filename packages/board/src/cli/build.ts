@@ -1,9 +1,8 @@
-
-import { build as viteBuild } from 'vite'
-import * as path from 'node:path'
 import * as fs from 'node:fs'
-import { fileURLToPath } from 'node:url'
 import { builtinModules } from 'node:module'
+import * as path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { build as viteBuild } from 'vite'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -36,13 +35,13 @@ export async function runBuild(options: BuildOptions = {}) {
 				'pounce-board/client': path.resolve(__dirname, '../../src/client/index.ts'),
 				'pounce-board/server': path.resolve(__dirname, '../../src/server/index.ts'),
 				'pounce-board': path.resolve(__dirname, '../../src/client/index.ts'),
-			}
-		}
+			},
+		},
 	})
 
 	// 2. Server Build
 	console.log('\n📦 Building Server...')
-	
+
 	const serverEntryContent = `
 import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
@@ -163,12 +162,8 @@ serve({
 				emptyOutDir: true,
 				rollupOptions: {
 					input: tempEntry,
-                    external: [
-                        /^node:/,
-                        'jsdom',
-                        ...builtinModules
-                    ]
-				}
+					external: [/^node:/, 'jsdom', ...builtinModules],
+				},
 			},
 			resolve: {
 				alias: {
@@ -176,14 +171,14 @@ serve({
 					'pounce-board/client': path.resolve(__dirname, '../../src/client/index.ts'),
 					'pounce-board/server': path.resolve(__dirname, '../../src/server/index.ts'),
 					'pounce-board': path.resolve(__dirname, '../../src/client/index.ts'),
-				}
-			}
+				},
+			},
 		})
 	} finally {
 		if (fs.existsSync(tempEntry)) {
 			fs.unlinkSync(tempEntry)
 		}
 	}
-	
+
 	console.log('\n✅ Build complete!')
 }

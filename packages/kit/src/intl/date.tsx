@@ -1,6 +1,6 @@
+import type { Env } from '@pounce/core'
 import { cachedDateTimeFormat } from './cache'
 import { resolveLocale } from './locale'
-import { document, type Env } from '@pounce/core'
 
 /** Props for `<Intl.Date>`. Extends all `Intl.DateTimeFormatOptions`. */
 export interface IntlDateProps extends Intl.DateTimeFormatOptions {

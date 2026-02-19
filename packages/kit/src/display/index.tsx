@@ -1,8 +1,6 @@
 import type { Env } from '@pounce/core'
-
-import { componentStyle } from '../dom/index'
-import { client } from '../dom/index'
 import { reactive } from 'mutts'
+import { client, componentStyle } from '../dom/index'
 
 componentStyle.sass`
 .pounce-display-provider
@@ -17,7 +15,7 @@ const DISPLAY_KEY = 'display'
  * - perhaps in readonly, it's a good idea, though the DisplayContext should have a bunch of setters. The themeSetting "auto" should be in the setter object (who would have a theme-config: theme | 'auto') and let the theme be "parent-display-context. theme if 'auto'" - this "auto" shouldn't be in the env but in the communication between theme picker and display context
  * - I would definitively avoid `useView`, we can have a 1-way config by adding the `defaultDisplayContext` to rootenv in main.tsx, and have each displaycontext simply mimmic their env's prototype values (we cannot rely on the prototype chain to be completely reactive) when "auto" or no-config
  * Kit could also simply add the defaultDisplayContext to the rootenv in its loading process as rootEnv is a global common core-exported object
- * 
+ *
  * So, (Env it is then), the env provide read-only values. Env "override" them (by writing in its own env the value from the parent's one) - even if just copying the value if nothing is overriden - and Env provides a "settings" object who contains roughly the same but with "auto" (or "undefined) with get/set in order to plug in there configuration controls (like the theme toggle)
  */
 
@@ -39,11 +37,19 @@ export type DisplayContext = {
  * Returned when no DisplayProvider is in the ancestor chain.
  */
 export const defaultDisplayContext: DisplayContext = {
-	get theme() { return client.prefersDark ? 'dark' : 'light' },
+	get theme() {
+		return client.prefersDark ? 'dark' : 'light'
+	},
 	themeSetting: 'auto',
-	get direction() { return client.direction ?? 'ltr' },
-	get locale() { return client.language ?? 'en-US' },
-	get timeZone() { return Intl.DateTimeFormat().resolvedOptions().timeZone },
+	get direction() {
+		return client.direction ?? 'ltr'
+	},
+	get locale() {
+		return client.language ?? 'en-US'
+	},
+	get timeZone() {
+		return Intl.DateTimeFormat().resolvedOptions().timeZone
+	},
 }
 
 /**
@@ -109,15 +115,25 @@ export function DisplayProvider(props: DisplayProviderProps, env: Env) {
 	}
 
 	const context: DisplayContext = {
-		get theme() { return resolveTheme() },
-		get themeSetting() { return state.themeSetting },
+		get theme() {
+			return resolveTheme()
+		},
+		get themeSetting() {
+			return state.themeSetting
+		},
 		set themeSetting(t: string) {
 			state.themeSetting = t
 			props.onThemeChange?.(t)
 		},
-		get direction() { return resolveDirection() },
-		get locale() { return resolveLocale() },
-		get timeZone() { return resolveTimeZone() },
+		get direction() {
+			return resolveDirection()
+		},
+		get locale() {
+			return resolveLocale()
+		},
+		get timeZone() {
+			return resolveTimeZone()
+		},
 	}
 
 	env[DISPLAY_KEY] = context

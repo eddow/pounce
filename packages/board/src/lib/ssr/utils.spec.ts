@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { escapeJson, getSSRData, injectApiResponses, registerInjector, injectSSRContent } from './utils.js'
+import { escapeJson, getSSRData, injectApiResponses, injectSSRContent, registerInjector } from './utils.js'
 
 describe('ssr utils', () => {
 	afterEach(() => {

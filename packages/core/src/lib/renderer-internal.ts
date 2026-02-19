@@ -200,26 +200,39 @@ export function attachAttributes(
 	}
 	attributes.mask('class')
 	attributes.mask('style')
+
+	cleanups.class = attachAttribute(
+		element,
+		'class',
+		new ReactiveProp(() => attributes.mergeClasses())
+	)
+	cleanups.style = attachAttribute(
+		element,
+		'style',
+		new ReactiveProp(() => attributes.mergeStyles())
+	)
+
 	if (attributes.isReactive) {
 		const stop = effect(() => {
 			const newKeys = attributes.keys
 			for (const key of newKeys)
 				if (!(key in cleanups)) cleanups[key] = attachAttribute(element, key, attributes.get(key))
-			for (const key in cleanups)
+			for (const key in cleanups) {
+				if (key === 'class' || key === 'style') continue
 				if (!newKeys.has(key)) {
 					cleanups[key]?.()
 					delete cleanups[key]
 				}
+			}
 		})
 		return () => {
 			stop()
 			cleanAll()
 		}
-	} else {
-		for (const key of attributes.keys)
-			cleanups[key] = attachAttribute(element, key, attributes.get(key))
 	}
-	attachAttribute(element, 'class', new ReactiveProp(() => attributes.mergeClasses()))
-	attachAttribute(element, 'style', new ReactiveProp(() => attributes.mergeStyles()))
+
+	for (const key of attributes.keys)
+		cleanups[key] = attachAttribute(element, key, attributes.get(key))
+
 	return cleanAll
 }

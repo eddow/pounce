@@ -1,16 +1,16 @@
 /**
  * Test Intl formatting components — locale resolution, caching, and output
  */
-import { describe, expect, it, beforeEach } from 'vitest'
-import { resolveLocale, setLocaleResolver } from './locale'
+import { beforeEach, describe, expect, it } from 'vitest'
 import {
-	cachedNumberFormat,
 	cachedDateTimeFormat,
-	cachedRelativeTimeFormat,
-	cachedListFormat,
-	cachedPluralRules,
 	cachedDisplayNames,
+	cachedListFormat,
+	cachedNumberFormat,
+	cachedPluralRules,
+	cachedRelativeTimeFormat,
 } from './cache'
+import { resolveLocale, setLocaleResolver } from './locale'
 
 describe('resolveLocale', () => {
 	beforeEach(() => {

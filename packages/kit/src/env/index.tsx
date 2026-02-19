@@ -1,9 +1,6 @@
 import type { Env } from '@pounce/core'
 import { rootEnv } from '@pounce/core'
-
-import { componentStyle } from '../dom/index'
-import { client } from '../dom/index'
-import { env } from 'node:process'
+import { client, componentStyle } from '../dom/index'
 
 componentStyle.sass`
 .pounce-env
@@ -14,22 +11,30 @@ componentStyle.sass`
 
 Object.defineProperties(rootEnv, {
 	theme: {
-		get() { return client.prefersDark ? 'dark' : 'light' },
+		get() {
+			return client.prefersDark ? 'dark' : 'light'
+		},
 		enumerable: true,
 		configurable: true,
 	},
 	locale: {
-		get() { return client.language ?? 'en-US' },
+		get() {
+			return client.language ?? 'en-US'
+		},
 		enumerable: true,
 		configurable: true,
 	},
 	direction: {
-		get() { return client.direction ?? 'ltr' },
+		get() {
+			return client.direction ?? 'ltr'
+		},
 		enumerable: true,
 		configurable: true,
 	},
 	timeZone: {
-		get() { return client.timezone ?? 'UTC' },
+		get() {
+			return client.timezone ?? 'UTC'
+		},
 		enumerable: true,
 		configurable: true,
 	},
@@ -85,34 +90,37 @@ export function Env(props: EnvProps, env: Env) {
 
 	Object.defineProperties(env, {
 		theme: {
-			get() { return resolve('theme') },
+			get() {
+				return resolve('theme')
+			},
 			enumerable: true,
 			configurable: true,
 		},
 		locale: {
-			get() { return resolve('locale') },
+			get() {
+				return resolve('locale')
+			},
 			enumerable: true,
 			configurable: true,
 		},
 		direction: {
-			get() { return resolve('direction') },
+			get() {
+				return resolve('direction')
+			},
 			enumerable: true,
 			configurable: true,
 		},
 		timeZone: {
-			get() { return resolve('timeZone') },
+			get() {
+				return resolve('timeZone')
+			},
 			enumerable: true,
 			configurable: true,
 		},
 	})
 
 	return (
-		<div
-			class="pounce-env"
-			data-theme={env.theme}
-			dir={env.direction}
-			lang={env.locale}
-		>
+		<div class="pounce-env" data-theme={env.theme} dir={env.direction} lang={env.locale}>
 			{props.children}
 		</div>
 	)

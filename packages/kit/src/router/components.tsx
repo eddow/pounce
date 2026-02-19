@@ -1,7 +1,7 @@
 import { extend, PounceElement } from '@pounce/core'
 import { lift } from 'mutts'
-import { client } from '../platform/shared.js'
 import { perf } from '../perf.js'
+import { client } from '../platform/shared.js'
 import {
 	matchRoute as coreMatchRoute,
 	routeMatcher as coreRouteMatcher,
@@ -23,6 +23,7 @@ export type {
 	RouteWildcard,
 }
 export { buildRoute } from './logic.js'
+
 // Node/SSR shim for MouseEvent if likely missing
 type MouseEventShim = unknown
 type SafeMouseEvent = typeof globalThis extends { MouseEvent: any } ? MouseEvent : MouseEventShim
@@ -172,7 +173,7 @@ export const Router = <
 			)
 		}
 	})
-	// TODO: Do we really want to `new PounceElement` here? 
+	// TODO: Do we really want to `new PounceElement` here?
 	return new PounceElement(() => rendered, 'Router')
 }
 

@@ -66,49 +66,48 @@ latch('#app', <App />)
 // App's env inherits from rootEnv`
 
 export default function EnvPage() {
-  return (
-    <article>
-      <h1>Env</h1>
-      <p>
-        Env is Pounce's dependency injection mechanism. It's a prototype-chained
-        reactive object passed to every component — no Context providers, no prop drilling.
-      </p>
+	return (
+		<article>
+			<h1>Env</h1>
+			<p>
+				Env is Pounce's dependency injection mechanism. It's a prototype-chained reactive object
+				passed to every component — no Context providers, no prop drilling.
+			</p>
 
-      <Section title="How Env Works">
-        <p>
-          Every component receives <code>env</code> as its second parameter.
-          When a parent calls <code>extend(env, {'{ ... }'})</code>, it creates a new
-          env object whose prototype is the parent's env. Descendants inherit
-          all values via JavaScript's prototype chain.
-        </p>
-        <Code code={envBasics} lang="tsx" />
-      </Section>
+			<Section title="How Env Works">
+				<p>
+					Every component receives <code>env</code> as its second parameter. When a parent calls{' '}
+					<code>extend(env, {'{ ... }'})</code>, it creates a new env object whose prototype is the
+					parent's env. Descendants inherit all values via JavaScript's prototype chain.
+				</p>
+				<Code code={envBasics} lang="tsx" />
+			</Section>
 
-      <Section title="extend()">
-        <p>
-          <code>extend(base, added)</code> creates a reactive object with <code>base</code>
-          as its prototype and <code>added</code> as own properties. Property lookups
-          walk the prototype chain — reads are reactive at every level.
-        </p>
-        <Code code={extendFunction} lang="tsx" />
-      </Section>
+			<Section title="extend()">
+				<p>
+					<code>extend(base, added)</code> creates a reactive object with <code>base</code>
+					as its prototype and <code>added</code> as own properties. Property lookups walk the
+					prototype chain — reads are reactive at every level.
+				</p>
+				<Code code={extendFunction} lang="tsx" />
+			</Section>
 
-      <Section title="<env> Element">
-        <p>
-          The <code>{'<env>'}</code> intrinsic injects values into the env chain
-          without adding a DOM wrapper. It's syntactic sugar for creating a wrapper
-          component that calls <code>extend()</code>.
-        </p>
-        <Code code={envElement} lang="tsx" />
-      </Section>
+			<Section title="<env> Element">
+				<p>
+					The <code>{'<env>'}</code> intrinsic injects values into the env chain without adding a
+					DOM wrapper. It's syntactic sugar for creating a wrapper component that calls{' '}
+					<code>extend()</code>.
+				</p>
+				<Code code={envElement} lang="tsx" />
+			</Section>
 
-      <Section title="Root Env">
-        <p>
-          <code>rootEnv</code> is the top-level env. You can pre-populate it
-          before mounting the app.
-        </p>
-        <Code code={rootEnv} lang="tsx" />
-      </Section>
-    </article>
-  )
+			<Section title="Root Env">
+				<p>
+					<code>rootEnv</code> is the top-level env. You can pre-populate it before mounting the
+					app.
+				</p>
+				<Code code={rootEnv} lang="tsx" />
+			</Section>
+		</article>
+	)
 }

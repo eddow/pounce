@@ -1,0 +1,61 @@
+{
+	"name": "@pounce/adapter-pico",
+	"version": "1.0.0",
+	"description": "PicoCSS framework adapter for @pounce/ui",
+	"type": "module",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.mjs",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.cjs"
+		},
+		"./css": "./dist/pico-bridge.css"
+	},
+	"sideEffects": [
+		"*.css"
+	],
+	"files": [
+		"dist",
+		"src"
+	],
+	"scripts": {
+		"build": "pnpm run build:js && pnpm run build:css",
+		"build:js": "vite build",
+		"build:css": "sass src/pico-bridge.sass dist/pico-bridge.css --style=compressed --no-source-map",
+		"type-check": "tsc --noEmit",
+		"dev": "vite dev --config demo/vite.config.ts",
+		"demo": "vite dev --config demo/vite.config.ts",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"peerDependencies": {
+		"@picocss/pico": "^2.0.0",
+		"@pounce/core": "workspace:*",
+		"@pounce/ui": "workspace:*"
+	},
+	"devDependencies": {
+		"@picocss/pico": "^2.1.1",
+		"@pounce/core": "workspace:*",
+		"@pounce/kit": "workspace:*",
+		"@pounce/ui": "workspace:*",
+		"@tabler/icons": "^3.36.1",
+		"mutts": "link:../../../../mutts",
+		"pure-glyf": "workspace:*",
+		"sass": "^1.93.2",
+		"typescript": "^5.9.3",
+		"vite": "7.3.1",
+		"vite-plugin-dts": "^4.5.3",
+		"vitest": "^4.0.18"
+	},
+	"keywords": ["pounce", "picocss", "adapter", "css"],
+	"author": "fmdm",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/eddow/pounce.git"
+	},
+	"packageManager": "pnpm@10.30.0"
+}

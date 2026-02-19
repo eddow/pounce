@@ -1,5 +1,4 @@
-import { A } from '@pounce/kit'
-import { PackageHeader, Section, Code } from '../../components'
+import { Code, PackageHeader, Section } from '../../components'
 
 const routerExample = `import { Router, A } from '@pounce/kit'
 
@@ -57,59 +56,60 @@ const intlExample = `import { IntlNumber, IntlDate, IntlRelativeTime } from '@po
 // → "3 days ago"`
 
 export default function KitPage() {
-  return (
-    <article>
-      <PackageHeader
-        name="@pounce/kit"
-        description="Router, client state, storage, Intl formatting, and API utilities."
-      />
+	return (
+		<article>
+			<PackageHeader
+				name="@pounce/kit"
+				description="Router, client state, storage, Intl formatting, and API utilities."
+			/>
 
-      <p>
-        <code>@pounce/kit</code> provides the application-level tools that sit
-        between the core framework and UI components: routing, browser state,
-        persistent storage, internationalization, and API helpers.
-      </p>
+			<p>
+				<code>@pounce/kit</code> provides the application-level tools that sit between the core
+				framework and UI components: routing, browser state, persistent storage,
+				internationalization, and API helpers.
+			</p>
 
-      <Section title="Router">
-        <p>
-          Client-side router with reactive URL matching, parameter extraction,
-          and SPA navigation via <code>{'<A>'}</code> links.
-        </p>
-        <Code code={routerExample} lang="tsx" />
-      </Section>
+			<Section title="Router">
+				<p>
+					Client-side router with reactive URL matching, parameter extraction, and SPA navigation
+					via <code>{'<A>'}</code> links.
+				</p>
+				<Code code={routerExample} lang="tsx" />
+			</Section>
 
-      <Section title="Client State">
-        <p>
-          <code>client</code> is a reactive object exposing browser state.
-          Read any property in JSX and it updates automatically.
-        </p>
-        <Code code={clientExample} lang="tsx" />
-      </Section>
+			<Section title="Client State">
+				<p>
+					<code>client</code> is a reactive object exposing browser state. Read any property in JSX
+					and it updates automatically.
+				</p>
+				<Code code={clientExample} lang="tsx" />
+			</Section>
 
-      <Section title="Persistent Storage">
-        <p>
-          <code>stored()</code> creates a reactive value backed by <code>localStorage</code>.
-        </p>
-        <Code code={storedExample} lang="tsx" />
-      </Section>
+			<Section title="Persistent Storage">
+				<p>
+					<code>stored()</code> creates a reactive value backed by <code>localStorage</code>.
+				</p>
+				<Code code={storedExample} lang="tsx" />
+			</Section>
 
-      <Section title="Intl Components">
-        <p>
-          Six Intl formatting components that render text nodes directly — no wrapper elements.
-        </p>
-        <Code code={intlExample} lang="tsx" />
-      </Section>
+			<Section title="Intl Components">
+				<p>Six Intl formatting components that render text nodes directly — no wrapper elements.</p>
+				<Code code={intlExample} lang="tsx" />
+			</Section>
 
-      <Section title="Topics">
-        <ul>
-          <li>Router — route definitions, params, guards, <code>{'<A>'}</code></li>
-          <li>Client — browser state, navigation, media queries</li>
-          <li>Intl — Number, Date, RelativeTime, List, Plural, DisplayNames</li>
-          <li>Storage — <code>stored()</code> reactive localStorage</li>
-          <li>API — fetch utilities, validation with arktype</li>
-        </ul>
-      </Section>
-    </article>
-  )
+			<Section title="Topics">
+				<ul>
+					<li>
+						Router — route definitions, params, guards, <code>{'<A>'}</code>
+					</li>
+					<li>Client — browser state, navigation, media queries</li>
+					<li>Intl — Number, Date, RelativeTime, List, Plural, DisplayNames</li>
+					<li>
+						Storage — <code>stored()</code> reactive localStorage
+					</li>
+					<li>API — fetch utilities, validation with arktype</li>
+				</ul>
+			</Section>
+		</article>
+	)
 }
-

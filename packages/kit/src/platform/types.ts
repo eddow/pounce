@@ -1,4 +1,3 @@
-
 /** Parsed representation of the current URL. */
 export interface ClientUrl {
 	readonly href: string

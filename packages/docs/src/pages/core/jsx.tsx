@@ -1,4 +1,4 @@
-import { Code, Section, ApiTable } from '../../components'
+import { ApiTable, Code, Section } from '../../components'
 
 const hFunction = `import { h, r } from '@pounce/core'
 
@@ -50,61 +50,85 @@ const twoWayDetails = `// The Babel plugin generates two-way bindings for:
 // The plugin merges these into a single r(getter, customSetter).`
 
 export default function JsxPage() {
-  return (
-    <article>
-      <h1>JSX Factory</h1>
-      <p>
-        How Pounce transforms JSX into reactive DOM elements.
-      </p>
+	return (
+		<article>
+			<h1>JSX Factory</h1>
+			<p>How Pounce transforms JSX into reactive DOM elements.</p>
 
-      <Section title="The h() Function">
-        <p>
-          Pounce's <code>h()</code> function is the JSX factory. It creates
-          <code>PounceElement</code> descriptors — lightweight objects that describe
-          what to render. Actual DOM nodes are created lazily during <code>render()</code>.
-        </p>
-        <Code code={hFunction} lang="tsx" />
-      </Section>
+			<Section title="The h() Function">
+				<p>
+					Pounce's <code>h()</code> function is the JSX factory. It creates
+					<code>PounceElement</code> descriptors — lightweight objects that describe what to render.
+					Actual DOM nodes are created lazily during <code>render()</code>.
+				</p>
+				<Code code={hFunction} lang="tsx" />
+			</Section>
 
-      <Section title="ReactiveProp and r()">
-        <p>
-          <code>r()</code> creates a <code>ReactiveProp</code> — a wrapper around a getter
-          (and optional setter) that the rendering pipeline subscribes to. When the getter's
-          dependencies change, only the specific DOM node or attribute updates.
-        </p>
-        <Code code={reactiveProp} lang="tsx" />
-        <p>
-          <strong>You never write <code>r()</code> manually.</strong> The Babel plugin
-          handles all wrapping. Writing <code>{'{'}() =&gt; expr{'}'}</code> in JSX
-          would double-wrap and break reactivity.
-        </p>
-      </Section>
+			<Section title="ReactiveProp and r()">
+				<p>
+					<code>r()</code> creates a <code>ReactiveProp</code> — a wrapper around a getter (and
+					optional setter) that the rendering pipeline subscribes to. When the getter's dependencies
+					change, only the specific DOM node or attribute updates.
+				</p>
+				<Code code={reactiveProp} lang="tsx" />
+				<p>
+					<strong>
+						You never write <code>r()</code> manually.
+					</strong>{' '}
+					The Babel plugin handles all wrapping. Writing{' '}
+					<code>
+						{'{'}() =&gt; expr{'}'}
+					</code>{' '}
+					in JSX would double-wrap and break reactivity.
+				</p>
+			</Section>
 
-      <Section title="Two-Way Binding">
-        <p>
-          When the Babel plugin sees a member expression in a JSX attribute, it generates
-          both a getter and a setter. This enables automatic two-way binding for form elements.
-        </p>
-        <Code code={twoWayDetails} lang="tsx" />
-      </Section>
+			<Section title="Two-Way Binding">
+				<p>
+					When the Babel plugin sees a member expression in a JSX attribute, it generates both a
+					getter and a setter. This enables automatic two-way binding for form elements.
+				</p>
+				<Code code={twoWayDetails} lang="tsx" />
+			</Section>
 
-      <Section title="this= Attribute">
-        <p>
-          The <code>this=</code> attribute captures a reference to the rendered DOM element.
-          It's a set-only binding — the plugin generates a setter that assigns the element
-          after rendering.
-        </p>
-        <Code code={thisAttribute} lang="tsx" />
-      </Section>
+			<Section title="this= Attribute">
+				<p>
+					The <code>this=</code> attribute captures a reference to the rendered DOM element. It's a
+					set-only binding — the plugin generates a setter that assigns the element after rendering.
+				</p>
+				<Code code={thisAttribute} lang="tsx" />
+			</Section>
 
-      <Section title="Babel Plugin Summary">
-        <ApiTable props={[
-          { name: '{expr}', type: 'child/attr', description: 'Wrapped in r(() => expr) for reactive subscription', required: false },
-          { name: '{obj.prop}', type: 'attribute', description: 'Two-way: r(() => obj.prop, (v) => obj.prop = v)', required: false },
-          { name: 'this={ref}', type: 'attribute', description: 'Set-only: r(() => undefined, (v) => ref = v)', required: false },
-          { name: 'update:attr', type: 'attribute', description: 'Custom setter paired with base attribute', required: false },
-        ]} />
-      </Section>
-    </article>
-  )
+			<Section title="Babel Plugin Summary">
+				<ApiTable
+					props={[
+						{
+							name: '{expr}',
+							type: 'child/attr',
+							description: 'Wrapped in r(() => expr) for reactive subscription',
+							required: false,
+						},
+						{
+							name: '{obj.prop}',
+							type: 'attribute',
+							description: 'Two-way: r(() => obj.prop, (v) => obj.prop = v)',
+							required: false,
+						},
+						{
+							name: 'this={ref}',
+							type: 'attribute',
+							description: 'Set-only: r(() => undefined, (v) => ref = v)',
+							required: false,
+						},
+						{
+							name: 'update:attr',
+							type: 'attribute',
+							description: 'Custom setter paired with base attribute',
+							required: false,
+						},
+					]}
+				/>
+			</Section>
+		</article>
+	)
 }

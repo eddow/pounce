@@ -1,49 +1,30 @@
 {
 	"compilerOptions": {
-		"target": "ES2022",
-		"useDefineForClassFields": true,
+		"target": "ESNext",
 		"module": "ESNext",
-		"lib": [
-			"ES2023",
-			"DOM",
-			"DOM.Iterable"
-		],
-		"skipLibCheck": true,
 		"moduleResolution": "bundler",
-		"allowImportingTsExtensions": true,
-		"resolveJsonModule": true,
-		"isolatedModules": true,
-		"noEmit": true,
+		"strict": true,
 		"jsx": "react",
 		"jsxFactory": "h",
 		"jsxFragmentFactory": "Fragment",
-		"strict": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"noFallthroughCasesInSwitch": true,
-		"allowSyntheticDefaultImports": true,
-		"baseUrl": ".",
-		"plugins": [
-			{
-				"name": "typescript-styled-plugin",
-				"tags": ["componentStyle.sass"]
-			}
-		]
+		"lib": [
+			"ESNext",
+			"DOM",
+			"DOM.Iterable"
+		],
+		"types": [
+			"node",
+			"@pounce/core"
+		],
+		"skipLibCheck": true,
+		"noEmit": true,
+		"baseUrl": "."
 	},
 	"include": [
-		"src/**/*.ts",
-		"src/**/*.tsx"
+		"src/**/*"
 	],
 	"exclude": [
 		"node_modules",
-		"dist",
-		"**/*.spec.ts",
-		"**/*.test.ts",
-		"tests/**/*"
-	],
-	"references": [
-		{
-			"path": "./tsconfig.node.json"
-		}
+		"dist"
 	]
 }

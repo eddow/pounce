@@ -43,9 +43,7 @@
 		"test:e2e": "playwright test",
 		"test:e2e:ui": "playwright test --ui",
 		"test:coverage": "vitest --coverage",
-		"test:all": "npm run test && npm run test:e2e",
-		"lint": "biome check .",
-		"lint:fix": "biome check --write ."
+		"test:all": "npm run test && npm run test:e2e"
 	},
 	"keywords": [
 		"pounce",
@@ -76,7 +74,6 @@
 		"zod": "^3.24.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.0.6",
 		"@playwright/test": "^1.49.1",
 		"@types/node": "^22.10.5",
 		"@vitest/coverage-v8": "^4.0.18",

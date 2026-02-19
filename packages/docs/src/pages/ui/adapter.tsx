@@ -1,4 +1,4 @@
-import { Section, Code } from '../../components'
+import { Code, Section } from '../../components'
 
 const adapterPattern = `// The adapter pattern decouples component logic from CSS framework styling.
 // Components call getAdapter('Button') to get variant classes, configs, etc.
@@ -71,40 +71,35 @@ setAdapter({
 })`
 
 export default function AdapterPage() {
-  return (
-    <article>
-      <h1>Adapter Pattern</h1>
-      <p>
-        The adapter pattern decouples component logic from CSS framework styling.
-        Swap PicoCSS for Tailwind, Bootstrap, or any custom framework without
-        changing component code.
-      </p>
+	return (
+		<article>
+			<h1>Adapter Pattern</h1>
+			<p>
+				The adapter pattern decouples component logic from CSS framework styling. Swap PicoCSS for
+				Tailwind, Bootstrap, or any custom framework without changing component code.
+			</p>
 
-      <Section title="How It Works">
-        <Code code={adapterPattern} lang="tsx" />
-      </Section>
+			<Section title="How It Works">
+				<Code code={adapterPattern} lang="tsx" />
+			</Section>
 
-      <Section title="Adapter Structure">
-        <p>
-          An adapter provides variants, component configs, transitions, and an icon factory.
-        </p>
-        <Code code={adapterStructure} lang="tsx" />
-      </Section>
+			<Section title="Adapter Structure">
+				<p>An adapter provides variants, component configs, transitions, and an icon factory.</p>
+				<Code code={adapterStructure} lang="tsx" />
+			</Section>
 
-      <Section title="PicoCSS Adapter">
-        <p>
-          <code>@pounce/adapter-pico</code> bridges Pounce's CSS variable contract
-          to PicoCSS's theming system.
-        </p>
-        <Code code={picoDetails} lang="tsx" />
-      </Section>
+			<Section title="PicoCSS Adapter">
+				<p>
+					<code>@pounce/adapter-pico</code> bridges Pounce's CSS variable contract to PicoCSS's
+					theming system.
+				</p>
+				<Code code={picoDetails} lang="tsx" />
+			</Section>
 
-      <Section title="Custom Adapter">
-        <p>
-          Create your own adapter for any CSS framework.
-        </p>
-        <Code code={customAdapter} lang="tsx" />
-      </Section>
-    </article>
-  )
+			<Section title="Custom Adapter">
+				<p>Create your own adapter for any CSS framework.</p>
+				<Code code={customAdapter} lang="tsx" />
+			</Section>
+		</article>
+	)
 }

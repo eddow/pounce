@@ -201,7 +201,7 @@ export class CompositeAttributes {
 		const classes: any[] = []
 		for (const layer of this.layers)
 			if ('class' in layer) {
-				const val = layer.class
+				const val = collapse(layer.class)
 				if (Array.isArray(val)) classes.push(...val.flat(Infinity))
 				else if (val) classes.push(val)
 			}
@@ -213,7 +213,7 @@ export class CompositeAttributes {
 		const stylesInput: any[] = []
 		for (const layer of this.layers)
 			if ('style' in layer) {
-				const val = layer.style
+				const val = collapse(layer.style)
 				if (Array.isArray(val)) stylesInput.push(...val.flat(Infinity))
 				else if (val) stylesInput.push(val)
 			}

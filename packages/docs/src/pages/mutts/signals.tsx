@@ -1,4 +1,4 @@
-import { Section, Code, PackageHeader, ApiTable } from '../../components'
+import { ApiTable, Code, PackageHeader, Section } from '../../components'
 
 const signalsSnippet = `import { reactive, effect, memoize } from 'mutts'
 
@@ -33,8 +33,8 @@ export default function MuttsSignalsPage() {
 
 			<Section title="Core API">
 				<p>
-					Mutts uses native JavaScript Proxies to track property access.
-					Dependencies are collected automatically when an <code>effect</code> or <code>memoize</code> runs.
+					Mutts uses native JavaScript Proxies to track property access. Dependencies are collected
+					automatically when an <code>effect</code> or <code>memoize</code> runs.
 				</p>
 				<Code code={signalsSnippet} lang="tsx" />
 			</Section>
@@ -46,22 +46,53 @@ export default function MuttsSignalsPage() {
 				</p>
 				<Code code={cleanupSnippet} lang="tsx" />
 				<ul>
-					<li><code>propChange</code>: Triggered by one or more reactive property mutations.</li>
-					<li><code>stopped</code>: Manually stopped or parent effect disposed.</li>
-					<li><code>lineage</code>: Child effect stopped because its parent stopped.</li>
-					<li><code>gc</code>: Garbage collected by the system.</li>
-					<li><code>error</code>: Stopped due to an unhandled error in the effect chain.</li>
+					<li>
+						<code>propChange</code>: Triggered by one or more reactive property mutations.
+					</li>
+					<li>
+						<code>stopped</code>: Manually stopped or parent effect disposed.
+					</li>
+					<li>
+						<code>lineage</code>: Child effect stopped because its parent stopped.
+					</li>
+					<li>
+						<code>gc</code>: Garbage collected by the system.
+					</li>
+					<li>
+						<code>error</code>: Stopped due to an unhandled error in the effect chain.
+					</li>
 				</ul>
 			</Section>
 
 			<Section title="API Reference">
 				<ApiTable
 					props={[
-						{ name: 'reactive(obj)', type: 'T', description: 'Returns a reactive proxy of the object. Supports deep nesting.' },
-						{ name: 'effect(fn, options?)', type: 'Effect', description: 'Runs the function and re-runs it when dependencies change.' },
-						{ name: 'memoize(fn, options?)', type: '() => T', description: 'Creates a cached, computed value that updates reactively.' },
-						{ name: 'untracked(fn)', type: 'T', description: 'Runs a function without collecting dependencies.' },
-						{ name: 'cleanedBy(owner, fn)', type: 'T & { [cleanup] }', description: 'Ties a cleanup function to the owner\'s lifecycle. Returns the owner with a cleanup symbol.' },
+						{
+							name: 'reactive(obj)',
+							type: 'T',
+							description: 'Returns a reactive proxy of the object. Supports deep nesting.',
+						},
+						{
+							name: 'effect(fn, options?)',
+							type: 'Effect',
+							description: 'Runs the function and re-runs it when dependencies change.',
+						},
+						{
+							name: 'memoize(fn, options?)',
+							type: '() => T',
+							description: 'Creates a cached, computed value that updates reactively.',
+						},
+						{
+							name: 'untracked(fn)',
+							type: 'T',
+							description: 'Runs a function without collecting dependencies.',
+						},
+						{
+							name: 'cleanedBy(owner, fn)',
+							type: 'T & { [cleanup] }',
+							description:
+								"Ties a cleanup function to the owner's lifecycle. Returns the owner with a cleanup symbol.",
+						},
 					]}
 				/>
 			</Section>

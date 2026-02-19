@@ -1,5 +1,5 @@
-import { Section, Code, PackageHeader } from '../../components'
 import { componentStyle } from '@pounce/kit'
+import { Code, PackageHeader, Section } from '../../components'
 
 componentStyle.sass`
 .swatches
@@ -91,7 +91,10 @@ export default function CssVariablesPage() {
 
 			<Section title="Customization Example">
 				<p>Override variables globally or env-based to a container:</p>
-				<Code code={`:root {\n  --pounce-primary: #ec4899; /* Pink */\n  --pounce-border-radius: 0;\n}`} lang="css" />
+				<Code
+					code={`:root {\n  --pounce-primary: #ec4899; /* Pink */\n  --pounce-border-radius: 0;\n}`}
+					lang="css"
+				/>
 			</Section>
 		</article>
 	)

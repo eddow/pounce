@@ -2,7 +2,7 @@
  * Todo Web Component using inline JSX templating
  */
 
-import { memoize, type Register } from 'mutts'
+import { memoize } from 'mutts'
 import './Todo.scss'
 import { extend } from '../../lib/utils'
 
@@ -19,7 +19,7 @@ export default function TodoWebComponent(props: {
 	showClearCompleted?: boolean
 	maxTodos?: number
 	allowEmptyTodos?: boolean
-	todos: Register<Todo, number>
+	todos: Todo[]
 	filter?: 'all' | 'active' | 'completed'
 	newTodoText?: string
 }) {
@@ -53,12 +53,12 @@ export default function TodoWebComponent(props: {
 		state.newTodoText = ''
 	}
 
-	function deleteTodo(id: number) {
-		props.todos.remove(id)
+	function deleteTodo(removeId: number) {
+		props.todos = props.todos.filter(({ id }) => removeId !== id)
 	}
 
 	function clearCompleted() {
-		props.todos.keep((todo) => !todo.completed)
+		props.todos = props.todos.filter((todo) => !todo.completed)
 	}
 
 	const computed = memoize({
@@ -76,7 +76,7 @@ export default function TodoWebComponent(props: {
 					return props.todos.filter((todo) => todo.completed)
 				default:
 					// Return array to be consistent with other branches and <for> expectations
-					return props.todos.toArray()
+					return props.todos
 			}
 		},
 	})

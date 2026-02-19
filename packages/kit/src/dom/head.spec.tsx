@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { document, latch } from '@pounce/core'
 import { reactive, reset } from 'mutts'
-import { latch, document } from '@pounce/core'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 describe('latch(document.head, ...) — head injection', () => {
 	let originalHeadHTML: string

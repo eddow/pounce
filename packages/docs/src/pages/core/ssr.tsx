@@ -31,38 +31,36 @@ const boardSSR = `// @pounce/board handles SSR automatically.
 // See the @pounce/board documentation for details.`
 
 export default function SSRPage() {
-  return (
-    <article>
-      <h1>SSR</h1>
-      <p>
-        Server-side rendering with Pounce's Node.js entry point.
-      </p>
+	return (
+		<article>
+			<h1>SSR</h1>
+			<p>Server-side rendering with Pounce's Node.js entry point.</p>
 
-      <Section title="Dual Entry Points">
-        <p>
-          <code>@pounce/core</code> ships two entry points: <code>dom</code> (browser)
-          and <code>node</code> (server). Both export the same API — the difference is
-          how DOM globals (<code>document</code>, <code>window</code>, etc.) are provided.
-        </p>
-        <Code code={dualEntry} lang="tsx" />
-      </Section>
+			<Section title="Dual Entry Points">
+				<p>
+					<code>@pounce/core</code> ships two entry points: <code>dom</code> (browser) and{' '}
+					<code>node</code> (server). Both export the same API — the difference is how DOM globals (
+					<code>document</code>, <code>window</code>, etc.) are provided.
+				</p>
+				<Code code={dualEntry} lang="tsx" />
+			</Section>
 
-      <Section title="Node Entry Point">
-        <p>
-          The Node entry point sets up JSDOM for DOM APIs and uses
-          <code>AsyncLocalStorage</code> proxies so each concurrent request
-          gets its own isolated DOM context.
-        </p>
-        <Code code={nodeEntry} lang="tsx" />
-      </Section>
+			<Section title="Node Entry Point">
+				<p>
+					The Node entry point sets up JSDOM for DOM APIs and uses
+					<code>AsyncLocalStorage</code> proxies so each concurrent request gets its own isolated
+					DOM context.
+				</p>
+				<Code code={nodeEntry} lang="tsx" />
+			</Section>
 
-      <Section title="With @pounce/board">
-        <p>
-          For full-stack applications, <code>@pounce/board</code> handles SSR
-          automatically — server rendering, hydration, and file-based routing.
-        </p>
-        <Code code={boardSSR} lang="tsx" />
-      </Section>
-    </article>
-  )
+			<Section title="With @pounce/board">
+				<p>
+					For full-stack applications, <code>@pounce/board</code> handles SSR automatically — server
+					rendering, hydration, and file-based routing.
+				</p>
+				<Code code={boardSSR} lang="tsx" />
+			</Section>
+		</article>
+	)
 }

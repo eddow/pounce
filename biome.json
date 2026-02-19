@@ -1,0 +1,74 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.3.13/schema.json",
+	"files": {
+		"includes": ["packages/**/src/**/*.ts", "packages/**/src/**/*.tsx", "sandbox/**/*.ts"]
+	},
+"overrides": [
+	{
+		"includes": ["**/*.spec.tsx", "**/*.spec.ts"],
+		"linter": {
+			"enabled": false
+		},
+		"formatter": {
+			"enabled": false
+		}
+	}
+],
+	"javascript": {
+		"formatter": {
+			"lineWidth": 100,
+			"quoteStyle": "single",
+			"semicolons": "asNeeded",
+			"trailingCommas": "es5",
+			"indentStyle": "tab"
+		}
+	},
+	"linter": {
+		"rules": {
+			"style": {
+				"noNonNullAssertion": "off",
+				"useSingleVarDeclarator": {
+					"level": "warn",
+					"fix": "safe"
+				},
+				"useTemplate": {
+					"level": "warn",
+					"fix": "safe"
+				},
+				"noParameterAssign": "off",
+				"useImportType": { "level": "warn", "fix": "safe" },
+				"useConst": {
+					"level": "info",
+					"fix": "none"
+				}
+			},
+			"suspicious": {
+				"noExplicitAny": "off",
+				"noDebugger": "warn",
+				"noConsole": "off"
+			},
+			"performance": {
+				"noAccumulatingSpread": "off"
+			},
+			"complexity": {
+				"noUselessFragments": "off",
+				"noBannedTypes": "off"
+			},
+			"security": {},
+			"correctness": {
+				"noUnusedImports": {
+					"level": "info",
+					"fix": "safe"
+				},
+				"noUnusedFunctionParameters": {
+					"level": "info",
+					"fix": "safe"
+				}
+			},
+			"nursery": {},
+			"a11y": {
+				"useButtonType": "off"
+			}
+		}
+	}
+}

@@ -1,4 +1,4 @@
-import { Section, Code, ApiTable } from '../../components'
+import { ApiTable, Code, Section } from '../../components'
 
 const routeDefinition = `import { Router, A } from '@pounce/kit'
 import type { ClientRouteDefinition } from '@pounce/kit'
@@ -72,59 +72,80 @@ function NotFoundPage({ url }: { url: string }) {
 <Router routes={routes} notFound={NotFoundPage} />`
 
 export default function RouterPage() {
-  return (
-    <article>
-      <h1>Router</h1>
-      <p>
-        Client-side router with reactive URL matching, parameter extraction,
-        and SPA navigation.
-      </p>
+	return (
+		<article>
+			<h1>Router</h1>
+			<p>
+				Client-side router with reactive URL matching, parameter extraction, and SPA navigation.
+			</p>
 
-      <Section title="Route Definitions">
-        <p>
-          Routes are a flat array of objects with <code>path</code> and <code>view</code>.
-          Parameters use bracket syntax: <code>[id]</code> for single segments,
-          <code>[...slug]</code> for catch-all.
-        </p>
-        <Code code={routeDefinition} lang="tsx" />
-      </Section>
+			<Section title="Route Definitions">
+				<p>
+					Routes are a flat array of objects with <code>path</code> and <code>view</code>.
+					Parameters use bracket syntax: <code>[id]</code> for single segments,
+					<code>[...slug]</code> for catch-all.
+				</p>
+				<Code code={routeDefinition} lang="tsx" />
+			</Section>
 
-      <Section title="View Functions">
-        <p>
-          The router calls <code>view(spec, env)</code> where <code>spec.params</code>
-          contains the extracted URL parameters.
-        </p>
-        <Code code={viewFunction} lang="tsx" />
-      </Section>
+			<Section title="View Functions">
+				<p>
+					The router calls <code>view(spec, env)</code> where <code>spec.params</code>
+					contains the extracted URL parameters.
+				</p>
+				<Code code={viewFunction} lang="tsx" />
+			</Section>
 
-      <Section title="<A> Component">
-        <p>
-          <code>{'<A>'}</code> is a reactive link that uses <code>pushState</code> navigation
-          and sets <code>aria-current="page"</code> on the active link.
-        </p>
-        <Code code={aComponent} lang="tsx" />
-      </Section>
+			<Section title="<A> Component">
+				<p>
+					<code>{'<A>'}</code> is a reactive link that uses <code>pushState</code> navigation and
+					sets <code>aria-current="page"</code> on the active link.
+				</p>
+				<Code code={aComponent} lang="tsx" />
+			</Section>
 
-      <Section title="defineRoute()">
-        <p>
-          <code>defineRoute()</code> creates a typed route definition with a <code>buildUrl()</code>
-          helper. Supports query schema validation with arktype.
-        </p>
-        <Code code={defineRouteExample} lang="tsx" />
-      </Section>
+			<Section title="defineRoute()">
+				<p>
+					<code>defineRoute()</code> creates a typed route definition with a <code>buildUrl()</code>
+					helper. Supports query schema validation with arktype.
+				</p>
+				<Code code={defineRouteExample} lang="tsx" />
+			</Section>
 
-      <Section title="404 Handling">
-        <Code code={notFound} lang="tsx" />
-      </Section>
+			<Section title="404 Handling">
+				<Code code={notFound} lang="tsx" />
+			</Section>
 
-      <Section title="API Reference">
-        <ApiTable props={[
-          { name: 'routes', type: 'ClientRouteDefinition[]', description: 'Array of route definitions', required: true },
-          { name: 'notFound', type: '(spec) => JSX.Element', description: 'Component rendered for unmatched URLs', required: true },
-          { name: 'path', type: 'string', description: 'URL pattern with [param] and [...catchAll] segments', required: true },
-          { name: 'view', type: '(spec, env) => JSX.Element', description: 'Component to render for this route', required: true },
-        ]} />
-      </Section>
-    </article>
-  )
+			<Section title="API Reference">
+				<ApiTable
+					props={[
+						{
+							name: 'routes',
+							type: 'ClientRouteDefinition[]',
+							description: 'Array of route definitions',
+							required: true,
+						},
+						{
+							name: 'notFound',
+							type: '(spec) => JSX.Element',
+							description: 'Component rendered for unmatched URLs',
+							required: true,
+						},
+						{
+							name: 'path',
+							type: 'string',
+							description: 'URL pattern with [param] and [...catchAll] segments',
+							required: true,
+						},
+						{
+							name: 'view',
+							type: '(spec, env) => JSX.Element',
+							description: 'Component to render for this route',
+							required: true,
+						},
+					]}
+				/>
+			</Section>
+		</article>
+	)
 }

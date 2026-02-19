@@ -1,4 +1,5 @@
 import { reactive } from 'mutts'
+import { perf } from '../perf.js'
 import { setPlatform } from '../platform/shared.js'
 import type {
 	Client,
@@ -9,7 +10,6 @@ import type {
 	NavigateOptions,
 	PlatformAdapter,
 } from '../platform/types.js'
-import { perf } from '../perf.js'
 
 // --- Build the reactive client ---
 
@@ -39,7 +39,7 @@ if (typeof window !== 'undefined') {
 	client.viewport = createViewportSnapshot()
 	client.history = createHistorySnapshot()
 	client.focused = getInitialFocusState()
-	client.visibilityState = (document.visibilityState === 'visible' ? 'visible' : 'hidden')
+	client.visibilityState = document.visibilityState === 'visible' ? 'visible' : 'hidden'
 	client.devicePixelRatio = getInitialDevicePixelRatio()
 	client.online = getInitialOnlineState()
 	client.language = getInitialLanguage()
@@ -112,7 +112,7 @@ function initializeClientListeners(): void {
 		client.focused = getInitialFocusState()
 	}
 	const syncVisibility = () => {
-		client.visibilityState = (document.visibilityState === 'visible' ? 'visible' : 'hidden')
+		client.visibilityState = document.visibilityState === 'visible' ? 'visible' : 'hidden'
 	}
 	const syncOnline = () => {
 		client.online = getInitialOnlineState()

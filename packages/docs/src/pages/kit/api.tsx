@@ -1,4 +1,4 @@
-import { Section, Code, PackageHeader, ApiTable } from '../../components'
+import { ApiTable, Code, PackageHeader, Section } from '../../components'
 
 const factorySnippet = `// Browser — auto-configured with fetch
 import { api } from '@pounce/kit'
@@ -45,24 +45,25 @@ export default function KitApiPage() {
 
 			<Section title="API Client">
 				<p>
-					The API client is built on top of the native <code>Request</code> and <code>Response</code> APIs.
-					It supports path parameter inference, automatic JSON serialization, and retries.
+					The API client is built on top of the native <code>Request</code> and{' '}
+					<code>Response</code> APIs. It supports path parameter inference, automatic JSON
+					serialization, and retries.
 				</p>
 				<Code code={factorySnippet} lang="tsx" />
 			</Section>
 
 			<Section title="Interceptors">
 				<p>
-					Interceptors allow you to transform requests and responses globaly or within a specific request context.
-					They follow a middleware pattern.
+					Interceptors allow you to transform requests and responses globaly or within a specific
+					request context. They follow a middleware pattern.
 				</p>
 				<Code code={interceptorSnippet} lang="tsx" />
 			</Section>
 
 			<Section title="SSR Hydration">
 				<p>
-					When SSR is enabled, the client automatically tracks all <code>GET</code> requests.
-					The data is collected and can be injected into the client-side page, allowing the client-side
+					When SSR is enabled, the client automatically tracks all <code>GET</code> requests. The
+					data is collected and can be injected into the client-side page, allowing the client-side
 					API client to "hydrate" the data instantly without a second network request.
 				</p>
 				<Code code={ssrSnippet} lang="tsx" />
@@ -71,10 +72,29 @@ export default function KitApiPage() {
 			<Section title="API Reference">
 				<ApiTable
 					props={[
-						{ name: 'api(path, params?)', type: 'function', description: 'Creates a request builder. Call .get(), .post(body), .put(body), .delete() on the result.' },
-						{ name: 'intercept(pattern, handler)', type: 'function', description: 'Registers a global interceptor matching a URL pattern or regex. Returns an unsubscribe function.' },
-						{ name: 'PounceResponse', type: 'class', description: 'Extended Response with .json<T>() typing and .hydrated for SSR data.' },
-						{ name: 'ApiError', type: 'class', description: 'Error subclass thrown on non-2xx responses. Contains status, statusText, and response data.' },
+						{
+							name: 'api(path, params?)',
+							type: 'function',
+							description:
+								'Creates a request builder. Call .get(), .post(body), .put(body), .delete() on the result.',
+						},
+						{
+							name: 'intercept(pattern, handler)',
+							type: 'function',
+							description:
+								'Registers a global interceptor matching a URL pattern or regex. Returns an unsubscribe function.',
+						},
+						{
+							name: 'PounceResponse',
+							type: 'class',
+							description: 'Extended Response with .json<T>() typing and .hydrated for SSR data.',
+						},
+						{
+							name: 'ApiError',
+							type: 'class',
+							description:
+								'Error subclass thrown on non-2xx responses. Contains status, statusText, and response data.',
+						},
 					]}
 				/>
 			</Section>

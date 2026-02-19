@@ -1,4 +1,4 @@
-import { Section, Code, ApiTable } from '../../components'
+import { ApiTable, Code, Section } from '../../components'
 
 const storedBasics = `import { stored } from '@pounce/kit'
 
@@ -53,44 +53,61 @@ const prefs = stored({ theme: 'light' })
 cleanup(prefs)`
 
 export default function StoragePage() {
-  return (
-    <article>
-      <h1>Storage</h1>
-      <p>
-        <code>stored()</code> creates a reactive object backed by <code>localStorage</code>.
-        Changes persist across reloads and sync across browser tabs.
-      </p>
+	return (
+		<article>
+			<h1>Storage</h1>
+			<p>
+				<code>stored()</code> creates a reactive object backed by <code>localStorage</code>. Changes
+				persist across reloads and sync across browser tabs.
+			</p>
 
-      <Section title="Basic Usage">
-        <Code code={storedBasics} lang="tsx" />
-      </Section>
+			<Section title="Basic Usage">
+				<Code code={storedBasics} lang="tsx" />
+			</Section>
 
-      <Section title="Cross-Tab Sync">
-        <p>
-          <code>stored()</code> listens to the <code>storage</code> event.
-          Changes in one tab propagate to all other tabs reactively.
-        </p>
-        <Code code={interTab} lang="tsx" />
-      </Section>
+			<Section title="Cross-Tab Sync">
+				<p>
+					<code>stored()</code> listens to the <code>storage</code> event. Changes in one tab
+					propagate to all other tabs reactively.
+				</p>
+				<Code code={interTab} lang="tsx" />
+			</Section>
 
-      <Section title="Custom Serialization">
-        <p>
-          Override <code>json.parse</code> and <code>json.stringify</code> for custom types.
-        </p>
-        <Code code={jsonCustom} lang="tsx" />
-      </Section>
+			<Section title="Custom Serialization">
+				<p>
+					Override <code>json.parse</code> and <code>json.stringify</code> for custom types.
+				</p>
+				<Code code={jsonCustom} lang="tsx" />
+			</Section>
 
-      <Section title="Cleanup">
-        <Code code={cleanup} lang="tsx" />
-      </Section>
+			<Section title="Cleanup">
+				<Code code={cleanup} lang="tsx" />
+			</Section>
 
-      <Section title="API Reference">
-        <ApiTable props={[
-          { name: 'stored(initial)', type: '(T) => T', description: 'Create reactive localStorage-backed object', required: true },
-          { name: 'json.parse', type: '(string) => T', description: 'Deserializer for stored values', required: false },
-          { name: 'json.stringify', type: '(T) => string', description: 'Serializer for stored values', required: false },
-        ]} />
-      </Section>
-    </article>
-  )
+			<Section title="API Reference">
+				<ApiTable
+					props={[
+						{
+							name: 'stored(initial)',
+							type: '(T) => T',
+							description: 'Create reactive localStorage-backed object',
+							required: true,
+						},
+						{
+							name: 'json.parse',
+							type: '(string) => T',
+							description: 'Deserializer for stored values',
+							required: false,
+						},
+						{
+							name: 'json.stringify',
+							type: '(T) => string',
+							description: 'Serializer for stored values',
+							required: false,
+						},
+					]}
+				/>
+			</Section>
+		</article>
+	)
 }

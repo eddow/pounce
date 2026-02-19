@@ -1,42 +1,14 @@
 {
 	"name": "@pounce/ui",
-	"version": "1.0.0",
-	"description": "Framework-agnostic UI component engine for Pounce",
+	"version": "2.0.0",
+	"description": "Headless UI primitives for Pounce applications",
 	"type": "module",
-	"main": "dist/index.js",
-	"module": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js",
-			"require": "./dist/index.cjs"
-		},
-		"./css": "./dist/ui.css",
-		"./css-dark": "./dist/ui-dark.css"
-	},
-	"scripts": {
-		"dev": "vite dev",
-		"demo": "vite dev --config demo/vite.config.ts",
-		"build": "npm run build:js && npm run build:css",
-		"build:js": "vite build",
-		"build:css": "npm run build:css:light && npm run build:css:dark",
-		"build:css:light": "sass src/styles/index.sass dist/ui.css --style=compressed --no-source-map",
-		"build:css:dark": "sass src/styles/dark.sass dist/ui-dark.css --style=compressed --no-source-map",
-		"type-check": "tsc --noEmit",
-		"lint": "biome check .",
-		"test": "npm run test:unit && npm run test:e2e",
-		"test:unit": "vitest run",
-		"test:watch": "vitest",
-		"test:e2e": "playwright test",
-		"profile": "playwright test -c playwright.perf.config.ts",
-		"biome": "biome check --write src"
-	},
 	"keywords": [
 		"pounce",
+		"headless",
 		"ui",
 		"components",
-		"reactive"
+		"primitives"
 	],
 	"author": "fmdm",
 	"license": "MIT",
@@ -44,32 +16,27 @@
 		"type": "git",
 		"url": "git+https://github.com/eddow/pounce.git"
 	},
-	"devDependencies": {
-		"@axe-core/playwright": "^4.10.0",
-		"@biomejs/biome": "^2.2.7",
-		"@playwright/test": "^1.56.1",
-		"@types/node": "25.1.0",
-		"arktype": "^2.1.29",
-		"jsdom": "^27.4.0",
-		"magic-string": "^0.30.21",
-		"sass": "^1.93.2",
-		"typescript": "^5.9.3",
-		"vite": "7.3.1",
-		"vite-plugin-dts": "^4.5.3",
-		"vitest": "^4.0.18"
-	},
-	"peerDependencies": {
-		"dockview-core": "^4.13.1"
-	},
-	"peerDependenciesMeta": {
-		"dockview-core": {
-			"optional": true
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./button": {
+			"types": "./dist/button/index.d.ts",
+			"import": "./dist/button/index.js",
+			"default": "./dist/button/index.js"
+		},
+		"./checkbox": {
+			"types": "./dist/checkbox/index.d.ts",
+			"import": "./dist/checkbox/index.js",
+			"default": "./dist/checkbox/index.js"
+		},
+		"./forms": {
+			"types": "./dist/forms/index.d.ts",
+			"import": "./dist/forms/index.js",
+			"default": "./dist/forms/index.js"
 		}
-	},
-	"dependencies": {
-		"@pounce/core": "workspace:*",
-		"@pounce/kit": "workspace:*",
-		"mutts": "link:../../../mutts"
 	},
 	"files": [
 		"dist",
@@ -78,5 +45,23 @@
 		"README.md",
 		"LLM.md"
 	],
+	"scripts": {
+		"build": "vite build",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@pounce/core": "workspace:*",
+		"mutts": "link:../../../mutts"
+	},
+	"devDependencies": {
+		"@types/node": "^25.1.0",
+		"jsdom": "^27.4.0",
+		"typescript": "^5.9.3",
+		"vite": "^7.3.1",
+		"vite-plugin-dts": "^4.5.3",
+		"vitest": "^4.0.18"
+	},
 	"packageManager": "pnpm@10.30.0"
 }

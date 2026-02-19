@@ -1,14 +1,14 @@
 /**
  * Request Context for pounce-board
  * Handles thread-local storage for SSR data, configuration, and interceptors.
- * 
+ *
  * NOTE: This file is server-side only due to AsyncLocalStorage usage.
  * The client-side context.ts in @pounce/core handles browser environments.
  */
 import { AsyncLocalStorage } from 'node:async_hooks'
 
-// Define the Interceptor type here to avoid circular imports if possible, 
-// or import strictly as type. 
+// Define the Interceptor type here to avoid circular imports if possible,
+// or import strictly as type.
 // We'll import InterceptorMiddleware from client.ts, but only as type.
 import type { InterceptorMiddleware } from './client.js'
 
@@ -105,10 +105,7 @@ export function createScope(config: Partial<ClientConfig> = {}): RequestScope {
 /**
  * Run a function within a request scope
  */
-export async function runWithContext<T>(
-	scope: RequestScope,
-	fn: () => Promise<T>
-): Promise<T> {
+export async function runWithContext<T>(scope: RequestScope, fn: () => Promise<T>): Promise<T> {
 	// Initialize storage if needed (Node.js only)
 	const storage = await ensureStorage()
 
@@ -134,7 +131,7 @@ export function addContextInterceptor(pattern: string | RegExp, handler: Interce
 	if (ctx) {
 		ctx.interceptors.push({ pattern, handler })
 		return () => {
-			const index = ctx.interceptors.findIndex(i => i.handler === handler)
+			const index = ctx.interceptors.findIndex((i) => i.handler === handler)
 			if (index !== -1) ctx.interceptors.splice(index, 1)
 		}
 	} else {

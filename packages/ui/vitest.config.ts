@@ -7,9 +7,8 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const baseConfig = createBaseConfig(__dirname)
 
 export default mergeConfig(baseConfig, defineConfig({
-  test: {
-    name: 'ui',
-    environment: 'jsdom',
-    setupFiles: ['./tests/setup.ts'],
-  },
+	test: {
+		name: 'ui',
+		environment: 'jsdom',
+	},
 }))

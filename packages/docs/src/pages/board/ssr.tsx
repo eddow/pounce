@@ -1,4 +1,4 @@
-import { Section, Code, PackageHeader } from '../../components'
+import { Code, PackageHeader, Section } from '../../components'
 
 const hydrationSnippet = `import { api } from '@pounce/board'
 
@@ -27,13 +27,18 @@ export default function BoardSsrPage() {
 
 			<Section title="The Reactive Pipeline">
 				<p>
-					Board uses a unique <strong>Reactive Rendering Pipeline</strong> that handles asynchronous data dependencies
-					automatically during server rendering.
+					Board uses a unique <strong>Reactive Rendering Pipeline</strong> that handles asynchronous
+					data dependencies automatically during server rendering.
 				</p>
 				<ol>
 					<li>The renderer mounts the component into a virtual DOM.</li>
-					<li>Any <code>api()</code> calls register promises with the SSR context.</li>
-					<li>The renderer waits for all promises to resolve, then executes another reactive pass if state has changed.</li>
+					<li>
+						Any <code>api()</code> calls register promises with the SSR context.
+					</li>
+					<li>
+						The renderer waits for all promises to resolve, then executes another reactive pass if
+						state has changed.
+					</li>
 					<li>Once the state stabilizes, the final HTML is generated and sent to the browser.</li>
 				</ol>
 			</Section>
@@ -41,24 +46,26 @@ export default function BoardSsrPage() {
 			<Section title="Hydration">
 				<p>
 					Data fetched during SSR is serialized into deterministic <code>&lt;script&gt;</code> tags.
-					On the client, the <code>api()</code> client automatically detects these tags and hydrates the state instantly,
-					preventing an unnecessary "second fetch" on the browser.
+					On the client, the <code>api()</code> client automatically detects these tags and hydrates
+					the state instantly, preventing an unnecessary "second fetch" on the browser.
 				</p>
 				<Code code={hydrationSnippet} lang="tsx" />
 			</Section>
 
 			<Section title="Smart Promises">
 				<p>
-					The result of <code>api().get()</code> is a <strong>Smart Promise</strong>. It exposes a <code>.hydrated</code> property
-					which is populated immediately if the data is already available from SSR or the local cache.
+					The result of <code>api().get()</code> is a <strong>Smart Promise</strong>. It exposes a{' '}
+					<code>.hydrated</code> property which is populated immediately if the data is already
+					available from SSR or the local cache.
 				</p>
 				<Code code={smartPromiseSnippet} lang="tsx" />
 			</Section>
 
 			<Section title="CSS Injection">
 				<p>
-					Styles generated via <code>css</code> templates or <code>Pure-glyf</code> are automatically collected during
-					the server render pass and injected into the <code>&lt;head&gt;</code>.
+					Styles generated via <code>css</code> templates or <code>Pure-glyf</code> are
+					automatically collected during the server render pass and injected into the{' '}
+					<code>&lt;head&gt;</code>.
 				</p>
 			</Section>
 		</article>

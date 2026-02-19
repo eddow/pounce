@@ -1,8 +1,8 @@
 /**
  * Type definitions and augmentation support for @pounce/board
- * 
+ *
  * Users can extend RequestContext by declaring a module augmentation:
- * 
+ *
  * ```ts
  * declare module '@pounce/board/server' {
  *   interface RequestContext {
@@ -15,11 +15,11 @@
 
 // Types - re-export for augmentation support from core
 export type {
-	RequestContext,
+	HttpMethod,
 	Middleware,
+	RequestContext,
 	RouteHandler,
 	RouteResponse,
-	HttpMethod,
 } from './lib/http/core.js'
 
-export type { RouteTreeNode, ParsedPathSegment, RouteParams } from './lib/router/index.js'
+export type { ParsedPathSegment, RouteParams, RouteTreeNode } from './lib/router/index.js'

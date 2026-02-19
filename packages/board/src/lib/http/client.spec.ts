@@ -16,8 +16,8 @@ import {
 	type RouteRegistry,
 	setRouteRegistry,
 } from './client.js'
-import { PounceResponse } from './response.js'
 import { ApiError } from './core.js'
+import { PounceResponse } from './response.js'
 
 describe('api client SSR integration', () => {
 	beforeEach(() => {
