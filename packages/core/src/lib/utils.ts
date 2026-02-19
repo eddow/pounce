@@ -12,15 +12,20 @@ import { isWeakKey } from './renderer-internal'
  * // d.name → props.name         (passthrough)
  * ```
  */
-export function defaults<
-	P,
-	D extends { [K in keyof D]: K extends keyof P ? NonNullable<P[K]> : never },
+export function defaulted<
+	P extends Record<string, any>,
+	D extends Record<string, any>,
 >(props: P, defs: D): Omit<P, keyof D> & { [K in keyof D & keyof P]-?: NonNullable<P[K]> } {
-	return new Proxy(props as any, {
-		get(target, key, receiver) {
-			const val = Reflect.get(target, key, receiver)
-			if (typeof key === 'string' && key in defs) return val ?? defs[key as keyof D]
-			return val
+	defs = reactive(defs)
+	return new Proxy({props, defs} as any, {
+		get(_, key) {
+			if(typeof key === 'string')
+				return (key in props ? props : defs)[key]
+		},
+		set(_, key, value) {
+			if(typeof key !== 'string') return false
+			;((key in props ? props : defs) as Record<string, any>)[key] = value
+			return true
 		},
 	}) as any
 }

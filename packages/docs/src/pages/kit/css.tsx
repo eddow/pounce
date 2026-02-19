@@ -24,7 +24,7 @@ scss\`
 const componentStyleExample = `import { componentStyle } from '@pounce/kit'
 
 // componentStyle wraps css/sass/scss with @layer pounce.components.
-// Use this for component-scoped styles.
+// Use this for component-env-based styles.
 
 componentStyle.sass\`
 .my-widget
@@ -77,7 +77,7 @@ export default function CSSPage() {
 
       <Section title="componentStyle">
         <p>
-          Wraps styles in <code>@layer pounce.components</code>. Use for component-scoped styles.
+          Wraps styles in <code>@layer pounce.components</code>. Use for component-env-based styles.
         </p>
         <Code code={componentStyleExample} lang="tsx" />
       </Section>

@@ -1,4 +1,4 @@
-import { biDi } from 'mutts'
+import { atomic, biDi } from 'mutts'
 
 function isFunction(value: any): value is Function {
 	return typeof value === 'function'
@@ -41,7 +41,7 @@ export function resize(target: Node | Node[], value: any, _scope: Record<Propert
 		}
 	}
 
-	const observer = new ResizeObserver((entries) => {
+	const observer = new ResizeObserver(atomic((entries) => {
 		const entry = entries[0]
 		let width: number
 		let height: number
@@ -79,7 +79,7 @@ export function resize(target: Node | Node[], value: any, _scope: Record<Propert
 				else value.height = height
 			}
 		}
-	})
+	}))
 	observer.observe(element)
 	return () => observer.disconnect()
 }

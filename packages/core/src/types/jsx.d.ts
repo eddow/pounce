@@ -1,11 +1,22 @@
-import type { Children as SourceChildren, PounceElement, Scope } from '../lib/pounce-element'
+import type { Children as SourceChildren, PounceElement, Env, Meta } from '../lib/pounce-element'
 import type { StyleInput } from '../lib/styles'
 
 declare global {
 	var h: (type: any, props?: any, ...children: any[]) => JSX.Element
-	var Fragment: (props: any, scope?: any) => any
+	var Fragment: (props: any, env?: any) => any
 	const window: never // Prevent accidental window usage in SSR - import from @pounce/core instead
-	type ComponentFunction = (props: any, scope: Scope) => SourceChildren
+	type ComponentFunction<P = any, M = Meta> = (props: P, meta: M) => SourceChildren
+
+	interface ComponentInfo {
+		id: string
+		name: string
+		ctor: Function
+		props: any
+		env: any
+		parent?: ComponentInfo
+		children: Set<ComponentInfo>
+		elements: Set<Node>
+	}
 	namespace JSX {
 		// biome-ignore lint/suspicious/noConfusingVoidType: Void ends up automatically
 		type Child =
@@ -46,7 +57,7 @@ declare global {
 		interface ElementClass {
 			template: any
 		}
-		type ElementType = string | ComponentFunction
+		type ElementType = string | ((props: any, ...args: any[]) => any)
 
 		type ExtractComponentProps<C, Props> = C extends { props: infer ExplicitProps }
 			? ExplicitProps
@@ -72,13 +83,17 @@ declare global {
 
 		type ThisBinding<T> = ElementResult<T> | undefined
 
-		type ComponentIntrinsicAttributes<C> = C extends (...args: any[]) => any
-			? { this?: ThisBinding<ReturnType<C>> }
+		type ComponentIntrinsicAttributes<C> = C extends (
+			props: any,
+			env: any,
+			meta: infer M
+		) => infer N
+			? { this?: ThisBinding<N> } & (M extends Meta ? MetaAttributes<M, N> : {})
 			: {}
 
 		// Override the default JSX children handling
 		// Allow any children type so components can accept function-as-children
-		type IntrinsicThisAttributes<N extends Node | readonly Node[] | undefined> =
+		type IntrinsicThisAttributes<N extends Node | readonly Node[]> =
 			| { children: Children }
 			| ({
 					children?: any
@@ -87,21 +102,25 @@ declare global {
 					if?: any
 					else?: true
 					use?: (target: N) => void
-			  } & {
-					// TODO: Try to un-any all these? (type inference somehow, especially update:)
-					[K in `use:${string}`]: any
-			  } & {
-					[K in `if:${string}`]?: any
-			  } & {
-					[K in `when:${string}`]?: any
-			  } & {
-					[K in `update:${string}`]?: (val: any) => void
-			  })
+			  } & MetaAttributes<Meta, N>)
+		type MetaAttributes<M, N extends Node | readonly Node[] = Node | readonly Node[]> = {
+			[K in string & keyof M as `use:${K}`]?: M[K] extends (
+				node: N,
+				value: infer V,
+				meta: Meta
+			) => any
+				? V
+				: never
+		} & {
+			[K in string & keyof M as `if:${K}`]?: M[K]
+		} & {
+			[K in string & keyof M as `when:${K}`]?: M[K] extends (value: infer V) => boolean ? V : never
+		}
 
-		type ElementIntrinsicAttributes<N extends Node | readonly Node[] | undefined> =
+		type ElementIntrinsicAttributes<N extends Node | readonly Node[]> =
 			IntrinsicThisAttributes<N>
 
-		type IntrinsicAttributes = IntrinsicThisAttributes<Node | readonly Node[] | undefined>
+		type IntrinsicAttributes = IntrinsicThisAttributes<Node | readonly Node[]>
 
 		// Custom class type for conditional classes
 		type ClassValue = string | ClassValue[] | Record<string, boolean> | null | undefined
@@ -247,7 +266,49 @@ declare global {
 			onDblclick?: (event: MouseEvent) => void
 		}
 
-		interface InputNumber {
+		interface InputBase {
+			name?: string
+			form?: string
+			formAction?: string
+			formEncType?: string
+			formMethod?: 'get' | 'post' | 'dialog' | (string & {})
+			placeholder?: string
+			disabled?: boolean
+			required?: boolean
+			readOnly?: boolean
+			min?: number | string
+			max?: number | string
+			step?: number | string
+			size?: number
+			multiple?: boolean
+			accept?: string
+			list?: string
+			capture?: boolean | 'user' | 'environment' | (string & {})
+			autoComplete?: string
+			autoCorrect?: 'on' | 'off' | (string & {})
+			autoCapitalize?:
+				| 'off'
+				| 'none'
+				| 'on'
+				| 'sentences'
+				| 'words'
+				| 'characters'
+				| (string & {})
+			spellCheck?: boolean | 'true' | 'false' | (string & {})
+			pattern?: string
+			maxLength?: number
+			minLength?: number
+			dirName?: string
+			// Events
+			onInput?: (event: Event) => void
+			onChange?: (event: Event) => void
+			onSelect?: (event: Event) => void
+			onInvalid?: (event: Event) => void
+			onReset?: (event: Event) => void
+			onSearch?: (event: Event) => void
+		}
+
+		interface InputNumber extends InputBase {
 			type: 'number' | 'range' | (string & {})
 			value?: number
 			min?: number
@@ -255,7 +316,7 @@ declare global {
 			step?: number
 			'update:value'?(value: number): void
 		}
-		interface InputString {
+		interface InputString extends InputBase {
 			type?:
 				| 'text'
 				| 'password'
@@ -279,7 +340,7 @@ declare global {
 			value?: string
 			'update:value'?(value: string): void
 		}
-		interface InputBoolean {
+		interface InputBoolean extends InputBase {
 			type: 'checkbox' | 'radio' | (string & {})
 			checked?: boolean
 			value?: string
@@ -301,7 +362,7 @@ declare global {
 				children?: Children
 				[key: string]: any
 			}
-			scope: ElementIntrinsicAttributes<Node | Node[]> & {
+			env: ElementIntrinsicAttributes<Node | Node[]> & {
 				children?: Children
 				[key: string]: any
 			}
@@ -309,62 +370,16 @@ declare global {
 				children?: Children
 			}
 			for: ElementIntrinsicAttributes<Node[]> & ForElementProps
-			// Form Elements
-			input: BaseHTMLAttributes<HTMLInputElement> &
-				(InputNumber | InputString | InputBoolean) & {
-					name?: string
-					form?: string
-					formAction?: string
-					formEncType?: string
-					formMethod?: 'get' | 'post' | 'dialog' | (string & {})
-					placeholder?: string
-					disabled?: boolean
-					required?: boolean
-					readOnly?: boolean
-					min?: number | string
-					max?: number | string
-					step?: number | string
-					size?: number
-					multiple?: boolean
-					accept?: string
-					list?: string
-					capture?: boolean | 'user' | 'environment' | (string & {})
-					autoComplete?: string
-					autoCorrect?: 'on' | 'off' | (string & {})
-					autoCapitalize?:
-						| 'off'
-						| 'none'
-						| 'on'
-						| 'sentences'
-						| 'words'
-						| 'characters'
-						| (string & {})
-					spellCheck?: boolean | 'true' | 'false' | (string & {})
-					pattern?: string
-					maxLength?: number
-					minLength?: number
-					dirName?: string
-					// Events
-					onInput?: (event: Event) => void
-					onChange?: (event: Event) => void
-					onSelect?: (event: Event) => void
-					onInvalid?: (event: Event) => void
-					onReset?: (event: Event) => void
-					onSearch?: (event: Event) => void
-					[key: string]: any
-				}
-			fragment: ElementIntrinsicAttributes<Node | Node[]> & {
-				children?: Children
-			}
-			for: ElementIntrinsicAttributes<Node[]> & ForElementProps
+			
 			// Form Elements
 			input:
-				| (BaseHTMLAttributes<HTMLInputElement> & InputNumber & InputExtraAttributes)
-				| (BaseHTMLAttributes<HTMLInputElement> & InputString & InputExtraAttributes)
-				| (BaseHTMLAttributes<HTMLInputElement> & InputBoolean & InputExtraAttributes)
+				| (BaseHTMLAttributes<HTMLInputElement> & InputNumber)
+				| (BaseHTMLAttributes<HTMLInputElement> & InputString)
+				| (BaseHTMLAttributes<HTMLInputElement> & InputBoolean)
 
 			textarea: BaseHTMLAttributes<HTMLTextAreaElement> & {
 				value?: string
+				'update:value'?(value: string): void
 				placeholder?: string
 				disabled?: boolean
 				required?: boolean
@@ -397,6 +412,7 @@ declare global {
 
 			select: BaseHTMLAttributes<HTMLSelectElement> & {
 				value?: any
+				'update:value'?(value: any): void
 				disabled?: boolean
 				required?: boolean
 				name?: string

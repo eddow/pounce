@@ -20,13 +20,13 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Ang
 - **Attributes for control flow**: `if={...}`, `if:name={...}`, `when:name={...}`, `else`, `else if={...}`, `else when={...}`. Angular uses `@if`/`*ngIf` and `@else` (or older structural directives), and `@for`/`*ngFor` with `trackBy`.
 - **Lists**: Use `<for each={array}>` or `project(array, fn)` (optionally with `memoize`). Angular prefers `*ngFor` with `trackBy` for stability.
 
-### Context/Scope vs DI and Injection
-- **Reactive scope inheritance**: Components receive a prototype‑inherited reactive `scope`. Components can set `scope.foo = ...` and descendants see it. Angular uses DI/injector hierarchy and `@Input()`/providers; no prototype scope.
-- **`<scope>` helper**: Adds values/functions to `scope` for descendants without extra DOM.
+### Context/Env vs DI and Injection
+- **Reactive env inheritance**: Components receive a prototype‑inherited reactive `env`. Components can set `env.foo = ...` and descendants see it. Angular uses DI/injector hierarchy and `@Input()`/providers; no prototype env.
+- **`<env>` helper**: Adds values/functions to `env` for descendants without extra DOM.
 
 ### Refs and Directives
 - **Refs via `this`**: `this={sink}` receives `HTMLElement` (elements) or `Node | Node[]` (components). Angular uses `@ViewChild`/`ElementRef` and template reference variables.
-- **Directives via `use:`**: `use={...}` one‑shot mount callback, `use:name={value}` calls a scoped mixin (may return cleanup). Angular directives/components are class‑based with DI and lifecycle.
+- **Directives via `use:`**: `use={...}` one‑shot mount callback, `use:name={value}` calls a env-based mixin (may return cleanup). Angular directives/components are class‑based with DI and lifecycle.
 
 ### Events
 - **Native DOM events**: `onClick`, `onInput`, … directly attach to DOM. Angular uses `(click)`, `(input)` and `@Output()` for component events.
@@ -38,13 +38,13 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Ang
 - **Derived state**: `memoize` vs Angular `computed` (signals).
 - **Lists**: `<for>`/`project` vs `*ngFor`/`@for`.
 - **Two‑way input**: auto get/set vs `[(ngModel)]` or event bindings.
-- **Context**: reactive `scope` vs DI/injector tree.
+- **Context**: reactive `env` vs DI/injector tree.
 - **Rendering**: direct DOM vs compiled instructions + change detection.
 
 See also:
 - `docs/reactivity.md` (memoize, effect)
 - `docs/binding.md` (two‑way binding and `update:prop`)
-- `docs/advanced.md` (Scope, control flow, directives)
+- `docs/advanced.md` (Env, control flow, directives)
 - `docs/api-reference.md`
 
 

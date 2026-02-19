@@ -166,13 +166,14 @@ export class CompositeAttributes {
 						return true
 					}
 				}
+				console.warn(`Cannot set property ${String(prop)}`)
 				return false
 			},
 
 			has: (target, prop) => typeof prop === 'string' && target.keys.has(prop),
 			ownKeys: (target) => {
 				return Array.from(target.keys)
-			},/*
+			} /*
 			getOwnPropertyDescriptor: (target, prop) => {
 				if (typeof prop === 'string' && target.keys.has(prop)) {
 					return {
@@ -185,7 +186,7 @@ export class CompositeAttributes {
 					}
 				}
 				return undefined
-			},*/
+			},*/,
 			getPrototypeOf: () => this,
 		})
 	}

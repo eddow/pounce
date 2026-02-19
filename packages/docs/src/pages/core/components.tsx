@@ -1,7 +1,7 @@
 import { Code, Section, ApiTable } from '../../components'
 
 const componentSignature = `// A Pounce component is a plain function:
-function MyComponent(props: MyProps, scope: Scope): JSX.Element {
+function MyComponent(props: MyProps, env: Env): JSX.Element {
   // Body runs ONCE — no re-renders.
   // All reactivity comes from r() wrappers in JSX.
   return <div>{props.title}</div>
@@ -15,10 +15,10 @@ const pounceElement = `// PounceElement is the core abstraction.
 
 class PounceElement {
   // The produce function creates real DOM nodes
-  produce: (scope?: Scope) => Node | readonly Node[]
+  produce: (env?: Env) => Node | readonly Node[]
 
   // Render with caching — same element always returns same nodes
-  render(scope?: Scope): Node | readonly Node[]
+  render(env?: Env): Node | readonly Node[]
 
   // Lifecycle
   mount?: ((target: Node) => ScopedCallback)[]
@@ -86,7 +86,7 @@ export default function ComponentsPage() {
 
       <Section title="Component Signature">
         <p>
-          A component is a function that takes <code>props</code> and <code>scope</code>
+          A component is a function that takes <code>props</code> and <code>env</code>
           and returns JSX. The body executes <strong>exactly once</strong> — there are no
           re-renders. The Babel plugin's <code>r()</code> wrappers handle all reactive updates
           at the individual node/attribute level.
@@ -128,8 +128,8 @@ export default function ComponentsPage() {
 
       <Section title="PounceElement API">
         <ApiTable props={[
-          { name: 'produce', type: '(scope?) => Node | Node[]', description: 'Creates real DOM nodes from the element descriptor', required: true },
-          { name: 'render', type: '(scope?) => Node | Node[]', description: 'Cached version of produce — same element always returns same nodes', required: true },
+          { name: 'produce', type: '(env?) => Node | Node[]', description: 'Creates real DOM nodes from the element descriptor', required: true },
+          { name: 'render', type: '(env?) => Node | Node[]', description: 'Cached version of produce — same element always returns same nodes', required: true },
           { name: 'mount', type: '((Node) => cleanup)[]', description: 'Callbacks invoked after DOM insertion', required: false },
           { name: 'condition', type: '() => any', description: 'Reactive condition for if=/when= directives', required: false },
           { name: 'tag', type: 'string | ComponentFunction', description: 'The element tag or component function (for debugging)', required: false },

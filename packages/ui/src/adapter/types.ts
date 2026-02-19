@@ -1,9 +1,9 @@
-import type { Scope } from "@pounce/core"
+import type { Env } from "@pounce/core"
 
-export type DisplayContext = Scope
+export type DisplayContext = Env
 
 /**
- * Display context - presentation concerns available from scope.
+ * Display context - presentation concerns available from env.
  * Separate from adapter (styling) concerns.
  * Provided by DisplayProvider, read via useDisplayContext().
  */
@@ -134,7 +134,7 @@ export type ComponentAdapter = BaseAdaptation
  * - Transitions: Animation system
  * 
  * Note: Display concerns (theme, direction, locale) are handled separately via
- * DisplayContext (scope-based), not adapters. See display-context.tsx.
+ * DisplayContext (env-based), not adapters. See display-context.tsx.
  */
 export type FrameworkAdapter = {
 	/** 

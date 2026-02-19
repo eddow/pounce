@@ -96,6 +96,4 @@ const App = () => (
 )
 
 // Initialize the app using the automated latch helper
-export function initDemo() {
-	latch('#app', <App />)
-}
+latch('#app', <App />)

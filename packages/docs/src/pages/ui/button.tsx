@@ -23,8 +23,8 @@ const variantDotSyntax = `// Variant dot-syntax — shorthand for variant="..."
 
 const loadingState = `import { loading } from '@pounce/ui'
 
-function SaveButton(_props: {}, scope: Scope) {
-  scope.loading = loading
+function SaveButton(_props: {}, env: Env) {
+  env.loading = loading
   const state = reactive({ saving: false })
 
   function save() {
@@ -183,7 +183,7 @@ export default function ButtonPage() {
       <Section title="Loading State">
         <p>
           Use the <code>use:loading</code> directive to show a spinner overlay.
-          Inject <code>loading</code> into scope first.
+          Inject <code>loading</code> into env first.
         </p>
         <Code code={loadingState} lang="tsx" />
       </Section>

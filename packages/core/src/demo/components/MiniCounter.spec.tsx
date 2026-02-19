@@ -1,12 +1,12 @@
+import { h, rootEnv } from '@pounce/core'
 import { reactive } from 'mutts'
 import { describe, expect, it } from 'vitest'
-import { h, rootScope } from '@pounce/core'
 import { MiniCounter } from './MiniCounter'
 
 describe('MiniCounter Component', () => {
 	it('renders with default props', () => {
 		const mount = h('div', {}, h(MiniCounter, {}))
-		const root = mount.render(rootScope) as HTMLElement
+		const root = mount.render(rootEnv) as HTMLElement
 
 		const input = root.querySelector('input[type="text"]')
 		expect(input).toBeTruthy()
@@ -23,7 +23,7 @@ describe('MiniCounter Component', () => {
 
 	it('renders with custom list and addedText', () => {
 		const mount = h('div', {}, h(MiniCounter, { list: ['Item1', 'Item2'], addedText: 'NewItem' }))
-		const root = mount.render(rootScope) as HTMLElement
+		const root = mount.render(rootEnv) as HTMLElement
 
 		const input = root.querySelector('input[type="text"]') as HTMLInputElement
 		expect(input?.value).toBe('NewItem')
@@ -39,7 +39,7 @@ describe('MiniCounter Component', () => {
 
 	it('has correct CSS classes', () => {
 		const mount = h('div', {}, h(MiniCounter, { list: ['Test'] }))
-		const root = mount.render(rootScope) as HTMLElement
+		const root = mount.render(rootEnv) as HTMLElement
 
 		const listItems = root.querySelectorAll('button.remove')
 		expect(listItems.length).toBeGreaterThan(0)
@@ -54,7 +54,7 @@ describe('MiniCounter Component', () => {
 
 	it('renders input and buttons with correct tags', () => {
 		const mount = h('div', {}, h(MiniCounter, {}))
-		const root = mount.render(rootScope) as HTMLElement
+		const root = mount.render(rootEnv) as HTMLElement
 
 		const input = root.querySelector('input')
 		expect(input?.tagName).toBe('INPUT')
@@ -68,7 +68,7 @@ describe('MiniCounter Component', () => {
 	it('shows Remove All after adding an item dynamically', () => {
 		const list = reactive([] as string[])
 		const mount = h('div', {}, h(MiniCounter, { list }))
-		const root = mount.render(rootScope) as HTMLElement
+		const root = mount.render(rootEnv) as HTMLElement
 
 		// Initially hidden
 		expect(root.querySelector('button.remove-all')).toBeFalsy()
@@ -94,7 +94,7 @@ describe('MiniCounter Component', () => {
 			)
 		}
 		const mount = h('div', {}, h(App, {}))
-		const root = mount.render(rootScope) as HTMLElement
+		const root = mount.render(rootEnv) as HTMLElement
 
 		expect(root.querySelector('button.remove-all')).toBeFalsy()
 		state.list.push('hello')
@@ -114,7 +114,7 @@ describe('MiniCounter Component', () => {
 			)
 		}
 		const mount = <App />
-		const root = mount.render(rootScope) as HTMLElement
+		const root = mount.render(rootEnv) as HTMLElement
 
 		expect(root.querySelector('button.remove-all')).toBeFalsy()
 

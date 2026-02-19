@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { h, rootScope } from '../lib'
+import { h, rootEnv } from '../lib'
 import { HelloWorld } from './hello-world'
 
 describe('HelloWorld Component', () => {
 	it('renders with default props', () => {
 		const mount = h(HelloWorld, {})
-		const root = (mount.render(rootScope) as HTMLElement[])[0]
+		const root = (mount.render(rootEnv) as HTMLElement[])[0]
 
 		const greetingElement = root.querySelector('.greeting')
 		const messageElement = root.querySelector('.message')
@@ -16,7 +16,7 @@ describe('HelloWorld Component', () => {
 
 	it('renders with custom name', () => {
 		const mount = h(HelloWorld, { name: 'Alice' })
-		const root = (mount.render(rootScope) as HTMLElement[])[0]
+		const root = (mount.render(rootEnv) as HTMLElement[])[0]
 
 		const greetingElement = root.querySelector('.greeting')
 		expect(greetingElement?.textContent).toBe('Hello, Alice!')
@@ -24,7 +24,7 @@ describe('HelloWorld Component', () => {
 
 	it('renders with custom greeting', () => {
 		const mount = h(HelloWorld, { greeting: 'Hi', name: 'Bob' })
-		const root = (mount.render(rootScope) as HTMLElement[])[0]
+		const root = (mount.render(rootEnv) as HTMLElement[])[0]
 
 		const greetingElement = root.querySelector('.greeting')
 		expect(greetingElement?.textContent).toBe('Hi, Bob!')
@@ -32,7 +32,7 @@ describe('HelloWorld Component', () => {
 
 	it('has correct CSS classes', () => {
 		const mount = h(HelloWorld, {})
-		const root = (mount.render(rootScope) as HTMLElement[])[0]
+		const root = (mount.render(rootEnv) as HTMLElement[])[0]
 
 		// The root element itself should have the hello-world class
 		expect(root.classList.contains('hello-world')).toBe(true)
@@ -46,7 +46,7 @@ describe('HelloWorld Component', () => {
 
 	it('renders h1 and p elements with correct tags', () => {
 		const mount = h(HelloWorld, {})
-		const root = (mount.render(rootScope) as HTMLElement[])[0]
+		const root = (mount.render(rootEnv) as HTMLElement[])[0]
 
 		const h1Element = root.querySelector('h1')
 		const pElement = root.querySelector('p')

@@ -131,10 +131,15 @@ Use camelCase event handlers (e.g., `onClick`, `onInput`):
 
 ### 4. Two-Way Binding
 
-Automatically bind form inputs to state:
+The Babel plugin auto-generates `{ get, set }` pairs for member expressions and mutable (`let`/`var`) identifiers. `const` and imports stay one-way.
 
 ```tsx
+// Member expression → two-way
 <input value={state.name} />
+
+// Mutable variable → two-way
+let count = 0
+<Counter value={count} />
 
 // Or explicitly with update:
 <input 

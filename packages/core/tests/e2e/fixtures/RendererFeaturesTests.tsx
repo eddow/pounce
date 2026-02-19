@@ -1,5 +1,5 @@
 import { reactive, effect } from 'mutts'
-import type { Scope } from '@pounce/core'
+import type { Env } from '@pounce/core'
 
 
 type Role = 'guest' | 'member' | 'admin'
@@ -12,7 +12,7 @@ function FancyDynamicComponent(
 		'data-kind'?: string
 		is?: string
 	},
-	_scope: Scope
+	_scope: Env
 ) {
 	const forwardedChildren = props.children as any
 	return (
@@ -116,11 +116,11 @@ function DynamicDemo() {
 	)
 }
 
-function IfDemo(_: any, scope: Scope) {
+function IfDemo(_: any, env: Env) {
 	effect(() => {
-		scope.currentRole = state.role
+		env.currentRole = state.role
 	})
-	scope.allows = (perm: string) => {
+	env.allows = (perm: string) => {
 		if (perm === 'analytics') return state.role !== 'guest'
 		if (perm === 'admin') return state.role === 'admin'
 		return false
@@ -158,8 +158,8 @@ function IfDemo(_: any, scope: Scope) {
 	)
 }
 
-function UseDemo(_: any, scope: Scope) {
-	scope.marker = (target: Node | Node[], value: string) => {
+function UseDemo(_: any, env: Env) {
+	env.marker = (target: Node | Node[], value: string) => {
 		const node = Array.isArray(target) ? target[0] : target
 		if (!(node instanceof HTMLElement)) return
 		return effect(() => {
@@ -234,8 +234,8 @@ function OverlayIfDemo() {
 	)
 }
 
-function ForListDemo(_: any, scope: Scope) {
-	scope.trackListItem = (target: Node | Node[], value: { id: number; label: string }) => {
+function ForListDemo(_: any, env: Env) {
+	env.trackListItem = (target: Node | Node[], value: { id: number; label: string }) => {
 		const node = Array.isArray(target) ? target[0] : target
 		if (!(node instanceof HTMLElement)) return
 		if (!node.dataset.instance) {
@@ -300,8 +300,7 @@ const RendererFeaturesFixture = () => (
 			<OverlayIfDemo />
 			<ForListDemo />
 			<NamespacedOptionalDemo
-				config:heading="Namespaced Optional Demo"
-				config:count={state.list.length}
+				config={{ heading: "Namespaced Optional Demo", count: state.list.length }}
 			/>
 		</section>
 	</main>
@@ -321,8 +320,8 @@ type RequiredNamespacedProps = JSX.LibraryManagedAttributes<
 >
 // biome-ignore lint/suspicious/noUnusedIdentifiers -- compile-time namespace type assertions
 type _NamespacedTypeAssertions = [
-	AssertTrue<Extract<keyof OptionalNamespacedProps, `config:${string}`> extends never ? false : true>,
-	OptionalNamespacedProps['config:count'],
+	AssertTrue<Extract<keyof OptionalNamespacedProps, `config:${string}`> extends never ? true : false>,
+	OptionalNamespacedProps['config'],
 	AssertTrue<Extract<keyof RequiredNamespacedProps, `item:${string}`> extends never ? true : false>,
 ]
 declare const _namespacedTypeAssertions: _NamespacedTypeAssertions

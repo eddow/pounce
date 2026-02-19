@@ -22,13 +22,13 @@ describe('Directive Re-rendering', () => {
 			el.setAttribute('data-arg', String(arg))
 		}
 
-		const scope = reactive({ myDir })
+		const env = reactive({ myDir })
 
 		const App = () => (
 			<div use:myDir={state.arg} />
 		)
 
-		latch(container, <App />, scope)
+		latch(container, <App />, env)
 		expect(callCount).toBe(1)
 		expect(container.querySelector('div')?.getAttribute('data-arg')).toBe('1')
 
@@ -46,7 +46,7 @@ describe('Directive Re-rendering', () => {
 			el.setAttribute('data-calls', String(callCount))
 		}
 
-		const scope = reactive({ myDir })
+		const env = reactive({ myDir })
 
 		const staticChild = <div id="child" use:myDir />
 
@@ -55,7 +55,7 @@ describe('Directive Re-rendering', () => {
 			return <div id="parent">{staticChild}</div>
 		}
 
-		latch(container, <App />, scope)
+		latch(container, <App />, env)
 		expect(callCount).toBe(1)
 		const child = document.getElementById('child')
 		expect(child?.getAttribute('data-calls')).toBe('1')
@@ -74,7 +74,7 @@ describe('Directive Re-rendering', () => {
 			el.setAttribute('data-calls', String(callCount))
 		}
 
-		const scope = reactive({ myDir })
+		const env = reactive({ myDir })
 
 		const Child = () => {
 			state.trigger // bare reactive read — rebuild fence should prevent re-rendering
@@ -83,7 +83,7 @@ describe('Directive Re-rendering', () => {
 
 		const App = () => <Child />
 
-		latch(container, <App />, scope)
+		latch(container, <App />, env)
 		expect(callCount).toBe(1)
 
 		state.trigger++

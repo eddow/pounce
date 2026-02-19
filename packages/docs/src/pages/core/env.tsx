@@ -1,17 +1,17 @@
 import { Code, Section } from '../../components'
 
-const scopeBasics = `// Every component receives scope as its second argument.
-// Scope is a prototype-chained reactive object.
+const envBasics = `// Every component receives env as its second argument.
+// Env is a prototype-chained reactive object.
 
-function Parent(_props: {}, scope: Scope) {
-  // extend() creates a new scope that inherits from the parent
-  extend(scope, { theme: reactive({ dark: false }) })
+function Parent(_props: {}, env: Env) {
+  // extend() creates a new env that inherits from the parent
+  extend(env, { theme: reactive({ dark: false }) })
   return <Child />
 }
 
-function Child(_props: {}, scope: Scope) {
-  // Child can read scope.theme — inherited via prototype chain
-  return <span>{scope.theme.dark ? 'Dark' : 'Light'}</span>
+function Child(_props: {}, env: Env) {
+  // Child can read env.theme — inherited via prototype chain
+  return <span>{env.theme.dark ? 'Dark' : 'Light'}</span>
 }`
 
 const extendFunction = `import { extend } from '@pounce/core'
@@ -23,9 +23,9 @@ import { reactive } from 'mutts'
 // The result is a new reactive object whose prototype is base.
 // Property lookups walk the chain — just like JS prototype inheritance.
 
-function App(_props: {}, scope: Scope) {
-  // Inject user and theme into scope for all descendants
-  extend(scope, {
+function App(_props: {}, env: Env) {
+  // Inject user and theme into env for all descendants
+  extend(env, {
     user: reactive({ name: 'Alice', role: 'admin' }),
     theme: reactive({ dark: false, accent: 'blue' }),
   })
@@ -33,55 +33,55 @@ function App(_props: {}, scope: Scope) {
   return <Dashboard />
 }`
 
-const scopeElement = `// <scope> is a built-in intrinsic that injects values
+const envElement = `// <env> is a built-in intrinsic that injects values
 // without adding a DOM wrapper element.
 
 function App() {
   return (
-    <scope
+    <env
       user={reactive({ name: 'Alice' })}
       config={{ apiUrl: '/api' }}
     >
-      {/* All children inherit user and config in their scope */}
+      {/* All children inherit user and config in their env */}
       <Header />
       <Main />
       <Footer />
-    </scope>
+    </env>
   )
 }
 
-// Equivalent to calling extend(scope, { user, config })
+// Equivalent to calling extend(env, { user, config })
 // inside a wrapper component, but without the extra component.`
 
-const rootScope = `import { rootScope } from '@pounce/core'
+const rootEnv = `import { rootEnv } from '@pounce/core'
 
-// rootScope is the top-level scope object.
+// rootEnv is the top-level env object.
 // latch() passes it (or a child of it) to the root component.
 // You can pre-populate it before mounting:
 
-rootScope.apiUrl = '/api/v2'
-rootScope.debug = true
+rootEnv.apiUrl = '/api/v2'
+rootEnv.debug = true
 
 latch('#app', <App />)
-// App's scope inherits from rootScope`
+// App's env inherits from rootEnv`
 
-export default function ScopePage() {
+export default function EnvPage() {
   return (
     <article>
-      <h1>Scope</h1>
+      <h1>Env</h1>
       <p>
-        Scope is Pounce's dependency injection mechanism. It's a prototype-chained
+        Env is Pounce's dependency injection mechanism. It's a prototype-chained
         reactive object passed to every component — no Context providers, no prop drilling.
       </p>
 
-      <Section title="How Scope Works">
+      <Section title="How Env Works">
         <p>
-          Every component receives <code>scope</code> as its second parameter.
-          When a parent calls <code>extend(scope, {'{ ... }'})</code>, it creates a new
-          scope object whose prototype is the parent's scope. Descendants inherit
+          Every component receives <code>env</code> as its second parameter.
+          When a parent calls <code>extend(env, {'{ ... }'})</code>, it creates a new
+          env object whose prototype is the parent's env. Descendants inherit
           all values via JavaScript's prototype chain.
         </p>
-        <Code code={scopeBasics} lang="tsx" />
+        <Code code={envBasics} lang="tsx" />
       </Section>
 
       <Section title="extend()">
@@ -93,21 +93,21 @@ export default function ScopePage() {
         <Code code={extendFunction} lang="tsx" />
       </Section>
 
-      <Section title="<scope> Element">
+      <Section title="<env> Element">
         <p>
-          The <code>{'<scope>'}</code> intrinsic injects values into the scope chain
+          The <code>{'<env>'}</code> intrinsic injects values into the env chain
           without adding a DOM wrapper. It's syntactic sugar for creating a wrapper
           component that calls <code>extend()</code>.
         </p>
-        <Code code={scopeElement} lang="tsx" />
+        <Code code={envElement} lang="tsx" />
       </Section>
 
-      <Section title="Root Scope">
+      <Section title="Root Env">
         <p>
-          <code>rootScope</code> is the top-level scope. You can pre-populate it
+          <code>rootEnv</code> is the top-level env. You can pre-populate it
           before mounting the app.
         </p>
-        <Code code={rootScope} lang="tsx" />
+        <Code code={rootEnv} lang="tsx" />
       </Section>
     </article>
   )

@@ -1,10 +1,10 @@
 import { Section, Code, PackageHeader } from '../../components'
 
-const installSnippet = `import { rootScope } from '@pounce/core'
+const installSnippet = `import { rootEnv } from '@pounce/core'
 import { directives } from '@pounce/ui'
 
-// Make all UI directives available via use:name in JSX
-Object.assign(rootScope, directives)`
+// Add all directives to the root env
+Object.assign(rootEnv, directives)`
 
 const loadingSnippet = `<button use:loading={state.saving}>
   Submit
@@ -72,8 +72,8 @@ export default function UiDirectivesPage() {
 
 			<Section title="Installation">
 				<p>
-					UI directives must be registered in the scope to be available in JSX via the <code>use:name</code> syntax.
-					The easiest way is to assign the <code>directives</code> namespace export into the root scope.
+					UI directives must be registered in the env to be available in JSX via the <code>use:name</code> syntax.
+					The easiest way is to assign the <code>directives</code> namespace export into the root env.
 				</p>
 				<Code code={installSnippet} lang="tsx" />
 			</Section>

@@ -1,9 +1,10 @@
 import { cleanedBy, effect, formatCleanupReason, named, reactive } from 'mutts'
 import { perf } from '../perf'
 import { type CompositeAttributesMeta, collapse, ReactiveProp } from './composite-attributes'
-import { type ComponentInfo, POUNCE_OWNER } from './debug'
+export { ReactiveProp }
+import { POUNCE_OWNER } from './debug'
 
-export const rootScope: Scope = reactive(Object.create(null))
+export const rootEnv: Env = reactive(Object.create(null))
 
 export class DynamicRenderingError extends Error {
 	constructor(message: string) {
@@ -18,7 +19,7 @@ export class DynamicRenderingError extends Error {
  */
 export type NodeDesc = Node | string | number
 
-export type Child = Node | string | number | null | undefined | PounceElement | ReactiveProp<any>
+export type Child = Node | string | number | null | undefined | PounceElement | ReactiveProp<Child>
 export type Children = Child | readonly Children[]
 // TODO: kill this hack
 export type ComponentNode = Node & {
@@ -26,9 +27,7 @@ export type ComponentNode = Node & {
 	__mutts_projection__?: unknown
 }
 
-export type Scope = Record<PropertyKey, any> & { component?: ComponentInfo }
-
-export type ComponentFunction<P = any> = (props: P, scope: Scope) => Children
+export type Env<T = any> = Record<PropertyKey, T>
 
 /**
  * PounceElement class - encapsulates JSX element creation and rendering
@@ -37,14 +36,14 @@ export class PounceElement {
 	// Core properties
 
 	constructor(
-		public produce: (scope: Scope) => Node | readonly Node[],
+		public produce: (env: Env) => Node | readonly Node[],
 		public tag?: string | ComponentFunction,
 		public meta: CompositeAttributesMeta = {}
 	) {}
 	get conditional() {
 		return this.meta.condition || this.meta.if || this.meta.when || this.meta.else
 	}
-	shouldRender(alreadyRendered: boolean, scope: Scope): boolean | undefined {
+	shouldRender(alreadyRendered: boolean, env: Env): boolean | undefined {
 		const meta = this.meta
 		if (this.conditional) {
 			if (meta.else && alreadyRendered) return false
@@ -52,15 +51,15 @@ export class PounceElement {
 
 			if (this.meta.when)
 				for (const [key, arg] of Object.entries(this.meta.when))
-					if (!(key in scope)) throw new DynamicRenderingError(`${key} not found in scope for when`)
-					else if (typeof scope[key] !== 'function')
-						throw new DynamicRenderingError(`${key} not a predicate in scope for when`)
-					else if (!scope[key](collapse(arg))) return false
+					if (!(key in env)) throw new DynamicRenderingError(`${key} not found in env for when`)
+					else if (typeof env[key] !== 'function')
+						throw new DynamicRenderingError(`${key} not a predicate in env for when`)
+					else if (!env[key](collapse(arg))) return false
 
 			if (this.meta.if)
 				for (const [key, value] of Object.entries(this.meta.if))
-					if (!(key in scope)) throw new DynamicRenderingError(`${key} not found in scope for if`)
-					else if (collapse(value) !== scope[key]) return false
+					if (!(key in env)) throw new DynamicRenderingError(`${key} not found in env for if`)
+					else if (collapse(value) !== env[key]) return false
 
 			return true
 		}
@@ -68,7 +67,7 @@ export class PounceElement {
 		return undefined
 	}
 
-	mountCallbacks(target: Node | readonly Node[], scope: Scope) {
+	mountCallbacks(target: Node | readonly Node[], env: Env) {
 		const t = this.meta.this as any
 		if (t) {
 			if (t instanceof ReactiveProp && t.set) t.set(target)
@@ -81,16 +80,16 @@ export class PounceElement {
 		// Process use callbacks
 		if (this.meta.use)
 			for (const [key, v] of Object.entries(this.meta.use) as [string, any]) {
-				if (typeof scope[key] !== 'function')
-					throw new DynamicRenderingError(`${key} in scope is not a function`)
-				scope[key](target, collapse(v), scope)
+				if (typeof env[key] !== 'function')
+					throw new DynamicRenderingError(`${key} in env is not a function`)
+				effect((access) => env[key](target, collapse(v), access))
 			}
 	}
 
 	/**
 	 * Render the element - executes the produce function with caching
 	 */
-	render(scope: Scope = rootScope): Node | readonly Node[] {
+	render(meta: Env = Object.create(rootEnv)): Node | readonly Node[] {
 		const tagName = typeof this.tag === 'string' ? this.tag : this.tag?.name || 'anonymous'
 		let partial: Node | readonly Node[] | undefined
 		perf?.mark(`render:${tagName}:start`)
@@ -104,8 +103,8 @@ export class PounceElement {
 					)
 					debugger
 				}
-				partial = this.produce(scope)
-				this.mountCallbacks(partial, scope)
+				partial = this.produce(meta)
+				this.mountCallbacks(partial, meta)
 			})
 		)
 
@@ -119,5 +118,5 @@ export class PounceElement {
 		return partial
 	}
 }
-export type Component<P = {}> = (props: P, scope?: Scope) => PounceElement
+export type Component<P = {}, M = Env> = (props: P, meta?: M) => PounceElement
 export const emptyChild = new PounceElement(() => [], 'empty')

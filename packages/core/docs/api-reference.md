@@ -4,14 +4,14 @@ Complete reference for Pounce-TS APIs and utilities.
 
 ## Core APIs
 
-### `latch(target, content, scope?)`
+### `latch(target, content, env?)`
 
 Latch reactive content onto a DOM element. Polymorph: accepts PounceElement, Child[], Node, Node[], or undefined. Processes content through the appropriate pipeline, then reconciles into the target. Includes DOMContentLoaded guard and conflict detection.
 
 **Parameters:**
 - `target` - CSS selector or HTMLElement to latch onto
 - `content` - The JSX content or PounceElement to render
-- `scope` - Optional scope object (defaults to rootScope)
+- `env` - Optional env object (defaults to rootEnv)
 
 **Returns:** Cleanup function that unmounts the content
 
@@ -106,30 +106,30 @@ onEffectTrigger((obj, evolution) => {
 ### Conditional Rendering
 
 - `if={condition}` — Render the node when `condition` is truthy.
-- `if:name={value}` — Strict-compare `value === scope.name` to decide rendering.
-- `when:name={arg}` — Call `scope[name](arg)`; render when the returned value is truthy.
+- `if:name={value}` — Strict-compare `value === env.name` to decide rendering.
+- `when:name={arg}` — Call `env[name](arg)`; render when the returned value is truthy.
 - `else` — Render this node only if no previous sibling in the same fragment has rendered via an `if`/`when` condition. Can be chained as `else if={...}`.
 
 Notes
 - Use fragments (`<>...</>`) to group multiple `if`/`else if`/`else` branches for a component without adding wrapper DOM.
-- `scope` can be provided via the `<scope>` component or programmatically within components.
+- `env` can be provided via the `<env>` component or programmatically within components.
 
 Examples
 ```tsx
 // Simple boolean condition
 <div if={state.isLoggedIn}>Welcome back</div>
 
-// Compare against scope
-<scope role="admin">
+// Compare against env
+<env role="admin">
   <>
     <div if:role={"admin"}>Admin Panel</div>
     <div else>User Panel</div>
   </>
-</scope>
+</env>
 
-// when: calls scope method
-function App(_p: {}, scope: Scope) {
-  scope.can = (perm: string) => scope.role === 'admin' && perm === 'edit'
+// when: calls env method
+function App(_p: {}, env: Env) {
+  env.can = (perm: string) => env.role === 'admin' && perm === 'edit'
   return (
     <>
       <div when:can={"edit"}>You can edit</div>
@@ -178,12 +178,12 @@ const refs: Record<string, any> = {}
 
 Attach an inline mount callback directly on an element or component.
 
-**Signature:** `use={(target: Node | Node[], scope) => void}`
+**Signature:** `use={(target: Node | Node[], env) => void}`
 
 **Behavior:**
 - Called once after the target is rendered.
 - `target` is the rendered node for intrinsic elements, or `Node | Node[]` for components.
-- No cleanup or reactive re-run; for reactive behavior/cleanup, use `use:name` with a scoped mixin.
+- No cleanup or reactive re-run; for reactive behavior/cleanup, use `use:name` with a env-based mixin.
 
 **Example:**
 ```tsx
@@ -197,11 +197,11 @@ Attach an inline mount callback directly on an element or component.
 />
 ```
 
-### `use:name` (scope mixins)
+### `use:name` (env mixins)
 
-Attach a scope-provided mixin to the rendered target.
+Attach a env-provided mixin to the rendered target.
 
-- Define on scope: `scope.name(target: Node | Node[], value: any | undefined, scope)`
+- Define on env: `env.name(target: Node | Node[], value: any | undefined, env)`
 - Use in JSX: `use:name={value}` (value optional)
 - May return a cleanup function.
 
@@ -209,7 +209,7 @@ Example:
 
 ```tsx
 // In component body
-scope.resize = (target, value, scope) => {
+env.resize = (target, value, env) => {
   const el = Array.isArray(target) ? target[0] : target
   if (!(el instanceof HTMLElement)) return
   const ro = new ResizeObserver((entries) => {
@@ -237,16 +237,16 @@ Iterate over a reactive array.
 </for>
 ```
 
-### `<scope>`
+### `<env>`
 
-Creates a scope for conditional rendering.
+Creates a env for conditional rendering.
 
 **Example:**
 ```tsx
-<scope user="Alice" role="admin">
+<env user="Alice" role="admin">
   <Component1 />
   <Component2 />
-</scope>
+</env>
 ```
 
 ### `<Fragment>` or `<>`

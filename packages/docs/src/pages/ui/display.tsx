@@ -61,7 +61,7 @@ export default function DisplayPage() {
 			<Section title="Env & DisplayProvider">
 				<p>
 					Theme resolution is handled by the <code>Env</code> component in <code>@pounce/kit</code>.
-					It tracks system preferences and propagates the active theme through the scope.
+					It tracks system preferences and propagates the active theme through the env.
 				</p>
 				<Code code={envSnippet} lang="tsx" />
 				<blockquote>

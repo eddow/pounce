@@ -2,14 +2,14 @@
  * E2E fixture for overlay system testing.
  * Renders buttons that trigger each overlay type, plus status indicators.
  */
-import { type Scope } from '@pounce/core'
+import { type Env } from '@pounce/core'
 import { StandardOverlays } from '../../../src/overlays/standard-overlays'
 import { Dialog } from '../../../src/overlays/dialog'
 import { Drawer } from '../../../src/overlays/drawer'
 import { Toast } from '../../../src/overlays/toast'
 
-const Controls = (_props: {}, scope: Scope) => {
-	const push = scope.overlay as (spec: any) => Promise<any>
+const Controls = (_props: {}, env: Env) => {
+	const push = env.overlay as (spec: any) => Promise<any>
 
 	const openDialog = () => {
 		push(Dialog.show({

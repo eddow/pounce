@@ -1,4 +1,4 @@
-import type { Scope } from '@pounce/core'
+import type { Env } from '@pounce/core'
 
 import { componentStyle } from '../dom/index'
 import { client } from '../dom/index'
@@ -9,16 +9,16 @@ componentStyle.sass`
 	display: contents
 `
 
-/** Scope key used by DisplayProvider to inject context */
+/** Env key used by DisplayProvider to inject context */
 const DISPLAY_KEY = 'display'
 
 /* TODO: review structure
- * - scope should perhaps contain directly ltr/theme/locale/timezone/...
- * - perhaps in readonly, it's a good idea, though the DisplayContext should have a bunch of setters. The themeSetting "auto" should be in the setter object (who would have a theme-config: theme | 'auto') and let the theme be "parent-display-context. theme if 'auto'" - this "auto" shouldn't be in the scope but in the communication between theme picker and display context
- * - I would definitively avoid `useView`, we can have a 1-way config by adding the `defaultDisplayContext` to rootscope in main.tsx, and have each displaycontext simply mimmic their scope's prototype values (we cannot rely on the prototype chain to be completely reactive) when "auto" or no-config
- * Kit could also simply add the defaultDisplayContext to the rootscope in its loading process as rootScope is a global common core-exported object
+ * - env should perhaps contain directly ltr/theme/locale/timezone/...
+ * - perhaps in readonly, it's a good idea, though the DisplayContext should have a bunch of setters. The themeSetting "auto" should be in the setter object (who would have a theme-config: theme | 'auto') and let the theme be "parent-display-context. theme if 'auto'" - this "auto" shouldn't be in the env but in the communication between theme picker and display context
+ * - I would definitively avoid `useView`, we can have a 1-way config by adding the `defaultDisplayContext` to rootenv in main.tsx, and have each displaycontext simply mimmic their env's prototype values (we cannot rely on the prototype chain to be completely reactive) when "auto" or no-config
+ * Kit could also simply add the defaultDisplayContext to the rootenv in its loading process as rootEnv is a global common core-exported object
  * 
- * So, (Env it is then), the scope provide read-only values. Env "override" them (by writing in its own scope the value from the parent's one) - even if just copying the value if nothing is overriden - and Env provides a "settings" object who contains roughly the same but with "auto" (or "undefined) with get/set in order to plug in there configuration controls (like the theme toggle)
+ * So, (Env it is then), the env provide read-only values. Env "override" them (by writing in its own env the value from the parent's one) - even if just copying the value if nothing is overriden - and Env provides a "settings" object who contains roughly the same but with "auto" (or "undefined) with get/set in order to plug in there configuration controls (like the theme toggle)
  */
 
 export type DisplayContext = {
@@ -47,11 +47,11 @@ export const defaultDisplayContext: DisplayContext = {
 }
 
 /**
- * Read the current DisplayContext from scope.
+ * Read the current DisplayContext from env.
  * Falls back to system defaults if no DisplayProvider is present.
  */
-export function useDisplayContext(scope: Scope): DisplayContext {
-	return (scope[DISPLAY_KEY] as DisplayContext) ?? defaultDisplayContext
+export function useDisplayContext(env: Env): DisplayContext {
+	return (env[DISPLAY_KEY] as DisplayContext) ?? defaultDisplayContext
 }
 
 export type DisplayProviderProps = {
@@ -69,14 +69,14 @@ export type DisplayProviderProps = {
 }
 
 /**
- * Scope-based display context provider.
+ * Env-based display context provider.
  *
  * Sets `data-theme`, `dir`, and `lang` on its own DOM element — never on `<html>`.
  * Supports nesting: child providers inherit from parent, overriding only specified axes.
  * All axes default to `'auto'` (inherit from parent, or system defaults at root).
  */
-export function DisplayProvider(props: DisplayProviderProps, scope: Scope) {
-	const parent = scope[DISPLAY_KEY] as DisplayContext | undefined
+export function DisplayProvider(props: DisplayProviderProps, env: Env) {
+	const parent = env[DISPLAY_KEY] as DisplayContext | undefined
 
 	const state = reactive({ themeSetting: props.theme ?? 'auto' })
 
@@ -120,7 +120,7 @@ export function DisplayProvider(props: DisplayProviderProps, scope: Scope) {
 		get timeZone() { return resolveTimeZone() },
 	}
 
-	scope[DISPLAY_KEY] = context
+	env[DISPLAY_KEY] = context
 
 	return (
 		<div

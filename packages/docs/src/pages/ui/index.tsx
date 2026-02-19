@@ -15,7 +15,7 @@ const buttonExample = `import { Button } from '@pounce/ui'
 <Button variant="danger">Delete</Button>
 <Button variant="success">Confirm</Button>
 
-// Loading state via directive (inject loading into scope first):
+// Loading state via directive (inject loading into env first):
 <Button use:loading={state.saving}>Submitting...</Button>
 
 // With icons (via pure-glyf):
@@ -28,13 +28,13 @@ const overlayExample = `import { StandardOverlays } from '@pounce/ui'
   <App />
 </StandardOverlays>
 
-// Then use scope.dialog / scope.toast / scope.drawer:
-scope.toast.success('Saved!')
-scope.toast.error('Something went wrong')
+// Then use env.dialog / env.toast / env.drawer:
+env.toast.success('Saved!')
+env.toast.error('Something went wrong')
 
-scope.dialog({ title: 'Confirm', message: 'Are you sure?' })
+env.dialog({ title: 'Confirm', message: 'Are you sure?' })
 
-scope.drawer({ children: <SettingsPanel />, side: 'right' })`
+env.drawer({ children: <SettingsPanel />, side: 'right' })`
 
 const displayContext = `import { DisplayProvider, ThemeToggle } from '@pounce/ui'
 
@@ -113,7 +113,7 @@ export default function UIPage() {
       <Section title="Overlay System">
         <p>
           Dialogs, toasts, and drawers use a shared overlay system.
-          Inject <code>StandardOverlays</code> into scope to enable them.
+          Inject <code>StandardOverlays</code> into env to enable them.
         </p>
         <Code code={overlayExample} lang="tsx" />
       </Section>

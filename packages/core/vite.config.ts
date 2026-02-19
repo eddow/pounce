@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config'
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { pounceCorePackage } from './src/plugin/index'
@@ -10,7 +10,7 @@ export default defineConfig({
 	root: '.',
 	server: {
 		fs: {
-			allow: [projectRootDir, resolvePath(projectRootDir, '../../../mutts')],
+			allow: [projectRootDir],
 		},
 		headers: {
 			'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
@@ -29,7 +29,6 @@ export default defineConfig({
 		conditions: ['browser', 'default', 'import'],
 		alias: {
 			'@pounce/core': resolvePath(projectRootDir, 'src/lib/index.ts'),
-			'mutts': resolvePath(projectRootDir, '../../../mutts/src'),
 		},
 	},
 	plugins: [

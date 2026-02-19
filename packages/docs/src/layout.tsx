@@ -1,4 +1,4 @@
-import type { Scope } from '@pounce/core'
+import type { Env } from '@pounce/core'
 import { Router } from '@pounce/kit'
 import { Container, Heading, Text, ThemeToggle, Toolbar } from '@pounce/ui'
 import { Env, type EnvSettings } from '@pounce/kit/env'
@@ -10,7 +10,7 @@ import routes from './routes'
 const envSettings = reactive<EnvSettings>({ theme: 'auto' })
 const uiState = reactive({ mobileOpen: false })
 
-export function DocsApp(_props: {}, _scope: Scope) {
+export function DocsApp(_props: {}, _env: Env) {
   return (
     <Env settings={envSettings}>
       <div class={{ 'docs-layout': true, 'mobile-open': uiState.mobileOpen }}>

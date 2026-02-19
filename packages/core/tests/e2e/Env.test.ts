@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Scope component', () => {
+test.describe('Env component', () => {
 	test.beforeEach(async ({ page }) => {
-		await page.goto('/#Scope')
+		await page.goto('/#Env')
 		await page.waitForSelector('#tests [data-testid="visible-content"]')
 	})
 

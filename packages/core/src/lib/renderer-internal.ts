@@ -29,9 +29,10 @@ export function isWeakKey(value: any): value is WeakKey {
 export function listen(
 	target: EventTarget,
 	type: string,
-	listener: EventListenerOrEventListenerObject,
+	listener: EventListener,
 	options?: boolean | AddEventListenerOptions
 ) {
+	listener = atomic(listener)
 	testing.renderingEvent?.('add event listener', target, type, listener, options)
 	target.addEventListener(type, listener, options)
 	return () => {

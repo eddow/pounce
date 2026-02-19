@@ -6,8 +6,6 @@ import { memoize, type Register } from 'mutts'
 import './Todo.scss'
 import { extend } from '../../lib/utils'
 
-//import { Scope } from '../lib'
-
 export interface Todo {
 	id: number
 	text: string
@@ -26,7 +24,6 @@ export default function TodoWebComponent(
 		filter?: 'all' | 'active' | 'completed'
 		newTodoText?: string
 	}
-	//scope: Scope
 ) {
 	const state = extend(
 		{

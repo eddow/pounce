@@ -1,6 +1,7 @@
 import { caught, reactive } from 'mutts'
-import { reconcile, type Scope } from '@pounce/core'
+import { reconcile, type Env } from '@pounce/core'
 import { getAdapter } from '../adapter/registry'
+import { env } from 'node:process'
 
 /**
  * ErrorBoundary - Catches and displays errors in component trees
@@ -59,7 +60,7 @@ const ErrorReceiver = (props: ReceiverProps) => {
 	return <span style="display:contents">{props.children}</span>
 }
 
-export const ErrorBoundary = (props: ErrorBoundaryProps, scope: Scope) => {
+export const ErrorBoundary = (props: ErrorBoundaryProps, env: Env) => {
 	const adapter = getAdapter('ErrorBoundary')
 	const state = reactive({ error: undefined as Error | undefined })
 
@@ -69,7 +70,7 @@ export const ErrorBoundary = (props: ErrorBoundaryProps, scope: Scope) => {
 		if (!state.error) {
 			const receiver = <ErrorReceiver state={state} onError={props.onError}>{props.children}</ErrorReceiver>
 			try {
-				return reconcile(el, receiver.render(scope))
+				return reconcile(el, receiver.render(env))
 			} catch {
 				// DynamicRenderingError — ErrorReceiver's caught() already set state.error
 			}
@@ -79,14 +80,14 @@ export const ErrorBoundary = (props: ErrorBoundaryProps, scope: Scope) => {
 			const fallbackJsx = props.fallback
 				? props.fallback(state.error, { componentStack: '' })
 				: defaultFallback(state.error)
-			return reconcile(el, fallbackJsx.render(scope))
+			return reconcile(el, fallbackJsx.render(env))
 		}
 	}
 
 	return <div class={adapter.classes?.base || 'pounce-error-boundary'} use={mount} />
 }
 
-export const ProductionErrorBoundary = (props: { children: JSX.Element | JSX.Element[] }, scope: Scope) => {
+export const ProductionErrorBoundary = (props: { children: JSX.Element | JSX.Element[] }, env: Env) => {
 	const adapter = getAdapter('ErrorBoundary')
 	const state = reactive({ error: undefined as Error | undefined })
 
@@ -96,7 +97,7 @@ export const ProductionErrorBoundary = (props: { children: JSX.Element | JSX.Ele
 		if (!state.error) {
 			const receiver = <ErrorReceiver state={state}>{props.children}</ErrorReceiver>
 			try {
-				return reconcile(el, receiver.render(scope))
+				return reconcile(el, receiver.render(env))
 			} catch {
 				// DynamicRenderingError — ErrorReceiver's caught() already set state.error
 			}
@@ -109,7 +110,7 @@ export const ProductionErrorBoundary = (props: { children: JSX.Element | JSX.Ele
 					<p>Please refresh the page and try again.</p>
 				</div>
 			)
-			return reconcile(el, fallbackJsx.render(scope))
+			return reconcile(el, fallbackJsx.render(env))
 		}
 	}
 

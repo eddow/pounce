@@ -153,6 +153,11 @@ export function pounceBabelPlugin({
 		ensureImport('r')
 	}
 
+	function isMutableBinding(path: NodePath, name: string): boolean {
+		const binding = path.scope.getBinding(name)
+		return !!binding && (binding.kind === 'let' || binding.kind === 'var')
+	}
+
 	function buildCompositeCall(args: t.CallExpression['arguments']) {
 		const layers: t.Expression[] = []
 		for (const arg of args) {
@@ -300,9 +305,12 @@ export function pounceBabelPlugin({
 										const dummyGetter = t.arrowFunctionExpression([], t.identifier('undefined'))
 										const bindingObject = t.callExpression(t.identifier('r'), [dummyGetter, setter])
 										attr.value = t.jsxExpressionContainer(bindingObject)
-									} else if (t.isMemberExpression(innerExpression)) {
+									} else if (
 										// Auto-detect 2-way binding: transform `{this.count}`, `{state.count}`, or `{state['count']}` to `{{get: () => this.count, set: (val) => this.count = val}}`
 										// For type assertions, use the original expression in getter (with cast) but inner expression in setter (without cast)
+										t.isMemberExpression(innerExpression) ||
+										// Mutable identifier: 2-way binding
+										(t.isIdentifier(innerExpression) && isMutableBinding(path, innerExpression.name))) {
 										const getter = t.arrowFunctionExpression([], expression)
 										const setter = t.arrowFunctionExpression(
 											[t.identifier('val')],

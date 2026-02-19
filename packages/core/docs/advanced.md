@@ -4,7 +4,7 @@ This guide covers advanced features and patterns in Pounce-TS.
 
 ## Conditional Rendering
 
-Pounce-TS supports several conditional rendering patterns using component-local conditions and scoped properties.
+Pounce-TS supports several conditional rendering patterns using component-local conditions and environment properties.
 
 ### `if={...}` boolean conditions
 
@@ -24,26 +24,26 @@ function App() {
 }
 ```
 
-### `if:name={value}` strict scope comparison
+### `if:name={value}` strict env comparison
 
-Strict-compare a value against `scope.name`:
+Strict-compare a value against `env.name`:
 
 ```tsx
-<scope role="admin">
+<env role="admin">
   <>
     <div if:role={"admin"}>Admin Dashboard</div>
     <div else>User Dashboard</div>
   </>
-</scope>
+</env>
 ```
 
-### `when:name={arg}` calling a scope function
+### `when:name={arg}` calling an env function
 
-Use `when:` to call a function exposed on `scope` and render if it returns a truthy value:
+Use `when:` to call a function exposed on `env` and render if it returns a truthy value:
 
 ```tsx
-function Area(props: {}, scope: Scope) {
-  scope.has = (perm: string) => scope.user?.permissions?.includes(perm)
+function Area(props: {}, env: Env) {
+  env.has = (perm: string) => env.user?.permissions?.includes(perm)
   return (
     <>
       <div when:has={"write"}>You can write</div>
@@ -65,101 +65,101 @@ function Area(props: {}, scope: Scope) {
 </>
 ```
 
-## Scope Management
+## Environment Management
 
-Scope in Pounce-TS is like React's context or Svelte's context - it provides a way to share data down the component tree through **prototype inheritance**.
+Env in Pounce-TS is like React's context or Svelte's context - it provides a way to share data down the component tree through **prototype inheritance**.
 
-### How Scope Works
+### How Env Works
 
-When a component renders its children, it creates a new scope that inherits from the parent scope using JavaScript's prototype chain. This means:
+When a component renders its children, it creates a new env that inherits from the parent env using JavaScript's prototype chain. This means:
 
-1. **Scope flows down**: Children automatically receive the parent's scope
-2. **Modifications are inherited**: If parent A modifies scope and renders child B, B sees A's modifications
-3. **Siblings share scope**: Components at the same level share the same scope
-4. **Scope changes propagate**: Changes to scope in a parent are immediately visible to all descendants
+1. **Env flows down**: Children automatically receive the parent's env
+2. **Modifications are inherited**: If parent A modifies env and renders child B, B sees A's modifications
+3. **Siblings share env**: Components at the same level share the same env
+4. **Env changes propagate**: Changes to env in a parent are immediately visible to all descendants
 
-If you need to manually create a derived scope, call `extend(scope, additions)`—it returns a reactive object that prototypes the original scope while layering your overrides.
+If you need to manually create a derived env, call `extend(env, additions)`—it returns a reactive object that prototypes the original env while layering your overrides.
 
-### The `<scope>` Component
+### The `<env>` Component
 
-The `<scope>` component is a special component that forwards its children but adds its props to the scope. It doesn't render any DOM elements itself - it just injects its attributes into the scope for its children to use.
+The `<env>` component is a special component that forwards its children but adds its props to the env. It doesn't render any DOM elements itself - it just injects its attributes into the env for its children to use.
 
 **Usage example:**
 
 ```tsx
-import { Scope } from '@pounce/core'
+import { Env } from '@pounce/core'
 
 function App() {
   return (
-    <scope user="Alice" role="admin">
+    <env user="Alice" role="admin">
       <UserInfo />
       <AdminPanel />
-    </scope>
+    </env>
   )
 }
 
-function UserInfo(props: any, scope: Scope) {
-  return <p>User: {scope.user}</p>
+function UserInfo(props: any, env: Env) {
+  return <p>User: {env.user}</p>
 }
 
-function AdminPanel(props: any, scope: Scope) {
+function AdminPanel(props: any, env: Env) {
   return (
     <div if:role={'admin'}>
-      <p>Admin Panel (visible to {scope.user})</p>
+      <p>Admin Panel (visible to {env.user})</p>
     </div>
   )
 }
 ```
 
-Since `<scope>` doesn't render any wrapper, this renders as flat DOM - just the children without any extra `<div>` or other container.
+Since `<env>` doesn't render any wrapper, this renders as flat DOM - just the children without any extra `<div>` or other container.
 
-### Scope Inheritance Example
+### Environment Inheritance Example
 
 ```tsx
 function ComponentC() {
   return <ComponentA><ComponentB /></ComponentA>
 }
 
-function ComponentA(props: any, scope: Scope) {
-  // Modify scope
-  scope.theme = 'dark'
+function ComponentA(props: any, env: Env) {
+  // Modify env
+  env.theme = 'dark'
   
-  // ComponentB will inherit scope.theme = 'dark'
-  return <div>{props.children}</div>
+  // ComponentB will inherit env.theme = 'dark'
+  return <ComponentB />
 }
 
-function ComponentB(props: any, scope: Scope) {
-  // This component receives scope from A, even though it was written in C
-  return <div class={scope.theme}>Using dark theme</div>
+function ComponentB(props: any, env: Env) {
+  // This component receives env from A, even though it was written in C
+  return <div class={env.theme}>Using dark theme</div>
 }
 ```
 
-### Using Scope for Conditional Rendering
+### Using Environment for Conditional Rendering
 
-Scope is particularly powerful for conditional rendering using `if`, `if:name`, `when:name`, and `else`:
+Env is particularly powerful for conditional rendering using `if`, `if:name`, `when:name`, and `else`:
 
 ```tsx
 function App() {
   const state = reactive({ isLoggedIn: true, role: 'admin' })
   
   return (
-    <scope isLoggedIn={state.isLoggedIn} role={state.role}>
-      <Header />
-      <MainContent />
-    </scope>
+    <env isLoggedIn={state.isLoggedIn} role={state.role}>
+      <AdminPanel if:role={"admin"} />
+      <UserPanel else />
+    </env>
   )
 }
 
-function Header(props: any, scope: Scope) {
+function Header(props: any, env: Env) {
   return (
     <div>
-      <div if={scope.isLoggedIn}>Welcome!</div>
+      <div if={env.isLoggedIn}>Welcome!</div>
       <div else>Please log in</div>
     </div>
   )
 }
 
-function MainContent(props: any, scope: Scope) {
+function MainContent(props: any, env: Env) {
   return (
     <>
       <div if:role={'admin'}>Admin Dashboard</div>
@@ -373,12 +373,16 @@ function Input(props: {
 // Usage
 const state = reactive({ text: 'Hello' })
 
-// Computed value
+// Computed value (const → one-way)
 const displayText = memoize(() => state.text.toUpperCase())
 <Input value={displayText} />
 
-// Two-way binding
+// Two-way binding (member expression)
 <Input value={state.text} />
+
+// Two-way binding (mutable variable)
+let text = 'Hello'
+<Input value={text} />
 ```
 
 ### Dynamic Props
@@ -547,7 +551,7 @@ function processItem(item: any) {
 
 ## Best Practices
 
-1. **Use Scope for context**: Share data without prop drilling
+1. **Use Environment for context**: Share data without prop drilling
 2. **Memoize expensive computations**: Use `memoize` for performance
 3. **Keep components focused**: Single responsibility principle
 4. **Use TypeScript strictly**: Enable strict mode for better type safety

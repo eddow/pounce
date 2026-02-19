@@ -1,4 +1,4 @@
-import type { Scope } from '@pounce/core'
+import type { Env } from '@pounce/core'
 import { reactive } from 'mutts'
 import {
 	Button,
@@ -9,8 +9,8 @@ import {
 	loading,
 } from '../../src'
 // TODO: repair radiobuttons and functionality (test the demo)
-function LoadingDemo(_props: {}, scope: Scope) {
-	scope.loading = loading
+function LoadingDemo(_props: {}, env: Env) {
+	env.loading = loading
 	const state = reactive({ saving: false })
 	function simulateSave() {
 		state.saving = true

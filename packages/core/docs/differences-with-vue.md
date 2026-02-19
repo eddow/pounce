@@ -20,13 +20,13 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Vue
 - **Attributes for control flow**: `if={...}`, `if:name={...}`, `when:name={...}`, `else`, `else if={...}`, `else when={...}` inside fragments. Vue uses `v-if`, `v-else-if`, `v-else`.
 - **Lists**: Use `<for each={array}>` or `project(array, fn)` (optionally with `memoize`). Vue uses `v-for` with `:key`; Pounce does not require keys in typical cases.
 
-### Context/Scope vs provide/inject
-- **Reactive scope inheritance**: Components receive a prototype‑inherited reactive `scope`. Components can set `scope.foo = ...` and descendants see it. Vue uses `provide/inject` (explicit), not prototype inheritance.
-- **`<scope>` helper**: Adds values/functions to `scope` for descendants without extra DOM.
+### Context/Env vs provide/inject
+- **Reactive env inheritance**: Components receive a prototype‑inherited reactive `env`. Components can set `env.foo = ...` and descendants see it. Vue uses `provide/inject` (explicit), not prototype inheritance.
+- **`<env>` helper**: Adds values/functions to `env` for descendants without extra DOM.
 
 ### Refs and Directives
 - **Refs via `this`**: `this={sink}` receives `HTMLElement` (elements) or `Node | Node[]` (components). Vue uses `ref`/`template ref` objects.
-- **Directives via `use:`**: `use={...}` one‑shot mount callback, `use:name={value}` calls a scoped mixin (may return cleanup). Vue has `v-*` directives with lifecycle hooks.
+- **Directives via `use:`**: `use={...}` one‑shot mount callback, `use:name={value}` calls a env-based mixin (may return cleanup). Vue has `v-*` directives with lifecycle hooks.
 
 ### Events
 - **Native DOM events**: `onClick`, `onInput`, … directly attach to DOM; no synthetic system. Vue uses event modifiers and emits for component events.
@@ -39,13 +39,13 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Vue
 - **Derived state**: `memoize` vs `computed`.
 - **Lists**: `<for>`/`project` vs `v-for`.
 - **Two‑way input**: auto get/set vs `v-model`.
-- **Context**: reactive `scope` vs provide/inject.
+- **Context**: reactive `env` vs provide/inject.
 - **Rendering**: direct DOM vs VDOM.
 
 See also:
 - `docs/reactivity.md` (memoize, effect)
 - `docs/binding.md` (two‑way binding and `update:prop`)
-- `docs/advanced.md` (Scope, control flow, directives)
+- `docs/advanced.md` (Env, control flow, directives)
 - `docs/api-reference.md`
 
 

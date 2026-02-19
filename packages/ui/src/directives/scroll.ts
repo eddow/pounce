@@ -1,4 +1,4 @@
-import { biDi, isObject } from 'mutts'
+import { atomic, biDi, isObject } from 'mutts'
 
 export type ScrollAxis = number | { value: number; max: number }
 export type ScrollOptions = {
@@ -81,14 +81,14 @@ export function scroll(
 	}
 
 	// Listeners
-	element.addEventListener('scroll', handleScroll)
+	element.addEventListener('scroll', atomic(handleScroll))
 	// We need to update max on resize (content or container)
-	const resizeObserver = new ResizeObserver(() => {
+	const resizeObserver = new ResizeObserver(atomic(() => {
 		updateMax()
 		// Also re-check scroll position validity if bounds changed?
 		// Browser handles clamping, but we might want to sync the clamped value?
 		// biDi/handleScroll should take care of sync if the browser clamps it.
-	})
+	}))
 	resizeObserver.observe(element)
 
 	// If we are tracking 'max', we must observe content size changes to keep it accurate.

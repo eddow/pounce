@@ -90,7 +90,7 @@ export default function CssVariablesPage() {
 			</Section>
 
 			<Section title="Customization Example">
-				<p>Override variables globally or scoped to a container:</p>
+				<p>Override variables globally or env-based to a container:</p>
 				<Code code={`:root {\n  --pounce-primary: #ec4899; /* Pink */\n  --pounce-border-radius: 0;\n}`} lang="css" />
 			</Section>
 		</article>

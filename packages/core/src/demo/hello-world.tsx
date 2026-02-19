@@ -1,13 +1,11 @@
-//import { h, type Scope } from '@pounce/core'
-
-import type { Scope } from '@pounce/core'
+import type { Env } from '@pounce/core'
 
 export interface HelloWorldProps {
 	name?: string
 	greeting?: string
 }
 
-export function HelloWorld(props: HelloWorldProps, _scope: Scope) {
+export function HelloWorld(props: HelloWorldProps, _env: Env) {
 	return (
 		<div class="hello-world">
 			<h1 class="greeting">

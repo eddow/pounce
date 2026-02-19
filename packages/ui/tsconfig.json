@@ -23,32 +23,6 @@
 		"noFallthroughCasesInSwitch": true,
 		"allowSyntheticDefaultImports": true,
 		"baseUrl": ".",
-		"paths": {
-			"mutts": [
-				"../../../mutts/dist/index.d.ts"
-			],
-			"mutts/*": [
-				"../../../mutts/dist/*"
-			],
-			"@pounce/core": [
-				"../core/dist/index.d.ts"
-			],
-			"@pounce/core/*": [
-				"../core/dist/*"
-			],
-			"@pounce/core/test": [
-				"../core/src/test/dom.ts"
-			],
-			"@pounce/kit": [
-				"../kit/src/dom/index.ts"
-			],
-			"@pounce/kit/dom": [
-				"../kit/src/dom/index.ts"
-			],
-			"@pounce/kit/env": [
-				"../kit/src/env/index.tsx"
-			]
-		},
 		"plugins": [
 			{
 				"name": "typescript-styled-plugin",

@@ -12,7 +12,7 @@ effect(() => {
 
 state.count++  // logs: "Count is now: 1"`
 
-const componentExample = `// Components are plain functions: (props, scope) => JSX.Element
+const componentExample = `// Components are plain functions: (props, env) => JSX.Element
 function Greeting({ name }: { name: string }) {
   return <h1>Hello, {name}!</h1>
 }
@@ -35,16 +35,16 @@ const twoWayExample = `function LoginForm() {
 
 const scopeExample = `import { extend } from '@pounce/core'
 
-// Parent injects "theme" into scope
-function App(_props: {}, scope: Record<string, any>) {
-  extend(scope, { theme: reactive({ dark: false }) })
+// Parent injects "theme" into env
+function App(_props: {}, env: Record<string, any>) {
+  extend(env, { theme: reactive({ dark: false }) })
   return <Layout />
 }
 
-// Any descendant reads it from scope — no prop drilling
-function ThemeButton(_props: {}, scope: Record<string, any>) {
+// Any descendant reads it from env — no prop drilling
+function ThemeButton(_props: {}, env: Record<string, any>) {
   return (
-    <button onClick={() => scope.theme.dark = !scope.theme.dark}>
+    <button onClick={() => env.theme.dark = !env.theme.dark}>
       Toggle theme
     </button>
   )
@@ -71,7 +71,7 @@ export default function ConceptsPage() {
   return (
     <article>
       <h1>Core Concepts</h1>
-      <p>The mental model behind Pounce: reactivity, components, scope, and directives.</p>
+      <p>The mental model behind Pounce: reactivity, components, env, and directives.</p>
 
       <Section title="Reactivity">
         <p>
@@ -85,7 +85,7 @@ export default function ConceptsPage() {
 
       <Section title="Components">
         <p>
-          A Pounce component is a plain function that receives <code>props</code> and <code>scope</code>
+          A Pounce component is a plain function that receives <code>props</code> and <code>env</code>
           and returns JSX. <strong>Components render once.</strong> The Babel plugin wraps
           JSX expressions in <code>r()</code> calls that create fine-grained reactive subscriptions.
         </p>
@@ -106,10 +106,10 @@ export default function ConceptsPage() {
         <Code code={twoWayExample} lang="tsx" />
       </Section>
 
-      <Section title="Scope">
+      <Section title="Env">
         <p>
-          Scope is a prototype-chained reactive object passed as the second argument to every component.
-          Use <code>extend(scope, {'{ ... }'})</code> to inject values that any descendant can read — no
+          Env is a prototype-chained reactive object passed as the second argument to every component.
+          Use <code>extend(env, {'{ ... }'})</code> to inject values that any descendant can read — no
           Context providers, no prop drilling.
         </p>
         <Code code={scopeExample} lang="tsx" />

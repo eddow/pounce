@@ -1,10 +1,11 @@
-import type { Scope } from '@pounce/core'
+import type { Env } from '@pounce/core'
 import { reactive } from 'mutts'
 import {
 	Button,
 	Heading, Text,
 	Stack, Inline,
 } from '../../src'
+import { env } from 'process'
 
 function EventDebug() {
 	const state = reactive({ clicks: 0, lastResult: '' as string })
@@ -25,8 +26,8 @@ function EventDebug() {
 	)
 }
 
-function DialogDebug(_props: {}, scope: Scope) {
-	const dialog = scope.dialog as (opts: string | object) => Promise<string>
+function DialogDebug(_props: {}, env: Env) {
+	const dialog = env.dialog as (opts: string | object) => Promise<string>
 	const state = reactive({ result: '' as string })
 	return (
 		<Stack gap="md" style="padding: 1rem; border: 2px solid orange; border-radius: 0.5rem; background: rgba(255,165,0,0.05);">
@@ -61,16 +62,16 @@ function DialogDebug(_props: {}, scope: Scope) {
 	)
 }
 
-export default function OverlaysRoute(_props: {}, scope: Scope) {
-	const dialog = scope.dialog as (opts: string | object) => Promise<string>
-	const toast = scope.toast as ((msg: string) => void) & Record<string, (msg: string) => void>
-	const drawer = scope.drawer as (opts: object) => Promise<void>
+export default function OverlaysRoute(_props: {}, env: Env) {
+	const dialog = env.dialog as (opts: string | object) => Promise<string>
+	const toast = env.toast as ((msg: string) => void) & Record<string, (msg: string) => void>
+	const drawer = env.drawer as (opts: object) => Promise<void>
 
 	return (
 		<Stack gap="lg">
 			<header>
 				<Heading level={1}>Overlays</Heading>
-				<Text muted>Dialogs, toasts, and drawers via StandardOverlays scope.</Text>
+				<Text muted>Dialogs, toasts, and drawers via StandardOverlays env.</Text>
 			</header>
 
 			<EventDebug />

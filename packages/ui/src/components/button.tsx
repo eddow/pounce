@@ -1,5 +1,5 @@
 import { defaults } from '@pounce/core'
-import type { Scope } from '@pounce/core'
+import type { Env } from '@pounce/core'
 import { componentStyle } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
 
@@ -63,7 +63,7 @@ export type ButtonProps = {
 	children?: JSX.Children
 }
 
-const ButtonBase = (props: ButtonProps, scope: Scope) => {
+const ButtonBase = (props: ButtonProps, env: Env) => {
 	const adapter = getAdapter('Button')
 
 	const p = defaults(props, { iconPosition: 'start' as const, disabled: false, tag: 'button' as const })
@@ -116,7 +116,7 @@ const ButtonBase = (props: ButtonProps, scope: Scope) => {
 					: (props.ariaLabel ?? props.el?.['aria-label']),
 				'aria-disabled': p.disabled || undefined,
 			},
-		}, scope)
+		}, env)
 	}
 
 	return (

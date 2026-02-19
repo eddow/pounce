@@ -1,4 +1,4 @@
-import type { Scope } from '@pounce/core'
+import type { Env } from '@pounce/core'
 import type { ClientRouteDefinition } from '@pounce/kit'
 import IndexPage from './pages/index'
 import GettingStartedPage from './pages/getting-started/index'
@@ -7,7 +7,7 @@ import CorePage from './pages/core/index'
 import JsxPage from './pages/core/jsx'
 import ComponentsPage from './pages/core/components'
 import DirectivesPage from './pages/core/directives'
-import ScopePage from './pages/core/scope'
+import ScopePage from './pages/core/env'
 import ComposePage from './pages/core/compose'
 import SSRPage from './pages/core/ssr'
 import KitPage from './pages/kit/index'
@@ -52,7 +52,7 @@ import PureGlyfUsagePage from './pages/pure-glyf/usage'
 
 // Route type that includes the view function
 type AppRoute = ClientRouteDefinition & {
-  readonly view: (spec: { params: Record<string, string> }, scope: Scope) => JSX.Element
+  readonly view: (spec: { params: Record<string, string> }, env: Env) => JSX.Element
 }
 
 const routes: AppRoute[] = [
@@ -63,7 +63,7 @@ const routes: AppRoute[] = [
   { path: '/core/jsx', view: JsxPage },
   { path: '/core/components', view: ComponentsPage },
   { path: '/core/directives', view: DirectivesPage },
-  { path: '/core/scope', view: ScopePage },
+  { path: '/core/env', view: ScopePage },
   { path: '/core/compose', view: ComposePage },
   { path: '/core/ssr', view: SSRPage },
   { path: '/kit', view: KitPage },

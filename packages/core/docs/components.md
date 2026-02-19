@@ -17,12 +17,12 @@ function Greeting(props: { name: string }) {
 Every component receives two parameters:
 
 1. **`props`**: The component's properties
-2. **`scope`**: The reactive scope for conditional rendering and mixins (similar to React/Svelte context)
+2. **`env`**: The reactive environment for conditional rendering and mixins (similar to React/Svelte context)
 
 ```tsx
 function MyComponent(
   props: { title: string; count: number },
-  scope: Scope
+  env: Env
 ) {
   return (
     <div>
@@ -33,14 +33,14 @@ function MyComponent(
 }
 ```
 
-**Important:** The `scope` parameter uses prototype inheritance. When component A renders component B, B automatically receives A's scope. Any modifications A makes to `scope` are visible to B and all its descendants. This means if `<ComponentA><ComponentB /></ComponentA>` is written in `ComponentC`, ComponentB will still receive ComponentA's scope modifications.
+**Important:** The `env` parameter uses prototype inheritance. When component A renders component B, B automatically receives A's env. Any modifications A makes to `env` are visible to B and all its descendants. This means if `<ComponentA><ComponentB /></ComponentA>` is written in `ComponentC`, ComponentB will still receive ComponentA's env modifications.
 
-See the [Advanced Features Guide](./advanced.md#scope-management) for more details on scope management.
+See the [Advanced Features Guide](./advanced.md#environment-management) for more details on environment management.
 
-Conditional rendering with scope
+Conditional rendering with env
 - `if={...}`: boolean condition
-- `if:name={value}`: compares `value === scope.name`
-- `when:name={arg}`: calls `scope[name](arg)` and checks the returned value
+- `if:name={value}`: compares `value === env.name`
+- `when:name={arg}`: calls `env[name](arg)` and checks the returned value
 - `else` and `else if={...}`: use inside fragments to chain branches
 
 ## Default Props
@@ -96,15 +96,19 @@ Simple values passed directly:
 
 ### Reactive Props
 
-Props can be reactive functions or two-way bindings:
+Props can be reactive functions or two-way bindings. The Babel plugin generates two-way bindings for member expressions and mutable (`let`/`var`) identifiers, and one-way for `const`/imports:
 
 ```tsx
-// One-way binding with memoized derivation
+// Two-way binding (member expression)
+<Counter count={state.counter} />
+
+// Two-way binding (mutable variable)
+let count = 0
+<Counter count={count} />
+
+// One-way binding (const → no wrapping)
 const doubled = memoize(() => state.counter * 2)
 <Counter count={doubled} />
-
-// Two-way binding
-<Counter count={state.counter} />
 ```
 
 ### Event Handler Props
@@ -266,20 +270,20 @@ function TodoList(props: { todos: Todo[] }) {
 
 ## `use:` mixins (element/component directives)
 
-The `use:` directive lets you attach behaviors ("mixins") implemented on the current `scope` to either DOM elements or component results.
+The `use:` directive lets you attach behaviors ("mixins") implemented on the current `env` to either DOM elements or component results.
 
-- Define a mixin on the scope: `scope.myMixin(target, value, scope)`
+- Define a mixin on the env: `env.myMixin(target, value, env)`
 - Use it in JSX: `use:myMixin={value}`
 
 Signature
 
 ### `use={callback}` (mount hook)
 
-Attach an inline mount callback without defining a mixin on `scope`.
+Attach an inline mount callback without defining a mixin on `env`.
 
-- Signature: `use={(target, scope) => void}`
+- Signature: `use={(target, env) => void}`
 - `target`: `Node | Node[]` — the rendered target. Intrinsic elements receive a single `Node`. Components may yield a `Node` or `Node[]`.
-- `scope`: the current reactive scope object.
+- `env`: the current reactive environment object.
 
 > **Important**: The Pounce-TS Babel plugin **automatically transforms** `use={handler}` into `use={() => handler}`.
 > You should **NOT** write `use={() => handler}` manually, as this would result in a double-wrapped function (`() => () => handler`) which will not work as expected.
@@ -288,7 +292,7 @@ Attach an inline mount callback without defining a mixin on `scope`.
 Example:
 
 ```tsx
-function Demo(props: {}, scope: Scope) {
+function Demo(props: {}, env: Env) {
   return (
     <>
       {/* DOM element target */}
@@ -311,20 +315,20 @@ function Demo(props: {}, scope: Scope) {
 ```
 
 Notes:
-- This is a convenience alternative to `use:name` when you don't need to reuse the behavior via `scope`.
-- The callback is invoked once on mount and does not support reactive updates or cleanup return values. For reactive behavior or cleanup, prefer `use:name` implemented as a scoped mixin.
+- This is a convenience alternative to `use:name` when you don't need to reuse the behavior via `env`.
+- The callback is invoked once on mount and does not support reactive updates or cleanup return values. For reactive behavior or cleanup, prefer `use:name` implemented as an env mixin.
 - `target`: `Node | Node[]` — the rendered node(s). For components, handle either a single node or an array.
 - `value`: any | undefined — the value passed from `use:myMixin={...}`; bare `use:myMixin` yields `undefined`.
-- `scope`: the current scope object.
+- `env`: the current environment object.
 - Return value: optional cleanup function `() => void` (called on dispose/re-run), or nothing.
 
 Example: resize mixin with ResizeObserver
 
 ```tsx
-function ResizeSandbox(_props: {}, scope: Scope) {
+function ResizeSandbox(_props: {}, env: Env) {
   const size = reactive({ width: 0, height: 0 })
 
-  scope.resize = (target: Node | Node[], value: any, _scope: Record<PropertyKey, any>) => {
+  env.resize = (target: Node | Node[], value: any, _env: Record<PropertyKey, any>) => {
     const element = Array.isArray(target) ? target[0] : target
     if (!(element instanceof HTMLElement)) return
     const ro = new ResizeObserver((entries) => {

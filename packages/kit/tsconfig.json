@@ -18,24 +18,7 @@
 		],
 		"skipLibCheck": true,
 		"noEmit": true,
-		"baseUrl": ".",
-		"paths": {
-			"@pounce/core": [
-				"../core/src/index.d.ts"
-			],
-			"@pounce/core/server": [
-				"../core/src/node/index.ts"
-			],
-			"@pounce/core/*": [
-				"../core/src/*"
-			],
-			"mutts": [
-				"../../../mutts/dist/index.d.ts"
-			],
-			"mutts/*": [
-				"../../../mutts/dist/*"
-			]
-		}
+		"baseUrl": "."
 	},
 	"include": [
 		"src/**/*"

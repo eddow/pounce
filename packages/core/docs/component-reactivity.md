@@ -106,11 +106,11 @@ Virtual attributes are available on **any** element or component. They are not r
 |-----------|---------|---------|
 | `if={expr}` | Conditional rendering — element exists only when truthy | `<Panel if={isOpen} />` |
 | `else` | Renders when the preceding `if` was falsy | `<Fallback else />` |
-| `if:name={value}` | Scope-based condition — renders when `scope[name] === value` | `<Admin if:role={'admin'} />` |
-| `when:name={arg}` | Scope-based predicate — renders when `scope[name](arg)` is truthy | `<Route when:match={'/home'} />` |
+| `if:name={value}` | Env-based condition — renders when `env[name] === value` | `<Admin if:role={'admin'} />` |
+| `when:name={arg}` | Env-based predicate — renders when `env[name](arg)` is truthy | `<Route when:match={'/home'} />` |
 | `use={fn}` | Mount hook — called once with the rendered target | `<div use={(el) => el.focus()} />` |
-| `use:name={value}` | Scoped mixin — calls `scope[name](target, value, scope)` | `<div use:resize={callback} />` |
-| `update:name={fn}` | Two-way binding callback for scoped mixins | `<input update:value={(v) => state.val = v} />` |
+| `use:name={value}` | Scoped mixin — calls `env[name](target, value, env)` | `<div use:resize={callback} />` |
+| `update:name={fn}` | Two-way binding callback for env-based mixins | `<input update:value={(v) => state.val = v} />` |
 | `this={ref}` | Captures a reference to the rendered DOM node(s) | `<input this={refs.input} />` |
 
 **Key point**: `if`, `else`, `when` are reactive — the Babel plugin wraps their values in `r()`, so the element appears/disappears automatically when dependencies change. No re-render of the parent component occurs.
@@ -120,7 +120,7 @@ Virtual attributes are available on **any** element or component. They are not r
 <Dashboard if={user.loggedIn} />
 <LoginForm else />
 
-// Scope-based conditions
+// Env-based conditions
 <AdminPanel if:role={'admin'} />
 <UserPanel else />
 ```
@@ -133,7 +133,7 @@ Virtual elements are custom JSX tags that don't produce DOM elements. They are f
 |---------|---------|---------|
 | `<for each={array}>{(item) => <Item />}</for>` | Reactive list rendering | See below |
 | `<fragment>...</fragment>` | Groups children without a DOM wrapper | `<fragment if={cond}>...</fragment>` |
-| `<scope key={value}>...</scope>` | Creates a child scope with injected properties | `<scope role="admin">...</scope>` |
+| `<env key={value}>...</env>` | Creates a child env with injected properties | `<env role="admin">...</env>` |
 | `<dynamic tag={tagOrComponent}>...</dynamic>` | Renders a variable tag or component | `<dynamic tag={props.as ?? 'div'} />` |
 
 **`<for>`** is the idiomatic way to render reactive lists. It uses `project.array` from mutts under the hood, so items are added/removed/reordered efficiently without re-rendering the entire list:
@@ -170,7 +170,7 @@ A `<div if={cond}>` is still a `<div>` that conditionally exists. A `<for>` is n
 ### 1. Separate Rendering from Logic
 
 ```typescript
-export function Component(props: Props, scope: Scope) {
+export function Component(props: Props, env: Env) {
   // ✅ Rendering: happens once
   const element = (
     <div class="container">
@@ -223,7 +223,7 @@ When testing components, ensure they render without triggering reactive errors:
 ```typescript
 it('should render without reactivity issues', () => {
   const mount = h(MyComponent, { prop: 'value' })
-  const root = mount.render(rootScope)
+  const root = mount.render(rootEnv)
   
   // Component should render once without errors
   expect(root).toBeTruthy()

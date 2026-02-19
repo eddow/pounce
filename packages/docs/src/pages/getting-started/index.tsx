@@ -99,7 +99,7 @@ pnpm add -D vite typescript sass`} lang="bash" />
 
       <Section title="Next Steps">
         <ul>
-          <li><A href="/getting-started/concepts">Core Concepts</A> — scope, reactivity, components, directives</li>
+          <li><A href="/getting-started/concepts">Core Concepts</A> — env, reactivity, components, directives</li>
           <li><A href="/core">@pounce/core</A> — JSX factory, PounceElement, reconciler</li>
           <li><A href="/ui">@pounce/ui</A> — component library with adapter pattern</li>
         </ul>

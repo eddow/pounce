@@ -96,16 +96,16 @@ function Header() {
 
 const scopeDirective = `import { extend } from '@pounce/core'
 
-// <scope> injects values into the scope chain without a DOM wrapper
-function App(_props: {}, scope: any) {
+// <env> injects values into the env chain without a DOM wrapper
+function App(_props: {}, env: any) {
   return (
-    <scope theme={reactive({ dark: false })} user={{ name: 'Alice' }}>
+    <env theme={reactive({ dark: false })} user={{ name: 'Alice' }}>
       <Dashboard />
-    </scope>
+    </env>
   )
 }
 
-// Dashboard and all descendants can read scope.theme and scope.user`
+// Dashboard and all descendants can read env.theme and env.user`
 
 export default function DirectivesPage() {
   return (
@@ -152,9 +152,9 @@ export default function DirectivesPage() {
         <Code code={fragmentDirective} lang="tsx" />
       </Section>
 
-      <Section title="scope">
+      <Section title="env">
         <p>
-          <code>{'<scope>'}</code> injects values into the scope chain without
+          <code>{'<env>'}</code> injects values into the env chain without
           adding a DOM wrapper element. All descendants inherit the injected values.
         </p>
         <Code code={scopeDirective} lang="tsx" />

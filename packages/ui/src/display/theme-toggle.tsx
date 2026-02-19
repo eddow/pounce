@@ -1,4 +1,4 @@
-import type { Scope } from '@pounce/core'
+import type { Env } from '@pounce/core'
 import { componentStyle } from '@pounce/kit'
 import { Icon } from '../components/icon'
 import type { EnvSettings } from '@pounce/kit/env'
@@ -103,7 +103,7 @@ export type ThemeToggleProps = {
 const DEFAULT_ICONS: Record<string, string> = { light: 'sun', dark: 'moon' }
 const DEFAULT_LABELS: Record<string, string> = { light: 'Light', dark: 'Dark' }
 
-export function ThemeToggle(props: ThemeToggleProps, scope: Scope) {
+export function ThemeToggle(props: ThemeToggleProps, env: Env) {
 	let menuOpen = false
 	let menuEl: HTMLElement | undefined
 
@@ -111,7 +111,7 @@ export function ThemeToggle(props: ThemeToggleProps, scope: Scope) {
 	const labels = () => props.labels ?? DEFAULT_LABELS
 	const autoLabel = () => props.autoLabel ?? 'Auto'
 
-	const resolvedTheme = () => scope.theme
+	const resolvedTheme = () => env.theme
 	const themeSetting = () => props.settings.theme ?? 'auto'
 	const isAuto = () => themeSetting() === 'auto'
 

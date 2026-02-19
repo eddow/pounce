@@ -1,17 +1,18 @@
-import type { Scope } from '@pounce/core'
-import { rootScope } from '@pounce/core'
+import type { Env } from '@pounce/core'
+import { rootEnv } from '@pounce/core'
 
 import { componentStyle } from '../dom/index'
 import { client } from '../dom/index'
+import { env } from 'node:process'
 
 componentStyle.sass`
 .pounce-env
 	display: contents
 `
 
-// ─── Env defaults on rootScope ──────────────────────────────────
+// ─── Env defaults on rootEnv ──────────────────────────────────
 
-Object.defineProperties(rootScope, {
+Object.defineProperties(rootEnv, {
 	theme: {
 		get() { return client.prefersDark ? 'dark' : 'light' },
 		enumerable: true,
@@ -51,10 +52,10 @@ export type EnvProps = {
 // ─── Env component ──────────────────────────────────────────────
 
 /**
- * Scope-based environment provider.
+ * Env-based environment provider.
  *
  * Sets `data-theme`, `dir`, and `lang` on its own DOM element.
- * Supports nesting: child `Env` inherits from parent scope,
+ * Supports nesting: child `Env` inherits from parent env,
  * overriding only axes where `settings` specifies a concrete value.
  *
  * Usage:
@@ -65,12 +66,12 @@ export type EnvProps = {
  * </Env>
  * ```
  */
-export function Env(props: EnvProps, scope: Scope) {
+export function Env(props: EnvProps, env: Env) {
 	const settings = props.settings
 
-	// The parent scope values live on the prototype chain.
+	// The parent env values live on the prototype chain.
 	// We read them lazily so reactivity is preserved.
-	const proto = Object.getPrototypeOf(scope)
+	const proto = Object.getPrototypeOf(env)
 
 	function parentValue(key: string): string {
 		return proto[key]
@@ -82,7 +83,7 @@ export function Env(props: EnvProps, scope: Scope) {
 		return v
 	}
 
-	Object.defineProperties(scope, {
+	Object.defineProperties(env, {
 		theme: {
 			get() { return resolve('theme') },
 			enumerable: true,
@@ -108,9 +109,9 @@ export function Env(props: EnvProps, scope: Scope) {
 	return (
 		<div
 			class="pounce-env"
-			data-theme={scope.theme}
-			dir={scope.direction}
-			lang={scope.locale}
+			data-theme={env.theme}
+			dir={env.direction}
+			lang={env.locale}
 		>
 			{props.children}
 		</div>

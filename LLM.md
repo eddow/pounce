@@ -22,5 +22,11 @@
    - **Callback/effect**: reads inside `effect()`, `attend()`, event handlers, or `<for each>` callbacks are fine.
 2. **`variantProps(undefined)` returns `{}`** — no need to default variants to `'primary'`. Pass `props.variant` directly.
 
+## Babel Plugin Binding Rules
+1. **Two-way** (`r(getter, setter)`): member expressions (`state.name`, `props.count`) and mutable bare identifiers (`let`/`var`).
+2. **One-way** (`r(() => expr)`): complex expressions (calls, template literals, binary ops with non-safe operands).
+3. **No wrapping**: `const` variables, imports, function declarations, parameters, literals, arrow functions, safe objects/arrays — `isSafeExpression` returns `true`.
+4. The check uses Babel's `path.scope.getBinding(name).kind` to distinguish `let`/`var` from `const`/`module`/`param`/`hoisted`.
+
 ## Reconciler Gotchas
 1. **Don't double-wrap in `processChildren`**: `renderChild` must return `renderer.render(scope)` array results directly — NOT wrapped in another `processChildren()`. `render()` already returns a `processChildren` result for components/fragments. Double-wrapping stores a reactive array inside a reactive array. When the inner one is replaced, mutts' `recursiveTouching` (same prototype → recursive diff path) swallows the identity-change notification, so the outer `flattenNodes` lift is never notified and `reconcile` never updates the DOM.

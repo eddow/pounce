@@ -1,4 +1,4 @@
-import type { Scope } from '@pounce/core'
+import type { Env as EnvType } from '@pounce/core'
 import { reactive } from 'mutts'
 import {
 	Button,
@@ -10,14 +10,14 @@ import { Env, type EnvSettings } from '@pounce/kit/env'
 
 const envSettings = reactive<EnvSettings>({ theme: 'auto' })
 
-function ContextInspector(_props: {}, scope: Scope) {
+function ContextInspector(_props: {}, env: EnvType) {
 	return (
 		<div style="padding: 1rem; border: 1px solid var(--pounce-border, #d1d5db); border-radius: var(--pounce-border-radius, 0.5rem); background: var(--pounce-bg-muted, rgba(0,0,0,0.04));">
 			<Text size="sm" muted>
-				<strong>theme:</strong> {scope.theme} &nbsp;
+				<strong>theme:</strong> {env.theme} &nbsp;
 				<strong>setting:</strong> {envSettings.theme ?? 'auto'} &nbsp;
-				<strong>dir:</strong> {scope.direction} &nbsp;
-				<strong>locale:</strong> {scope.locale}
+				<strong>dir:</strong> {env.direction} &nbsp;
+				<strong>locale:</strong> {env.locale}
 			</Text>
 		</div>
 	)

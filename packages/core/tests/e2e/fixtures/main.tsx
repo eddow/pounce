@@ -68,7 +68,7 @@ async function loadFixtureFixture() {
 			return
 		}
 
-		// Render with For and Scope available in global scope
+		// Render with For and Env available in global scope
 		state.component = <FixtureComponent />
 		state.error = null
 	} catch (error) {

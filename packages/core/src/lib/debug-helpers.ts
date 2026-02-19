@@ -1,16 +1,5 @@
 export const POUNCE_OWNER = Symbol.for('pounce.owner')
 
-export interface ComponentInfo {
-	id: string
-	name: string
-	ctor: Function
-	props: any
-	scope: any
-	parent?: ComponentInfo
-	children: Set<ComponentInfo>
-	elements: Set<Node>
-}
-
 export const rootComponents = new Set<ComponentInfo>()
 /**
  * Returns the component instance (ComponentInfo) that "owns" the given DOM element.

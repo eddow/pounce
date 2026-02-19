@@ -8,25 +8,24 @@ import {
 	type PerhapsReactive,
 	ReactiveProp,
 } from './composite-attributes'
-import { type ComponentInfo, POUNCE_OWNER, perfCounters, rootComponents, testing } from './debug'
+import { POUNCE_OWNER, perfCounters, rootComponents, testing } from './debug'
 import {
 	type Child,
 	type Children,
-	type ComponentFunction,
 	type ComponentNode,
 	DynamicRenderingError,
 	PounceElement,
-	rootScope,
-	type Scope,
+	rootEnv,
+	type Env,
 } from './pounce-element'
 import { processChildren, reconcile } from './reconciler'
 import { attachAttributes, checkComponentRebuild, isString } from './renderer-internal'
 import { extend } from './utils'
 
 export const intrinsicComponentAliases: Record<string, ComponentFunction> = extend(null, {
-	scope(props: { children?: any; [key: string]: any }, scope: Scope) {
-		effect(function scopeEffect() {
-			for (const [key, value] of Object.entries(props)) if (key !== 'children') scope[key] = value
+	env(props: { children?: any; [key: string]: any }, env: Env) {
+		effect(function envEffect() {
+			for (const [key, value] of Object.entries(props)) if (key !== 'children') env[key] = value
 		})
 		return props.children
 	},
@@ -35,7 +34,7 @@ export const intrinsicComponentAliases: Record<string, ComponentFunction> = exte
 			each: PerhapsReactive<readonly T[]>
 			children: any
 		},
-		scope: Scope
+		env: Env,
 	) {
 		if (Array.isArray(props.children) && props.children.length !== 1)
 			throw new DynamicRenderingError(
@@ -52,17 +51,17 @@ export const intrinsicComponentAliases: Record<string, ComponentFunction> = exte
 		return new PounceElement(
 			() =>
 				processChildren(
-					morph(()=> collapse(props.each), cb),
-					scope
+					morph(() => collapse(props.each), cb),
+					env
 				),
 			'for'
 		)
 	},
-	dynamic(props: { tag: any; children?: any } & Record<string, any>, _scope: Scope) {
+	dynamic(props: { tag: any; children?: any } & Record<string, any>, _env: Env) {
 		return lift(() => produceDOM(props.tag, Object.getPrototypeOf(props), props.children, {}))
 	},
-	fragment(props: { children: PounceElement[] }, scope: Scope) {
-		return new PounceElement(() => processChildren(props.children, scope), 'fragment')
+	fragment(props: { children: PounceElement[] }, env: Env) {
+		return new PounceElement(() => processChildren(props.children, env), 'fragment')
 	},
 })
 
@@ -113,17 +112,17 @@ function produceComponent(
 		name: componentCtor.name,
 		ctor: componentCtor,
 		props: inAttrs, // Store composite props
-		scope: undefined,
+		env: undefined,
 		parent: undefined,
 		children: new Set<ComponentInfo>(),
 		elements: new Set<Node>(),
 	})
 
 	return new PounceElement(
-		function componentRender(scope: Scope = rootScope) {
+		function componentRender(env: Env) {
 			perfCounters.componentRenders++
 			perf?.mark(`component:${componentCtor.name}:start`)
-			const parent = scope.component
+			const parent = env.component
 			const isRegistered = parent ? parent.children.has(info) : rootComponents.has(info)
 			if (info.parent !== parent || !isRegistered) {
 				if (info.parent) info.parent.children.delete(info)
@@ -133,15 +132,17 @@ function produceComponent(
 				else rootComponents.add(info)
 			}
 
-			const childScope = extend(scope || rootScope, { component: info })
-			info.scope = childScope
+			info.env = extend(env, { component: info })
 
 			checkComponentRebuild(componentCtor)
 			testing.renderingEvent?.('render component', componentCtor.name)
 
 			// Component gets the flattened props proxy, potentially restructured for namespaces
-			const result = componentCtor(extend(inAttrs.asProps(), { children }), childScope)
-			const processed = processChildren(result, childScope)
+			const result = componentCtor(
+				extend(inAttrs.asProps(), { children }),
+				info.env
+			)
+			const processed = processChildren(result, info.env)
 
 			cleanedBy(processed, () => {
 				if (info.parent) info.parent.children.delete(info)
@@ -168,12 +169,12 @@ export function produceDOM(
 	meta: CompositeAttributesMeta
 ): PounceElement {
 	return new PounceElement(
-		function elementRender(scope: Scope) {
+		function elementRender(env: Env) {
 			perfCounters.elementRenders++
 			perf?.mark(`element:${tagName}:start`)
 
 			const element = document.createElement(tagName)
-			const componentToUse = scope.component
+			const componentToUse = env.component
 			if (componentToUse) {
 				;(element as ComponentNode)[POUNCE_OWNER] = componentToUse
 				componentToUse.elements.add(element)
@@ -183,7 +184,7 @@ export function produceDOM(
 
 			attachAttributes(element, inAttrs)
 
-			cleanedBy(element, reconcile(element, processChildren(children, scope)))
+			cleanedBy(element, reconcile(element, processChildren(children, env)))
 
 			return element
 		},

@@ -36,7 +36,7 @@ export default function IndexPage() {
         <table>
           <thead><tr><th>Package</th><th>Description</th></tr></thead>
           <tbody>
-            <tr><td><A href="/core"><code>@pounce/core</code></A></td><td>JSX factory, reactivity, directives, scope, two-way binding</td></tr>
+            <tr><td><A href="/core"><code>@pounce/core</code></A></td><td>JSX factory, reactivity, directives, env, two-way binding</td></tr>
             <tr><td><A href="/kit"><code>@pounce/kit</code></A></td><td>Router, client state, storage, Intl, API utilities</td></tr>
             <tr><td><A href="/ui"><code>@pounce/ui</code></A></td><td>15+ components, overlays, display context, adapter pattern</td></tr>
             <tr><td><code>@pounce/board</code></td><td>Full-stack meta-framework: file-based routing, SSR, middleware</td></tr>
@@ -56,7 +56,7 @@ export default function IndexPage() {
         <ul>
           <li><strong>Components render once</strong> — no re-renders, no diffing. Reactivity is fine-grained via <code>mutts</code>.</li>
           <li><strong>Two-way binding by default</strong> — the Babel plugin auto-generates getter/setter pairs for JSX attributes.</li>
-          <li><strong>Scope inheritance</strong> — prototype-chained reactive context, no prop drilling.</li>
+          <li><strong>Env inheritance</strong> — prototype-chained reactive context, no prop drilling.</li>
           <li><strong>Adapter pattern</strong> — swap CSS frameworks without changing component code.</li>
           <li><strong>Direct DOM</strong> — no virtual DOM. PounceElement manages real nodes directly.</li>
         </ul>

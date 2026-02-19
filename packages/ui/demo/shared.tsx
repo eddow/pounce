@@ -1,4 +1,4 @@
-import type { Scope } from '@pounce/core'
+import type { Env as EnvType } from '@pounce/core'
 import { A, Router, type RouteWildcard } from '@pounce/kit'
 import { AppShell, Container, ErrorBoundary, Heading, Inline, Link, StandardOverlays, Text, ThemeToggle, Toolbar } from '../src'
 import { Env, type EnvSettings } from '@pounce/kit/env'
@@ -14,7 +14,7 @@ import { scope } from 'arktype'
 export type DemoSection = {
 	readonly path: RouteWildcard
 	readonly label: string
-	readonly view: (props: {}, scope: Scope) => JSX.Element
+	readonly view: (props: {}, env: EnvType) => JSX.Element
 }
 
 export const baseRoutes: DemoSection[] = [
@@ -65,13 +65,13 @@ export function DemoApp(options: DemoAppOptions) {
 		</section>
 	)
 
-	return (_props: {}, scope: Scope) => {
-		scope.resize = resize
-		scope.scroll = scroll
-		scope.intersect = intersect
-		scope.pointer = pointer
-		scope.badge = badge
-		scope.loading = loading
+	return (_props: {}, env: EnvType) => {
+		env.resize = resize
+		env.scroll = scroll
+		env.intersect = intersect
+		env.pointer = pointer
+		env.badge = badge
+		env.loading = loading
 		return (
 			<Env settings={envSettings}>
 				<StandardOverlays>

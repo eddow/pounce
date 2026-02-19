@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { latch, document, rootScope, type Scope } from '@pounce/core'
+import { latch, document, rootEnv, type Env as EnvType, h } from '@pounce/core'
 import { reactive } from 'mutts'
 import { Env, type EnvSettings } from './index'
 
@@ -49,17 +49,17 @@ describe('Env', () => {
 		expect(el?.getAttribute('lang')).toBe('fr-FR')
 	})
 
-	it('uses default timeZone from rootScope', () => {
+	it('uses default timeZone from rootEnv', () => {
 		render(<Env><span /></Env>)
-		// rootScope.timeZone should be available (set by env/index.tsx initialization)
-		expect(rootScope.timeZone).toBeDefined()
+		// rootEnv.timeZone should be available (set by env/index.tsx initialization)
+		expect(rootEnv.timeZone).toBeDefined()
 	})
 
-	describe('scope values', () => {
-		it('makes override values available to children via scope', () => {
-			let captured: Scope | undefined
-			function Inspector(_props: {}, scope: Scope) {
-				captured = scope
+	describe('env values', () => {
+		it('makes override values available to children via env', () => {
+			let captured: EnvType | undefined
+			function Inspector(_props: {}, env: EnvType) {
+				captured = env
 				return <span />
 			}
 
@@ -74,10 +74,10 @@ describe('Env', () => {
 			expect(captured?.locale).toBe('ar-SA')
 		})
 
-		it('inherits parent scope values when nested with auto', () => {
-			let captured: Scope | undefined
-			function Inspector(_props: {}, scope: Scope) {
-				captured = scope
+		it('inherits parent env values when nested with auto', () => {
+			let captured: EnvType | undefined
+			function Inspector(_props: {}, env: EnvType) {
+				captured = env
 				return <span />
 			}
 
@@ -95,10 +95,10 @@ describe('Env', () => {
 			expect(captured?.locale).toBe('ar-SA')
 		})
 
-		it('allows inner Env to override only specific axes', () => {
-			let captured: Scope | undefined
-			function Inspector(_props: {}, scope: Scope) {
-				captured = scope
+		it('allows inner EnvType to override only specific axes', () => {
+			let captured: EnvType | undefined
+			function Inspector(_props: {}, env: EnvType) {
+				captured = env
 				return <span />
 			}
 
@@ -117,10 +117,10 @@ describe('Env', () => {
 	})
 
 	describe('reactive settings', () => {
-		it('updates scope when settings change', () => {
-			let captured: Scope | undefined
-			function Inspector(_props: {}, scope: Scope) {
-				captured = scope
+		it('updates env when settings change', () => {
+			let captured: EnvType | undefined
+			function Inspector(_props: {}, env: EnvType) {
+				captured = env
 				return <span />
 			}
 

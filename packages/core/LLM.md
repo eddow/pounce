@@ -8,7 +8,7 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
 ### 1. Rendering Model
 *   **No VDOM**: `h()` returns a "Mountable" object with a `render(scope)` method, not a virtual node description.
 *   **Direct Updates**: Components render once. Updates happen via reactive effects attached to DOM elements.
-*   **Scope**: Components receive a `scope` object (in addition to props) which allows dependency injection down the tree.
+*   **Env**: Components receive an `env` object (in addition to props) which allows dependency injection down the tree.
 *   **Reconciliation (`processChildren`)**:
     *   **Two-Stage Pipeline**: 
         1.  `morph` subscribes to array mutations and handles element creation/conditional rendering.
@@ -51,7 +51,7 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
 
 ### 4. Directives (`use`)
 *   **`use={handler}`**: The `handler` is called during the **render phase** (untracked) with the mounted element/component instance.
-*   **`use:name={value}`**: Calls `scope.name(instance, value, scope)`. This allows dependency injection of directives from the scope.
+*   **`use:name={value}`**: Calls `env.name(instance, value, env)`. This allows dependency injection of directives from the scope.
 
 ### 5. Best Practices & Anti-Patterns
 > [!IMPORTANT]

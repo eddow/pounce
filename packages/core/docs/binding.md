@@ -1,20 +1,38 @@
 # Two-Way Binding in Pounce-TS
 
-Pounce-TS provides automatic two-way binding for form inputs and component properties. The Babel plugin automatically detects when you're binding to reactive properties and sets up the binding for you.
+Pounce-TS provides automatic two-way binding for form inputs and component properties. The Babel plugin automatically detects when you're binding to an assignable expression and sets up the binding for you.
 
 ## Automatic Two-Way Binding
 
-### Basic Usage
+The plugin generates a `{ get, set }` pair (two-way binding) when the attribute value is:
 
-Simply bind a reactive property to an input's `value` attribute:
+- A **member expression** — `state.name`, `props.count`, `obj['key']`
+- A **mutable bare identifier** — a `let` or `var` variable
+
+It generates **one-way** (read-only) binding when the value is:
+
+- A **`const`** variable, an **import**, a **function declaration**, or a **parameter**
+- A **literal**, **function expression**, or other safe expression (no wrapping at all)
+- A **complex expression** like a function call or template literal (wrapped in `r(() => expr)`)
+
+### Basic Usage
 
 ```tsx
 const state = reactive({ name: 'Alice' })
 
+// Member expression → two-way
 <input value={state.name} />
+
+// Mutable variable → two-way
+let count = 0
+<Counter value={count} />
+
+// Const → one-way (safe, no wrapping)
+const label = 'Hello'
+<Greeting name={label} />
 ```
 
-The Babel plugin automatically transforms this into a two-way binding:
+The Babel plugin automatically transforms assignable expressions into two-way bindings:
 
 ```tsx
 // What you write
@@ -87,12 +105,19 @@ const state = reactive({ price: 0 })
 
 ## One-Way Binding
 
-For read-only values or memoized properties, use one-way binding:
+Values that cannot be assigned to are automatically one-way:
 
 ```tsx
-// Memoized value (reactive)
+// const variable → safe, no wrapping
+const label = 'Hello'
+<Greeting name={label} />
+
+// Memoized value → reactive one-way (wrapped in r())
 const displayName = memoize(() => state.name.toUpperCase())
-<input value={displayName} />
+<input value={displayName()} />
+
+// Complex expression → reactive one-way
+<span title={state.firstName + ' ' + state.lastName} />
 ```
 
 ## Component Props
@@ -108,10 +133,14 @@ function Counter(props: { count: number }) {
 
 const state = reactive({ count: 0 })
 
-// Two-way binding
+// Two-way binding (member expression)
 <Counter count={state.count} />
 
-// One-way binding with memoize
+// Two-way binding (mutable variable)
+let count = 0
+<Counter count={count} />
+
+// One-way binding (const → safe, no wrapping)
 const doubled = memoize(() => state.count * 2)
 <Counter count={doubled} />
 ```

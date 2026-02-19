@@ -1,6 +1,6 @@
 import { initTests } from '../tests/e2e/fixtures/main'
-import { initDemo } from './demo/main'
-import { initMini } from './demo/mini'
+import './demo/main'
+import './demo/mini'
 
 /**
  * Entry point that determines whether to load the main demos
@@ -14,10 +14,6 @@ function entry() {
 	if (hash && hash !== 'mini' && hash !== 'app') {
 		console.log('[pounce] Entry: Loading test fixtures')
 		initTests()
-	} else {
-		console.log('[pounce] Entry: Loading main demos')
-		initMini()
-		initDemo()
 	}
 }
 

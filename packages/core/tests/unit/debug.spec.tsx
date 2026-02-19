@@ -11,9 +11,7 @@ describe('Component association debug tools', () => {
 	test('should maintain association in reactive updates', async () => {
 		const state = reactive({ show: true })
 
-		const Conditional = () => h('div', {}, [
-			r(() => state.show ? h('span', { id: 'true-branch' }, 'True') : h('span', { id: 'false-branch' }, 'False')) as any
-		])
+		const Conditional = () => h('div', {}, r(() => state.show ? h('span', { id: 'true-branch' }, 'True') : h('span', { id: 'false-branch' }, 'False')))
 
 		const mount = h(Conditional, {})
 		const root = (mount.render() as HTMLElement[])[0]

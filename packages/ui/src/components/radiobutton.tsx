@@ -1,5 +1,5 @@
 import { defaults } from '@pounce/core'
-import type { Scope } from '@pounce/core'
+import type { Env } from '@pounce/core'
 import { componentStyle } from '@pounce/kit'
 import { getAdapter } from '../adapter/registry'
 
@@ -63,7 +63,7 @@ export type RadioButtonProps<Value = any> = {
 	children?: JSX.Children
 }
 
-const RadioButtonBase = (props: RadioButtonProps, scope: Scope) => {
+const RadioButtonBase = (props: RadioButtonProps, env: Env) => {
 	const adapter = getAdapter('RadioButton')
 
 	const p = defaults(props, { iconPosition: 'start' as const, disabled: false })
@@ -116,7 +116,7 @@ const RadioButtonBase = (props: RadioButtonProps, scope: Scope) => {
 					: props.ariaLabel,
 				'aria-disabled': p.disabled || undefined,
 			},
-		}, scope)
+		}, env)
 	}
 
 	return (

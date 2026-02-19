@@ -96,8 +96,8 @@ export default function CounterWebComponent(props: {
 						max={state.maxValue}
 						step={state.step}
 						value={state.count}
-						update:value={(v) => {
-							state.count = Number(v)
+						update:value={(v: number) => {
+							state.count = v
 						}}
 						disabled={state.disabled || state.maxValue === state.minValue}
 					/>
@@ -116,6 +116,9 @@ export default function CounterWebComponent(props: {
 						max={state.maxValue}
 						step={state.step}
 						value={state.count}
+						update:value={(v: number) => {
+							state.count = v
+						}}
 						disabled={state.disabled || state.maxValue === state.minValue}
 					/>
 				</div>

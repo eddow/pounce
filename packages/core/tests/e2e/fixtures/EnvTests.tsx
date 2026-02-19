@@ -29,8 +29,8 @@ window.__scopeFixture = fixtureControls
 
 const ScopeFixtureApp = () => (
 	<main>
-		<h1>Scope Component Fixture</h1>
-		<p>Testing conditional rendering with Scope component.</p>
+		<h1>Env Component Fixture</h1>
+		<p>Testing conditional rendering with Env component.</p>
 
 		<section class="controls">
 			<button data-action="toggle" onClick={() => fixtureControls.toggleVisible()}>

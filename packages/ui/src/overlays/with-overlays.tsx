@@ -1,4 +1,4 @@
-import { type Scope } from '@pounce/core'
+import { type Env } from '@pounce/core'
 import { reactive } from 'mutts'
 import { type OverlayEntry, type PushOverlayFunction } from './manager'
 import { componentStyle } from '@pounce/kit'
@@ -106,7 +106,7 @@ export interface WithOverlaysProps {
 	backdropModes?: string[]
 	/** Whether the container is fixed to viewport. Default: true. */
 	fixed?: boolean
-	/** Optional extension helpers to bind to the scope */
+	/** Optional extension helpers to bind to the env */
 	extend?: Record<string, (push: PushOverlayFunction) => (options: any) => Promise<any>>
 }
 
@@ -124,19 +124,19 @@ function modeToComponent(mode: string): ComponentName | undefined {
 /**
  * Generic Overlay Host Component.
  */
-export const WithOverlays = (props: WithOverlaysProps, scope: Scope) => {
+export const WithOverlays = (props: WithOverlaysProps, env: Env) => {
 	// 1. Level Management (Nesting Coordination)
-	scope.overlayLevelState ??= reactive({ max: 0 })
-	const state = scope.overlayLevelState as { max: number }
+	env.overlayLevelState ??= reactive({ max: 0 })
+	const state = env.overlayLevelState as { max: number }
 
-	const overlayLevel = (scope.overlayLevel || 0) + 1
-	scope.overlayLevel = overlayLevel
+	const overlayLevel = (env.overlayLevel || 0) + 1
+	env.overlayLevel = overlayLevel
 
 	if (overlayLevel > state.max) {
 		state.max = overlayLevel
 	}
 
-	scope.maxOverlayLevel = () => state.max
+	env.maxOverlayLevel = () => state.max
 	const zIndex = () => 10000 + (overlayLevel * 1000)
 
 	// 2. Local Stack & Logic
@@ -183,13 +183,13 @@ export const WithOverlays = (props: WithOverlaysProps, scope: Scope) => {
 		})
 	}
 
-	// Expose to scope
-	scope.overlay = push
+	// Expose to env
+	env.overlay = push
 
 	// 3. Bind extensions (Factories)
 	if (props.extend) {
 		for (const [key, factory] of Object.entries(props.extend)) {
-			scope[key] = factory(push)
+			env[key] = factory(push)
 		}
 	}
 

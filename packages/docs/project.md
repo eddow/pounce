@@ -6,7 +6,7 @@ A **pounce** application that serves as the living documentation for the entire 
 
 | Package | Description |
 |---|---|
-| `@pounce/core` | JSX factory, reactivity (`r()`), PounceElement, scope, reconciler, directives (`if`, `when`, `for`, `dynamic`), two-way binding, `compose()`, SSR |
+| `@pounce/core` | JSX factory, reactivity (`r()`), PounceElement, env, reconciler, directives (`if`, `when`, `for`, `dynamic`), two-way binding, `compose()`, SSR |
 | `@pounce/kit` | Router, client state, `stored()`, CSS injection, Intl components, API utilities |
 | `@pounce/ui` | 15+ components, 6 directives, overlay system, DisplayProvider, adapter pattern, CSS variable contract |
 | `@pounce/board` | Full-stack meta-framework: file-based routing, SSR, middleware (Hono) |
@@ -136,13 +136,13 @@ const ButtonPage = () => (
 ```
 /                                   Landing page — what is pounce, install, quick start
 /getting-started                    Installation, first app, concepts overview
-/getting-started/concepts           Scope, reactivity, components, directives
+/getting-started/concepts           Env, reactivity, components, directives
 
 /core                               @pounce/core overview
 /core/components                    PounceElement, render, mount/use lifecycle
 /core/jsx                           JSX factory, r(), two-way binding, this=
 /core/directives                    if, when, for, dynamic, fragment
-/core/scope                         Scope chain, <scope>, injection
+/core/env                         Env chain, <env>, injection
 /core/ssr                           Node entry, JSDOM, AsyncLocalStorage
 
 /kit                                @pounce/kit overview
@@ -214,7 +214,7 @@ packages/docs/
 │   │   │   ├── components.tsx
 │   │   │   ├── jsx.tsx
 │   │   │   ├── directives.tsx
-│   │   │   ├── scope.tsx
+│   │   │   ├── env.tsx
 │   │   │   ├── compose.tsx
 │   │   │   └── ssr.tsx
 │   │   ├── kit/
@@ -310,7 +310,7 @@ pnpm dev         # Vite dev server on :5290
 3. `<Demo>` component in `@pounce/ui`
 4. Layout shell (sidebar nav + content + ThemeToggle)
 5. Landing page + Getting Started
-6. Core docs (JSX, components, directives, scope) — these are the hardest to understand
+6. Core docs (JSX, components, directives, env) — these are the hardest to understand
 
 ### Phase 2 — Kit + UI Component Pages
 7. Kit docs (router, client, intl, storage)

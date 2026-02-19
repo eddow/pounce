@@ -2,7 +2,7 @@
  * Test Overlays Coordination (WithOverlays, Dialog, Drawer, Toast, Focus Trap)
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { latch, document, type Scope } from '@pounce/core'
+import { latch, document, type Env } from '@pounce/core'
 import { WithOverlays } from '../../src/overlays/with-overlays'
 import { StandardOverlays } from '../../src/overlays/standard-overlays'
 import { Dialog } from '../../src/overlays/dialog'
@@ -33,10 +33,10 @@ describe('Overlays System', () => {
 
 	const tick = () => new Promise(r => setTimeout(r, 0))
 
-	it('StandardOverlays injects dialog and toast into scope', async () => {
-		let capturedScope: Scope | undefined
-		const App = (_props: any, scope: Scope) => {
-			capturedScope = scope
+	it('StandardOverlays injects dialog and toast into env', async () => {
+		let capturedEnv: Env | undefined
+		const App = (_props: any, env: Env) => {
+			capturedEnv = env
 			return <div>App</div>
 		}
 
@@ -46,17 +46,17 @@ describe('Overlays System', () => {
 			</StandardOverlays>
 		)
 
-		expect(capturedScope?.dialog).toBeDefined()
-		expect(capturedScope?.toast).toBeDefined()
-		expect(capturedScope?.drawer).toBeDefined()
-		expect(capturedScope?.overlay).toBeDefined()
+		expect(capturedEnv?.dialog).toBeDefined()
+		expect(capturedEnv?.toast).toBeDefined()
+		expect(capturedEnv?.drawer).toBeDefined()
+		expect(capturedEnv?.overlay).toBeDefined()
 	})
 
 	describe('WithOverlays Interaction', () => {
 		it('renders overlays when pushed', async () => {
 			let push: any
-			const App = (_props: any, scope: Scope) => {
-				push = scope.overlay
+			const App = (_props: any, env: Env) => {
+				push = env.overlay
 				return <div>App</div>
 			}
 
@@ -77,8 +77,8 @@ describe('Overlays System', () => {
 		it('dismisses overlay on backdrop click if dismissible', async () => {
 			vi.useFakeTimers()
 			let push: any
-			const App = (_props: any, scope: Scope) => {
-				push = scope.overlay
+			const App = (_props: any, env: Env) => {
+				push = env.overlay
 				return <div>App</div>
 			}
 
@@ -105,8 +105,8 @@ describe('Overlays System', () => {
 
 		it('does NOT dismiss overlay on backdrop click if NOT dismissible', async () => {
 			let push: any
-			const App = (_props: any, scope: Scope) => {
-				push = scope.overlay
+			const App = (_props: any, env: Env) => {
+				push = env.overlay
 				return <div>App</div>
 			}
 
@@ -127,8 +127,8 @@ describe('Overlays System', () => {
 
 		it('handles Escape key orchestration', async () => {
 			let push: any
-			const App = (_props: any, scope: Scope) => {
-				push = scope.overlay
+			const App = (_props: any, env: Env) => {
+				push = env.overlay
 				return <div>App</div>
 			}
 
@@ -153,13 +153,13 @@ describe('Overlays System', () => {
 			let level1: number | undefined
 			let level2: number | undefined
 
-			const Inner = (_props: any, scope: Scope) => {
-				level2 = scope.overlayLevel
+			const Inner = (_props: any, env: Env) => {
+				level2 = env.overlayLevel
 				return <div>Inner</div>
 			}
 
-			const App = (_props: any, scope: Scope) => {
-				level1 = scope.overlayLevel
+			const App = (_props: any, env: Env) => {
+				level1 = env.overlayLevel
 				return (
 					<WithOverlays fixed={false}>
 						<Inner />
@@ -187,8 +187,8 @@ describe('Overlays System', () => {
 	describe('Toast', () => {
 		it('renders toast with message', async () => {
 			let push: any
-			const App = (_props: any, scope: Scope) => {
-				push = scope.overlay
+			const App = (_props: any, env: Env) => {
+				push = env.overlay
 				return <div>App</div>
 			}
 
@@ -208,8 +208,8 @@ describe('Overlays System', () => {
 
 		it('applies variant from adapter', async () => {
 			let push: any
-			const App = (_props: any, scope: Scope) => {
-				push = scope.overlay
+			const App = (_props: any, env: Env) => {
+				push = env.overlay
 				return <div>App</div>
 			}
 
@@ -231,8 +231,8 @@ describe('Overlays System', () => {
 	describe('Drawer', () => {
 		it('renders drawer with title and body', async () => {
 			let push: any
-			const App = (_props: any, scope: Scope) => {
-				push = scope.overlay
+			const App = (_props: any, env: Env) => {
+				push = env.overlay
 				return <div>App</div>
 			}
 
@@ -253,8 +253,8 @@ describe('Overlays System', () => {
 
 		it('renders drawer-right with correct class', async () => {
 			let push: any
-			const App = (_props: any, scope: Scope) => {
-				push = scope.overlay
+			const App = (_props: any, env: Env) => {
+				push = env.overlay
 				return <div>App</div>
 			}
 
@@ -273,8 +273,8 @@ describe('Overlays System', () => {
 
 		it('conditionally renders footer', async () => {
 			let push: any
-			const App = (_props: any, scope: Scope) => {
-				push = scope.overlay
+			const App = (_props: any, env: Env) => {
+				push = env.overlay
 				return <div>App</div>
 			}
 
@@ -296,8 +296,8 @@ describe('Overlays System', () => {
 	describe('Layered Rendering', () => {
 		it('renders overlays in correct layers with StandardOverlays', async () => {
 			let push: any
-			const App = (_props: any, scope: Scope) => {
-				push = scope.overlay
+			const App = (_props: any, env: Env) => {
+				push = env.overlay
 				return <div>App</div>
 			}
 
@@ -323,8 +323,8 @@ describe('Overlays System', () => {
 	describe('Dialog Features', () => {
 		it('resolves with button key when clicked', async () => {
 			let push: any
-			const App = (_props: any, scope: Scope) => {
-				push = scope.overlay
+			const App = (_props: any, env: Env) => {
+				push = env.overlay
 				return <div>App</div>
 			}
 
@@ -352,8 +352,8 @@ describe('Overlays System', () => {
 
 		it('applies size class', async () => {
 			let push: any
-			const App = (_props: any, scope: Scope) => {
-				push = scope.overlay
+			const App = (_props: any, env: Env) => {
+				push = env.overlay
 				return <div>App</div>
 			}
 

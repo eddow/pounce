@@ -35,9 +35,7 @@
 		"forceConsistentCasingInFileNames": true
 	},
 	"include": [
-		"src/**/*",
-		"tests/**/*.ts",
-		"tests/**/*.tsx"
+		"src/**/*"
 	],
 	"exclude": [
 		"../../../mutts/**/*"

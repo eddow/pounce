@@ -3,7 +3,7 @@ import { Section, Code, ApiTable } from '../../components'
 const setup = `import { StandardOverlays } from '@pounce/ui'
 
 // StandardOverlays is a wrapper component that provides
-// dialog, toast, and drawer helpers via scope.
+// dialog, toast, and drawer helpers via env.
 // Wrap your app (or a subtree) with it:
 
 function App() {
@@ -14,17 +14,17 @@ function App() {
   )
 }
 
-// Inside any descendant, scope.dialog / scope.toast / scope.drawer
+// Inside any descendant, env.dialog / env.toast / env.drawer
 // are available automatically.`
 
 const dialogExample = `// Dialog is an imperative API — not a JSX component.
-// scope.dialog is injected by StandardOverlays.
+// env.dialog is injected by StandardOverlays.
 
 // Simple message (OK button auto-added):
-scope.dialog('Something happened')
+env.dialog('Something happened')
 
 // With title and custom buttons:
-scope.dialog({
+env.dialog({
   title: 'Confirm Delete',
   message: 'This action cannot be undone.',
   buttons: {
@@ -34,28 +34,28 @@ scope.dialog({
 })
 
 // Confirm shorthand — returns Promise<boolean>:
-const confirmed = await scope.dialog.confirm('Are you sure?')
+const confirmed = await env.dialog.confirm('Are you sure?')
 if (confirmed) deleteItem()`
 
-const toastExample = `// scope.toast is injected by StandardOverlays.
+const toastExample = `// env.toast is injected by StandardOverlays.
 // Convenience methods for each variant:
 
-scope.toast.success('Saved successfully!')
-scope.toast.error('Something went wrong')
-scope.toast.warn('Disk space low')
-scope.toast.info('New update available')
+env.toast.success('Saved successfully!')
+env.toast.error('Something went wrong')
+env.toast.warn('Disk space low')
+env.toast.info('New update available')
 
 // Full options:
-scope.toast({
+env.toast({
   message: 'Custom toast',
   variant: 'primary',
   duration: 5000,  // ms, default 3000. 0 = no auto-dismiss
 })`
 
-const drawerExample = `// scope.drawer is injected by StandardOverlays.
+const drawerExample = `// env.drawer is injected by StandardOverlays.
 // Drawer.show() returns a Promise that resolves when closed.
 
-scope.drawer({
+env.drawer({
   title: 'Settings',
   children: <SettingsPanel />,
   side: 'right',   // 'left' (default) | 'right'
@@ -63,7 +63,7 @@ scope.drawer({
 })
 
 // Minimal — just content:
-scope.drawer({ children: <nav>Sidebar</nav> })`
+env.drawer({ children: <nav>Sidebar</nav> })`
 
 const overlaySpec = `// Under the hood, all overlays use the same OverlaySpec:
 interface OverlaySpec {
@@ -84,20 +84,20 @@ export default function OverlaysPage() {
       <h1>Overlays</h1>
       <p>
         Dialog, Toast, and Drawer — all using a shared overlay system
-        injected via scope by <code>StandardOverlays</code>.
+        injected via env by <code>StandardOverlays</code>.
       </p>
 
       <Section title="Setup">
         <p>
           <code>StandardOverlays</code> is a wrapper component that binds
-          <code>scope.dialog</code>, <code>scope.toast</code>, and <code>scope.drawer</code>.
+          <code>env.dialog</code>, <code>env.toast</code>, and <code>env.drawer</code>.
         </p>
         <Code code={setup} lang="tsx" />
       </Section>
 
       <Section title="Dialog">
         <p>
-          Imperative modal dialog. <code>scope.dialog()</code> returns a <code>Promise</code> that
+          Imperative modal dialog. <code>env.dialog()</code> returns a <code>Promise</code> that
           resolves with the clicked button key (or <code>null</code> on dismiss).
         </p>
         <Code code={dialogExample} lang="tsx" />
@@ -122,7 +122,7 @@ export default function OverlaysPage() {
       <Section title="OverlaySpec">
         <p>
           All overlay types share a common <code>OverlaySpec</code> interface.
-          You can push custom overlays via <code>scope.overlay(spec)</code>.
+          You can push custom overlays via <code>env.overlay(spec)</code>.
         </p>
         <Code code={overlaySpec} lang="tsx" />
       </Section>

@@ -23,9 +23,9 @@ function App() {
   )
 }`
 
-const viewFunction = `// The Router calls view(spec, scope) where:
+const viewFunction = `// The Router calls view(spec, env) where:
 //   spec.params — extracted URL parameters
-//   scope — the current reactive scope
+//   env — the current reactive env
 
 function UserPage(spec: { params: { id: string } }) {
   return <h1>User {spec.params.id}</h1>
@@ -91,7 +91,7 @@ export default function RouterPage() {
 
       <Section title="View Functions">
         <p>
-          The router calls <code>view(spec, scope)</code> where <code>spec.params</code>
+          The router calls <code>view(spec, env)</code> where <code>spec.params</code>
           contains the extracted URL parameters.
         </p>
         <Code code={viewFunction} lang="tsx" />
@@ -122,7 +122,7 @@ export default function RouterPage() {
           { name: 'routes', type: 'ClientRouteDefinition[]', description: 'Array of route definitions', required: true },
           { name: 'notFound', type: '(spec) => JSX.Element', description: 'Component rendered for unmatched URLs', required: true },
           { name: 'path', type: 'string', description: 'URL pattern with [param] and [...catchAll] segments', required: true },
-          { name: 'view', type: '(spec, scope) => JSX.Element', description: 'Component to render for this route', required: true },
+          { name: 'view', type: '(spec, env) => JSX.Element', description: 'Component to render for this route', required: true },
         ]} />
       </Section>
     </article>

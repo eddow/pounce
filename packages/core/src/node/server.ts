@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { JSDOM } from 'jsdom'
-import { reconcile, rootScope, type Scope } from '../lib'
+import { reconcile, rootEnv, type Env } from '../lib'
 
 /**
  * Global storage for the JSDOM instance associated with the current execution context (e.g., an SSR request).
@@ -34,10 +34,10 @@ export function withSSR<T>(fn: (dom: { document: Document; window: Window }) => 
  * Renders a @pounce/core element to a string synchronously.
  * Useful for basic SSR.
  */
-export function renderToString(element: JSX.Element, scope: Scope = rootScope): string {
+export function renderToString(element: JSX.Element, env: Env = rootEnv): string {
 	return withSSR(({ document }) => {
 		const container = document.getElementById('root')!
-		const mountable = element.render(scope)
+		const mountable = element.render(env)
 		reconcile(container as HTMLElement, mountable)
 		return container.innerHTML
 	})
@@ -49,12 +49,12 @@ export function renderToString(element: JSX.Element, scope: Scope = rootScope): 
  */
 export async function renderToStringAsync(
 	element: JSX.Element,
-	scope: Scope = rootScope,
+	env: Env = rootEnv,
 	options: { collectPromises?: () => Promise<unknown>[] } = {}
 ): Promise<string> {
 	return await withSSR(async ({ document }) => {
 		const container = document.getElementById('root')!
-		const mountable = element.render(scope)
+		const mountable = element.render(env)
 		reconcile(container as HTMLElement, mountable)
 
 		// If we have a way to collect promises, wait for them

@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { reactive, effect, type CleanupReason } from 'mutts'
-import { latch, type Scope, document } from '@pounce/core'
+import { latch, type Env, document } from '@pounce/core'
 
 describe('Effect during render bug', () => {
 	let container: HTMLElement
@@ -23,7 +23,7 @@ describe('Effect during render bug', () => {
 		})
 
 		// Child component
-		function ChildCounter(_props: any, _scope: Scope) {
+		function ChildCounter(_props: any, _env: Env) {
 			childRenderCount.count++
 			return (
 				<button class="add" onClick={() => state.count++}>Increment</button>

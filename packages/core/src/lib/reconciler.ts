@@ -1,41 +1,46 @@
-import { cleanedBy, cleanup, effect, isReactive, lift, morph, reactive, type ScopedCallback, unwrap } from 'mutts'
+import {
+	atomic,
+	cleanedBy,
+	cleanup,
+	effect,
+	isReactive,
+	lift,
+	morph,
+	named,
+	type ScopedCallback,
+	tag,
+	unwrap,
+} from 'mutts'
 import { perf } from '../perf'
 import { document, Node } from '../shared'
 import { collapse, ReactiveProp } from './composite-attributes'
 import { perfCounters, testing } from './debug'
-import { type Child, type Children, PounceElement, rootScope, type Scope } from './pounce-element'
+import { type Child, type Children, PounceElement, rootEnv, type Env } from './pounce-element'
 import { weakCached } from './utils'
 
 const latchOwners = new WeakMap<Element, string>()
 
-export function pounceElement(child: Children, scope: Scope): PounceElement {
+export function pounceElement(child: Children, env: Env): PounceElement {
 	return child instanceof PounceElement
 		? child
 		: child === null || child === undefined
 			? new PounceElement(() => [], 'empty')
 			: Array.isArray(child)
-				? new PounceElement(() => processChildren(child, scope))
+				? new PounceElement(() => processChildren(child, env))
 				: child instanceof Node
 					? new PounceElement(() => child)
 					: new PounceElement(() => document.createTextNode(String(child)), '#text')
 }
 
 let reconcileCount = 0
-export function reconcile(
-	parent: Node,
-	newChildren: Node | readonly Node[]
-): ScopedCallback {
+export function reconcile(parent: Node, newChildren: Node | readonly Node[]): ScopedCallback {
 	function reconciler() {
 		perfCounters.reconciliations++
 		const rid = ++reconcileCount
 		perf?.mark(`reconcile:${rid}:start`)
-		const items = Array.isArray(newChildren)
-			? newChildren
-			: newChildren
-				? [newChildren]
-				: []
-		if(parent instanceof Element && (items.length === 0 || parent.childNodes.length === 0)) {
-			(parent as Element).replaceChildren(...items)
+		const items = Array.isArray(newChildren) ? newChildren : newChildren ? [newChildren] : []
+		if (parent instanceof Element && (items.length === 0 || parent.childNodes.length === 0)) {
+			;(parent as Element).replaceChildren(...items)
 			return
 		}
 		let added = 0
@@ -43,19 +48,19 @@ export function reconcile(
 		const itemsSet = new Set(items)
 		// Iterate through items and sync with live DOM
 		items.forEach((item, i) => {
-			const newChild = unwrap(item) as Node;
-			let currentChild = parent.childNodes[i];
-			while(i < parent.childNodes.length && !itemsSet.has(currentChild)) {
+			const newChild = unwrap(item) as Node
+			let currentChild = parent.childNodes[i]
+			while (i < parent.childNodes.length && !itemsSet.has(currentChild)) {
 				removed++
 				parent.removeChild(currentChild)
 				currentChild = parent.childNodes[i]
 			}
 			if (currentChild !== newChild) {
 				// This handles BOTH moving an existing node and inserting a brand new one
-				parent.insertBefore(newChild, currentChild || null);
-				added++;
+				parent.insertBefore(newChild, currentChild || null)
+				added++
 			}
-		});
+		})
 
 		while (parent.childNodes.length > items.length) {
 			removed++
@@ -71,11 +76,11 @@ export function reconcile(
 	}
 	let stopRedraw = () => {}
 	// TODO: re-optimize?
-	//if(isReactive(newChildren)) {
-		stopRedraw = effect(reconciler)
-		// Anchor the redraw effect to the reactive children so GC doesn't collect it.
-		// Root effects use FinalizationRegistry — if nobody holds the cleanup, GC kills the effect.
-		if (newChildren && typeof newChildren === 'object') cleanedBy(newChildren, stopRedraw)
+	//if(isReactive(newChildren))
+	stopRedraw = effect(reconciler)
+	// Anchor the redraw effect to the reactive children so GC doesn't collect it.
+	// Root effects use FinalizationRegistry — if nobody holds the cleanup, GC kills the effect.
+	if (newChildren && typeof newChildren === 'object') cleanedBy(newChildren, stopRedraw)
 	//} else reconciler()
 	return stopRedraw
 }
@@ -89,7 +94,7 @@ export function reconcile(
 export function latch(
 	target: string | Element,
 	content: PounceElement | Children | Children[] | Node | Node[] | undefined,
-	scope: Scope = rootScope
+	env: Env = rootEnv
 ): ScopedCallback {
 	let stop: ScopedCallback | undefined
 	let element: Element | null = null
@@ -115,17 +120,17 @@ export function latch(
 
 		let nodes: Node | readonly Node[]
 		if (content instanceof PounceElement) {
-			nodes = content.render(scope)
+			nodes = content.render(env)
 		} else if (content instanceof Node) {
 			nodes = content
 		} else if (Array.isArray(content)) {
 			if (content.length > 0 && content[0] instanceof Node) {
 				nodes = content as Node[]
 			} else {
-				nodes = processChildren(content as Children[], scope)
+				nodes = processChildren(content as Children[], env)
 			}
 		} else if (content !== undefined && content !== null) {
-			nodes = processChildren([content as Children], scope)
+			nodes = processChildren([content as Children], env)
 		} else {
 			console.error('[pounce] Invalid content:', content)
 			throw new Error('Invalid content')
@@ -136,7 +141,7 @@ export function latch(
 	}
 
 	if (document.readyState === 'loading')
-		document.addEventListener('DOMContentLoaded', actuallyLatch)
+		document.addEventListener('DOMContentLoaded', atomic(actuallyLatch))
 	else actuallyLatch()
 
 	return () => {
@@ -157,7 +162,7 @@ export function latch(
  *   - Spreads childrenArray ([...childrenArray]) to subscribe to array mutations
  *   - Flattens nested arrays, filters falsy
  *   - Applies conditional rendering (if/when/else) via shouldRender()
- *   - Maps surviving PounceElements → rendered results via e.render(scope)
+ *   - Maps surviving PounceElements → rendered results via e.render(env)
  *   - Returns: reactive array of PerhapsReactive<Node | readonly Node[]>
  *
  * STAGE 2 — ReactiveProp getter (flattening)
@@ -177,40 +182,58 @@ export function latch(
  *   the morph effect + reactive cache are wasted. Restore fast paths
  *   that return rendered nodes directly.
  */
-export function processChildren(children: Children, scope: Scope): Node | readonly Node[] {
-	if (!Array.isArray(children)) return pounceElement(children, scope).render(scope)
+export function processChildren(children: Children, env: Env): Node | readonly Node[] {
+	if (!Array.isArray(children)) return pounceElement(children, env).render(env)
 	//Idea: keep reactivity for as late as possible
-	const flatInput: Child[] & { [cleanup]?: ScopedCallback } = isReactive(children)
-		? lift(() => unwrap(children.flat(Infinity).filter(Boolean) as Child[]))
-		: children.flat(Infinity).filter(Boolean)
-	let flatElements: PounceElement[] & { [cleanup]?: ScopedCallback } =
-		isReactive(flatInput) || flatInput.some((c) => c instanceof ReactiveProp)
-			? lift(() => flatInput.map((c) => pounceElement(collapse(c), scope)))
-			: flatInput.map((c) => pounceElement(c, scope))
-
-	const conditioned =
-		isReactive(flatElements) || flatElements.some((e) => e.conditional)
-			? lift(() => {
-					// TODO: re-think about 'pick'
-					let ifOccurred = false
-					return flatElements
-						.map((e) => {
-							const shouldRender = e.shouldRender(ifOccurred, scope)
-							if (shouldRender) ifOccurred = true
-							if (shouldRender !== false) return e
-						})
-						.filter(Boolean) as PounceElement[]
+	const flatInput: Child[] & { [cleanup]?: ScopedCallback } =
+		tag('flatInput', isReactive(children) || children.some((c) => isReactive(c))
+			? lift(named('lift:flatInput', () => unwrap(children.flat(Infinity).filter(Boolean) as Child[])))
+			: children.flat(Infinity).filter(Boolean))
+	const flatElements: readonly PounceElement[] & { [cleanup]?: ScopedCallback } =
+		tag('flatElements', isReactive(flatInput) || flatInput.some((c) => c instanceof ReactiveProp)
+			? morph(flatInput, named('morph:flatElements', (c) => pounceElement(collapse(c), env)), {
+					pure: (c) => !(c instanceof ReactiveProp),
 				})
+			: (flatInput.map((c) => pounceElement(c, env)) as readonly PounceElement[] & {
+					[cleanup]?: never
+				}))
+
+	const conditioned = tag(
+		'conditioned',
+		isReactive(flatElements) || flatElements.some((e) => e.conditional)
+			? lift(
+					named('lift:conditioned', () => {
+						// TODO: re-think about 'pick'
+						let ifOccurred = false
+						return flatElements
+							.map((e) => {
+								const shouldRender = e.shouldRender(ifOccurred, env)
+								if (shouldRender) ifOccurred = true
+								if (shouldRender !== false) return e
+							})
+							.filter(Boolean) as PounceElement[]
+					})
+				)
 			: flatElements
-	// Render the elements to nodes
-	const rendered = morph.pure(
-		conditioned,
-		weakCached((e: PounceElement) => e.render(scope))
 	)
-	return cleanedBy(lift(() => rendered.flat(Infinity) as Node[]), () => {
-		flatInput[cleanup]?.()
-		flatElements[cleanup]?.()
-		conditioned[cleanup]?.()
-		rendered[cleanup]?.()
-	})
+	// Render the elements to nodes
+	const rendered = tag(
+		'rendered',
+		morph.pure(
+			conditioned,
+			named(
+				'morph:rendered',
+				weakCached((e: PounceElement) => e.render(env))
+			)
+		)
+	)
+	return cleanedBy(
+		tag('nodes', lift(named('lift:nodes', () => rendered.flat(Infinity) as Node[]))),
+		() => {
+			flatInput[cleanup]?.()
+			flatElements[cleanup]?.()
+			conditioned[cleanup]?.()
+			rendered[cleanup]?.()
+		}
+	)
 }
