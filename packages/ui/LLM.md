@@ -7,9 +7,10 @@ Read [pounce core's LLM](../core/LLM.md) and [kit's LLM](../kit/LLM.md).
 **Headless** UI primitives for Pounce applications. Zero styling, zero class names, zero opinions on CSS frameworks. Provides:
 - Behavioral logic (state, a11y, event handling) via composable `use*` hooks
 - Shared prop interfaces that adapters extend
-- Icon registration (the one true cross-cutting concern)
+- Icon registration via `options.iconFactory`
 - `uiComponent` factory for variant typing + dot-syntax
 - `options` object for global configuration
+- RTL/LTR resolution via `relativeSide()` using `DisplayContext` from `@pounce/kit`
 
 ## Architecture: Adapter as Front
 
@@ -19,47 +20,50 @@ Read [pounce core's LLM](../core/LLM.md) and [kit's LLM](../kit/LLM.md).
 
 ```
 @pounce/ui (headless)
-  └── useButton(props) → { onClick, isIconOnly, ariaProps, ... }
+  └── useButton(props, env) → { onClick, isIconOnly, iconPosition, ariaProps, ... }
 
 @pounce/pico (styled)
-  └── Button = uiComponent(['primary','danger'] as const)(function Button(props) {
-        const state = useButton(props)
-        return <button class={`btn-${props.variant}`} onClick={state.onClick}>...</button>
+  └── Button = picoComponent(function Button(props, env) {
+        const state = useButton(props, env)
+        return <button onClick={state.onClick}>...</button>
       })
 ```
 
+## `env.dc` — DisplayContext
+
+`@pounce/kit` injects a `DisplayContext` into the Pounce `Env` under the key `dc`.
+Components and hooks access it as `env.dc`. It carries:
+- `direction: 'ltr' | 'rtl'`
+- `theme: string`
+- `locale: string`
+- `timeZone: string`
+
+Hooks that need direction (e.g. `useButton`) receive `env: Env` and read `env.dc`.
+The `Icon` component also receives `env` and passes `env.dc` to `iconFactory`.
+
+`uiComponent` forwards `env` to the wrapped component automatically.
+
 ## `options` Object
 
-Single mutable config object — same pattern as `reactiveOptions` in mutts.
+Single mutable config object.
 
 ```ts
 import { options } from '@pounce/ui'
-
-// Set icon renderer once at app startup:
-options.iconFactory = (name, size) => <i class={`icon-${name}`} />
-
-// Register known variant names (for dev-mode warnings):
-options.variants.add('primary')
-options.variants.add('danger')
+options.iconFactory = (name, size, dc) => <i class={`icon-${name}`} />
 ```
 
 **Fields:**
-- `options.iconFactory: IconFactory | undefined` — renders `<Icon name="star" />`. Falls back to `<span data-icon="name">name</span>` if unset.
-- `options.variants: Set<string>` — known variant names. `uiComponent` warns in dev when an unknown variant is passed.
+- `options.iconFactory: IconFactory | undefined` — `(name, size, context: DisplayContext) => JSX.Element`. Falls back to `<span data-icon>` if unset.
 
 ## `uiComponent` — Variant Factory
 
 Curried factory. Call once per adapter with the variant list; wrap each component with the result.
 
 ```ts
-import { uiComponent } from '@pounce/ui'
-
-// Adapter creates its factory once (variants as const → infers V type):
 const picoComponent = uiComponent(['primary', 'secondary', 'danger', 'ghost'] as const)
 
-// Each component is wrapped:
-export const Button = picoComponent(function Button(props) {
-  // props.variant is typed as 'primary' | 'secondary' | 'danger' | 'ghost' | undefined
+export const Button = picoComponent(function Button(props, env) {
+  const state = useButton(props, env)
   return <button class={`btn btn-${props.variant ?? 'default'}`}>{props.children}</button>
 })
 
@@ -68,23 +72,19 @@ export const Button = picoComponent(function Button(props) {
 <Button.primary>Save</Button.primary>
 ```
 
-**What `uiComponent` does:**
-1. Narrows `props.variant` to the declared union type
-2. Adds dot-syntax accessors (`Button.primary`, `Button.danger`, …)
-3. In dev: warns if `props.variant` is not in `options.variants`
-4. Sets `component.name` for devtools
+**What it does:** narrows `props.variant`, adds dot-syntax accessors, forwards `env`, dev-mode unknown-variant error.
 
-**What `uiComponent` does NOT do:** variant-to-attrs mapping, class generation, theme handling — all adapter concerns.
+**What it does NOT do:** variant-to-attrs mapping, class generation, theme handling — all adapter concerns.
 
 ## Hook Pattern
 
 Each component domain exports a `use*` hook returning a plain object of lazy getters:
 
 ```ts
-export function useButton(props: ButtonProps): ButtonState {
+export function useButton(props: ButtonProps, env: Env): ButtonState {
   return {
     get onClick() { return props.disabled ? undefined : props.onClick },
-    get isIconOnly() { return !!props.icon && !this.hasLabel },
+    get iconPosition() { if (props.icon) return relativeSide(env.dc, props.iconPosition) },
     get ariaProps() { return { 'aria-label': ..., 'aria-disabled': ... } },
   }
 }
@@ -92,48 +92,42 @@ export function useButton(props: ButtonProps): ButtonState {
 
 All properties are **getters** — no reactive reads at hook call time. Safe to call in component body.
 
+## RTL/LTR — `relativeSide`
+
+`shared/utils.ts` exports `relativeSide(dc, side)`:
+- Input: `LogicalSide` = `'start' | 'end' | 'left' | 'right'`
+- Output: `PhysicalSide` = `'left' | 'right'`
+- `'left'`/`'right'` pass through; `'start'`/`'end'` resolve using `dc.direction`
+
+The adapter receives physical sides and can use them directly in CSS/style.
+
 ## Source Map
 
 ```
 src/
-├── index.ts              # Barrel: options, uiComponent, Icon, all hooks
-├── options.ts            # options object (iconFactory, variants)
-├── component.ts          # uiComponent factory, UiComponent type, WithVariant type
-├── button/
-│   ├── use-button.ts     # useButton(props) → ButtonState
-│   ├── types.ts          # ButtonProps, ButtonState
-│   └── index.ts
-├── checkbox/
-│   ├── use-checkbox.ts   # useCheckbox(props) → ControlState
-│   ├── use-radio.ts      # useRadio(props) → RadioState
-│   ├── types.ts          # CheckboxProps, RadioProps, SwitchProps, ControlState, RadioState
-│   └── index.ts
-├── forms/
-│   ├── use-combobox.ts   # useCombobox(props) → ComboboxState (datalist id)
-│   ├── types.ts          # SelectProps, ComboboxProps, ComboboxOption, …
-│   └── index.ts
+├── index.ts          # Barrel export — single entry point, tree-shakeable
+├── options.ts        # options.iconFactory, IconFactory type
+├── component.ts      # uiComponent factory, UiComponent/WithVariant types
+├── icon.tsx          # <Icon> component (uses env.dc + options.iconFactory)
+├── button.ts         # ButtonProps, ButtonState, useButton(props, env)
+├── checkbox.ts       # CheckboxProps, RadioProps, SwitchProps, useCheckbox, useRadio, useSwitch
+├── checkbutton.ts    # CheckButtonProps, CheckButtonState, useCheckButton
+├── radiobutton.ts    # RadioButtonProps, RadioButtonState, useRadioButton
+├── accordion.ts      # AccordionProps, AccordionState, AccordionGroupProps, useAccordion
+├── progress.ts       # ProgressProps, ProgressState, useProgress
+├── forms.ts          # SelectProps, ComboboxProps, ComboboxState, useCombobox
 └── shared/
-    ├── types.ts          # DisableableProps, VariantProps, IconProps, CheckedProps, …
-    └── id.ts             # generateId(prefix?) utility
+    ├── types.ts      # DisableableProps, VariantProps, IconProps, CheckedProps, ...
+    └── utils.ts      # generateId, isDev, relativeSide, LogicalSide, PhysicalSide
 ```
 
-**Note:** `Icon` component and `IconFactory` type live in `options.ts` / re-exported from root. No `icon/` subfolder.
-
-## Key Differences from adapted-ui
-
-| Concern | adapted-ui | @pounce/ui v2 |
-|---------|-----------|---------------|
-| Class names | Hardcoded fallbacks | None |
-| Adapter registry | `setAdapter/getAdapter` | Removed |
-| Variants | Global `variants` dict + `asVariant` proxy | `uiComponent` factory, adapter owns mapping |
-| `toneClass` | Hack in forms.tsx | Deleted |
-| SASS in components | Yes (vanilla styles) | None |
-| Global config | Multiple accessor functions | Single `options` object |
+Each component file is self-contained: types + hook + helpers in one file. No per-component subdirectories.
 
 ## ⚠️ Gotchas
 
 1. **No JSX in hooks**: `use*` hooks return plain objects, not JSX. Adapters own the JSX.
 2. **Reactive getters**: All state properties are getters — never read them at hook call time.
 3. **Variant is a string**: `props.variant` is always the string name. The adapter maps it to classes/attrs.
-4. **`options.variants` is for dev warnings only**: It does not drive any runtime behavior beyond the console warning.
-5. **`uiComponent` is curried**: First call takes the variant list, second call takes the component function.
+4. **`uiComponent` is curried**: First call takes the variant list, second call takes the component function.
+5. **`env` forwarding**: `uiComponent` passes `env` through. Hooks that need `DisplayContext` take `env: Env` as second arg and read `env.dc`.
+6. **`iconPosition` is physical**: `useButton` resolves `'start'`/`'end'` → `'left'`/`'right'` via `relativeSide`. Adapters compare against `'left'`/`'right'`, never `'start'`/`'end'`.

@@ -9,10 +9,6 @@ export class PounceResponse extends Response {
 	private _textCache: string | null = null
 	private _bodyRead = false
 
-	constructor(body?: BodyInit | null, init?: ResponseInit) {
-		super(body, init)
-	}
-
 	/**
 	 * Internal helper to get and cache the raw buffer
 	 */

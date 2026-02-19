@@ -28,7 +28,7 @@ const routeTreeCache = new Map<string, RouteTreeNode>()
 export function createPounceMiddleware(options?: PounceMiddlewareOptions): MiddlewareHandler {
 	const routesDir = options?.routesDir ?? './routes'
 
-	return async (c: Context, next: () => Promise<void>): Promise<Response | void> => {
+	return async (c: Context, next: () => Promise<void>): Promise<Response | undefined> => {
 		const url = new URL(c.req.url)
 		const origin = `${url.protocol}//${url.host}`
 
@@ -45,7 +45,7 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
 				setRouteRegistry({
 					match: (path, method) => {
 						const m = matchRoute(path, routeTree!, method)
-						if (m && m.handler) {
+						if (m?.handler) {
 							return {
 								handler: m.handler,
 								middlewareStack: m.middlewareStack,
@@ -92,7 +92,7 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
 
 				// Handle SSR injection for HTML responses
 				const contentType = c.res.headers.get('Content-Type')
-				if (contentType && contentType.includes('text/html')) {
+				if (contentType?.includes('text/html')) {
 					const html = await c.res.text()
 					// Inject content (API, styles, etc.) into the HTML body
 					let finalHtml = await injectSSRContent(html)

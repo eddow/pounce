@@ -13,6 +13,3 @@ export * from './components'
 
 // Export factory for custom components
 export { picoComponent } from './factory'
-
-// Export setup utilities
-export { setupIcons } from './setup'

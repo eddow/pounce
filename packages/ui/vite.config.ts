@@ -7,9 +7,6 @@ export default defineConfig({
 		lib: {
 			entry: {
 				index: resolve(__dirname, 'src/index.ts'),
-				'button/index': resolve(__dirname, 'src/button/index.ts'),
-				'checkbox/index': resolve(__dirname, 'src/checkbox/index.ts'),
-				'forms/index': resolve(__dirname, 'src/forms/index.ts'),
 			},
 			formats: ['es'],
 		},

@@ -1,6 +1,7 @@
 import type { Env } from '@pounce/core'
 import { reactive } from 'mutts'
-import { client, componentStyle } from '../dom/index'
+// TODO: GRRRRRRRRRRRR - no internal file should import from the entry-points!!! The entry points are only used to forward all what the library exports and dom-specific behavior!! Kit/display has to be used both in browser and SSR!
+import { client, componentStyle } from './dom/index'
 
 componentStyle.sass`
 .pounce-display-provider
@@ -8,22 +9,11 @@ componentStyle.sass`
 `
 
 /** Env key used by DisplayProvider to inject context */
-const DISPLAY_KEY = 'display'
-
-/* TODO: review structure
- * - env should perhaps contain directly ltr/theme/locale/timezone/...
- * - perhaps in readonly, it's a good idea, though the DisplayContext should have a bunch of setters. The themeSetting "auto" should be in the setter object (who would have a theme-config: theme | 'auto') and let the theme be "parent-display-context. theme if 'auto'" - this "auto" shouldn't be in the env but in the communication between theme picker and display context
- * - I would definitively avoid `useView`, we can have a 1-way config by adding the `defaultDisplayContext` to rootenv in main.tsx, and have each displaycontext simply mimmic their env's prototype values (we cannot rely on the prototype chain to be completely reactive) when "auto" or no-config
- * Kit could also simply add the defaultDisplayContext to the rootenv in its loading process as rootEnv is a global common core-exported object
- *
- * So, (Env it is then), the env provide read-only values. Env "override" them (by writing in its own env the value from the parent's one) - even if just copying the value if nothing is overriden - and Env provides a "settings" object who contains roughly the same but with "auto" (or "undefined) with get/set in order to plug in there configuration controls (like the theme toggle)
- */
+const DISPLAY_KEY = 'dc'
 
 export type DisplayContext = {
 	/** Resolved theme (never 'auto' — always the concrete value) */
 	readonly theme: string
-	/** Raw theme setting ('auto' | 'light' | 'dark' | custom) */
-	themeSetting: string
 	/** Resolved text direction */
 	readonly direction: 'ltr' | 'rtl'
 	/** Resolved locale */
@@ -40,7 +30,6 @@ export const defaultDisplayContext: DisplayContext = {
 	get theme() {
 		return client.prefersDark ? 'dark' : 'light'
 	},
-	themeSetting: 'auto',
 	get direction() {
 		return client.direction ?? 'ltr'
 	},
@@ -84,7 +73,7 @@ export type DisplayProviderProps = {
 export function DisplayProvider(props: DisplayProviderProps, env: Env) {
 	const parent = env[DISPLAY_KEY] as DisplayContext | undefined
 
-	const state = reactive({ themeSetting: props.theme ?? 'auto' })
+	const state = reactive({ themeSetting: props.theme })
 
 	function resolveTheme(): string {
 		const setting = state.themeSetting
@@ -117,13 +106,6 @@ export function DisplayProvider(props: DisplayProviderProps, env: Env) {
 	const context: DisplayContext = {
 		get theme() {
 			return resolveTheme()
-		},
-		get themeSetting() {
-			return state.themeSetting
-		},
-		set themeSetting(t: string) {
-			state.themeSetting = t
-			props.onThemeChange?.(t)
 		},
 		get direction() {
 			return resolveDirection()

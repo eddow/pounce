@@ -1,19 +1,33 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.3.13/schema.json",
 	"files": {
-		"includes": ["packages/**/src/**/*.ts", "packages/**/src/**/*.tsx", "sandbox/**/*.ts"]
+		"includes": [
+			"packages/**/src/**/*.ts",
+			"packages/**/src/**/*.tsx",
+			"sandbox/**/*.ts"
+		]
 	},
-"overrides": [
-	{
-		"includes": ["**/*.spec.tsx", "**/*.spec.ts"],
-		"linter": {
-			"enabled": false
+	"overrides": [
+		{
+			"includes": ["**/*.spec.tsx", "**/*.spec.ts"],
+			"linter": {
+				"enabled": false
+			},
+			"formatter": {
+				"enabled": false
+			}
 		},
-		"formatter": {
-			"enabled": false
+		{
+			"includes": ["packages/docs/**/*.ts", "packages/docs/**/*.tsx"],
+			"linter": {
+				"rules": {
+					"a11y": {
+						"noLabelWithoutControl": "off"
+					}
+				}
+			}
 		}
-	}
-],
+	],
 	"javascript": {
 		"formatter": {
 			"lineWidth": 100,
@@ -45,7 +59,12 @@
 			"suspicious": {
 				"noExplicitAny": "off",
 				"noDebugger": "warn",
-				"noConsole": "off"
+				"noConsole": "off",
+				"noAssignInExpressions": "off",
+				"noImplicitAnyLet": "off",
+				"useIterableCallbackReturn": "off",
+				"noRedeclare": "off",
+				"noShadowRestrictedNames": "off"
 			},
 			"performance": {
 				"noAccumulatingSpread": "off"
@@ -67,7 +86,9 @@
 			},
 			"nursery": {},
 			"a11y": {
-				"useButtonType": "off"
+				"useButtonType": "off",
+				"noStaticElementInteractions": "off",
+				"useValidAnchor": "off"
 			}
 		}
 	}

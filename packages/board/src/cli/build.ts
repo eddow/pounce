@@ -16,7 +16,7 @@ export async function runBuild(options: BuildOptions = {}) {
 	const root = process.cwd()
 	const routesDir = options.routesDir ?? './routes'
 	const outDir = options.outDir ?? './dist'
-	const entryHtml = options.entryHtml ?? './index.html'
+	const _entryHtml = options.entryHtml ?? './index.html'
 
 	console.log('🚧 Starting Pounce-Board build...')
 

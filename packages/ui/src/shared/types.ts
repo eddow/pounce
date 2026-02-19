@@ -16,12 +16,11 @@ export type VariantProps = {
 /** Any component that accepts an icon (name string or pre-rendered element) */
 export type IconProps = {
 	icon?: string | JSX.Element
-	iconPosition?: 'start' | 'end'
+	iconPosition?: 'left' | 'right' | 'start' | 'end'
 }
 
 /** Any component that exposes a checked/selected state */
 export type CheckedProps = {
-	checked?: boolean
 	onChange?: (checked: boolean) => void
 }
 

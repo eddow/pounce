@@ -48,7 +48,7 @@
 | `pointer` | Pointer events (down/move/up) with state |
 | `resize` | ResizeObserver wrapper |
 | `scroll` | Scroll position tracking (x/y) |
-| `trail` | Mouse trail effect |
+| `trail` | log-style "scroll-to-bottom" |
 
 ### Overlays (`src/overlays/`)
 | Export | Description |

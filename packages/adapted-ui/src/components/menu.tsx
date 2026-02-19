@@ -147,11 +147,11 @@ function checkMenuStructure(detailsEl: HTMLDetailsElement) {
 
 const MenuList = ({ items }: { items: JSX.Element[] }) => {
 	if (items.length === 0) {
-		return <ul role="menu"></ul>
+		return <ul></ul>
 	}
 	const state = reactive({ items })
 	return (
-		<ul role="menu">
+		<ul>
 			<for each={state.items}>{(item) => <li role="none">{item}</li>}</for>
 		</ul>
 	)

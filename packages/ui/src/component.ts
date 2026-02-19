@@ -1,3 +1,4 @@
+import type { Env } from '@pounce/core'
 import { isDev } from './shared/utils'
 
 /** Props type with variant narrowed to the declared union V */
@@ -43,12 +44,12 @@ export type UiComponent<Props, V extends string> = ((
 export function uiComponent<const V extends string>(
 	variants: readonly V[]
 ): <Props extends { variant?: string }>(
-	ctor: (props: WithVariant<Props, V>) => JSX.Element
+	ctor: (props: WithVariant<Props, V>, env: Env) => JSX.Element
 ) => UiComponent<Props, V> {
 	return function wrap<Props extends { variant?: string }>(
-		ctor: (props: WithVariant<Props, V>) => JSX.Element
+		ctor: (props: WithVariant<Props, V>, env: Env) => JSX.Element
 	): UiComponent<Props, V> {
-		const wrapped = (props: WithVariant<Props, V>) => {
+		const wrapped = (props: WithVariant<Props, V>, env: Env) => {
 			if (
 				isDev &&
 				props.variant !== undefined &&
@@ -59,7 +60,7 @@ export function uiComponent<const V extends string>(
 					`[pounce/ui] <${ctor.name}> unknown variant "${props.variant}". Known: ${variants.join(', ')}`
 				)
 			}
-			return ctor(props)
+			return ctor(props, env)
 		}
 
 		Object.defineProperty(wrapped, 'name', { value: ctor.name })
@@ -67,8 +68,8 @@ export function uiComponent<const V extends string>(
 		return new Proxy(wrapped, {
 			get(target, prop) {
 				if (typeof prop === 'string' && (variants as readonly string[]).includes(prop)) {
-					return (props: Omit<WithVariant<Props, V>, 'variant'>) =>
-						ctor({ ...props, variant: prop as V } as WithVariant<Props, V>)
+					return (props: Omit<WithVariant<Props, V>, 'variant'>, env: Env) =>
+						ctor({ ...props, variant: prop as V } as WithVariant<Props, V>, env)
 				}
 				return Reflect.get(target, prop)
 			},

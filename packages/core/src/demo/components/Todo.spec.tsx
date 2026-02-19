@@ -1,7 +1,7 @@
 import { h, rootEnv } from '@pounce/core'
-import { project, Register, reactive } from 'mutts'
+import { project, reactive } from 'mutts'
 import { describe, expect, it } from 'vitest'
-import TodoWebComponent from './Todo'
+import TodoWebComponent, { type Todo } from './Todo'
 
 describe('TodoWebComponent', () => {
 	it('project reacts to second push', () => {
@@ -38,7 +38,7 @@ describe('TodoWebComponent', () => {
 	})
 
 	it('adds a second todo to the DOM', () => {
-		const todos = new Register((t: any) => t.id, [])
+		const todos = reactive<Todo[]>([])
 		const mount = h('div', {}, h(TodoWebComponent, { todos }))
 		const root = mount.render(rootEnv) as HTMLElement
 
@@ -53,14 +53,16 @@ describe('TodoWebComponent', () => {
 	})
 
 	it('shows correct text after remove and re-add', () => {
-		const todos = new Register((t: any) => t.id, [])
+		const todos = reactive<Todo[]>([])
 		const mount = h('div', {}, h(TodoWebComponent, { todos }))
 		const root = mount.render(rootEnv) as HTMLElement
 
 		todos.push({ id: 1, text: 'a', completed: false, createdAt: new Date() })
 		expect(root.querySelector('.todo-item .todo-text')?.textContent).toBe('a')
 
-		todos.remove(1)
+		// Filter out the todo with id 1
+		const filtered = todos.filter(todo => todo.id !== 1)
+		todos.splice(0, todos.length, ...filtered)
 		expect(root.querySelectorAll('.todo-item').length).toBe(0)
 
 		todos.push({ id: 2, text: 'b', completed: false, createdAt: new Date() })

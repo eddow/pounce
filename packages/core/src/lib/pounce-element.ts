@@ -9,7 +9,6 @@ export class DynamicRenderingError extends Error {
 	constructor(message: string) {
 		super(message)
 		this.name = 'DynamicRenderingError'
-		debugger
 	}
 }
 
@@ -100,8 +99,6 @@ export class PounceElement {
 						...(reaction === true ? ['No reasons given'] : formatCleanupReason(reaction)),
 						'\nIt means the component definition refers a reactive value that has been modified, though the component has not been rebuilt as it is considered forbidden to avoid infinite events loops.'
 					)
-					//throw new Error(`Component <${tagName}> rebuild detected.`)
-					debugger
 				} else {
 					partial = this.produce(env)
 					this.mountCallbacks(partial, env)

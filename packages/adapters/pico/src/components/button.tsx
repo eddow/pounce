@@ -1,4 +1,5 @@
-import { type ButtonProps, useButton } from '@pounce/ui'
+import type { Env } from '@pounce/core'
+import { type ButtonProps, Icon, useButton } from '@pounce/ui'
 import { picoComponent } from '../factory'
 
 /**
@@ -10,8 +11,8 @@ import { picoComponent } from '../factory'
  * <Button.danger onClick={handleDelete}>Delete</Button.danger>
  * ```
  */
-export const Button = picoComponent(function Button(props: ButtonProps) {
-	const state = useButton(props)
+export const Button = picoComponent(function Button(props: ButtonProps, env: Env) {
+	const state = useButton(props, env)
 
 	return (
 		<button
@@ -27,11 +28,11 @@ export const Button = picoComponent(function Button(props: ButtonProps) {
 			// Additional attributes
 			{...props.el}
 		>
-			{/* Icon at start */}
-			{props.icon && props.iconPosition === 'start' && (
-				<span style={{ marginRight: '0.5em' }}>
+			{/* Icon on the left */}
+			{state.iconPosition === 'left' && (
+				<span style={{ marginRight: state.isIconOnly ? undefined : '0.5em' }}>
 					{typeof props.icon === 'string' ? (
-						<span data-icon={props.icon}>{props.icon}</span>
+						<Icon name={props.icon} />	
 					) : (
 						props.icon
 					)}
@@ -41,21 +42,14 @@ export const Button = picoComponent(function Button(props: ButtonProps) {
 			{/* Button content */}
 			{props.children}
 
-			{/* Icon at end */}
-			{props.icon && props.iconPosition === 'end' && (
-				<span style={{ marginLeft: '0.5em' }}>
+			{/* Icon on the right (or icon-only) */}
+			{(state.iconPosition === 'right' || state.isIconOnly) && (
+				<span style={{ marginLeft: state.isIconOnly ? undefined : '0.5em' }}>
 					{typeof props.icon === 'string' ? (
-						<span data-icon={props.icon}>{props.icon}</span>
+						<Icon name={props.icon} />	
 					) : (
 						props.icon
 					)}
-				</span>
-			)}
-
-			{/* Icon-only button */}
-			{state.isIconOnly && typeof props.icon === 'string' && (
-				<span data-icon={props.icon} aria-hidden="true">
-					{props.icon}
 				</span>
 			)}
 		</button>

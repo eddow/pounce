@@ -1,4 +1,16 @@
-export type IconFactory = (name: string, size: string | number | undefined) => JSX.Element
+import type { DisplayContext } from '@pounce/kit'
+
+/**
+ * Icon factory receives the `DisplayContext` from `@pounce/kit` (injected into `env.dc`
+ * by `DisplayProvider`). Carries direction (RTL/LTR), theme, locale, and timezone.
+ */
+
+export type IconFactory = (
+	name: string,
+	size: string | number | undefined,
+	el: JSX.GlobalHTMLAttributes,
+	context: DisplayContext
+) => JSX.Element
 
 /**
  * Global configuration for `@pounce/ui`.
@@ -7,7 +19,7 @@ export type IconFactory = (name: string, size: string | number | undefined) => J
  * @example
  * ```ts
  * import { options } from '@pounce/ui'
- * options.iconFactory = (name, size) => <i class={`icon-${name}`} />
+ * options.iconFactory = (name, size, el, dc) => <i class={`icon-${name}`} {...el} />
  * ```
  */
 export const options = {

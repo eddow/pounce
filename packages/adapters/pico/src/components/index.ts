@@ -2,10 +2,10 @@
 
 // Re-export types from @pounce/ui for convenience
 export type {
-	ButtonProps as PounceButtonProps,
-	CheckboxProps as PounceCheckboxProps,
-	RadioProps as PounceRadioProps,
-	SwitchProps as PounceSwitchProps,
+	ButtonProps,
+	CheckboxProps,
+	RadioProps,
+	SwitchProps,
 } from '@pounce/ui'
 export { Button } from './button'
 export { Checkbox } from './checkbox'

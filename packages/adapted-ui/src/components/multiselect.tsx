@@ -113,22 +113,14 @@ export const Multiselect = <T,>(props: MultiselectProps<T>) => {
 			>
 				{props.children}
 			</summary>
-			<ul
-				role="listbox"
-				aria-multiselectable="true"
-				class={adapter.classes?.menu || 'pounce-multiselect-menu'}
-			>
+			<ul aria-multiselectable="true" class={adapter.classes?.menu || 'pounce-multiselect-menu'}>
 				<for each={props.items}>
 					{(item: T) => {
 						const checked = props.value.has(item)
 						const rendered = props.renderItem(item, checked)
 						if (rendered === false) return null
 						return (
-							<li
-								role="option"
-								aria-selected={checked}
-								onClick={(e: MouseEvent) => handleItemClick(item, e)}
-							>
+							<li aria-selected={checked} onClick={(e: MouseEvent) => handleItemClick(item, e)}>
 								{rendered}
 							</li>
 						)

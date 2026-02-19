@@ -27,7 +27,7 @@ declare global {
 			| string
 			| number
 			| JSX.Element
-			| void
+			| undefined
 			| false
 			| null
 			| undefined

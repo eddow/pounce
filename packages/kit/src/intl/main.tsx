@@ -28,7 +28,7 @@ export function Intl(props: IntlProps) {
 	// But since this is a specific Intl component, let's assume if it is a string it might be an ISO date.
 	if (typeof value === 'string') {
 		const d = new globalThis.Date(value)
-		if (!isNaN(d.getTime())) {
+		if (!Number.isNaN(d.getTime())) {
 			return <IntlDate {...(props as IntlDateProps)} value={d} />
 		}
 		return value

@@ -48,7 +48,7 @@ declare global {
 import type { RouteRegistry } from './client.js'
 
 // Storage for strict thread-safety in Node.js (AsyncLocalStorage)
-const STORAGE_KEY = Symbol.for('__POUNCE_STORAGE__')
+const _STORAGE_KEY = Symbol.for('__POUNCE_STORAGE__')
 
 /** @internal */
 export function getStorage(): AsyncLocalStorage<RequestScope> | null {

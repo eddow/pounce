@@ -39,6 +39,7 @@ import { flavored } from 'mutts'
 // Runtime CSS injection function
 // This is called by the transformed code from the Vite plugin
 // SSR Collection State
+// TODO: What on fucking earth is doing ssr-related concerns in a "dom" entry-point ??!?
 const ssrStyles = new Map<string, string>() // hash -> css
 
 // Runtime CSS injection function
@@ -81,7 +82,7 @@ function getCallerId(): string {
 				}
 			}
 		}
-	} catch (e) {}
+	} catch (_e) {}
 	return 'default'
 }
 

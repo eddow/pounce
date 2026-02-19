@@ -6,9 +6,9 @@ import { picoComponent } from '../factory'
  *
  * @example
  * ```tsx
- * <Radio group="theme" value="dark" checked={theme === 'dark'} onChange={setTheme}>
- *   Dark mode
- * </Radio>
+ * const state = reactive({ color: 'red' })
+ * <Radio name="color" value="red" group={state.color}>Red</Radio>
+ * <Radio name="color" value="blue" group={state.color}>Blue</Radio>
  * ```
  */
 export const Radio = picoComponent(function Radio(props: RadioProps) {
@@ -18,15 +18,10 @@ export const Radio = picoComponent(function Radio(props: RadioProps) {
 		<label>
 			<input
 				type="radio"
-				name={String(props.group ?? '')}
-				value={String(props.value ?? '')}
-				checked={state.isChecked}
-				onChange={(e) => {
-					if (e.target instanceof HTMLInputElement) {
-						props.onChange?.(e.target.checked)
-					}
-				}}
+				name={props.name}
+				checked={state.checked}
 				disabled={props.disabled}
+				{...props.el}
 			/>
 			{state.labelText}
 		</label>

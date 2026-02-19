@@ -65,11 +65,10 @@ export function checkComponentRebuild(componentCtor: Function) {
 		// Reset to avoid spamming, then pause for debugging
 		tracker.count = 0
 		tracker.startTime = now
-		debugger
 	}
 }
 
-export function setHtmlProperty(element: any, key: string, value: any): ScopedCallback | void {
+export function setHtmlProperty(element: any, key: string, value: any): ScopedCallback | undefined {
 	const normalizedKey = key.toLowerCase()
 	try {
 		if (normalizedKey in element) {
@@ -108,7 +107,7 @@ function attachAttributeValue(
 	element: HTMLElement,
 	key: string,
 	value: any
-): ScopedCallback | void {
+): ScopedCallback | undefined {
 	// 1. Event Listeners
 	if (/^on[A-Z]/.test(key)) {
 		const eventType = key.slice(2).toLowerCase()
@@ -137,7 +136,11 @@ function attachAttributeValue(
 	return setHtmlProperty(element, key, value)
 }
 
-function attachAttribute(element: HTMLElement, key: string, value: any): ScopedCallback | void {
+function attachAttribute(
+	element: HTMLElement,
+	key: string,
+	value: any
+): ScopedCallback | undefined {
 	// Two-way Binding (BiDi) - only for ReactiveProp with explicit .set
 	if (value instanceof ReactiveProp && value.set) {
 		const binding = {
@@ -193,8 +196,8 @@ function attachAttribute(element: HTMLElement, key: string, value: any): ScopedC
 export function attachAttributes(
 	element: HTMLElement,
 	attributes: CompositeAttributes
-): ScopedCallback | void {
-	let cleanups: Record<string, ScopedCallback | void> = {}
+): ScopedCallback | undefined {
+	let cleanups: Record<string, ScopedCallback | undefined> = {}
 	const cleanAll = () => {
 		for (const cleanup of Object.values(cleanups)) cleanup?.()
 	}

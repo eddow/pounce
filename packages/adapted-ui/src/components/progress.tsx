@@ -63,7 +63,6 @@ const ProgressBase = (props: ProgressProps) => {
 			class={adapter.classes?.base || 'pounce-progress'}
 			value={isIndeterminate() ? undefined : props.value}
 			max={p.max}
-			role="progressbar"
 			aria-valuenow={isIndeterminate() ? undefined : props.value}
 			aria-valuemin={0}
 			aria-valuemax={p.max}

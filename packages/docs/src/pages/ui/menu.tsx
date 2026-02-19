@@ -30,7 +30,7 @@ const a11yNote = `// Menu enforces a11y in dev mode:
 function MenuDemo() {
 	return (
 		<Menu summary="Actions">
-			<ul role="menu">
+			<ul>
 				<li role="none">
 					<Menu.Item href="/ui/button">Buttons</Menu.Item>
 				</li>

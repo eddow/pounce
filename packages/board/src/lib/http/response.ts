@@ -6,10 +6,6 @@
 export class PounceResponse extends Response {
 	private _bufferCache: string | null = null
 
-	constructor(body?: BodyInit | null, init?: ResponseInit) {
-		super(body, init)
-	}
-
 	// Override json to cache the parsed value
 	override async json(): Promise<any> {
 		const text = await this.text()
@@ -54,7 +50,7 @@ export class PounceResponse extends Response {
 			// If the response body hasn't been consumed, we can clone it
 			try {
 				body = response.clone().body
-			} catch (e) {
+			} catch (_e) {
 				// Body was already consumed, create an empty response
 				body = null
 			}

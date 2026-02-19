@@ -98,7 +98,6 @@ export function parseSegment(segment: string): SegmentInfo {
 				paramName: parsed.name,
 				normalizedSegment: segment,
 			}
-		case 'literal':
 		default:
 			return {
 				isDynamic: false,

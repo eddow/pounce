@@ -3,7 +3,6 @@
  * Conditionally exports native Performance API in development
  */
 
-// @ts-expect-error - import.meta.env exists in Vite, process.env in Node
 const enabled =
 	(typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV) ||
 	(typeof process !== 'undefined' && process.env?.NODE_ENV === 'development')

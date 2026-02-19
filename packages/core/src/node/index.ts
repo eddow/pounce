@@ -50,7 +50,7 @@ if (typeof window !== 'undefined') {
 			if (key in globalThis) continue
 			// @ts-expect-error
 			globalThis[key] = value
-		} catch (e) {
+		} catch (_e) {
 			// Ignore assignment errors for read-only properties
 		}
 	}

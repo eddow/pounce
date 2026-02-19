@@ -21,21 +21,6 @@
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js",
 			"default": "./dist/index.js"
-		},
-		"./button": {
-			"types": "./dist/button/index.d.ts",
-			"import": "./dist/button/index.js",
-			"default": "./dist/button/index.js"
-		},
-		"./checkbox": {
-			"types": "./dist/checkbox/index.d.ts",
-			"import": "./dist/checkbox/index.js",
-			"default": "./dist/checkbox/index.js"
-		},
-		"./forms": {
-			"types": "./dist/forms/index.d.ts",
-			"import": "./dist/forms/index.js",
-			"default": "./dist/forms/index.js"
 		}
 	},
 	"files": [
@@ -53,6 +38,7 @@
 	},
 	"dependencies": {
 		"@pounce/core": "workspace:*",
+		"@pounce/kit": "workspace:*",
 		"mutts": "link:../../../mutts"
 	},
 	"devDependencies": {

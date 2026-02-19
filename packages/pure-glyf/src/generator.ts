@@ -45,7 +45,7 @@ function scanDirectory(dir: string, rootDir: string): string[] {
 	list.forEach((file) => {
 		const filePath = path.join(dir, file)
 		const stat = fs.statSync(filePath)
-		if (stat && stat.isDirectory()) {
+		if (stat?.isDirectory()) {
 			results = results.concat(scanDirectory(filePath, rootDir))
 		} else if (file.endsWith('.svg')) {
 			// Store relative path from the rootDir provided to the config

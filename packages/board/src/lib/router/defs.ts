@@ -1,6 +1,6 @@
 import type { z } from 'zod'
 
-export type RouteParams<Path extends string> = Record<string, string>
+export type RouteParams<_Path extends string> = Record<string, string>
 
 // Helper to extract params from path string like /users/[id]
 type ExtractParams<Path extends string> = Path extends `${infer Start}/${infer Rest}`

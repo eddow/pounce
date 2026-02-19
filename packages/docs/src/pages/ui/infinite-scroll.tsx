@@ -6,7 +6,7 @@ const fixedSource = `<InfiniteScroll items={rows} itemHeight={40}>
   {(item, i) => <div>{i}: {item}</div>}
 </InfiniteScroll>`
 
-const variableSource = `<InfiniteScroll
+const _variableSource = `<InfiniteScroll
   items={messages}
   itemHeight={(msg) => msg.long ? 80 : 40}
   stickyLast

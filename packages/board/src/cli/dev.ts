@@ -91,7 +91,7 @@ export async function runDevServer(options: DevServerOptions = {}) {
 				await api(url.pathname)
 					.get()
 					.catch(() => {})
-			} catch (e) {}
+			} catch (_e) {}
 
 			const indexPath = path.resolve(entryHtml)
 			if (!fs.existsSync(indexPath)) {
@@ -104,14 +104,14 @@ export async function runDevServer(options: DevServerOptions = {}) {
 			const routeTree = await buildRouteTree(routesDir, (p) => vite.ssrLoadModule(p))
 			const match = matchRoute(url.pathname, routeTree, 'GET')
 
-			if (match && match.component) {
+			if (match?.component) {
 				const { renderToStringAsync, withSSR } = await vite.ssrLoadModule('@pounce/core/server')
 				const { h } = await vite.ssrLoadModule('@pounce/core')
 				const { flushSSRPromises } = await vite.ssrLoadModule('@pounce/board/server')
 
 				if (typeof match.component !== 'function') return template
 
-				const renderedHtml = await withSSR(async () => {
+				const _renderedHtml = await withSSR(async () => {
 					let app = h(match.component, { params: match.params })
 					if (match.layouts) {
 						for (let i = match.layouts.length - 1; i >= 0; i--) {

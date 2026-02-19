@@ -156,7 +156,7 @@ export interface RouteRegistry {
 }
 
 // Use globalThis to ensure singleton across multiple module loads in SSR
-const REGISTRY_SYMBOL = Symbol.for('__POUNCE_ROUTE_REGISTRY__')
+const _REGISTRY_SYMBOL = Symbol.for('__POUNCE_ROUTE_REGISTRY__')
 
 /**
  * Set the route registry for server-side dispatch
@@ -216,7 +216,7 @@ async function dispatchToHandler(request: Request): Promise<Response> {
 	return response
 }
 
-const CONFIG_SYMBOL = Symbol.for('__POUNCE_CONFIG__')
+const _CONFIG_SYMBOL = Symbol.for('__POUNCE_CONFIG__')
 
 const DEFAULT_CONFIG = {
 	timeout: 10000,
@@ -398,7 +398,7 @@ function apiClient<P extends string>(
 		)
 	}
 
-	const ssrId = getSSRId(url)
+	const _ssrId = getSSRId(url)
 
 	/**
 	 * Helper for fetch with timeout

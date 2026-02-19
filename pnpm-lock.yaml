@@ -295,6 +295,9 @@ importers:
       '@pounce/core':
         specifier: workspace:*
         version: link:../core
+      '@pounce/kit':
+        specifier: workspace:*
+        version: link:../kit
       mutts:
         specifier: link:../../../mutts
         version: link:../../../mutts
