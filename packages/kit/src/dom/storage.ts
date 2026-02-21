@@ -1,4 +1,4 @@
-import { cleanedBy, effect, reactive, type ScopedCallback } from 'mutts'
+import { effect, link, reactive, type ScopedCallback } from 'mutts'
 
 /**
  * JSON parser and serializer for localStorage
@@ -84,7 +84,7 @@ export function stored<T extends Record<string, any>>(initial: T): T {
 		)
 	}
 	for (const key in initial) bind(key)
-	return cleanedBy(rv as T, () => {
+	return link(rv as T, () => {
 		for (const cleanup of cleanups) cleanup()
 		if (typeof window !== 'undefined') {
 			window.removeEventListener('storage', eventListener)

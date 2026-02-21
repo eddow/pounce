@@ -145,7 +145,7 @@ export function InfiniteScroll<T>(props: InfiniteScrollProps<T>): JSX.Element {
 		? new ResizeObserver((entries) => {
 				for (const entry of entries) {
 					const el = entry.target as HTMLElement
-					const idx = Number(el.dataset['vindex'])
+					const idx = Number(el.dataset.vindex)
 					if (!Number.isNaN(idx)) {
 						const height = entry.borderBoxSize?.[0]?.blockSize ?? el.offsetHeight
 						onItemMeasured(idx, height)
@@ -193,7 +193,7 @@ export function InfiniteScroll<T>(props: InfiniteScrollProps<T>): JSX.Element {
 			minHeight,
 			setupItem: variableMode
 				? (el: HTMLElement) => {
-						el.dataset['vindex'] = String(index)
+						el.dataset.vindex = String(index)
 						itemObserver!.observe(el)
 						return () => itemObserver!.unobserve(el)
 					}
@@ -244,11 +244,7 @@ export function InfiniteScroll<T>(props: InfiniteScrollProps<T>): JSX.Element {
 	}
 
 	return (
-		<div
-			use={setupContainer}
-			use:resize={handleResize}
-			style="overflow-y: auto; height: 100%"
-		>
+		<div use={setupContainer} use:resize={handleResize} style="overflow-y: auto; height: 100%">
 			<div style={{ height: `${computeTotalHeight()}px`, position: 'relative' }}>
 				<for each={computeVisibleItems()}>
 					{(item: ItemState) => (

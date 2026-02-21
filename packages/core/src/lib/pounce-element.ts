@@ -1,4 +1,4 @@
-import { cleanedBy, effect, formatCleanupReason, named, reactive } from 'mutts'
+import { effect, formatCleanupReason, link, named, reactive } from 'mutts'
 import { perf } from '../perf'
 import { type CompositeAttributesMeta, collapse, ReactiveProp } from './composite-attributes'
 
@@ -103,7 +103,7 @@ export class PounceElement {
 		if (!partial) throw new DynamicRenderingError('Renderer returned no content')
 		// Anchor the render effect to the DOM output so GC doesn't collect it
 		// (root effects use FinalizationRegistry — if nobody holds the cleanup, GC kills all children)
-		cleanedBy(partial, stopRender)
+		link(partial, stopRender)
 		perf?.mark(`render:${tagName}:end`)
 		perf?.measure(`render:${tagName}`, `render:${tagName}:start`, `render:${tagName}:end`)
 

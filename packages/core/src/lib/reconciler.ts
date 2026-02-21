@@ -1,10 +1,9 @@
 import {
 	atomic,
-	cleanedBy,
-	cleanup,
 	effect,
 	isReactive,
 	lift,
+	link,
 	morph,
 	named,
 	type ScopedCallback,
@@ -80,7 +79,7 @@ export function reconcile(parent: Node, newChildren: Node | readonly Node[]): Sc
 	stopRedraw = effect(reconciler)
 	// Anchor the redraw effect to the reactive children so GC doesn't collect it.
 	// Root effects use FinalizationRegistry — if nobody holds the cleanup, GC kills the effect.
-	if (newChildren && typeof newChildren === 'object') cleanedBy(newChildren, stopRedraw)
+	if (newChildren && typeof newChildren === 'object') link(newChildren, stopRedraw)
 	//} else reconciler()
 	return stopRedraw
 }
@@ -185,7 +184,7 @@ export function latch(
 export function processChildren(children: Children, env: Env): Node | readonly Node[] {
 	if (!Array.isArray(children)) return pounceElement(children, env).render(env)
 	//Idea: keep reactivity for as late as possible
-	const flatInput: Child[] & { [cleanup]?: ScopedCallback } =
+	const flatInput: Child[] =
 		isReactive(children) || children.some((c) => isReactive(c))
 			? tag(
 					'flatInput',
@@ -197,7 +196,7 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 				)
 			: children.flat(Infinity).filter(Boolean)
 
-	const flatElements: readonly PounceElement[] & { [cleanup]?: ScopedCallback } =
+	const flatElements: readonly PounceElement[] =
 		isReactive(flatInput) || flatInput.some((c) => c instanceof ReactiveProp)
 			? tag(
 					'flatElements',
@@ -209,10 +208,8 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 						}
 					)
 				)
-			: (flatInput.map((c) => pounceElement(c, env)) as readonly PounceElement[] & {
-					[cleanup]?: never
-				})
-	const conditioned =
+			: (flatInput.map((c) => pounceElement(c, env)) as readonly PounceElement[])
+	const conditioned: readonly PounceElement[] =
 		isReactive(flatElements) || flatElements.some((e) => e.conditional)
 			? tag(
 					'conditioned',
@@ -232,23 +229,27 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 				)
 			: flatElements
 	// Render the elements to nodes
-	const rendered = tag(
-		'rendered',
-		morph.pure(
-			conditioned,
-			named(
-				'morph:rendered',
-				weakCached((e: PounceElement) => e.render(env))
+	const rendered: readonly (Node | readonly Node[])[] = isReactive(conditioned)
+		? tag(
+				'rendered',
+				morph.pure(
+					conditioned,
+					named(
+						'morph:rendered',
+						weakCached((e: PounceElement) => e.render(env))
+					)
+				)
 			)
-		)
-	)
-	return cleanedBy(
-		tag('nodes', lift(named('lift:nodes', () => rendered.flat(Infinity) as Node[]))),
-		() => {
-			flatInput[cleanup]?.()
-			flatElements[cleanup]?.()
-			conditioned[cleanup]?.()
-			rendered[cleanup]?.()
-		}
-	)
+		: conditioned.map((e: PounceElement) => e.render(env))
+
+	const nodes =
+		isReactive(rendered) || rendered.some((r) => isReactive(r))
+			? tag('nodes', lift(named('lift:nodes', () => rendered.flat(Infinity) as Node[])))
+			: (rendered.flat(Infinity) as Node[])
+
+	if (isReactive(nodes)) {
+		return link(nodes, flatInput, flatElements, conditioned, rendered)
+	}
+
+	return nodes
 }

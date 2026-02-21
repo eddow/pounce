@@ -1,4 +1,4 @@
-import { cleanedBy, effect, lift, memoize, morph, unreactive } from 'mutts'
+import { effect, lift, link, memoize, morph, unreactive } from 'mutts'
 import { perf } from '../perf'
 import { document } from '../shared'
 import {
@@ -141,7 +141,7 @@ function produceComponent(
 			const result = componentCtor(defaults({ children }, inAttrs.asProps()), info.env)
 			const processed = processChildren(result, info.env)
 
-			cleanedBy(processed, () => {
+			link(processed, () => {
 				if (info.parent) info.parent.children.delete(info)
 				else rootComponents.delete(info)
 			})
@@ -181,7 +181,7 @@ export function produceDOM(
 
 			attachAttributes(element, inAttrs)
 
-			cleanedBy(element, reconcile(element, processChildren(children, env)))
+			link(element, reconcile(element, processChildren(children, env)))
 
 			return element
 		},

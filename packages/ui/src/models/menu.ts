@@ -112,7 +112,7 @@ export function menuModel(_props: MenuProps): MenuModel {
 				},
 				get onToggle() {
 					return (e: Event) => {
-						if (typeof process !== 'undefined' && process.env?.['NODE_ENV'] === 'production') return
+						if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') return
 						if (e.currentTarget) checkMenuStructure(e.currentTarget as HTMLDetailsElement)
 					}
 				},
