@@ -11,7 +11,7 @@ import { type IntersectOptions, intersect } from './intersect'
 import { type PointerState, pointer } from './pointer'
 import { resize } from './resize'
 import { scroll } from './scroll'
-import { trail } from './trail'
+import { tail } from './tail'
 
 describe('Directives', () => {
   describe('pointer', () => {
@@ -262,7 +262,7 @@ describe('Directives', () => {
     })
   })
 
-  describe('trail', () => {
+  describe('tail', () => {
     let element: HTMLElement
     let cleanup: (() => void) | undefined
     let mutationCallback: MutationCallback
@@ -286,31 +286,31 @@ describe('Directives', () => {
     })
 
     it('should return cleanup function', () => {
-      const result = trail(element, true, {})
+      const result = tail(element, true, {})
       expect(typeof result).toBe('function')
       result?.()
     })
 
     it('should handle non-HTMLElement target', () => {
       const textNode = document.createTextNode('text')
-      const result = trail(textNode, true, {})
+      const result = tail(textNode, true, {})
       expect(result).toBeUndefined()
     })
 
     it('should be disabled when value is false', () => {
-      const result = trail(element, false, {})
+      const result = tail(element, false, {})
       expect(result).toBeUndefined()
     })
 
     it('should default to enabled when value is undefined', () => {
-      const result = trail(element, undefined, {})
+      const result = tail(element, undefined, {})
       expect(typeof result).toBe('function')
       result?.()
     })
 
     it('should attach scroll listener and MutationObserver', () => {
       const addSpy = vi.spyOn(element, 'addEventListener')
-      cleanup = trail(element, true, {})
+      cleanup = tail(element, true, {})
 
       expect(addSpy).toHaveBeenCalledWith('scroll', expect.any(Function))
       expect(MutationObserver).toHaveBeenCalled()
@@ -318,7 +318,7 @@ describe('Directives', () => {
 
     it('should remove listeners on cleanup', () => {
       const removeSpy = vi.spyOn(element, 'removeEventListener')
-      cleanup = trail(element, true, {})
+      cleanup = tail(element, true, {})
       const disconnectFn = (MutationObserver as any).mock.results[0].value.disconnect
 
       cleanup!()
@@ -329,7 +329,7 @@ describe('Directives', () => {
     })
 
     it('should accept array target', () => {
-      const result = trail([element], true, {})
+      const result = tail([element], true, {})
       expect(typeof result).toBe('function')
       result?.()
     })

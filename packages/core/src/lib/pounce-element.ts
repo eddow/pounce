@@ -1,7 +1,6 @@
 import { cleanedBy, effect, formatCleanupReason, named, reactive } from 'mutts'
 import { perf } from '../perf'
 import { type CompositeAttributesMeta, collapse, ReactiveProp } from './composite-attributes'
-import { POUNCE_OWNER } from './debug'
 
 export const rootEnv: Env = reactive(Object.create(null))
 
@@ -19,11 +18,6 @@ export type NodeDesc = Node | string | number
 
 export type Child = Node | string | number | null | undefined | PounceElement | ReactiveProp<Child>
 export type Children = Child | readonly Children[]
-// TODO: kill this hack
-export type ComponentNode = Node & {
-	[POUNCE_OWNER]?: ComponentInfo
-	__mutts_projection__?: unknown
-}
 
 export type Env<T = any> = Record<PropertyKey, T>
 

@@ -1,4 +1,4 @@
-import { type RadioProps, useRadio } from '@pounce/ui'
+import { gather, type RadioProps, radioModel } from '@pounce/ui'
 import { picoComponent } from '../factory'
 
 /**
@@ -12,18 +12,12 @@ import { picoComponent } from '../factory'
  * ```
  */
 export const Radio = picoComponent(function Radio(props: RadioProps) {
-	const state = useRadio(props)
+	const model = radioModel(props)
 
 	return (
-		<label>
-			<input
-				type="radio"
-				name={props.name}
-				checked={state.checked}
-				disabled={props.disabled}
-				{...props.el}
-			/>
-			{state.labelText}
+		<label style="display:inline-flex;align-items:center">
+			<input {...model.input} name={props.name} />
+			{gather(props.children)}
 		</label>
 	)
 })

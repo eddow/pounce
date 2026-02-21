@@ -5,27 +5,32 @@ Read [pounce core's LLM](../core/LLM.md) and [kit's LLM](../kit/LLM.md).
 ## Overview
 
 **Headless** UI primitives for Pounce applications. Zero styling, zero class names, zero opinions on CSS frameworks. Provides:
-- Behavioral logic (state, a11y, event handling) via composable `use*` hooks
+- Behavioral logic (state, a11y, event handling) via composable `*Model` functions
 - Shared prop interfaces that adapters extend
 - Icon registration via `options.iconFactory`
 - `uiComponent` factory for variant typing + dot-syntax
 - `options` object for global configuration
-- RTL/LTR resolution via `relativeSide()` using `DisplayContext` from `@pounce/kit`
+- RTL/LTR awareness via logical CSS properties (`order`, `marginInline*`) — no physical side resolution needed
 
 ## Architecture: Adapter as Front
 
 **Old model (adapted-ui)**: App → `@pounce/ui` Button → checks adapter registry → falls back to vanilla classes.
 
-**New model**: App → `@pounce/pico` Button → uses `useButton()` from `@pounce/ui` → zero styling.
+**New model**: App → `@pounce/pico` Button → uses `buttonModel()` from `@pounce/ui` → zero styling.
 
 ```
 @pounce/ui (headless)
-  └── useButton(props, env) → { onClick, isIconOnly, iconPosition, ariaProps, ... }
+  └── buttonModel(props) → { button: { onClick, disabled, aria-label, ... }, icon: { position, span, element }, ... }
 
 @pounce/pico (styled)
-  └── Button = picoComponent(function Button(props, env) {
-        const state = useButton(props, env)
-        return <button onClick={state.onClick}>...</button>
+  └── Button = picoComponent(function Button(props) {
+        const model = buttonModel(props)
+        return (
+          <button class="btn" {...model.button} {...props.el}>
+            {model.icon && <span {...model.icon.span}>{model.icon.element}</span>}
+            {model.hasLabel && gather(props.children)}
+          </button>
+        )
       })
 ```
 
@@ -38,10 +43,11 @@ Components and hooks access it as `env.dc`. It carries:
 - `locale: string`
 - `timeZone: string`
 
-Hooks that need direction (e.g. `useButton`) receive `env: Env` and read `env.dc`.
-The `Icon` component also receives `env` and passes `env.dc` to `iconFactory`.
+The `Icon` component receives `env` and passes `env.dc` to `iconFactory`.
 
 `uiComponent` forwards `env` to the wrapped component automatically.
+
+Models do **not** take `env` — direction-awareness is handled via logical CSS, not `env.dc`.
 
 ## `options` Object
 
@@ -49,7 +55,7 @@ Single mutable config object.
 
 ```ts
 import { options } from '@pounce/ui'
-options.iconFactory = (name, size, dc) => <i class={`icon-${name}`} />
+options.iconFactory = (name, size, el, dc) => <i class={`icon-${name}`} />
 ```
 
 **Fields:**
@@ -62,9 +68,9 @@ Curried factory. Call once per adapter with the variant list; wrap each componen
 ```ts
 const picoComponent = uiComponent(['primary', 'secondary', 'danger', 'ghost'] as const)
 
-export const Button = picoComponent(function Button(props, env) {
-  const state = useButton(props, env)
-  return <button class={`btn btn-${props.variant ?? 'default'}`}>{props.children}</button>
+export const Button = picoComponent(function Button(props) {
+  const model = buttonModel(props)
+  return <button class={`btn btn-${props.variant ?? 'secondary'}`} {...model.button} {...props.el}>{gather(props.children)}</button>
 })
 
 // Usage — both equivalent:
@@ -76,30 +82,60 @@ export const Button = picoComponent(function Button(props, env) {
 
 **What it does NOT do:** variant-to-attrs mapping, class generation, theme handling — all adapter concerns.
 
-## Hook Pattern
+## Model Pattern
 
-Each component domain exports a `use*` hook returning a plain object of lazy getters:
+Each component domain exports a `*Model` function returning a plain object of lazy getters.
+The model groups spreadable attrs by **target element** — adapters spread them directly:
 
 ```ts
-export function useButton(props: ButtonProps, env: Env): ButtonState {
-  return {
-    get onClick() { return props.disabled ? undefined : props.onClick },
-    get iconPosition() { if (props.icon) return relativeSide(env.dc, props.iconPosition) },
-    get ariaProps() { return { 'aria-label': ..., 'aria-disabled': ... } },
+export function buttonModel(props: ButtonProps): ButtonModel {
+  const model: ButtonModel = {
+    get hasLabel() { ... },
+    get isIconOnly() { return !!props.icon && !model.hasLabel },
+    get icon() {
+      // undefined when no icon; otherwise: { position, span, element }
+    },
+    get button(): JSX.IntrinsicElements['button'] {
+      return {
+        get onClick() { return props.disabled ? undefined : props.onClick },
+        get disabled() { return props.disabled || undefined },
+        get 'aria-label'() { ... },
+        get 'aria-disabled'() { ... },
+      }
+    },
   }
+  return model
 }
+
+// Adapter:
+const model = buttonModel(props)
+<button {...model.button} {...props.el} class={...}>
 ```
 
-All properties are **getters** — no reactive reads at hook call time. Safe to call in component body.
+All properties are **getters** — no reactive reads at model call time. Safe to call in component body.
 
-## RTL/LTR — `relativeSide`
+Spread group types use `JSX.IntrinsicElements['tagname']` (not `BaseHTMLAttributes`) — this includes element-specific attrs like `disabled` on `<button>`.
 
-`shared/utils.ts` exports `relativeSide(dc, side)`:
-- Input: `LogicalSide` = `'start' | 'end' | 'left' | 'right'`
-- Output: `PhysicalSide` = `'left' | 'right'`
-- `'left'`/`'right'` pass through; `'start'`/`'end'` resolve using `dc.direction`
+Self-references inside getters use the named `model` variable, not `this` (object literal arrow functions lose `this`).
 
-The adapter receives physical sides and can use them directly in CSS/style.
+**Element group naming convention:**
+| Model | Spread group | Target element |
+|---|---|---|
+| `buttonModel`, `checkButtonModel`, `radioButtonModel` | `model.button` | `<button>` |
+| `checkboxModel`, `radioModel`, `switchModel` | `model.input` + `model.label` | `<input>` + `<label>` |
+| `accordionModel` | `model.details` | `<details>` |
+| `progressModel` | `model.progress` | `<progress>` |
+
+## RTL/LTR — Logical CSS Only
+
+`buttonModel` exposes `model.icon.position: 'start' | 'end'` — logical, never physical.
+The model sets `order: -1` (start) or `order: 1` (end) on the icon `<span>` via `model.icon.span`.
+Legacy `'left'`/`'right'` inputs are normalized to `'start'`/`'end'` inside the model.
+Logical margins (`marginInlineEnd`/`marginInlineStart`) are set by the model when a label is present.
+
+`shared/utils.tsx` still exports `relativeSide(dc, side)` for legacy adapters only — do not use in new code.
+
+See `src/models.md` for the full recipe before creating/modifying models.
 
 ## Source Map
 
@@ -109,25 +145,66 @@ src/
 ├── options.ts        # options.iconFactory, IconFactory type
 ├── component.ts      # uiComponent factory, UiComponent/WithVariant types
 ├── icon.tsx          # <Icon> component (uses env.dc + options.iconFactory)
-├── button.ts         # ButtonProps, ButtonState, useButton(props, env)
-├── checkbox.ts       # CheckboxProps, RadioProps, SwitchProps, useCheckbox, useRadio, useSwitch
-├── checkbutton.ts    # CheckButtonProps, CheckButtonState, useCheckButton
-├── radiobutton.ts    # RadioButtonProps, RadioButtonState, useRadioButton
-├── accordion.ts      # AccordionProps, AccordionState, AccordionGroupProps, useAccordion
-├── progress.ts       # ProgressProps, ProgressState, useProgress
-├── forms.ts          # SelectProps, ComboboxProps, ComboboxState, useCombobox
-└── shared/
-    ├── types.ts      # DisableableProps, VariantProps, IconProps, CheckedProps, ...
-    └── utils.ts      # generateId, isDev, relativeSide, LogicalSide, PhysicalSide
+├── button.tsx        # ButtonProps, ButtonModel, buttonModel(props) — JSX for icon rendering
+├── checkbox.ts       # CheckboxProps, RadioProps, SwitchProps, checkboxModel, radioModel, switchModel
+├── checkbutton.ts    # CheckButtonProps, CheckButtonModel, checkButtonModel
+├── radiobutton.ts    # RadioButtonProps, RadioButtonModel, radioButtonModel
+├── accordion.ts      # AccordionProps, AccordionModel, AccordionGroupProps, accordionModel
+├── progress.ts       # ProgressProps, ProgressModel, progressModel
+├── forms.ts          # SelectProps, ComboboxProps, ComboboxModel, comboboxModel
+├── layout.ts         # SpacingToken, stackModel, inlineModel, gridModel, containerModel, appShellModel
+│                     # + spacingValue, alignItemsValue, justifyContentValue helpers
+├── nav.ts            # setupButtonGroupNav, setupToolbarNav (DOM keyboard nav utilities)
+├── status.ts         # BadgeProps, PillProps, ChipProps, badgeModel, pillModel, chipModel
+├── typography.ts     # HeadingProps, TextProps, LinkProps, headingModel, textModel, linkModel
+├── multiselect.ts    # MultiselectProps<T>, MultiselectModel<T>, multiselectModel
+├── stars.ts          # StarsProps, StarsModel, starsModel
+├── directives.ts     # resize, scroll, intersect, loading, pointer, floatingBadge, tail
+├── overlays.ts       # OverlaySpec, OverlayEntry, createOverlayStack, applyTransition, trapFocus,
+│                     # applyAutoFocus, dialogSpec, toastSpec, drawerSpec, bindDialog, bindToast, bindDrawer
+├── menu.ts           # MenuProps, MenuModel, menuModel, menuItemModel, menuBarModel
+├── shared/
+│   ├── types.ts      # DisableableProps, VariantProps, IconProps, CheckedProps, ...
+│   └── utils.tsx     # generateId, isDev, gather, relativeSide, LogicalSide, PhysicalSide
+└── components/
+    └── infinite-scroll.tsx # InfiniteScroll<T> component — self-contained virtualized list
+                            # Fixed-height fast path + variable-height ResizeObserver + prefix-sum offset table
+                            # Props: items, itemHeight, estimatedItemHeight, stickyLast, children(item,index)
 ```
 
 Each component file is self-contained: types + hook + helpers in one file. No per-component subdirectories.
 
+## Directives
+
+Directives are plain DOM functions — not hooks. They follow the Pounce `use:name={value}` directive signature:
+`(target: Node | Node[], value: T, scope?: Record<PropertyKey, unknown>) => (() => void) | undefined`
+
+| Directive | Value type | Description |
+|-----------|-----------|-------------|
+| `resize` | `(w,h)=>void` or `{width?,height?}` | ResizeObserver wrapper |
+| `scroll` | `{x?: ScrollAxis, y?: ScrollAxis}` | Scroll position tracking + max |
+| `intersect` | `IntersectOptions` | IntersectionObserver wrapper |
+| `loading` | `boolean` | Sets aria-busy, disables form elements |
+| `pointer` | `{value: PointerState\|undefined}` | Pointer events (down/move/up/leave) |
+| `floatingBadge` | `string\|number\|JSX.Element\|FloatingBadgeOptions` | Floating badge overlay |
+| `tail` | `boolean?` | Scroll-to-bottom trailing |
+
+## Nav Utilities
+
+`setupButtonGroupNav(container, options?)` and `setupToolbarNav(container, options?)` are pure DOM utilities
+called from a `use=` mount callback. They return a cleanup function.
+
+- **ButtonGroupNav**: Arrow-key cycling within group, Tab exits to next focusable outside
+- **ToolbarNav**: Arrow-key cycling within segment, Tab moves between segments (or exits)
+
 ## ⚠️ Gotchas
 
-1. **No JSX in hooks**: `use*` hooks return plain objects, not JSX. Adapters own the JSX.
-2. **Reactive getters**: All state properties are getters — never read them at hook call time.
+1. **Models can produce JSX**: Model files that render JSX (e.g. icon elements) use `.tsx` extension. The model owns icon rendering; adapters just spread `model.icon.span` and render `model.icon.element`.
+2. **Reactive getters**: All model properties are getters — never read them at model call time.
 3. **Variant is a string**: `props.variant` is always the string name. The adapter maps it to classes/attrs.
 4. **`uiComponent` is curried**: First call takes the variant list, second call takes the component function.
-5. **`env` forwarding**: `uiComponent` passes `env` through. Hooks that need `DisplayContext` take `env: Env` as second arg and read `env.dc`.
-6. **`iconPosition` is physical**: `useButton` resolves `'start'`/`'end'` → `'left'`/`'right'` via `relativeSide`. Adapters compare against `'left'`/`'right'`, never `'start'`/`'end'`.
+5. **`env` in models**: Models do not take `env`. Direction-awareness uses logical CSS (`order`, `marginInline*`). Only `Icon` component still uses `env.dc`.
+6. **`model.icon` is a group**: `model.icon` is `undefined` when no icon, otherwise `{ position, span, element }`. Use `model.hasLabel` to guard `gather(props.children)`.
+7. **Spread groups**: Each model exposes element-keyed spread groups (`model.button`, `model.input`, `model.label`, etc.). Adapters spread them directly: `<button {...model.button} {...props.el}>`.
+8. **`gather` for children**: Always wrap `props.children` with `gather()` in adapters that also render an icon — CSS `order` requires a single flex item.
+9. **`JSX.IntrinsicElements['tag']` for spread types**: Use this, not `BaseHTMLAttributes<T>` — the latter omits element-specific attrs like `disabled`.

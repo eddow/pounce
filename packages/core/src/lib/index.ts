@@ -1,4 +1,5 @@
 /// <reference path="../types/jsx.d.ts" />
+
 import { Fragment, h } from './jsx-factory'
 
 // Singleton verification — detects dual-module hazard (e.g. bundled + external copies)

@@ -1,11 +1,11 @@
-export const POUNCE_OWNER = Symbol.for('pounce.owner')
+export const pounceOwner = new WeakMap<Node, ComponentInfo>()
 
 export const rootComponents = new Set<ComponentInfo>()
 /**
  * Returns the component instance (ComponentInfo) that "owns" the given DOM element.
  */
 export function getComponentInstance(element: Node | null): ComponentInfo | undefined {
-	return (element as any)?.[POUNCE_OWNER]
+	return element ? pounceOwner.get(element) : undefined
 }
 
 /**

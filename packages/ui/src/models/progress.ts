@@ -1,4 +1,6 @@
-import type { ElementPassthroughProps, VariantProps } from './shared/types'
+// TODO: to review
+// TODO: Hungry dog
+import type { ElementPassthroughProps, VariantProps } from '../shared/types'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -10,18 +12,16 @@ export type ProgressProps = VariantProps &
 		max?: number
 	}
 
-export type ProgressState = {
+export type ProgressModel = {
 	/** True when value is undefined (indeterminate spinner) */
 	readonly isIndeterminate: boolean
-	/** Resolved value — undefined when indeterminate */
-	readonly value: number | undefined
-	/** Resolved max — defaults to 100 */
-	readonly max: number
-	/** aria attributes to spread onto the progress element */
-	readonly ariaProps: {
-		'aria-valuenow': number | undefined
-		'aria-valuemin': 0
-		'aria-valuemax': number
+	/** Spreadable attrs for the `<progress>` element */
+	readonly progress: JSX.IntrinsicElements['progress'] & {
+		readonly value: number | undefined
+		readonly max: number
+		readonly 'aria-valuenow': number | undefined
+		readonly 'aria-valuemin': 0
+		readonly 'aria-valuemax': number
 	}
 }
 
@@ -36,30 +36,35 @@ export type ProgressState = {
  * @example
  * ```tsx
  * const Progress = (props: ProgressProps) => {
- *   const state = useProgress(props)
+ *   const model = progressModel(props)
  *   return (
- *     <progress value={state.value} max={state.max} role="progressbar" {...state.ariaProps} />
+ *     <progress {...model.progress} role="progressbar" />
  *   )
  * }
  * ```
  */
-export function useProgress(props: ProgressProps): ProgressState {
-	return {
+export function progressModel(props: ProgressProps): ProgressModel {
+	const model: ProgressModel = {
 		get isIndeterminate() {
 			return props.value === undefined || props.value === null
 		},
-		get value() {
-			return this.isIndeterminate ? undefined : props.value
-		},
-		get max() {
-			return props.max ?? 100
-		},
-		get ariaProps() {
+		get progress() {
 			return {
-				'aria-valuenow': this.isIndeterminate ? undefined : props.value,
+				get value() {
+					return model.isIndeterminate ? undefined : props.value
+				},
+				get max() {
+					return props.max ?? 100
+				},
+				get 'aria-valuenow'() {
+					return model.isIndeterminate ? undefined : props.value
+				},
 				'aria-valuemin': 0 as const,
-				'aria-valuemax': this.max,
+				get 'aria-valuemax'() {
+					return props.max ?? 100
+				},
 			}
 		},
 	}
+	return model
 }

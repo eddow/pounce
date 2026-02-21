@@ -1,4 +1,6 @@
-import type { ElementPassthroughProps, VariantProps } from './shared/types'
+// TODO: to review
+// TODO: Hungry dog
+import type { ElementPassthroughProps, VariantProps } from '../shared/types'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -13,11 +15,12 @@ export type AccordionProps = VariantProps &
 		children?: JSX.Children
 	}
 
-export type AccordionState = {
-	/** Current open state */
-	readonly open: boolean | undefined
-	/** onToggle handler to wire to the details element */
-	readonly onToggle: (e: Event) => void
+export type AccordionModel = {
+	/** Spreadable attrs for the `<details>` element */
+	readonly details: JSX.IntrinsicElements['details'] & {
+		readonly open: boolean | undefined
+		readonly onToggle: (e: Event) => void
+	}
 }
 
 export type AccordionGroupProps = ElementPassthroughProps<'div'> & {
@@ -35,16 +38,16 @@ export type AccordionGroupProps = ElementPassthroughProps<'div'> & {
  * Headless accordion logic.
  *
  * Uses native `<details>`/`<summary>` semantics.
- * The adapter wires state.onToggle to the details element's onToggle event.
+ * The adapter spreads `model.details` on the details element.
  * For exclusive-open groups, pass `AccordionGroupProps.name` as the `name`
  * attribute on the `<details>` element (native HTML behaviour).
  *
  * @example
  * ```tsx
  * const Accordion = (props: AccordionProps) => {
- *   const state = useAccordion(props)
+ *   const model = accordionModel(props)
  *   return (
- *     <details open={state.open} onToggle={state.onToggle}>
+ *     <details {...model.details}>
  *       <summary>{props.summary}</summary>
  *       {props.children}
  *     </details>
@@ -52,16 +55,21 @@ export type AccordionGroupProps = ElementPassthroughProps<'div'> & {
  * }
  * ```
  */
-export function useAccordion(props: AccordionProps): AccordionState {
-	return {
-		get open() {
-			return props.open
-		},
-		get onToggle() {
-			return (e: Event) => {
-				const details = e.currentTarget as HTMLDetailsElement
-				props.onToggle?.(details.open)
+export function accordionModel(props: AccordionProps): AccordionModel {
+	const model: AccordionModel = {
+		get details() {
+			return {
+				get open() {
+					return props.open
+				},
+				get onToggle() {
+					return (e: Event) => {
+						const details = e.currentTarget as HTMLDetailsElement
+						props.onToggle?.(details.open)
+					}
+				},
 			}
 		},
 	}
+	return model
 }

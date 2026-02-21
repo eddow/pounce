@@ -1,12 +1,12 @@
 import { h, rootEnv } from '@pounce/core'
-import { project, reactive } from 'mutts'
+import { morph, reactive } from 'mutts'
 import { describe, expect, it } from 'vitest'
 import TodoWebComponent, { type Todo } from './Todo'
 
 describe('TodoWebComponent', () => {
-	it('project reacts to second push', () => {
+	it('morph reacts to second push', () => {
 		const source = reactive([] as { id: number; text: string }[])
-		const result = project(source, ({ value }) => value.text)
+		const result = morph(source, (value) => value.text)
 
 		expect(result.length).toBe(0)
 

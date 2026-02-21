@@ -58,7 +58,7 @@ const scrollSnippet = `const scroll = reactive({
   </div>
 </div>`
 
-const trailSnippet = `<div use:trail style="height: 200px; overflow: auto">
+const trailSnippet = `<div use:tail style="height: 200px; overflow: auto">
   <for each={messages}>{(msg) => <p>{msg}</p>}</for>
 </div>`
 
@@ -124,7 +124,7 @@ export default function UiDirectivesPage() {
 				<Code code={scrollSnippet} lang="tsx" />
 			</Section>
 
-			<Section title="trail">
+			<Section title="tail">
 				<p>
 					Auto-scrolls a container to the bottom when content grows (e.g. for chat logs), unless the
 					user has scrolled up to read history.

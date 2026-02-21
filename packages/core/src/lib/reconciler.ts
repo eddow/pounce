@@ -185,47 +185,52 @@ export function latch(
 export function processChildren(children: Children, env: Env): Node | readonly Node[] {
 	if (!Array.isArray(children)) return pounceElement(children, env).render(env)
 	//Idea: keep reactivity for as late as possible
-	const flatInput: Child[] & { [cleanup]?: ScopedCallback } = tag(
-		'flatInput',
+	const flatInput: Child[] & { [cleanup]?: ScopedCallback } =
 		isReactive(children) || children.some((c) => isReactive(c))
-			? lift(
-					named('lift:flatInput', () => unwrap(children.flat(Infinity).filter(Boolean) as Child[]))
+			? tag(
+					'flatInput',
+					lift(
+						named('lift:flatInput', () =>
+							unwrap(children.flat(Infinity).filter(Boolean) as Child[])
+						)
+					)
 				)
 			: children.flat(Infinity).filter(Boolean)
-	)
-	const flatElements: readonly PounceElement[] & { [cleanup]?: ScopedCallback } = tag(
-		'flatElements',
+
+	const flatElements: readonly PounceElement[] & { [cleanup]?: ScopedCallback } =
 		isReactive(flatInput) || flatInput.some((c) => c instanceof ReactiveProp)
-			? morph(
-					flatInput,
-					named('morph:flatElements', (c) => pounceElement(collapse(c), env)),
-					{
-						pure: (c) => !(c instanceof ReactiveProp),
-					}
+			? tag(
+					'flatElements',
+					morph(
+						flatInput,
+						named('morph:flatElements', (c) => pounceElement(collapse(c), env)),
+						{
+							pure: (c) => !(c instanceof ReactiveProp),
+						}
+					)
 				)
 			: (flatInput.map((c) => pounceElement(c, env)) as readonly PounceElement[] & {
 					[cleanup]?: never
 				})
-	)
-
-	const conditioned = tag(
-		'conditioned',
+	const conditioned =
 		isReactive(flatElements) || flatElements.some((e) => e.conditional)
-			? lift(
-					named('lift:conditioned', () => {
-						// TODO: re-think about 'pick'
-						let ifOccurred = false
-						return flatElements
-							.map((e) => {
-								const shouldRender = e.shouldRender(ifOccurred, env)
-								if (shouldRender) ifOccurred = true
-								if (shouldRender !== false) return e
-							})
-							.filter(Boolean) as PounceElement[]
-					})
+			? tag(
+					'conditioned',
+					lift(
+						named('lift:conditioned', () => {
+							// TODO: re-think about 'pick'
+							let ifOccurred = false
+							return flatElements
+								.map((e) => {
+									const shouldRender = e.shouldRender(ifOccurred, env)
+									if (shouldRender) ifOccurred = true
+									if (shouldRender !== false) return e
+								})
+								.filter(Boolean) as PounceElement[]
+						})
+					)
 				)
 			: flatElements
-	)
 	// Render the elements to nodes
 	const rendered = tag(
 		'rendered',

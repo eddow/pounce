@@ -1,5 +1,6 @@
-import { type EffectCleanup, isReactive, stringKeys } from 'mutts'
+import { type EffectCleanup, isReactive } from 'mutts'
 import { styles } from './styles'
+import { stringKeys } from './utils'
 
 export class ReactiveProp<T> {
 	constructor(

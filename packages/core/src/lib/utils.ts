@@ -5,6 +5,10 @@ const defaultsProxy: ProxyHandler<any> & Record<symbol, unknown> = {
 	[Symbol.toStringTag]: 'Defaulted',
 	get(target, key) {
 		if (typeof key === 'string') return (key in target.props ? target.props : target.defs)[key]
+		// Forward symbol reads (e.g. CompositeAttributes[fromAttribute]) to wrapped props.
+		const fromProps = Reflect.get(target.props, key)
+		if (fromProps !== undefined) return fromProps
+		return Reflect.get(target.defs, key)
 	},
 	set(target, key, value) {
 		if (typeof key !== 'string') return false

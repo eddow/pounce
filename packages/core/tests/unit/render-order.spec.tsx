@@ -2,7 +2,7 @@
  * Test effect topology and error propagation
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { effect, project, caught, reactive, reset } from 'mutts'
+import { effect, morph, caught, reactive, reset } from 'mutts'
 import '@pounce/core'
 
 describe('Effect topology and error propagation', () => {
@@ -29,8 +29,8 @@ describe('Effect topology and error propagation', () => {
 		let parentCaught = false
 		const logs: string[] = []
 
-		// Simulate pounce rendering: component in one project.array, children in another
-		project.array([null], () => {
+		// Simulate pounce rendering: component in one morph, children in another
+		const m1 = morph([null], () => {
 			logs.push('parent-start')
 
 			caught((_err) => {
@@ -42,9 +42,10 @@ describe('Effect topology and error propagation', () => {
 			logs.push('parent-end')
 			return 'parent-result'
 		})
+		void m1[0] // Trigger evaluation
 
 		// Children rendered separately (sibling effect)
-		project.array([null], () => {
+		const m2 = morph([null], () => {
 			logs.push('child-start')
 			if (state.triggerError) {
 				throw new Error('Child error')
@@ -52,14 +53,17 @@ describe('Effect topology and error propagation', () => {
 			logs.push('child-end')
 			return 'child-result'
 		})
+		void m2[0] // Trigger evaluation
 
 		expect(logs).toEqual(['parent-start', 'parent-end', 'child-start', 'child-end'])
 		expect(parentCaught).toBe(false)
 
 		// Trigger error
 		logs.length = 0
+		state.triggerError = true
+		void m1[0] // Trigger parent re-evaluation first
 		expect(() => {
-			state.triggerError = true
+			void m2[0] // Trigger child re-evaluation
 		}).toThrow('Child error')
 
 		// Parent did NOT catch the error (sibling effects)

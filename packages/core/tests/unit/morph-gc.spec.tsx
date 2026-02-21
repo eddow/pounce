@@ -6,7 +6,7 @@
  * Requires --expose-gc (NODE_OPTIONS='--expose-gc' in package.json test:unit).
  */
 import { describe, it, expect, beforeEach } from 'vitest'
-import { reactive, project } from 'mutts'
+import { reactive, morph } from 'mutts'
 import { latch, document } from '@pounce/core'
 
 const gc = typeof globalThis.gc === 'function' ? globalThis.gc : undefined
@@ -22,7 +22,7 @@ async function collectGarbages() {
 	await tick()
 }
 
-describe('Project effect GC safety', () => {
+describe('Morph effect GC safety', () => {
 	let container: HTMLElement
 
 	beforeEach(() => {
@@ -30,15 +30,15 @@ describe('Project effect GC safety', () => {
 		container = document.getElementById('app') as HTMLElement
 	})
 
-	itGC('project() list items survive garbage collection', async () => {
+	itGC('morph() list items survive garbage collection', async () => {
 		const state = reactive({ list: ['A', 'B'] })
 		const clicked = reactive({ item: '' })
 
 		const App = () => (
 			<div>
-				{project(state.list, ({ get }) => (
-					<button onClick={() => { clicked.item = get() }}>
-						{get()}
+				{morph(state.list, (item) => (
+					<button onClick={() => { clicked.item = item as string }}>
+						{item as string}
 					</button>
 				))}
 			</div>

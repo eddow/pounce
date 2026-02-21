@@ -25,7 +25,7 @@ describe('Component association debug tools', () => {
 		expect(getComponentInstance(falseSpan)?.name).toBe('Conditional')
 	})
 
-	test('should work with projections', () => {
+	test('should work with morphing', () => {
 		const state = reactive({ items: ['A', 'B'] })
 
 		const ListComponent = () => h('ul', {},

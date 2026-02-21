@@ -9,12 +9,12 @@ import './demo/mini'
 function entry() {
 	const hash = window.location.hash.slice(1)
 
-	// If there's a hash, we assume it's a test fixture route.
-	// Test fixtures usually start with an uppercase letter or are specific names.
-	if (hash && hash !== 'mini' && hash !== 'app') {
+	// Test fixtures start with uppercase letter (e.g., Binding, Dynamic, For, etc.)
+	if (hash && /^[A-Z]/.test(hash)) {
 		console.log('[pounce] Entry: Loading test fixtures')
 		initTests()
 	}
+	// Main demo mounts by default (already imported via side effects)
 }
 
 // Use microtask to ensure all modules are fully evaluated before starting

@@ -1,4 +1,4 @@
-import { type SwitchProps, useCheckbox } from '@pounce/ui'
+import { gather, type SwitchProps, switchModel } from '@pounce/ui'
 import { picoComponent } from '../factory'
 
 /**
@@ -12,21 +12,12 @@ import { picoComponent } from '../factory'
  * ```
  */
 export const Switch = picoComponent(function Switch(props: SwitchProps) {
-	const state = useCheckbox(props)
+	const model = switchModel(props)
 
 	return (
-		<label>
-			<input
-				type="checkbox"
-				checked={props.checked}
-				onChange={(e) => {
-					if (e.target instanceof HTMLInputElement) {
-						props.onChange?.(e.target.checked)
-					}
-				}}
-				disabled={props.disabled}
-			/>
-			{state.labelText}
+		<label style="display:inline-flex;align-items:center">
+			<input {...model.input} />
+			{gather(props.children)}
 		</label>
 	)
 })

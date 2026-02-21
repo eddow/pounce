@@ -1,5 +1,5 @@
 /**
- * `use:trail` directive — keeps a scrollable container pinned to the bottom
+ * `use:tail` directive — keeps a scrollable container pinned to the bottom
  * as content grows, unless the user scrolls away. Re-engages when the user
  * scrolls back to the bottom.
  *
@@ -7,12 +7,12 @@
  *
  * @example
  * ```tsx
- * <div use:trail>
+ * <div use:tail>
  *   <for each={messages}>{(msg) => <p>{msg.text}</p>}</for>
  * </div>
  * ```
  */
-export function trail(
+export function tail(
 	target: Node | Node[],
 	value: boolean | undefined,
 	_scope: Record<PropertyKey, any>

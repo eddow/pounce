@@ -9,11 +9,10 @@ import {
 	type PerhapsReactive,
 	ReactiveProp,
 } from './composite-attributes'
-import { POUNCE_OWNER, perfCounters, rootComponents, testing } from './debug'
+import { perfCounters, pounceOwner, rootComponents, testing } from './debug'
 import {
 	type Child,
 	type Children,
-	type ComponentNode,
 	DynamicRenderingError,
 	type Env,
 	PounceElement,
@@ -174,7 +173,7 @@ export function produceDOM(
 			const element = document.createElement(tagName)
 			const componentToUse = env.component
 			if (componentToUse) {
-				;(element as ComponentNode)[POUNCE_OWNER] = componentToUse
+				pounceOwner.set(element, componentToUse)
 				componentToUse.elements.add(element)
 			}
 

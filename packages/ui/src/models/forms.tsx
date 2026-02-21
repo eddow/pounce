@@ -1,5 +1,7 @@
-import type { DisableableProps, VariantProps } from './shared/types'
-import { generateId } from './shared/utils'
+// TODO: to review
+// TODO: Hungry dog
+import type { DisableableProps, VariantProps } from '../shared/types'
+import { generateId } from '../shared/utils'
 
 // ── Select ──────────────────────────────────────────────────────────────────
 
@@ -9,23 +11,20 @@ export type SelectProps = VariantProps &
 		fullWidth?: boolean
 	}
 
-export type SelectState = {
-	readonly fullWidthClass: boolean
-}
-
 // ── Combobox ────────────────────────────────────────────────────────────────
 
 export type ComboboxOption = string | { value: string; label?: string }
 
 export type ComboboxProps = VariantProps &
 	DisableableProps &
-	JSX.IntrinsicElements['input'] & {
+	Omit<JSX.IntrinsicElements['input'], 'list'> & {
 		options?: readonly ComboboxOption[]
 	}
 
-export type ComboboxState = {
+export type ComboboxModel = {
 	/** Generated or provided datalist id */
-	readonly listId: string
+	readonly input: JSX.IntrinsicElements['input']
+	readonly dataList: JSX.Element
 }
 
 // ── Hooks ───────────────────────────────────────────────────────────────────
@@ -38,11 +37,11 @@ export type ComboboxState = {
  * @example
  * ```tsx
  * const Combobox = (props: ComboboxProps) => {
- *   const state = useCombobox(props)
+ *   const model = comboboxModel(props)
  *   return (
  *     <div>
- *       <input {...props} list={state.listId} />
- *       <datalist id={state.listId}>
+ *       <input {...props} {...model.input} />
+ *       <datalist id={model.listId}>
  *         <for each={props.options ?? []}>{(opt) => <option value={opt} />}</for>
  *       </datalist>
  *     </div>
@@ -50,11 +49,27 @@ export type ComboboxState = {
  * }
  * ```
  */
-export function useCombobox(props: ComboboxProps): ComboboxState {
+export function comboboxModel(props: ComboboxProps): ComboboxModel {
 	const generatedId = generateId('combobox')
-	return {
-		get listId() {
-			return (props.list as string | undefined) ?? generatedId
+	const model: ComboboxModel = {
+		get input() {
+			return { list: generatedId }
+		},
+		get dataList() {
+			return (
+				<datalist id={generatedId}>
+					<for each={props.options ?? []}>
+						{(opt) =>
+							typeof opt === 'string' ? (
+								<option value={opt} />
+							) : (
+								<option value={opt.value}>{opt.label || opt.value}</option>
+							)
+						}
+					</for>
+				</datalist>
+			)
 		},
 	}
+	return model
 }

@@ -1,10 +1,11 @@
+// TODO: Hungry dog
 import type {
 	AriaLabelProps,
 	DisableableProps,
 	ElementPassthroughProps,
 	IconProps,
 	VariantProps,
-} from './shared/types'
+} from '../shared/types'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -20,21 +21,18 @@ export type CheckButtonProps = VariantProps &
 		children?: JSX.Children
 	}
 
-export type CheckButtonState = {
-	/** Current checked state (internal, toggled on click) */
-	readonly checked: boolean
+export type CheckButtonModel = {
 	/** True when icon present but no label children */
 	readonly isIconOnly: boolean
 	/** True when children are non-empty */
 	readonly hasLabel: boolean
-	/** role="checkbox" for the button element */
-	readonly role: 'checkbox'
-	/** aria-checked string value */
-	readonly ariaChecked: 'true' | 'false'
-	/** aria-label (required when icon-only) */
-	readonly ariaLabel: string | undefined
-	/** Click handler — toggles checked and calls onCheckedChange */
-	readonly onClick: (e: MouseEvent) => void
+	/** Spreadable attrs for the `<button>` element */
+	readonly button: JSX.IntrinsicElements['button'] & {
+		readonly role: 'checkbox'
+		readonly 'aria-checked': 'true' | 'false'
+		readonly 'aria-label': string | undefined
+		readonly onClick: (e: MouseEvent) => void
+	}
 }
 
 // ── Hook ────────────────────────────────────────────────────────────────────
@@ -43,19 +41,16 @@ export type CheckButtonState = {
  * Headless toggle-button logic with role="checkbox" semantics.
  *
  * Owns internal checked state. The adapter renders a `<button>` element
- * and wires state.onClick, state.role, state.ariaChecked.
+ * and spreads `model.button`.
  *
  * @example
  * ```tsx
  * const CheckButton = (props: CheckButtonProps) => {
- *   const state = useCheckButton(props)
+ *   const model = checkButtonModel(props)
  *   return (
  *     <button
- *       role={state.role}
- *       aria-checked={state.ariaChecked}
- *       aria-label={state.ariaLabel}
- *       onClick={state.onClick}
- *       class={state.checked ? 'checked' : ''}
+ *       {...model.button}
+ *       class={model.checked ? 'checked' : ''}
  *     >
  *       {props.children}
  *     </button>
@@ -63,13 +58,8 @@ export type CheckButtonState = {
  * }
  * ```
  */
-export function useCheckButton(props: CheckButtonProps): CheckButtonState {
-	let checked = props.checked ?? false
-
-	return {
-		get checked() {
-			return checked
-		},
+export function checkButtonModel(props: CheckButtonProps): CheckButtonModel {
+	const model: CheckButtonModel = {
 		get hasLabel() {
 			return (
 				!!props.children &&
@@ -77,27 +67,28 @@ export function useCheckButton(props: CheckButtonProps): CheckButtonState {
 			)
 		},
 		get isIconOnly() {
-			return !!props.icon && !this.hasLabel
+			return !!props.icon && !model.hasLabel
 		},
-		get role(): 'checkbox' {
-			return 'checkbox'
-		},
-		get ariaChecked() {
-			return checked ? 'true' : 'false'
-		},
-		get ariaLabel() {
-			return this.isIconOnly ? (props.ariaLabel ?? 'Toggle') : props.ariaLabel
-		},
-		get onClick() {
-			return (e: MouseEvent) => {
-				if (props.disabled) return
-				if (props.el?.onClick) {
-					;(props.el.onClick as (e: MouseEvent) => void)(e)
-				}
-				if (e.defaultPrevented) return
-				checked = !checked
-				props.onCheckedChange?.(checked)
+		get button() {
+			return {
+				role: 'checkbox' as const,
+				get 'aria-checked'() {
+					return (props.checked ?? false) ? 'true' : ('false' as 'true' | 'false')
+				},
+				get 'aria-label'() {
+					return model.isIconOnly ? (props.ariaLabel ?? 'Toggle') : props.ariaLabel
+				},
+				get onClick() {
+					return (e: MouseEvent) => {
+						if (props.disabled) return
+						if (props.el?.onClick) (props.el.onClick as (e: MouseEvent) => void)(e)
+						if (e.defaultPrevented) return
+						props.checked = !(props.checked ?? false)
+						props.onCheckedChange?.(props.checked)
+					}
+				},
 			}
 		},
 	}
+	return model
 }

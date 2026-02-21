@@ -105,7 +105,7 @@ Framework-agnostic UI component library for Pounce applications. Evolved from `@
 | `use:resize` | `directives/resize.ts` | `object\|fn` | Two-way size binding via ResizeObserver |
 | `use:intersect` | `directives/intersect.ts` | `IntersectOptions` | IntersectionObserver wrapper |
 | `use:pointer` | `directives/pointer.ts` | `PointerState` | Pointer position tracking |
-| `use:trail` | `directives/trail.ts` | `TrailOptions` | Keeps scrollable container pinned to bottom, disengages on user scroll-up |
+| `use:tail` | `directives/tail.ts` | `TrailOptions` | Keeps scrollable container pinned to bottom, disengages on user scroll-up |
 
 ## Known Issues
 (none)

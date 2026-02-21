@@ -48,7 +48,7 @@
 | `pointer` | Pointer events (down/move/up) with state |
 | `resize` | ResizeObserver wrapper |
 | `scroll` | Scroll position tracking (x/y) |
-| `trail` | log-style "scroll-to-bottom" |
+| `tail` | log-style "scroll-to-bottom" |
 
 ### Overlays (`src/overlays/`)
 | Export | Description |
@@ -79,150 +79,128 @@ The old adapter system (registry, `setAdapter`, `getAdapter`, `renderStructure` 
 
 ## What is NOT yet in @pounce/ui v2 hooks
 
-### Missing hook logic
-
-**Button / RadioButton**
-- `tag` prop (dynamic element: button/a/div/span) — hook should expose `tag` default
-- `perf` marks integration point — adapter concern, but hook could expose timing hooks
-- `iconPosition` RTL/LTR awareness: `start`/`end` must map to `left`/`right` via `@pounce/kit`'s `biDi` or equivalent. **Currently the hook just passes `iconPosition` through — the adapter must resolve start/end to physical side using the document direction.**
-
-**CheckButton**
-- Entirely missing: toggle button with internal reactive checked state, `onCheckedChange`
-- `role="checkbox"` semantics
-
-**RadioButton (button-style)**
-- Entirely missing: button-style radio (not `<input type=radio>`), `role="radio"`, group/value binding
-
-**Switch**
-- Missing: `labelPosition` (start/end) in hook state
-- Missing: `role="switch"` + `aria-checked` in hook state
-- Missing: visual track element hint
-
-**Checkbox / Radio**
-- Missing: `description` prop in hook state
-- Missing: tone/variant class hint (hook should expose variant for adapter to map)
-
-**Select**
-- Entirely missing: `useSelect` hook (native `<select>` wrapper with fullWidth, variant)
-
-**Combobox**
-- Missing: `options` datalist rendering logic (currently hook is minimal)
-- Missing: generated id for datalist linkage
-
-**Multiselect**
-- Entirely missing: `useMultiselect` hook (generic, Set-based, renderItem callback, closeOnSelect)
-
-**Stars**
-- Entirely missing: `useStars` hook (single/range value, drag logic, readonly, icon name resolution)
-
-**InfiniteScroll**
-- Entirely missing: `useInfiniteScroll` hook (virtualization, offset table, ResizeObserver, stickyLast)
+### Still missing
 
 **Dockview**
 - Entirely missing: `useDockview` hook (wraps dockview-core, widget/tab renderers, layout serialization)
 
 **ErrorBoundary**
-- Entirely missing: `useErrorBoundary` hook (ErrorReceiver pattern, `caught()`, fallback)
+- Entirely missing: headless component (ErrorReceiver pattern, `caught()`, fallback) — requires `onEffectThrow` from `@pounce/core`, not expressible as a plain hook
 
-**Menu**
-- Entirely missing: `useMenu` hook (dropdown, a11y check, auto-close on link, MenuBar responsive)
-
-**Accordion**
-- Entirely missing: `useAccordion` hook (open/onToggle, group for exclusive-open)
-
-**Card**
-- Entirely missing: `useCard` hook (sub-components: Header/Body/Footer)
-
-**Progress**
-- Entirely missing: `useProgress` hook (indeterminate detection, aria attrs)
-
-**Badge / Pill / Chip**
-- Entirely missing: `useBadge`, `usePill`, `useChip` hooks
-- Chip: dismissible state, `onDismiss`
-
-**Typography (Heading / Text / Link)**
-- Entirely missing: `useHeading`, `useText`, `useLink` hooks
-- Heading: level 1-6, dynamic tag, align, variant color
-- Text: size, muted, variant color
-- Link: underline toggle, variant color
-
-**Layout (Stack / Inline / Grid / Container / AppShell)**
-- Entirely missing: layout hooks
-- SpacingToken scale (none/xs/sm/md/lg/xl → CSS calc expressions)
-- align/justify semantic maps
-- AppShell: shadowOnScroll scroll listener
-
-**ButtonGroup / Toolbar**
-- Entirely missing: `useButtonGroup`, `useToolbar` hooks
-- Complex keyboard navigation (Arrow keys within group, Tab exits, toolbar segment cycling)
-
-### Missing directives (all)
-- `badge` — floating badge with position, variant, JSX content
-- `intersect` — IntersectionObserver
-- `loading` — spinner overlay
-- `pointer` — pointer events with state
-- `resize` — ResizeObserver
-- `scroll` — scroll position tracking
-- `trail` — mouse trail
-
-### Missing overlay system (all)
-- `WithOverlays` host (stack, backdrop, focus trap, Escape, autoFocus, nested levels)
-- `Dialog`, `Drawer`, `Toast` overlay components
-- Transition system (`getTransitionConfig`, `applyTransition`)
-- Standard overlay helpers (`env.dialog()`, `env.toast()`)
-
-### Missing shared utilities
-- RTL/LTR `start`/`end` → `left`/`right` resolution (via `@pounce/kit` `biDi` or equivalent)
-- Transition config + apply (CSS class-based enter/exit)
-- Theme toggle component
+### Remaining open items
+- `useSelect` hook (native `<select>` wrapper with fullWidth, variant) — types present in `forms.ts`, hook body not implemented
+- Directive/nav integration tests — jsdom lacks ResizeObserver/IntersectionObserver/scroll geometry; needs e2e or adapter-level tests
+- Theme toggle component (adapter concern, not a hook)
 
 ---
 
-## Implementation Priority
+## Implementation Status
 
-### Tier 1 — Core interaction hooks (dogfood with pico adapter)
-1. **Fix existing hooks** to expose missing state:
-   - Button: expose `tag`, RTL note in types
-   - Switch: expose `labelPosition`, `role`, `aria-checked`
-   - Checkbox/Radio: expose `description`
-2. **`useCheckButton`** — toggle button, internal checked, `onCheckedChange`, `role="checkbox"`
-3. **`useRadioButton`** — button-style radio, group/value, `role="radio"`
-4. **`useAccordion`** — open/onToggle, AccordionGroup name
-5. **`useProgress`** — indeterminate, aria
+### Tier 1 — Core interaction hooks ✅
+1. ✅ `useButton` — tag, iconPosition (logical start/end, legacy left/right mapped), ariaProps
+2. ✅ `useCheckbox`, `useRadio`, `useSwitch` — label, description, labelPosition, role, aria-checked
+3. ✅ `useCheckButton` — toggle button, internal reactive checked, onCheckedChange, role="checkbox"
+4. ✅ `useRadioButton` — button-style radio, group/value, role="radio"
+5. ✅ `useAccordion` — open/onToggle, AccordionGroup name (exclusive-open via native `name`)
+6. ✅ `useProgress` — indeterminate detection, aria attrs
+7. ✅ `useCombobox` — stable listId for datalist linkage
 
-### Tier 2 — Layout & composition
-6. **`useCard`** — sub-component pattern (Header/Body/Footer)
-7. **Layout hooks**: `useStack`, `useInline`, `useGrid`, `useContainer`, `useAppShell`
-8. **`useButtonGroup`** / **`useToolbar`** — keyboard nav logic (Arrow keys, Tab, segment cycling)
+### Tier 2 — Layout & composition ✅
+8. ✅ `useCard` — structural no-op, sub-component pattern for adapter
+9. ✅ `useStack`, `useInline`, `useGrid`, `useContainer`, `useAppShell` — SpacingToken, align/justify maps, shadowOnScroll
+10. ✅ `setupButtonGroupNav`, `setupToolbarNav` — pure DOM keyboard nav utilities
 
-### Tier 3 — Status & typography
-9. **`useBadge`**, **`usePill`**, **`useChip`** — icon, trailing icon, dismissible
-10. **`useHeading`**, **`useText`**, **`useLink`** — level, align, size, muted, underline
+### Tier 3 — Status & typography ✅
+11. ✅ `useBadge`, `usePill`, `useChip` — icon, trailing icon, dismissible reactive state
+12. ✅ `useHeading`, `useText`, `useLink` — level, align, size, muted, underline
 
-### Tier 4 — Advanced form controls
-11. **`useSelect`** — fullWidth, variant
-12. **`useMultiselect`** — generic T, Set value, renderItem, closeOnSelect
-13. **`useStars`** — single/range, drag, readonly, icon names
+### Tier 4 — Advanced form controls ✅
+13. ⚠️ `useSelect` — types only, hook body not implemented
+14. ✅ `useMultiselect` — generic T, Set-based, closeOnSelect
+15. ✅ `useStars` — single/range, drag, readonly, icon names, reactive internal state
 
-### Tier 5 — Directives
-14. **`resize`**, **`scroll`**, **`intersect`** — used internally by InfiniteScroll and overlays
-15. **`loading`**, **`pointer`**, **`trail`**, **`badge`** directive
+### Tier 5 — Directives ✅
+16. ✅ `resize`, `scroll`, `intersect`, `loading`, `pointer`, `floatingBadge`, `tail`
+    - `loading` correctly saves/restores pre-existing `disabled` state
 
-### Tier 6 — Overlay system
-16. **Transition system** — `getTransitionConfig`, `applyTransition`
-17. **`useOverlayManager`** — stack, backdrop, focus trap, Escape, autoFocus, nested levels
-18. **`useDialog`**, **`useDrawer`**, **`useToast`**
-19. **Standard overlay helpers**
+### Tier 6 — Overlay system ✅
+17. ✅ `applyTransition` — CSS class-based enter/exit with animationend/transitionend + timeout fallback
+18. ✅ `createOverlayStack` — reactive stack, backdrop, Escape, onBackdropClick
+19. ✅ `trapFocus`, `applyAutoFocus` — focus management utilities
+20. ✅ `dialogSpec`, `toastSpec`, `drawerSpec` — OverlaySpec builders
+21. ✅ `bindDialog`, `bindToast`, `bindDrawer` — convenience binders for env
 
-### Tier 7 — Heavy components
-20. **`useInfiniteScroll`** — virtualization, offset table, ResizeObserver, stickyLast
-21. **`useErrorBoundary`** — ErrorReceiver pattern, `caught()`, fallback
-22. **`useDockview`** — dockview-core integration, widget/tab renderers, layout serialization
-23. **`useMenu`** + **`useMenuBar`** — dropdown, a11y check, responsive
+### Tier 7 — Heavy components ✅ (partial)
+22. ✅ `useInfiniteScroll` — fixed-height O(1) fast path + variable-height ResizeObserver + prefix-sum offset table
+23. ✅ `useMenu`, `useMenuItem`, `useMenuBar` — details/summary semantics, dev-mode a11y checks, auto-close on link
+24. ❌ `useDockview` — not implemented (dockview-core dependency, low priority)
+25. ❌ `ErrorBoundary` headless component — requires core `onEffectThrow`, not a plain hook
+
+---
+
+## Implementation Priority (remaining)
+
+### Next — Pico adapter catch-up (Hungry dogs 🐕)
+All files marked `// TODO: Hungry dog` are implemented in `@pounce/ui` but have no pico adapter counterpart yet:
+
+| Hook/Utility | File | Pico component needed |
+|---|---|---|
+| `useAccordion` | `accordion.ts` | `Accordion`, `AccordionGroup` |
+| `useCard` | `card.ts` | `Card`, `Card.Header`, `Card.Body`, `Card.Footer` |
+| `useCheckButton` | `checkbutton.ts` | `CheckButton` |
+| `resize`, `scroll`, … | `directives.ts` | directive bindings |
+| `useCombobox` | `forms.ts` | `Combobox`, `Select` |
+| `useInfiniteScroll` | `infinite-scroll.ts` | `InfiniteScroll` |
+| `useStack`, … | `layout.ts` | `Stack`, `Inline`, `Grid`, `Container`, `AppShell` |
+| `useMenu` | `menu.ts` | `Menu`, `Menu.Item`, `Menu.Bar` |
+| `useMultiselect` | `multiselect.ts` | `Multiselect` |
+| `setupButtonGroupNav` | `nav.ts` | `ButtonGroup`, `Toolbar` |
+| `createOverlayStack` | `overlays.ts` | `WithOverlays`, `Dialog`, `Drawer`, `Toast` |
+| `useProgress` | `progress.ts` | `Progress` |
+| `useRadioButton` | `radiobutton.ts` | `RadioButton` |
+| `useStars` | `stars.ts` | `Stars` |
+| `useBadge`, `usePill`, `useChip` | `status.ts` | `Badge`, `Pill`, `Chip` |
+| `useHeading`, `useText`, `useLink` | `typography.ts` | `Heading`, `Text`, `Link` |
+
+### Low priority / deferred
+- `useDockview` — dockview-core integration
+- `ErrorBoundary` headless component — requires `@pounce/core` `onEffectThrow`
+- Integration/e2e tests for directives and nav utilities
 
 ---
 
 ## Key Design Notes for v2 Hooks
+
+### Hook vs Headless Component
+
+**Rule:** use a `useXxx` hook for leaf controls; use a headless component for compound/coordinated controls.
+
+A `useXxx` hook is sufficient when:
+- The component is a single DOM element (or a label+input pair)
+- No parent-child state coordination is needed
+- No DOM access is required at the hook level (event wiring is done by the adapter)
+
+A headless component is needed when:
+- Multiple children share state managed by a parent (e.g. `RadioGroup` coordinating arrow-key nav across `Radio` children)
+- Focus management requires DOM traversal across children (e.g. `ButtonGroup`, `Toolbar`, `Menu`)
+- A portal or overlay lifecycle is involved (e.g. `Dialog`, `Drawer`, `Toast`)
+
+| Control | Pattern | Reason |
+|---------|---------|--------|
+| Button, Checkbox, Radio, Switch, Progress, Badge, Chip, Stars | `useXxx` hook | Single element, no coordination |
+| RadioGroup | Headless component | Arrow-key nav across children, shared selection state |
+| ButtonGroup / Toolbar | Shared nav utility (`setupButtonGroupNav`) called via `use=` | DOM traversal, not reactive state |
+| Select, Combobox, Multiselect | `useXxx` hook | Single element with internal state |
+| Accordion / AccordionGroup | `useAccordion` hook + `AccordionGroup` headless component | Group exclusive-open needs parent coordination |
+| Menu / MenuBar | Headless component | Compound (trigger + items), keyboard nav, a11y structure |
+| Dialog, Drawer, Toast | Headless component | Focus trap, portal, overlay lifecycle |
+| ErrorBoundary | Headless component (ErrorReceiver pattern) | Requires `onEffectThrow`, not expressible as a hook |
+| InfiniteScroll | `useInfiniteScroll` hook | All logic is self-contained in one scroll container |
+| Dockview | `useDockview` hook | Wraps external lib, single container |
+
+**There is no `HeadlessButton`, `HeadlessCheckbox`, etc.** — the `useXxx` hooks already are the headless layer. A headless component wrapper on top of a hook adds nothing for leaf controls.
+
+---
 
 ### RTL/LTR (iconPosition)
 `iconPosition: 'start' | 'end'` must be resolved to physical `left`/`right` by the adapter using the document/element direction. The hook exposes `iconPosition` as-is; the adapter calls `@pounce/kit`'s `biDi` (or reads `document.dir`) to map start→left in LTR, start→right in RTL.
@@ -254,10 +232,10 @@ Requires `caught()` from mutts and `reconcile`/`Env` from `@pounce/core`. The ho
 
 As each hook tier is completed, the pico adapter should implement the corresponding components. Current pico adapter status:
 
-- [x] Button (partial — missing tag, RTL note)
-- [x] Checkbox (partial — missing description)
-- [x] Radio (partial — missing description)
-- [x] Switch (partial — missing labelPosition, role, aria-checked)
+- [x] Button — tag, iconPosition now logical (start/end), legacy left/right mapped in hook
+- [x] Checkbox
+- [x] Radio
+- [x] Switch
 - [ ] CheckButton
 - [ ] RadioButton
 - [ ] Accordion / AccordionGroup
@@ -267,7 +245,8 @@ As each hook tier is completed, the pico adapter should implement the correspond
 - [ ] ButtonGroup / Toolbar
 - [ ] Badge / Pill / Chip
 - [ ] Heading / Text / Link
-- [ ] Select / Multiselect / Stars
+- [ ] Select / Combobox / Multiselect / Stars
 - [ ] Directives
-- [ ] Overlay system
-- [ ] InfiniteScroll / ErrorBoundary / Dockview / Menu
+- [ ] Overlay system (WithOverlays, Dialog, Drawer, Toast)
+- [ ] InfiniteScroll / Menu
+- [ ] ErrorBoundary / Dockview (deferred)

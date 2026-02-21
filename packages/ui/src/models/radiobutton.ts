@@ -1,10 +1,12 @@
+// TODO: to review
+// TODO: Hungry dog
 import type {
 	AriaLabelProps,
 	DisableableProps,
 	ElementPassthroughProps,
 	IconProps,
 	VariantProps,
-} from './shared/types'
+} from '../shared/types'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -21,21 +23,20 @@ export type RadioButtonProps<Value = unknown> = VariantProps &
 		children?: JSX.Children
 	}
 
-export type RadioButtonState = {
+export type RadioButtonModel = {
 	/** True when group === value */
 	readonly checked: boolean
 	/** True when icon present but no label children */
 	readonly isIconOnly: boolean
 	/** True when children are non-empty */
 	readonly hasLabel: boolean
-	/** role="radio" for the button element */
-	readonly role: 'radio'
-	/** aria-checked string value */
-	readonly ariaChecked: 'true' | 'false'
-	/** aria-label (required when icon-only) */
-	readonly ariaLabel: string | undefined
-	/** Click handler — calls props.onClick when not disabled */
-	readonly onClick: ((e: MouseEvent) => void) | undefined
+	/** Spreadable attrs for the `<button>` element */
+	readonly button: JSX.IntrinsicElements['button'] & {
+		readonly role: 'radio'
+		readonly 'aria-checked': 'true' | 'false'
+		readonly 'aria-label': string | undefined
+		readonly onClick: ((e: MouseEvent) => void) | undefined
+	}
 }
 
 // ── Hook ────────────────────────────────────────────────────────────────────
@@ -49,14 +50,11 @@ export type RadioButtonState = {
  * @example
  * ```tsx
  * const RadioButton = (props: RadioButtonProps) => {
- *   const state = useRadioButton(props)
+ *   const model = radioButtonModel(props)
  *   return (
  *     <button
- *       role={state.role}
- *       aria-checked={state.ariaChecked}
- *       aria-label={state.ariaLabel}
- *       onClick={state.onClick}
- *       class={state.checked ? 'checked' : ''}
+ *       {...model.button}
+ *       class={model.checked ? 'checked' : ''}
  *     >
  *       {props.children}
  *     </button>
@@ -64,8 +62,10 @@ export type RadioButtonState = {
  * }
  * ```
  */
-export function useRadioButton<Value = unknown>(props: RadioButtonProps<Value>): RadioButtonState {
-	return {
+export function radioButtonModel<Value = unknown>(
+	props: RadioButtonProps<Value>
+): RadioButtonModel {
+	const model: RadioButtonModel = {
 		get checked() {
 			return props.group !== undefined && props.value !== undefined
 				? props.group === props.value
@@ -78,22 +78,25 @@ export function useRadioButton<Value = unknown>(props: RadioButtonProps<Value>):
 			)
 		},
 		get isIconOnly() {
-			return !!props.icon && !this.hasLabel
+			return !!props.icon && !model.hasLabel
 		},
-		get role(): 'radio' {
-			return 'radio'
-		},
-		get ariaChecked() {
-			return this.checked ? 'true' : 'false'
-		},
-		get ariaLabel() {
-			return this.isIconOnly
-				? (props.ariaLabel ?? (typeof props.value === 'string' ? props.value : 'Option'))
-				: props.ariaLabel
-		},
-		get onClick() {
-			if (props.disabled) return undefined
-			return props.onClick
+		get button() {
+			return {
+				role: 'radio' as const,
+				get 'aria-checked'() {
+					return model.checked ? 'true' : ('false' as 'true' | 'false')
+				},
+				get 'aria-label'() {
+					return model.isIconOnly
+						? (props.ariaLabel ?? (typeof props.value === 'string' ? props.value : 'Option'))
+						: props.ariaLabel
+				},
+				get onClick() {
+					if (props.disabled) return undefined
+					return props.onClick
+				},
+			}
 		},
 	}
+	return model
 }
