@@ -7,6 +7,7 @@ export default defineConfig({
 		lib: {
 			entry: {
 				index: resolve(__dirname, 'src/index.ts'),
+				models: resolve(__dirname, 'src/models/index.ts'),
 			},
 			formats: ['es'],
 		},

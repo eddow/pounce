@@ -1,6 +1,6 @@
 import { ApiTable, Code, Section } from '../../components'
 
-const hFunction = `import { h, r } from '@pounce/core'
+const hFunction = `import { h, r } from '@pounce'
 
 // JSX is syntactic sugar for h() calls:
 // <div class="box">Hello</div>
@@ -12,7 +12,7 @@ h('div', { class: 'box' }, 'Hello')
 // becomes:
 h(MyComponent, { name: 'World' })`
 
-const reactiveProp = `import { r } from '@pounce/core'
+const reactiveProp = `import { r } from '@pounce'
 
 // The Babel plugin wraps JSX expressions automatically:
 // <span>{state.count}</span>

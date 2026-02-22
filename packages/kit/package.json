@@ -3,6 +3,7 @@
 	"version": "1.0.0",
 	"description": "Routing, i18n, and application utilities for Pounce",
 	"type": "module",
+	"sideEffects": false,
 	"keywords": [
 		"pounce",
 		"router",
@@ -36,22 +37,16 @@
 			"import": "./dist/intl.js",
 			"default": "./dist/intl.js"
 		},
-		"./src": {
-			"types": "./src/index.ts",
-			"node": "./src/node/index.ts",
-			"default": "./src/dom/index.ts"
-		},
-		"./env": {
-			"types": "./dist/env.d.ts",
-			"import": "./dist/env.js",
-			"default": "./dist/env.js"
-		},
 		"./router/logic": {
 			"types": "./src/router/logic.ts",
 			"import": "./src/router/logic.ts",
 			"default": "./src/router/logic.ts"
 		},
-		"./src/*": "./src/*"
+		"./models": {
+			"types": "./dist/models.d.ts",
+			"import": "./dist/models.js",
+			"default": "./dist/models.js"
+		}
 	},
 	"files": [
 		"dist",

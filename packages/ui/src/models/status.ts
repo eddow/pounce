@@ -1,4 +1,3 @@
-// TODO: Hungry dog
 import { reactive } from 'mutts'
 import type { ElementPassthroughProps, IconProps, VariantProps } from '../shared/types'
 

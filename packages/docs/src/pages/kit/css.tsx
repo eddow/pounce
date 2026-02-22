@@ -1,6 +1,6 @@
 import { Code, Section } from '../../components'
 
-const cssTag = `import { css, sass, scss } from '@pounce/kit'
+const cssTag = `import { css, sass, scss } from '@pounce'
 
 // Template tag functions that inject CSS into the document head.
 // Processed through Vite's PostCSS pipeline (autoprefixer, etc.)
@@ -21,7 +21,7 @@ scss\`
 }
 \``
 
-const componentStyleExample = `import { componentStyle } from '@pounce/kit'
+const componentStyleExample = `import { componentStyle } from '@pounce'
 
 // componentStyle wraps css/sass/scss with @layer pounce.components.
 // Use this for component-env-based styles.
@@ -35,7 +35,7 @@ componentStyle.sass\`
     background: var(--pounce-bg-muted)
 \``
 
-const baseStyleExample = `import { baseStyle } from '@pounce/kit'
+const baseStyleExample = `import { baseStyle } from '@pounce'
 
 // baseStyle wraps css/sass/scss with @layer pounce.base.
 // Use this for foundational styles (resets, typography, etc.)
@@ -47,7 +47,7 @@ baseStyle.css\`
 }
 \``
 
-const ssrStyles = `import { getSSRStyles } from '@pounce/kit'
+const ssrStyles = `import { getSSRStyles } from '@pounce'
 
 // During SSR, styles are collected instead of injected.
 // Call getSSRStyles() to get the <style> tag HTML for the <head>.

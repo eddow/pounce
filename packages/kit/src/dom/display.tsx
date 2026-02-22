@@ -1,7 +1,7 @@
 import type { Env } from '@pounce/core'
 import { reactive } from 'mutts'
-// TODO: GRRRRRRRRRRRR - no internal file should import from the entry-points!!! The entry points are only used to forward all what the library exports and dom-specific behavior!! Kit/display has to be used both in browser and SSR!
-import { client, componentStyle } from './dom/index'
+import { componentStyle } from '../css.js'
+import { client } from '../platform/shared.js'
 
 componentStyle.sass`
 .pounce-display-provider
@@ -73,7 +73,7 @@ export type DisplayProviderProps = {
 export function DisplayProvider(props: DisplayProviderProps, env: Env) {
 	const parent = env[DISPLAY_KEY] as DisplayContext | undefined
 
-	const state = reactive({ themeSetting: props.theme })
+	const state = reactive({ themeSetting: props.theme ?? 'auto' })
 
 	function resolveTheme(): string {
 		const setting = state.themeSetting

@@ -29,6 +29,7 @@
     "url": "git+https://github.com/eddow/pounce.git"
   },
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/dom.d.ts",

@@ -99,7 +99,7 @@ describe('InfiniteScroll', () => {
 
 	it('content height uses estimator function per item', () => {
 		const items = ['short', 'tall', 'short']
-		const heights = (item: string) => item === 'tall' ? 200 : 50
+		const heights = (item: string) => (item === 'tall' ? 200 : 50)
 		render(
 			<InfiniteScroll items={items} itemHeight={heights}>
 				{(item: string) => <div>{item}</div>}

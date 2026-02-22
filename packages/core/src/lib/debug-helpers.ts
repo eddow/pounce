@@ -30,16 +30,3 @@ export function getComponentHierarchy(element: Node): ComponentInfo[] {
 export function getComponentElements(info: ComponentInfo): Node[] {
 	return Array.from(info.elements)
 }
-
-export class Stack<T> {
-	private readonly stack: T[] = []
-	enter(value: T) {
-		this.stack.push(value)
-	}
-	exit() {
-		this.stack.pop()
-	}
-	get(): T | undefined {
-		return this.stack[this.stack.length - 1]
-	}
-}

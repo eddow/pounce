@@ -52,7 +52,11 @@ describe('Accordion', () => {
 	})
 
 	it('respects open prop', () => {
-		render(<Accordion summary="Title" open={true}>Content</Accordion>)
+		render(
+			<Accordion summary="Title" open={true}>
+				Content
+			</Accordion>
+		)
 		const details = container.querySelector('details') as HTMLDetailsElement
 		expect(details.open).toBe(true)
 	})
@@ -64,7 +68,11 @@ describe('Accordion', () => {
 	})
 
 	it('passes el props through', () => {
-		render(<Accordion summary="Title" el={{ id: 'my-accordion' }}>Content</Accordion>)
+		render(
+			<Accordion summary="Title" el={{ id: 'my-accordion' }}>
+				Content
+			</Accordion>
+		)
 		const details = container.querySelector('#my-accordion')
 		expect(details).toBeTruthy()
 		expect(details?.tagName).toBe('DETAILS')

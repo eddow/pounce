@@ -1,11 +1,7 @@
-import { picoAdapter } from '@pounce/adapter-pico'
-import { latch } from '@pounce/core'
-import { setAdapter } from '@pounce/ui'
+import { latch } from '@pounce'
 import '@picocss/pico/css/pico.min.css'
 import 'highlight.js/styles/github.css'
 import './styles/docs.sass'
 import { DocsApp } from './layout'
-
-setAdapter(picoAdapter)
 
 latch('#app', <DocsApp />)

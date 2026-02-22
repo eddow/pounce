@@ -1,7 +1,6 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const installSnippet = `import { rootEnv } from '@pounce/core'
-import { directives } from '@pounce/ui'
+const installSnippet = `import { rootEnv, directives } from '@pounce'
 
 // Add all directives to the root env
 Object.assign(rootEnv, directives)`

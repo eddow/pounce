@@ -11,6 +11,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
+      "@pounce": ["./@pounce.d.ts"],
       "@pounce/core": ["../core/src/lib/index.ts"],
       "@pounce/core/*": ["../core/src/*"],
       "@pounce/kit": ["../kit/src/dom/index.ts"],

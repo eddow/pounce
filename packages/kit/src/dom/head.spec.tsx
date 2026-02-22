@@ -18,7 +18,9 @@ describe('latch(document.head, ...) — head injection', () => {
 	it('injects elements into document.head', () => {
 		const unlatch = latch(document.head, <link rel="test-inject" href="https://example.com" />)
 		expect(document.head.querySelector('link[rel="test-inject"]')).not.toBeNull()
-		expect(document.head.querySelector('link[rel="test-inject"]')!.getAttribute('href')).toBe('https://example.com')
+		expect(document.head.querySelector('link[rel="test-inject"]')!.getAttribute('href')).toBe(
+			'https://example.com'
+		)
 		unlatch()
 	})
 
@@ -47,9 +49,13 @@ describe('latch(document.head, ...) — head injection', () => {
 	it('supports reactive content', () => {
 		const state = reactive({ url: 'https://a.com' })
 		const unlatch = latch(document.head, <link rel="reactive-test" href={state.url} />)
-		expect(document.head.querySelector('link[rel="reactive-test"]')!.getAttribute('href')).toBe('https://a.com')
+		expect(document.head.querySelector('link[rel="reactive-test"]')!.getAttribute('href')).toBe(
+			'https://a.com'
+		)
 		state.url = 'https://b.com'
-		expect(document.head.querySelector('link[rel="reactive-test"]')!.getAttribute('href')).toBe('https://b.com')
+		expect(document.head.querySelector('link[rel="reactive-test"]')!.getAttribute('href')).toBe(
+			'https://b.com'
+		)
 		unlatch()
 	})
 })

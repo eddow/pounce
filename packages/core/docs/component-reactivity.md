@@ -12,7 +12,7 @@ Traditional frameworks like React re-render entire component subtrees when state
 
 1. **Render once**: The constructor runs once, creates DOM structure and sets up reactive bindings
 2. **Reactive attributes**: The Babel plugin wraps JSX attribute values in `r(() => expr)`, so individual attributes update independently when their dependencies change
-3. **Virtual attributes & elements**: `if={}`, `when={}` (virtual attributes on any element) and `<for>` (a virtual element) handle conditional rendering and lists reactively — no need for JS `if` statements or `.map()` in the constructor body
+3. **Meta-attributes & Meta-components**: `if={}`, `when={}` (meta-attributes on any element) and `<for>` (a meta-component) handle conditional rendering and lists reactively — no need for JS `if` statements or `.map()` in the constructor body
 4. **Effects for logic**: Any imperative reactive logic uses `effect(() => ...)` inside the constructor
 
 Re-running the entire constructor would destroy and recreate all of this, losing DOM state, breaking effect lifecycles, and wasting performance. The rebuild fence warns about such attempts to help maintain the render-once pattern.
@@ -83,7 +83,7 @@ function BadComponent(props: { loggedIn: boolean }) {
 }
 ```
 
-#### ✅ Correct: Use the `if` directive
+#### ✅ Correct: Use the `if` meta-attribute
 
 ```tsx
 function GoodComponent(props: { loggedIn: boolean }) {
@@ -94,13 +94,13 @@ function GoodComponent(props: { loggedIn: boolean }) {
 }
 ```
 
-## JSX Extensions: Virtual Attributes & Virtual Elements
+## JSX Extensions: Meta-attributes & Meta-components
 
 Pounce extends JSX with two categories of non-standard constructs, both processed at compile time by the Babel plugin and at runtime by the reconciler.
 
-### Virtual Attributes (Directives)
+### Meta-attributes
 
-Virtual attributes are available on **any** element or component. They are not rendered to the DOM — the framework intercepts them during reconciliation.
+Meta-attributes are available on **any** element or component. They are not rendered to the DOM — the framework intercepts them during reconciliation.
 
 | Attribute | Purpose | Example |
 |-----------|---------|---------|
@@ -112,22 +112,135 @@ Virtual attributes are available on **any** element or component. They are not r
 | `use:name={value}` | Scoped mixin — calls `env[name](target, value, env)` | `<div use:resize={callback} />` |
 | `update:name={fn}` | Two-way binding callback for env-based mixins | `<input update:value={(v) => state.val = v} />` |
 | `this={ref}` | Captures a reference to the rendered DOM node(s) | `<input this={refs.input} />` |
+| `catch={fn}` | Error boundary — catches render/effect errors in children | `<div catch={(err) => <Fallback />} />` |
+| `pick:name={value}` | Oracle-based selection — renders when `env[name]` picks this value | `<Tab pick:active={'home'} />` |
 
-**Key point**: `if`, `else`, `when` are reactive — the Babel plugin wraps their values in `r()`, so the element appears/disappears automatically when dependencies change. No re-render of the parent component occurs.
+**Key point**: `if`, `else`, `when`, `catch` are reactive — the Babel plugin wraps their values in `r()`, so the element appears/disappears automatically when dependencies change. No re-render of the parent component occurs.
 
 ```tsx
-// Conditional rendering — reactive, no rebuild
+// Simple boolean
 <Dashboard if={user.loggedIn} />
 <LoginForm else />
-
-// Env-based conditions
-<AdminPanel if:role={'admin'} />
-<UserPanel else />
 ```
 
-### Virtual Elements
+### `if:name={value}` — Env-Based Equality
 
-Virtual elements are custom JSX tags that don't produce DOM elements. They are framework primitives for structural patterns.
+Renders when `env[name] === value` (strict equality). The env value is set by an ancestor component or `<env>` wrapper.
+
+```tsx
+function Layout(_p: {}, env: Env) {
+  env.role = 'admin'  // or read from auth state
+  return (
+    <>
+      <AdminPanel if:role={'admin'} />
+      <UserPanel  else />
+    </>
+  )
+}
+```
+
+### `when:name={arg}` — Env-Based Predicate
+
+Calls `env[name](arg)` and renders when the result is truthy. The env function is the **predicate** — it receives the argument and decides.
+
+Real-world example — permission guard:
+
+```tsx
+function App(_p: {}, env: Env) {
+  const auth = reactive({ rights: new Set(['view', 'comment']) })
+
+  // Predicate: receives the required right, returns whether the user has it
+  env.hasRights = (right: string) => auth.rights.has(right)
+
+  return (
+    <nav>
+      <a href="/">Home</a>
+      <a href="/edit"   when:hasRights="edit">Edit</a>
+      <a href="/delete" when:hasRights="delete">Delete</a>
+      <a href="/view"   when:hasRights="view">View</a>
+    </nav>
+  )
+}
+```
+
+When `auth.rights` changes, only the affected links appear/disappear — no component rebuild.
+
+### `catch={fn}` — Error Boundaries
+
+`catch` turns any element into an error boundary. If a child throws during render or in a reactive effect, the element's content is reactively swapped to the fallback returned by `fn`.
+
+**Signature:** `catch={(error: unknown, reset?: () => void) => JSX.Element}`
+
+- `error` — the thrown value (usually an `Error` instance)
+- `reset` — optional callback to restore the original content (available if there was a successful render before the error)
+- The boundary is **stable**: the DOM node itself is preserved; only its children are swapped
+- `env.catch` propagation: if an element has no local `catch`, errors bubble to the nearest ancestor that set `env.catch`
+- Setting `catch` clears `env.catch` for all descendants — no double-catching
+
+```tsx
+// Basic error boundary
+<div catch={(error) => <span class="error">{(error as Error).message}</span>}>
+  <UnreliableComponent />
+</div>
+
+// Nested: deep errors bubble up to the nearest ancestor boundary
+<section catch={(error) => <b class="error">{(error as Error).message}</b>}>
+  <Parent>
+    <GrandChild /> {/* throws — caught by <section> */}
+  </Parent>
+</section>
+
+// Reactive error: effect throws after mount
+const state = reactive({ fail: false })
+const Risky = () => {
+  effect(() => { if (state.fail) throw new Error('Boom') })
+  return <span>OK</span>
+}
+<div catch={(error) => <span class="recovered">{(error as Error).message}</span>}>
+  <Risky />
+</div>
+// state.fail = true → content reactively swaps to fallback
+```
+
+### `pick:name={value}` — Oracle-Based Selection
+
+`pick:name` is a multi-sibling selection mechanism driven by an env oracle function. Unlike `if:name` (strict equality), `pick:` lets `env[name]` decide which of several candidates render.
+
+**Protocol:**
+1. All siblings with `pick:name` declare their candidate value
+2. The reconciler collects all candidate values into a `Set` and calls `env[name](options: Set)` as an oracle
+3. The oracle returns the value(s) to render (single value, array, or `Set`)
+4. Only elements whose `pick:name` value is in the oracle's result render
+
+**Requires** `env[name]` to be a function — throws `DynamicRenderingError` if missing.
+
+Real-world example — responsive image variants (render the smallest image larger than the current container width):
+
+```tsx
+function ResponsiveImage(_p: {}, env: Env) {
+  const size = reactive({ height: 0, width: 0 })
+
+  // Oracle: receives all declared maxSize values, picks the smallest one
+  // that is still >= the actual container width
+  env.maxSize = (options: Set<number>) => {
+    return options.toSorted((a, b) => a - b).find((s) => s >= size.width)
+  }
+
+  return (
+    <div use:resize={size}>
+      <img src="/img-400.webp"  pick:maxSize={400}  alt="small" />
+      <img src="/img-800.webp"  pick:maxSize={800}  alt="medium" />
+      <img src="/img-1600.webp" pick:maxSize={Infinity} alt="large" />
+    </div>
+  )
+}
+```
+
+When the container resizes, the oracle re-runs and exactly one `<img>` is shown — no component rebuild, no JS conditionals.
+
+### Meta-components
+
+Meta-components are custom JSX tags that don't produce DOM elements. They are framework primitives for structural patterns.
 
 | Element | Purpose | Example |
 |---------|---------|---------|
@@ -160,8 +273,8 @@ Virtual elements are custom JSX tags that don't produce DOM elements. They are f
 
 ### Why the distinction matters
 
-- **Virtual attributes** modify *any* existing element's behavior — they are orthogonal to what the element is.
-- **Virtual elements** *are* the element — they define structural rendering patterns that have no DOM counterpart.
+- **Meta-attributes** modify *any* existing element's behavior — they are orthogonal to what the element is.
+- **Meta-components** *are* the element — they define structural rendering patterns that have no DOM counterpart.
 
 A `<div if={cond}>` is still a `<div>` that conditionally exists. A `<for>` is not a DOM element at all — it's a reactive list projection.
 

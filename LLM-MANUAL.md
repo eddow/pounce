@@ -425,136 +425,103 @@ SSR hydration: server collects API responses, injects as `<script>` tags, client
 
 ## 5. @pounce/ui (Component Library)
 
-### 5.1 Adapter System
+### 5.1 Architecture
 
-UI components use CSS variable contract (`--pounce-*`) with no built-in framework styling. Adapters provide the look:
+`@pounce/ui` is **headless**: pure logic, pure types, zero class names, zero styling. It provides:
+- `*Model` functions returning reactive state objects (lazy getters, no reactive reads at call time)
+- Shared prop type interfaces
+- `options.iconFactory` — the only global (set once at app startup)
+
+Adapters (e.g. `@pounce/adapter-pico`) own the actual components — they import models from `@pounce/ui` and provide the DOM structure and CSS.
 
 ```ts
-import { setAdapter } from '@pounce/ui'
-import { picoAdapter } from '@pounce/adapter-pico'
-import { glyfIcons } from '@pounce/pure-glyf'
+// App startup — set icon factory if needed
+import { options } from '@pounce/ui'
+options.iconFactory = (name, size, el, dc) => <i class={`icon-${name}`} {...el} />
 
-// Variadic — merges left-to-right (deep merge for variants/components)
-setAdapter(picoAdapter, glyfIcons)
-
-// Must be called BEFORE any component renders
+// Import components directly from the adapter
+import { Button, Accordion, Switch, Toolbar } from '@pounce/adapter-pico'
 ```
 
-**`FrameworkAdapter` type** (all fields optional):
-```ts
-type FrameworkAdapter = {
-  iconFactory?: (name: string, size: string | number | undefined, context: DisplayContext) => JSX.Element
-  variants?: Record<string, Trait>
-  transitions?: TransitionConfig
-  components?: { [Name in keyof UiComponents]?: UiComponents[Name] }
-}
-```
+No `setAdapter()`, no `picoAdapter`, no `FrameworkAdapter`. There is no registry.
 
 ### 5.2 Variants
 
-Variants are Trait objects in the adapter, accessed via `getVariantTrait(name)`:
+Variants are declared via `uiComponent(variants)(ComponentFn)` in the adapter:
 
 ```ts
 // In adapter
-const adapter = {
-  variants: {
-    primary: { classes: ['btn-primary'], attributes: { 'data-variant': 'primary' } },
-    danger: { classes: ['btn-danger'], attributes: { 'data-variant': 'danger' } },
-  }
-}
+import { uiComponent } from '@pounce/ui'
 
-// In components — dot-syntax via asVariant()
-import { Button } from '@pounce/ui'
+export const Button = uiComponent(['primary', 'danger', 'success'] as const)(
+  function Button(props) {
+    const model = buttonModel(props)
+    return <button {...model.button}>{props.children}</button>
+  }
+)
+
+// Dot-syntax automatically available
+<Button.danger>Delete</Button.danger>
 <Button variant="primary">OK</Button>
-<Button.danger>Delete</Button.danger>  // asVariant shorthand
 ```
 
 ### 5.3 Component Inventory
 
-**Buttons**: `Button`, `CheckButton`, `RadioButton`, `ButtonGroup`
-**Forms**: `Select`, `Combobox`, `Checkbox`, `Radio`, `Switch`, `Multiselect`
-**Status**: `Badge`, `Pill`, `Chip` (all support `asVariant`)
-**Data**: `Stars`, `InfiniteScroll`, `Icon`
-**Layout**: `Stack`, `Inline`, `Grid`, `Container`, `Toolbar`, `Menu`
-**Typography**: `Heading`, `Text`, `Link`
-**Overlays**: `Dialog`, `Toast`, `Drawer` (via `StandardOverlays` scope)
-**Other**: `ErrorBoundary`, `DockView`, `Card`, `Progress`, `Accordion`
+All components live in their adapter package (e.g. `@pounce/adapter-pico`). `@pounce/ui` only exports models and types.
 
-### 5.4 Using Overlays
+**Available in `@pounce/adapter-pico`**: `Button`, `Checkbox`, `Radio`, `Switch`, `Accordion`, `Container`, `Heading`, `Text`, `Toolbar`, `ThemeToggle`
+
+**Models in `@pounce/ui`** (for adapter authors):
+- `buttonModel`, `checkboxModel`, `radioModel`, `switchModel`, `accordionModel`
+- `checkButtonModel`, `radioButtonModel`, `comboboxModel`, `progressModel`, `starsModel`
+- `containerModel`, `headingModel`, `textModel`, `menuModel`, `typographyModel`
+
+### 5.4 DisplayProvider
+
+`DisplayProvider` is DOM-only — import from `@pounce/kit/dom`:
 
 ```tsx
-import { AppShell, StandardOverlays } from '@pounce/ui'
+import { DisplayProvider } from '@pounce/kit/dom'
 
-const App = () => (
-  <AppShell>
-    <StandardOverlays>
-      <MyContent/>
-    </StandardOverlays>
-  </AppShell>
-)
-
-// In any descendant component, via scope:
-const MyContent = (props, scope) => {
-  const showDialog = async () => {
-    const result = await scope.dialog.open({ title: 'Confirm', message: 'Sure?' })
-  }
-  scope.toast.show('Hello!', { variant: 'success' })
-  return <Button onClick={showDialog}>Open</Button>
-}
+// Wraps subtree with theme/direction/locale context
+// Sets data-theme, dir, lang on its own <div style="display:contents">
+<DisplayProvider theme={state.theme}>
+  <App />
+</DisplayProvider>
 ```
 
-### 5.5 Writing a Component (UI pattern)
+Props: `theme`, `direction`, `locale`, `timeZone` — all default to `'auto'` (inherit from parent or system). Nestable.
+
+### 5.5 Writing an Adapter Component
 
 ```tsx
-import { compose } from '@pounce/core'
 import { componentStyle } from '@pounce/kit'
-import { getAdapter } from '@pounce/ui'
-import { asVariant, getVariantTrait } from '@pounce/ui'
+import { buttonModel, uiComponent, type ButtonProps } from '@pounce/ui'
 
 componentStyle.sass`
-.pounce-mywidget
-  display: flex
+.my-btn
+  display: inline-flex
 `
 
-type MyWidgetProps = {
-  variant?: string
-  children?: JSX.Children
-  class?: string
-}
-
-const MyWidget = (props: MyWidgetProps) => {
-  const state = compose({}, props)
-  const adapter = getAdapter('MyWidget')
-  const baseClass = adapter?.classes?.root ?? 'pounce-mywidget'
-  
-  return (
-    <div class={[baseClass, state.class]} traits={getVariantTrait(state.variant)}>
-      {state.children}
-    </div>
-  )
-}
-
-export const MyWidgetVariant = asVariant(MyWidget)
+export const Button = uiComponent(['primary', 'danger'] as const)(
+  function Button(props: ButtonProps) {
+    const model = buttonModel(props)
+    // model.button spreads onClick, disabled, aria-label, aria-disabled
+    return (
+      <button class="my-btn" {...model.button}>
+        {props.children}
+      </button>
+    )
+  }
+)
+// Button.primary, Button.danger dot-syntax automatically available
 ```
 
-### 5.6 Writing an Adapter
-
-```ts
-import type { FrameworkAdapter } from '@pounce/ui'
-
-export const myAdapter: Partial<FrameworkAdapter> = {
-  variants: {
-    primary: { classes: ['my-primary'], attributes: { 'data-variant': 'primary' } },
-  },
-  components: {
-    Button: { classes: { root: 'my-btn', icon: 'my-btn-icon' } },
-    Dialog: { classes: { root: 'my-dialog' }, transitions: { enterClass: 'fade-in', duration: 200 } },
-  },
-  transitions: { enterClass: 'default-enter', exitClass: 'default-exit', duration: 300 },
-}
-```
-
-Adapters must be `Partial<FrameworkAdapter>`. CSS should be a separate import (no side effects in JS module).
+**Model pattern rules**:
+- All model properties are **lazy getters** — no reactive reads at model() call time
+- Spread groups (e.g. `model.button`, `model.input`, `model.details`) bundle intrinsic attrs
+- `props.el` is the passthrough escape hatch for caller-supplied HTML attrs
+- CSS lives in the adapter package, never in `@pounce/ui`
 
 ---
 
@@ -587,5 +554,5 @@ Orchestrated by Turborepo: `pnpm run build` from monorepo root
 | `arr.splice(0)` | `arr.length = 0` |
 | `<Spinner if={loading}/><Content else/>` | `{loading ? <Spinner/> : <Content/>}` |
 | `this={myRef}` for element refs | `ref={myRef}` (not supported) |
-| `setAdapter(...)` before render | `setAdapter(...)` during render |
+| `import { Button } from '@pounce/adapter-pico'` | `import { Button } from '@pounce/ui'` (ui has no components) |
 | `import { document } from '@pounce/core'` | `window.document` or global `document` |

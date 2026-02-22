@@ -96,8 +96,8 @@ describe('loading directive', () => {
 	it('should use adapter class override', () => {
 		setAdapter({
 			components: {
-				Loading: { classes: { base: 'custom-loading' } }
-			}
+				Loading: { classes: { base: 'custom-loading' } },
+			},
 		})
 		cleanup = loading(element, true)
 		expect(element.classList.contains('custom-loading')).toBe(true)

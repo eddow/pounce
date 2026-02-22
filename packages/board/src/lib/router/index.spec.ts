@@ -318,10 +318,10 @@ describe('router', () => {
 			const tree = await buildRouteTree('/routes', undefined, globRoutes)
 
 			expect(tree.handlers?.GET).toBeDefined()
-			
+
 			const usersNode = tree.children.get('users')
 			const idNode = usersNode?.children.get('[id]')
-			
+
 			expect(idNode).toBeDefined()
 			expect(idNode?.handlers?.GET).toBeDefined()
 			expect(idNode?.types).toBe('/routes/users/[id]/types.d.ts')

@@ -20,30 +20,39 @@ describe('defineRoute', () => {
 	})
 
 	it('should append query params if schema is provided', () => {
-		const route = defineRoute('/search', z.object({
-			q: z.string(),
-			page: z.number().optional(),
-		}))
+		const route = defineRoute(
+			'/search',
+			z.object({
+				q: z.string(),
+				page: z.number().optional(),
+			})
+		)
 
 		const url = route.buildUrl({ q: 'hello', page: 1 })
 		expect(url).toBe('/search?q=hello&page=1')
 	})
 
 	it('should validate query params', () => {
-		const route = defineRoute('/search', z.object({
-			age: z.number(),
-		}))
+		const route = defineRoute(
+			'/search',
+			z.object({
+				age: z.number(),
+			})
+		)
 
 		// @ts-expect-error - testing runtime validation
 		expect(() => route.buildUrl({ age: 'not-a-number' })).toThrow()
 	})
 
-    it('should handle both path and query params', () => {
-        const route = defineRoute('/users/[id]', z.object({
-            details: z.boolean().optional()
-        }))
+	it('should handle both path and query params', () => {
+		const route = defineRoute(
+			'/users/[id]',
+			z.object({
+				details: z.boolean().optional(),
+			})
+		)
 
-        const url = route.buildUrl({ id: '123', details: true })
-        expect(url).toBe('/users/123?details=true')
-    })
+		const url = route.buildUrl({ id: '123', details: true })
+		expect(url).toBe('/users/123?details=true')
+	})
 })

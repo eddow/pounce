@@ -1,4 +1,5 @@
-import { gather, type RadioProps, radioModel } from '@pounce/ui'
+import { gather } from '@pounce/ui'
+import { type RadioProps, radioModel } from '@pounce/ui/models'
 import { picoComponent } from '../factory'
 
 /**
@@ -16,7 +17,7 @@ export const Radio = picoComponent(function Radio(props: RadioProps) {
 
 	return (
 		<label style="display:inline-flex;align-items:center">
-			<input {...model.input} name={props.name} />
+			<input {...model.input} />
 			{gather(props.children)}
 		</label>
 	)

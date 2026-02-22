@@ -3,6 +3,7 @@
 	"version": "2.0.0",
 	"description": "Headless UI primitives for Pounce applications",
 	"type": "module",
+	"sideEffects": false,
 	"keywords": [
 		"pounce",
 		"headless",
@@ -21,6 +22,11 @@
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js",
 			"default": "./dist/index.js"
+		},
+		"./models": {
+			"types": "./dist/models/index.d.ts",
+			"import": "./dist/models.js",
+			"default": "./dist/models.js"
 		}
 	},
 	"files": [
@@ -39,6 +45,7 @@
 	"dependencies": {
 		"@pounce/core": "workspace:*",
 		"@pounce/kit": "workspace:*",
+		"dockview-core": "^5.0.0",
 		"mutts": "link:../../../mutts"
 	},
 	"devDependencies": {

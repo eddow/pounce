@@ -14,7 +14,7 @@ function Child(_props: {}, env: Env) {
   return <span>{env.theme.dark ? 'Dark' : 'Light'}</span>
 }`
 
-const extendFunction = `import { extend } from '@pounce/core'
+const extendFunction = `import { extend } from '@pounce'
 import { reactive } from 'mutts'
 
 // extend(base, added) creates:
@@ -53,7 +53,7 @@ function App() {
 // Equivalent to calling extend(env, { user, config })
 // inside a wrapper component, but without the extra component.`
 
-const rootEnv = `import { rootEnv } from '@pounce/core'
+const rootEnv = `import { rootEnv } from '@pounce'
 
 // rootEnv is the top-level env object.
 // latch() passes it (or a child of it) to the root component.

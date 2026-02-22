@@ -12,6 +12,8 @@ import { uiComponent } from '@pounce/ui'
  * - ghost: transparent background
  */
 const PICO_VARIANTS = ['primary', 'secondary', 'contrast', 'danger', 'success', 'ghost'] as const
+// TODO: What do we do with `outline`? Do we dedup all variants? (secondaryOutline, ...)  Or another system?
+export type PicoVariant = (typeof PICO_VARIANTS)[number]
 
 /**
  * Component factory for PicoCSS adapter

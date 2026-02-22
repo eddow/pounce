@@ -29,11 +29,14 @@ export function MiniCounter(props: MiniCounterProps) {
 		<>
 			<div>
 				<for each={vm.list}>
-					{(v: string) => (
-						<button class="remove" onClick={() => vm.list.splice(vm.list.indexOf(v), 1)}>
-							{v}
-						</button>
-					)}
+					{(v: string) => {
+						console.log('in for mapped function, v is:', v, typeof v)
+						return (
+							<button class="remove" onClick={() => vm.list.splice(vm.list.indexOf(v), 1)}>
+								{v}
+							</button>
+						)
+					}}
 				</for>
 			</div>
 			<div>

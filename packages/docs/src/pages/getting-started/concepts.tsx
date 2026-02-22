@@ -1,4 +1,4 @@
-import { A } from '@pounce/kit'
+import { A } from '@pounce'
 import { Code, Section } from '../../components'
 
 const reactivityExample = `import { reactive, effect } from 'mutts'
@@ -33,7 +33,7 @@ const twoWayExample = `function LoginForm() {
   )
 }`
 
-const scopeExample = `import { extend } from '@pounce/core'
+const scopeExample = `import { extend } from '@pounce'
 
 // Parent injects "theme" into env
 function App(_props: {}, env: Record<string, any>) {

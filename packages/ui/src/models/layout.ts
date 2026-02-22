@@ -1,5 +1,3 @@
-// TODO: to review
-// TODO: Hungry dog
 import type { ElementPassthroughProps } from '../shared/types'
 // ── SpacingToken ─────────────────────────────────────────────────────────────
 
@@ -7,11 +5,11 @@ export type SpacingToken = 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 
 const spacingScale: Record<SpacingToken, string> = {
 	none: '0',
-	xs: 'calc(var(--pounce-spacing) * 0.5)',
-	sm: 'var(--pounce-spacing)',
-	md: 'calc(var(--pounce-spacing) * 1.5)',
-	lg: 'calc(var(--pounce-spacing) * 2)',
-	xl: 'calc(var(--pounce-spacing) * 3)',
+	xs: '0.25rem',
+	sm: '0.5rem',
+	md: '1rem',
+	lg: '1.5rem',
+	xl: '2rem',
 }
 
 /** Resolves a SpacingToken to a CSS value string. */
@@ -62,8 +60,8 @@ export function justifyContentValue(justify?: JustifyContent): string | undefine
 
 // ── Stack ────────────────────────────────────────────────────────────────────
 
-export type StackProps = {
-	gap?: SpacingToken
+export type StackProps = ElementPassthroughProps<'div'> & {
+	gap?: SpacingToken | (string & {})
 	align?: AlignItems
 	justify?: JustifyContent
 	children?: JSX.Children
@@ -110,8 +108,8 @@ export function stackModel(props: StackProps): StackModel {
 
 // ── Inline ───────────────────────────────────────────────────────────────────
 
-export type InlineProps = {
-	gap?: SpacingToken
+export type InlineProps = ElementPassthroughProps<'div'> & {
+	gap?: SpacingToken | (string & {})
 	align?: AlignItems
 	justify?: JustifyContent
 	wrap?: boolean
@@ -170,8 +168,8 @@ export function inlineModel(props: InlineProps): InlineModel {
 
 // ── Grid ─────────────────────────────────────────────────────────────────────
 
-export type GridProps = {
-	gap?: SpacingToken
+export type GridProps = ElementPassthroughProps<'div'> & {
+	gap?: SpacingToken | (string & {})
 	columns?: number | string
 	minItemWidth?: string
 	align?: 'start' | 'center' | 'end' | 'stretch'

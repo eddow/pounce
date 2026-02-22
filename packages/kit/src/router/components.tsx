@@ -24,10 +24,6 @@ export type {
 }
 export { buildRoute } from './logic.js'
 
-// Node/SSR shim for MouseEvent if likely missing
-type MouseEventShim = unknown
-type SafeMouseEvent = typeof globalThis extends { MouseEvent: any } ? MouseEvent : MouseEventShim
-
 // === ROUTER TYPES ===
 
 /** Minimal route definition for client-side routing. */
@@ -110,6 +106,7 @@ export const Router = <
 	props: RouterProps<Definition>,
 	scope: Record<PropertyKey, unknown>
 ) => {
+	// TODO: Lazy loading road + "loading" or youtube-like progress
 	const state = extend(
 		{
 			get url() {
@@ -173,42 +170,6 @@ export const Router = <
 			)
 		}
 	})
-	// TODO: Do we really want to `new PounceElement` here?
+	// TODO: Do we really want to `new PounceElement` here? shouldn't we simply remove `renderElements` ?
 	return new PounceElement(() => rendered, 'Router')
-}
-
-/**
- * Client-side navigation link.
- * Intercepts clicks on internal hrefs (starting with `/`) and uses `client.navigate()`.
- * Automatically sets `aria-current="page"` when href matches current pathname.
- */
-export function A(props: JSX.IntrinsicElements['a']) {
-	function handleClick(event: SafeMouseEvent) {
-		props.onClick?.(event)
-		if (!event || event.defaultPrevented) {
-			return
-		}
-		const href = props.href
-		if (typeof href === 'string' && href.startsWith('/')) {
-			event.preventDefault()
-			if (client.url.pathname !== href) {
-				perf?.mark('route:click:start')
-				client.navigate(href)
-				perf?.mark('route:click:end')
-				perf?.measure('route:click', 'route:click:start', 'route:click:end')
-			}
-		}
-	}
-
-	return (
-		<a
-			{...props}
-			onClick={handleClick}
-			aria-current={
-				props['aria-current'] ?? (client.url.pathname === props.href ? 'page' : undefined)
-			}
-		>
-			{props.children}
-		</a>
-	)
 }

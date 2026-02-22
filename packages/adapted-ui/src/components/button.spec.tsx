@@ -37,7 +37,7 @@ describe('Button', () => {
 	it('applies all standard variant classes via dynamic flavoring', () => {
 		const variants = ['primary', 'secondary', 'contrast', 'danger', 'success', 'warning']
 
-		variants.forEach(variant => {
+		variants.forEach((variant) => {
 			// Clear previous renders
 			container.innerHTML = ''
 
@@ -80,10 +80,10 @@ describe('Button', () => {
 				Button: {
 					classes: {
 						base: 'custom-btn',
-						iconOnly: 'btn-icon-only'
-					}
-				}
-			}
+						iconOnly: 'btn-icon-only',
+					},
+				},
+			},
 		})
 
 		// Test base class override
@@ -143,7 +143,11 @@ describe('Button', () => {
 
 	// HTML Element Tests (inspired by Pico's tag flexibility)
 	it('supports different HTML tags', () => {
-		render(<Button tag="a" el={{ href: '/test', target: '_blank' }}>Link Button</Button>)
+		render(
+			<Button tag="a" el={{ href: '/test', target: '_blank' }}>
+				Link Button
+			</Button>
+		)
 		const button = container.querySelector('.pounce-button')
 		expect(button?.tagName).toBe('A')
 		expect((button as HTMLAnchorElement)?.href).toContain('/test')
@@ -151,7 +155,11 @@ describe('Button', () => {
 	})
 
 	it('supports div tag for custom button-like elements', () => {
-		render(<Button tag="div" el={{ role: 'button', tabIndex: 0 }}>Div Button</Button>)
+		render(
+			<Button tag="div" el={{ role: 'button', tabIndex: 0 }}>
+				Div Button
+			</Button>
+		)
 		const button = container.querySelector('.pounce-button')
 		expect(button?.tagName).toBe('DIV')
 		expect(button?.getAttribute('role')).toBe('button')
@@ -195,7 +203,13 @@ describe('Button', () => {
 	})
 
 	it('handles complex children (nested elements)', () => {
-		render(<Button><span>Nested <strong>Text</strong></span></Button>)
+		render(
+			<Button>
+				<span>
+					Nested <strong>Text</strong>
+				</span>
+			</Button>
+		)
 		const button = container.querySelector('.pounce-button')
 		expect(button).toBeTruthy()
 		expect(button?.querySelector('span')).toBeTruthy()

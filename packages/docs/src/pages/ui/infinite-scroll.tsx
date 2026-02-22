@@ -1,4 +1,4 @@
-import { InfiniteScroll, Inline, Select, Stack, Switch } from '@pounce/ui'
+import { InfiniteScroll, Inline, Select, Stack, Switch } from '@pounce'
 import { reactive } from 'mutts'
 import { ApiTable, Code, Demo, Section } from '../../components'
 

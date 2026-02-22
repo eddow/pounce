@@ -1,4 +1,4 @@
-import { A } from '@pounce/kit'
+import { A } from '@pounce'
 import { navigation } from '../nav-index'
 
 export default function PageNav() {

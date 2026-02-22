@@ -1,7 +1,6 @@
 import { ApiTable, Code, Section } from '../../components'
 
-const routeDefinition = `import { Router, A } from '@pounce/kit'
-import type { ClientRouteDefinition } from '@pounce/kit'
+const routeDefinition = `import { Router, A, type ClientRouteDefinition } from '@pounce'
 
 const routes: ClientRouteDefinition[] = [
   { path: '/', view: HomePage },
@@ -37,7 +36,7 @@ function DocsPage(spec: { params: { slug: string } }) {
   return <h1>Docs: {spec.params.slug}</h1>
 }`
 
-const aComponent = `import { A } from '@pounce/kit'
+const aComponent = `import { A } from '@pounce'
 
 // <A> is a reactive link that uses pushState navigation.
 // It sets aria-current="page" on the active link.
@@ -48,7 +47,7 @@ const aComponent = `import { A } from '@pounce/kit'
 // Equivalent to <a> but intercepts clicks for SPA navigation.
 // External links (different origin) fall through to normal navigation.`
 
-const defineRouteExample = `import { defineRoute } from '@pounce/kit'
+const defineRouteExample = `import { defineRoute } from '@pounce'
 import { type } from 'arktype'
 
 // defineRoute() creates a typed route with buildUrl() helper.

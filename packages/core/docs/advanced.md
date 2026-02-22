@@ -136,7 +136,7 @@ function ComponentB(props: any, env: Env) {
 
 ### Using Environment for Conditional Rendering
 
-Env is particularly powerful for conditional rendering using `if`, `if:name`, `when:name`, and `else`:
+Env is particularly powerful for conditional rendering using **meta-attributes** like `if`, `if:name`, `when:name`, and `else`:
 
 ```tsx
 function App() {
@@ -169,11 +169,11 @@ function MainContent(props: any, env: Env) {
 }
 ```
 
-## Control Flow Components
+## Meta-components
 
 ### for Loops
 
-Use the `<for>` component for reactive iteration:
+Use the `<for>` meta-component for reactive iteration:
 
 ```tsx
 function TodoList() {
@@ -595,6 +595,6 @@ function processItem(item: any) {
 5. **Handle edge cases**: Always validate props and state
 6. **Clean up effects**: Return cleanup functions to prevent memory leaks
 7. **Use debug mode during development**: Track reactive changes
-8. **Optimize re-renders**: Only update what's necessary
+8. **Leverage meta-attributes**: Use `if`, `when`, `catch` for fine-grained reactivity.
 
 

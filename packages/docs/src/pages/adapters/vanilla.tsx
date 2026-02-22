@@ -1,6 +1,6 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const usage = `import { setAdapter, vanillaAdapter } from '@pounce/ui'
+const usage = `import { setAdapter, vanillaAdapter } from '@pounce'
 
 // Enable standard variants and transitions without an external framework
 setAdapter(vanillaAdapter)`

@@ -1,5 +1,5 @@
-import { gather, type SwitchProps, switchModel } from '@pounce/ui'
-import { picoComponent } from '../factory'
+import { gather } from '@pounce/ui'
+import { type SwitchProps, switchModel } from '@pounce/ui/models'
 
 /**
  * PicoCSS Switch component (styled checkbox)
@@ -11,7 +11,7 @@ import { picoComponent } from '../factory'
  * </Switch>
  * ```
  */
-export const Switch = picoComponent(function Switch(props: SwitchProps) {
+export function Switch(props: SwitchProps) {
 	const model = switchModel(props)
 
 	return (
@@ -20,4 +20,4 @@ export const Switch = picoComponent(function Switch(props: SwitchProps) {
 			{gather(props.children)}
 		</label>
 	)
-})
+}

@@ -1,5 +1,3 @@
-// TODO: to review
-// TODO: Hungry dog
 import type { DisableableProps, VariantProps } from '../shared/types'
 import { generateId } from '../shared/utils'
 
@@ -49,7 +47,7 @@ export type ComboboxModel = {
  * }
  * ```
  */
-export function comboboxModel(props: ComboboxProps): ComboboxModel {
+export function comboboxModel(props: Pick<ComboboxProps, 'options'>): ComboboxModel {
 	const generatedId = generateId('combobox')
 	const model: ComboboxModel = {
 		get input() {

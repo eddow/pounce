@@ -1,5 +1,3 @@
-// TODO: to review
-// TODO: Hungry dog
 import { reactive } from 'mutts'
 
 // ── Types ───────────────────────────────────────────────────────────────────

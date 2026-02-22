@@ -14,17 +14,7 @@
 				"enabled": false
 			},
 			"formatter": {
-				"enabled": false
-			}
-		},
-		{
-			"includes": ["packages/docs/**/*.ts", "packages/docs/**/*.tsx"],
-			"linter": {
-				"rules": {
-					"a11y": {
-						"noLabelWithoutControl": "off"
-					}
-				}
+				"enabled": true
 			}
 		}
 	],
@@ -91,7 +81,17 @@
 				"useValidAnchor": "off",
 				"useSemanticElements": "off",
 				"useKeyWithClickEvents": "off",
-				"useAriaPropsSupportedByRole": "off"
+				"useAriaPropsSupportedByRole": "off",
+				"noLabelWithoutControl": "off",
+				"noNoninteractiveElementToInteractiveRole": "off",
+				"noRedundantRoles": "off"
+			}
+		}
+	},
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": "on"
 			}
 		}
 	}

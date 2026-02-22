@@ -1,4 +1,5 @@
-import { type ButtonProps, buttonModel, gather } from '@pounce/ui'
+import { gather } from '@pounce/ui'
+import { type ButtonProps, buttonModel } from '@pounce/ui/models'
 import { picoComponent } from '../factory'
 
 /**

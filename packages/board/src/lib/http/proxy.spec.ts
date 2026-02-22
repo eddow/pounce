@@ -565,10 +565,11 @@ describe('defineProxy', () => {
 			expect(mockFetch).toHaveBeenCalledWith(expect.any(URL), expect.objectContaining({ method }))
 		})
 	})
-	
+
 	describe('retry logic', () => {
 		it('should retry on non-ok response', async () => {
-			const mockFetch = vi.fn()
+			const mockFetch = vi
+				.fn()
 				.mockResolvedValueOnce({ ok: false, status: 503, statusText: 'Service Unavailable' })
 				.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ success: true }) })
 			vi.stubGlobal('fetch', mockFetch)
@@ -588,7 +589,8 @@ describe('defineProxy', () => {
 		})
 
 		it('should retry on fetch error', async () => {
-			const mockFetch = vi.fn()
+			const mockFetch = vi
+				.fn()
 				.mockRejectedValueOnce(new Error('Network error'))
 				.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ success: true }) })
 			vi.stubGlobal('fetch', mockFetch)
@@ -608,7 +610,9 @@ describe('defineProxy', () => {
 		})
 
 		it('should fail after all retries exhausted', async () => {
-			const mockFetch = vi.fn().mockResolvedValue({ ok: false, status: 500, statusText: 'Internal Error' })
+			const mockFetch = vi
+				.fn()
+				.mockResolvedValue({ ok: false, status: 500, statusText: 'Internal Error' })
 			vi.stubGlobal('fetch', mockFetch)
 
 			const proxy = defineProxy({
@@ -625,7 +629,9 @@ describe('defineProxy', () => {
 		})
 
 		it('should respect endpoint-specific retries over proxy retries', async () => {
-			const mockFetch = vi.fn().mockResolvedValue({ ok: false, status: 500, statusText: 'Internal Error' })
+			const mockFetch = vi
+				.fn()
+				.mockResolvedValue({ ok: false, status: 500, statusText: 'Internal Error' })
 			vi.stubGlobal('fetch', mockFetch)
 
 			const proxy = defineProxy({
@@ -650,7 +656,7 @@ describe('defineProxy', () => {
 					const id = setTimeout(() => {
 						resolve({ ok: true, json: () => Promise.resolve({ success: true }) })
 					}, 100)
-					
+
 					signal?.addEventListener('abort', () => {
 						clearTimeout(id)
 						const e = new Error('The operation was aborted')
@@ -660,7 +666,7 @@ describe('defineProxy', () => {
 				})
 			})
 			vi.stubGlobal('fetch', mockFetch)
-			
+
 			const proxy = defineProxy({
 				baseUrl: 'https://api.example.com',
 				timeout: 20, // Short timeout
@@ -773,7 +779,8 @@ describe('defineProxy', () => {
 		})
 
 		it('should NOT cache error responses', async () => {
-			const mockFetch = vi.fn()
+			const mockFetch = vi
+				.fn()
 				.mockResolvedValueOnce({ ok: false, status: 500, statusText: 'Error' })
 				.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ data: 'success' }) })
 			vi.stubGlobal('fetch', mockFetch)

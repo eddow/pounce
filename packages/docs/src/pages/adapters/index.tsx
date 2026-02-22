@@ -1,7 +1,6 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const adapterPattern = `import { setAdapter } from '@pounce/ui'
-import { picoAdapter } from '@pounce/adapter-pico'
+const adapterPattern = `import { setAdapter, picoAdapter } from '@pounce'
 
 // Mix and match adapters
 setAdapter(

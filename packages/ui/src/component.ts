@@ -44,10 +44,10 @@ export type UiComponent<Props, V extends string> = ((
 export function uiComponent<const V extends string>(
 	variants: readonly V[]
 ): <Props extends { variant?: string }>(
-	ctor: (props: WithVariant<Props, V>, env: Env) => JSX.Element
+	ctor: (props: Props, env: Env) => JSX.Element
 ) => UiComponent<Props, V> {
 	return function wrap<Props extends { variant?: string }>(
-		ctor: (props: WithVariant<Props, V>, env: Env) => JSX.Element
+		ctor: (props: Props, env: Env) => JSX.Element
 	): UiComponent<Props, V> {
 		const wrapped = (props: WithVariant<Props, V>, env: Env) => {
 			if (
@@ -59,7 +59,7 @@ export function uiComponent<const V extends string>(
 					`[pounce/ui] <${ctor.name}> unknown variant "${props.variant}". Known: ${variants.join(', ')}`
 				)
 			}
-			return ctor(props, env)
+			return ctor(props as unknown as Props, env)
 		}
 
 		Object.defineProperty(wrapped, 'name', { value: ctor.name })
@@ -68,7 +68,7 @@ export function uiComponent<const V extends string>(
 			get(target, prop) {
 				if (typeof prop === 'string' && (variants as readonly string[]).includes(prop)) {
 					return (props: Omit<WithVariant<Props, V>, 'variant'>, env: Env) =>
-						ctor({ ...props, variant: prop as V } as WithVariant<Props, V>, env)
+						ctor({ ...props, variant: prop as V } as unknown as Props, env)
 				}
 				return Reflect.get(target, prop)
 			},

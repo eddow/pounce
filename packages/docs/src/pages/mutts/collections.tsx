@@ -49,12 +49,6 @@ export default function MuttsCollectionsPage() {
 				<ul>
 					<li>
 						<strong>
-							<code>scan(array, cb, initial)</code>
-						</strong>
-						: Reactive accumulation (like reduce) optimized for collection moves.
-					</li>
-					<li>
-						<strong>
 							<code>attend(collection, cb)</code>
 						</strong>
 						: Subscribe to additions, removals, and updates with per-item cleanup support.

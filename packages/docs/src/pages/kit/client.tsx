@@ -1,6 +1,6 @@
 import { ApiTable, Code, Section } from '../../components'
 
-const clientBasics = `import { client } from '@pounce/kit'
+const clientBasics = `import { client } from '@pounce'
 
 // client is a reactive object — read any property in JSX
 // and it updates automatically when the browser state changes.
@@ -25,7 +25,7 @@ client.url.query      // { q: "pounce" }
 client.url.href       // full URL string
 client.url.origin     // "http://localhost:5290"`
 
-const navigation = `import { client } from '@pounce/kit'
+const navigation = `import { client } from '@pounce'
 
 // Programmatic navigation:
 client.navigate('/about')                    // pushState

@@ -271,15 +271,32 @@ describe('picoComponents', () => {
 
 	it('covers all expected component keys', () => {
 		const expected = [
-			'Card', 'Progress', 'Accordion',
-			'Button', 'CheckButton', 'RadioButton', 'ButtonGroup',
-			'Select', 'Combobox', 'Checkbox', 'Radio', 'Switch',
-			'Menu', 'Multiselect',
-			'Badge', 'Pill', 'Chip',
+			'Card',
+			'Progress',
+			'Accordion',
+			'Button',
+			'CheckButton',
+			'RadioButton',
+			'ButtonGroup',
+			'Select',
+			'Combobox',
+			'Checkbox',
+			'Radio',
+			'Switch',
+			'Menu',
+			'Multiselect',
+			'Badge',
+			'Pill',
+			'Chip',
 			'Stars',
-			'Heading', 'Text', 'Link',
-			'Toolbar', 'Layout',
-			'Dialog', 'Toast', 'Drawer'
+			'Heading',
+			'Text',
+			'Link',
+			'Toolbar',
+			'Layout',
+			'Dialog',
+			'Toast',
+			'Drawer',
 		]
 		for (const key of expected) {
 			expect(picoComponents[key as keyof typeof picoComponents], `missing: ${key}`).toBeDefined()

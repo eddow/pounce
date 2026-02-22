@@ -1,4 +1,4 @@
-import { Badge, Chip, Inline, Pill, Select, Stack, Switch } from '@pounce/ui'
+import { Badge, Chip, Inline, Pill, Select, Stack, Switch } from '@pounce'
 import { reactive } from 'mutts'
 import { ApiTable, Demo, Section } from '../../components'
 

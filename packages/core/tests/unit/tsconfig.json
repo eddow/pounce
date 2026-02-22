@@ -3,9 +3,6 @@
 	"compilerOptions": {
 		"baseUrl": "..",
 		"paths": {
-			"@pounce/core": [
-				"src/lib/node/index.ts",
-			]
 		}
 	},
 	"include": [

@@ -1,5 +1,48 @@
 # Pounce-TS Documentation
 
+## JSX Configuration Standard ⚠️ **CRITICAL**
+
+**ALL Pounce projects MUST use the classic JSX transform configuration.**
+Do NOT use `jsx: "react-jsx"` or `jsxImportSource` - this causes build failures and inconsistencies.
+
+### Standard TypeScript Configuration
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "jsxFactory": "h",
+    "jsxFragmentFactory": "Fragment"
+  }
+}
+```
+
+### Why Classic Transform?
+
+1. **Consistency** - All packages use the same JSX configuration
+2. **Compatibility** - Works with Pounce's custom JSX transform via Babel plugin
+3. **Simplicity** - No need for jsx-runtime exports or imports
+
+### What NOT to Do
+
+❌ DO NOT use `jsx: "react-jsx"`  
+❌ DO NOT use `jsxImportSource: "@pounce/core"`  
+❌ DO NOT add jsx-runtime or jsx-dev-runtime exports to package.json
+
+### Babel Plugin Configuration
+
+The Babel plugin handles JSX transformation with:
+```javascript
+['@babel/plugin-transform-react-jsx', {
+  runtime: 'classic',
+  pragma: 'h',
+  pragmaFrag: 'Fragment',
+  throwIfNamespace: false,
+}]
+```
+
+This ensures JSX is transformed to `h()` calls which Pounce understands.
+
 ## Overview
 Pounce is a **Component-Oriented UI Framework** that *looks* like React but works very differently. It uses **fine-grained reactivity** (via `mutts`) and direct DOM manipulation, avoiding the overhead of a Virtual DOM diffing engine.
 
@@ -147,9 +190,36 @@ Component constructors run **once** inside `PounceElement.render`'s effect. A **
 
 Bare reactive reads in the constructor body (e.g. `state.x` as a statement) are caught by the fence. Use `if={}` attributes for conditional rendering, NOT JS `if` statements.
 
-### 8. Error Boundaries
+### 8. Error Boundaries — `catch=` meta-attribute
 
-`onEffectThrow(handler)` in a component constructor registers on the component's render effect. Child component errors propagate up the effect parent chain and are caught by the boundary. The boundary fires `handler` but does NOT provide fallback content — the child's `PounceElement.render` still throws `DynamicRenderingError` if no content was produced.
+`catch={(error: unknown, reset?: () => void) => JSX.Element}` on **any element** turns it into an error boundary. No component wrapper needed.
+
+- Catches errors thrown by children during render **and** in reactive effects after mount
+- The boundary element is stable; only its children are reactively swapped to the fallback
+- `env.catch` propagation: errors bubble to the nearest ancestor boundary if no local `catch` is set
+- Setting `catch` clears `env.catch` for descendants — no double-catching
+- `reset` (second arg) restores original content if there was a successful render before the error
+
+```tsx
+<div catch={(error) => <span class="error">{(error as Error).message}</span>}>
+  <UnreliableComponent />
+</div>
+```
+
+`onEffectThrow` still exists in mutts but is **not** the idiomatic error boundary mechanism — use `catch=` instead.
+
+### 8b. `pick:name={value}` — Oracle-Based Selection
+
+Multi-sibling selection driven by an env oracle function. All siblings with `pick:name` declare a candidate value; the reconciler collects all values into a `Set`, calls `env[name](options: Set)`, and renders only elements whose value is in the oracle's result.
+
+- **Requires** `env[name]` to be a function — throws `DynamicRenderingError` if missing
+- Oracle can return a single value, array, or `Set` of winning values (multi-select supported)
+
+```tsx
+env.tab = (options: Set<string>) => state.active  // oracle picks one
+<HomePanel    pick:tab={'home'} />
+<SettingsPanel pick:tab={'settings'} />
+```
 
 ### 9. Vitest Uses Babel Plugin
 
@@ -162,6 +232,8 @@ The vitest base config (`test/vitest.config.base.ts`) includes `pounceCorePlugin
 **Rule**: Library builds that externalize `@pounce/core` MUST externalize ALL subpaths: use `/^@pounce\/core/` regex. A singleton guard in `src/lib/index.ts` throws if two instances load.
 
 **JSX Runtime**: Pounce uses the **classic** JSX transform (`pragma: h`, `pragmaFrag: Fragment`). There is no `jsx-runtime` module — babel emits direct `h()` calls. The `h` and `Fragment` functions are set as globals in `src/lib/index.ts`.
+
+**CRITICAL**: Never switch to `jsx: "react-jsx"` or add jsx-runtime exports. This breaks the build system and creates inconsistencies across packages. All Pounce projects must use the classic transform as documented in the JSX Configuration Standard section at the top of this file.
 
 ### 11. `latch()` — Latching Content onto Elements
 
@@ -188,7 +260,40 @@ unlatch()
 - **`bindApp()`** was a thin wrapper around `latch()` with perf markers (now removed)
 - **`reconcile()`** is the internal primitive (not exported for consumers) — syncs `Node[]` into a parent
 
-### 12. Known Issue: Premature Effect Cleanup in `jsx-factory`
+### 12. Barrel Plugin — `pounceBarrelPlugin`
+
+`pounceBarrelPlugin(options?)` in `@pounce/core/plugin` creates a **virtual module** that re-exports from the right Pounce packages based on a skeleton.
+
+```ts
+import { pounceBarrelPlugin } from '@pounce/core/plugin'
+
+pounceBarrelPlugin({
+  name: '@pounce',        // virtual module name (default: '@pounce')
+  skeleton: 'front-end', // 'kit' | 'front-end' | 'back-end' | 'full-stack' (default)
+  adapter: '@pounce/adapter-pico', // required when skeleton includes UI
+  dts: 'src/@pounce.d.ts', // path to write ambient declare module file (default: '<name>.d.ts' in cwd)
+                            // set to false to disable
+})
+```
+
+**Skeletons:**
+| Skeleton | Packages re-exported |
+|---|---|
+| `kit` | `@pounce/core`, `@pounce/kit` |
+| `front-end` | `@pounce/core`, `@pounce/kit/dom`, `@pounce/ui`, adapter |
+| `back-end` | `@pounce/core`, `@pounce/kit`, `@pounce/board` |
+| `full-stack` | `@pounce/core`, `@pounce/kit/dom`, `@pounce/ui`, adapter, `@pounce/board` |
+
+The virtual module ID is the `name` string itself (no `\0` prefix). Consumers import from it directly:
+```ts
+import { reactive, Button, A } from '@pounce'
+```
+
+At `buildStart`, the plugin writes an ambient `declare module` `.d.ts` file to disk for IDE type support (same pattern as `pure-glyf`). The generated file contains `declare module '@pounce' { export * from ... }` matching the skeleton. Add the path to `tsconfig.json` `paths` and `include`.
+
+Used by `@pounce/docs` and `mARC` (and any app that wants a single import namespace).
+
+### 13. Known Issue: Premature Effect Cleanup in `jsx-factory`
 
 **Status:** Open / Mitigated (Workaround Active)
 

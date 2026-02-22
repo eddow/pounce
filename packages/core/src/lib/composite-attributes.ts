@@ -1,8 +1,12 @@
-import { type EffectCleanup, isReactive } from 'mutts'
+import { type EffectCleanup, effect, isReactive, reactiveOptions } from 'mutts'
+import { pounceOptions } from './debug'
 import { styles } from './styles'
 import { stringKeys } from './utils'
 
+export type PropInteraction = 'none' | 'read' | 'write' | 'bidi'
+
 export class ReactiveProp<T> {
+	interaction: PropInteraction = 'none'
 	constructor(
 		public get: () => T,
 		public set?: (v: T) => void
@@ -21,31 +25,80 @@ export const fromAttribute = Symbol('from attributes')
 export interface CompositeAttributesMeta {
 	this?: ReactiveProp<Node | readonly Node[]>
 	condition?: ReactiveProp<any>
+	pick?: Record<string, any>
 	else?: true
-	mount?: (mounted: Node | readonly Node[]) => EffectCleanup
+	mount?: (mounted: Node | readonly Node[], env: Record<PropertyKey, any>) => EffectCleanup
 	when?: Record<string, PerhapsReactive<(arg: unknown) => boolean>>
 	if?: Record<string, PerhapsReactive<unknown> | true | string>
 	use?: Record<
 		string,
 		PerhapsReactive<(mounted: Node | readonly Node[], value: unknown) => EffectCleanup>
 	>
+	catch?: (error: unknown, resetCb?: () => void) => JSX.Element
 }
+function report(msg: string) {
+	if (pounceOptions.checkReactivity === 'error') throw new Error(msg)
+	console.warn(msg)
+}
+
+function trackRead(rp: ReactiveProp<any>) {
+	if (!pounceOptions.checkReactivity) return
+	if (rp.interaction === 'write') {
+		report('[pounce] Prop read after write-only interaction — expected bidi but got write-only')
+		rp.interaction = 'bidi'
+	} else if (rp.interaction === 'none') {
+		rp.interaction = 'read'
+	}
+}
+
+function trackWrite(rp: ReactiveProp<any>, value: any): boolean {
+	if (!rp.set) {
+		throw new TypeError(`[pounce] Cannot set read-only prop`)
+	}
+	if (!pounceOptions.checkReactivity) {
+		rp.set(value)
+		return true
+	}
+	if (rp.interaction === 'read') {
+		report('[pounce] Prop written after read-only interaction — expected bidi but got read-only')
+	}
+	const prevTouched = reactiveOptions.touched
+	let wasTouched = false
+	reactiveOptions.touched = (...args) => {
+		wasTouched = true
+		prevTouched(...args)
+	}
+	// Establish a temporary watcher so reactiveOptions.touched fires even with no pre-existing watchers
+	let stopWatcher: (() => void) | undefined
+	try {
+		stopWatcher = effect(function probeWatcher() {
+			rp.get()
+		})
+		rp.set(value)
+	} finally {
+		reactiveOptions.touched = prevTouched
+		stopWatcher?.()
+	}
+	rp.interaction = wasTouched ? 'bidi' : rp.interaction === 'read' ? 'read' : 'write'
+	return true
+}
+
 const propsProxy: ProxyHandler<CompositeAttributes> & Record<symbol, unknown> = {
 	[Symbol.toStringTag]: 'Properties',
 	get(target, prop) {
 		if (prop === fromAttribute) return target
-		if (typeof prop === 'string') return collapse(target.get(prop))
+		if (typeof prop === 'string') {
+			const rp = target.get(prop)
+			if (rp instanceof ReactiveProp) trackRead(rp)
+			return rp instanceof ReactiveProp ? rp.get() : rp
+		}
 	},
 	set(target, prop, value) {
 		if (typeof prop === 'string') {
 			const rp = target.get(prop)
-			if (rp instanceof ReactiveProp && rp.set) {
-				rp.set(value)
-				return true
-			}
+			if (rp instanceof ReactiveProp) return trackWrite(rp, value)
 		}
-		console.warn(`Cannot set property ${String(prop)}`)
-		return false
+		throw new TypeError(`[pounce] Cannot set property ${String(prop)}`)
 	},
 
 	has: (target, prop) => typeof prop === 'string' && target.keys.has(prop),
@@ -60,8 +113,11 @@ const propsProxy: ProxyHandler<CompositeAttributes> & Record<symbol, unknown> = 
 			configurable: true,
 			...(value instanceof ReactiveProp
 				? {
-						get: () => value.get(),
-						set: value.set && ((v) => value.set!(v)),
+						get: () => {
+							trackRead(value)
+							return value.get()
+						},
+						set: value.set && ((v) => trackWrite(value, v)),
 					}
 				: {
 						writable: false,
@@ -182,11 +238,13 @@ export class CompositeAttributes {
 		return {
 			this: this.getSingle('this', true),
 			condition: this.getSingle('if', true),
+			pick: this.getCategory('pick', true),
 			else: this.getSingle('else', true),
 			mount: this.getSingle('use', true),
 			when: this.getCategory('when', true),
 			use: this.getCategory('use', true),
 			if: this.getCategory('if', true),
+			catch: this.getSingle('catch', true),
 		}
 	}
 

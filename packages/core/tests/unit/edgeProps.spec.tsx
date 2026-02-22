@@ -1,29 +1,23 @@
 /**
  * Test edge cases for property handling
  */
-import { describe, test } from 'vitest'
-import { h, pounceOptions } from '@pounce/core'
+import { describe, expect, test } from 'vitest'
+import { h } from '@pounce/core'
 
 describe('edgeProps', () => {
     test('should explain why property set fails', () => {
-        //TODO: play with pounceOptions.writeRoProps
         const comp = (props: { value: string }) => {
+            'use strict'
             props.value = 'test'
             return []
         }
 
-        const oldInitial = pounceOptions.writeRoProps
-        pounceOptions.writeRoProps = 'ignore'
-
-        let inst = h(comp, { value: 'initial' })
-        inst.render({})
-        inst = h(comp, { value: () => 'initial' })
-        inst.render({})
-
-        pounceOptions.writeRoProps = oldInitial
-
-
-        //expect(() => h(Comp, { value: 'initial' })).toThrow()
+        // Assigning to a one-way binding in strict mode should throw a TypeError
+        // because its descriptor has writable: false
+        expect(() => {
+            let inst = h(comp, { value: () => 'initial' })
+            inst.render({})
+        }).toThrow(TypeError)
     })
 })
 

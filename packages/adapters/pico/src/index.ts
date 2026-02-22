@@ -10,6 +10,7 @@
 
 // Export all components
 export * from './components'
+export * from './directives'
 
 // Export factory for custom components
 export { picoComponent } from './factory'

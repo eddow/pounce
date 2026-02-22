@@ -4,6 +4,7 @@
  */
 import { describe, expect, test } from 'vitest'
 import { matchRoute, routeMatcher } from './components'
+import { linkModel } from './link-model'
 
 describe('Router matchRoute wrapper', () => {
 	const routes = [
@@ -44,11 +45,7 @@ describe('Router matchRoute wrapper', () => {
 })
 
 describe('routeMatcher (pre-compiled)', () => {
-	const routes = [
-		{ path: '/a' as const },
-		{ path: '/b' as const },
-		{ path: '/' as const },
-	]
+	const routes = [{ path: '/a' as const }, { path: '/b' as const }, { path: '/' as const }]
 	const matcher = routeMatcher(routes)
 
 	test('matches different routes on successive calls', () => {
@@ -75,6 +72,16 @@ describe('routeMatcher (pre-compiled)', () => {
 	test('returns null when no root route exists', () => {
 		const noRoot = routeMatcher([{ path: '/a' as const }])
 		expect(noRoot('/nope')).toBeNull()
+	})
+})
+
+describe('linkModel', () => {
+	test('defaults underline to true', () => {
+		expect(linkModel({}).underline).toBe(true)
+	})
+
+	test('underline=false disables it', () => {
+		expect(linkModel({ underline: false }).underline).toBe(false)
 	})
 })
 

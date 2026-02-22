@@ -1,12 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { escapeJson, getSSRData, injectApiResponses, injectSSRContent, registerInjector } from './utils.js'
+import {
+	escapeJson,
+	getSSRData,
+	injectApiResponses,
+	injectSSRContent,
+	registerInjector,
+} from './utils.js'
 
 describe('ssr utils', () => {
 	afterEach(() => {
 		vi.unstubAllGlobals()
 		vi.restoreAllMocks()
 	})
-	
+
 	describe('injectApiResponses', () => {
 		it('should inject script tags into HTML', () => {
 			const html = '<html><head></head><body></body></html>'
@@ -32,18 +38,18 @@ describe('ssr utils', () => {
 			expect(result).toContain('\\u003c/script\\u003e')
 		})
 	})
-	
+
 	describe('injectSSRContent', () => {
 		it('should run custom injectors', async () => {
 			const { withSSRContext } = await import('./utils.js')
-			
+
 			// Register custom injector
 			registerInjector(() => '<script>console.log("injected")</script>')
 
 			await withSSRContext(async () => {
 				const html = '<html><body></body></html>'
 				const result = await injectSSRContent(html)
-				
+
 				expect(result).toContain('<script>console.log("injected")</script>')
 				expect(result).toContain('</body>')
 			})
@@ -51,13 +57,13 @@ describe('ssr utils', () => {
 
 		it('should inject default API responses', async () => {
 			const { withSSRContext, injectSSRData } = await import('./utils.js')
-			
+
 			await withSSRContext(async () => {
 				injectSSRData('test-api', { foo: 'bar' })
-				
+
 				const html = '<html><body></body></html>'
 				const result = await injectSSRContent(html)
-				
+
 				expect(result).toContain(
 					'<script type="application/json" id="test-api">{"foo":"bar"}</script>'
 				)
@@ -68,14 +74,14 @@ describe('ssr utils', () => {
 			const { withSSRContext } = await import('./utils.js')
 
 			registerInjector(async () => {
-				await new Promise(resolve => setTimeout(resolve, 10))
+				await new Promise((resolve) => setTimeout(resolve, 10))
 				return '<style>.async { color: red; }</style>'
 			})
 
 			await withSSRContext(async () => {
 				const html = '<html><head></head><body></body></html>'
 				const result = await injectSSRContent(html)
-				
+
 				expect(result).toContain('<style>.async { color: red; }</style>')
 			})
 		})
@@ -168,13 +174,13 @@ describe('ssr utils', () => {
 	describe('SSRContext', () => {
 		it('should generate same IDs for the same URL within the same context (for caching)', async () => {
 			const { withSSRContext, getSSRId } = await import('./utils.js')
-			
+
 			await withSSRContext(async () => {
 				const id1 = getSSRId('/foo')
 				const id2 = getSSRId('/foo')
 				expect(id1).toBe(id2)
 				// IDs are hashed, so they won't contain the raw path 'foo'
-				// expect(id1).toContain('foo') 
+				// expect(id1).toContain('foo')
 				// expect(id2).toContain('foo')
 			})
 		})
@@ -198,7 +204,7 @@ describe('ssr utils', () => {
 
 			expect(res1.result).toHaveProperty('id-1')
 			expect(res1.result).not.toHaveProperty('id-2')
-			
+
 			expect(res2.result).toHaveProperty('id-2')
 			expect(res2.result).not.toHaveProperty('id-1')
 		})
@@ -208,14 +214,14 @@ describe('ssr utils', () => {
 
 			await withSSRContext(async () => {
 				injectSSRData('outer', true)
-				
+
 				await withSSRContext(async () => {
 					injectSSRData('inner', true)
 					const inner = getCollectedSSRResponses()
 					expect(inner).toHaveProperty('inner')
 					expect(inner).not.toHaveProperty('outer')
 				})
-				
+
 				const outer = getCollectedSSRResponses()
 				expect(outer).toHaveProperty('outer')
 				expect(outer).not.toHaveProperty('inner')

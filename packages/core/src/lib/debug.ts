@@ -95,6 +95,12 @@ export const perfCounters = {
  * Pounce framework configuration options
  * These can be modified at runtime to adjust framework behavior
  */
+const isDevMode =
+	(typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV) ||
+	(typeof process !== 'undefined' &&
+		process.env?.NODE_ENV !== 'production' &&
+		process.env?.NODE_ENV !== 'test')
+
 export const pounceOptions = {
 	/**
 	 * Maximum number of component rebuilds allowed in a time window before triggering a warning
@@ -102,7 +108,46 @@ export const pounceOptions = {
 	 */
 	maxRebuildsPerWindow: 1000,
 	rebuildWindowMs: 100,
-	writeRoProps: 'warn' as 'warn' | 'error' | 'ignore',
+
+	/**
+	 * Controls reactivity interaction tracking on ReactiveProp instances.
+	 * Each prop tracks its interaction pattern (none/read/write/bidi).
+	 * On get: reports if the prop was previously only written to.
+	 * On set: probes whether the setter actually called `touched` (i.e. is truly reactive);
+	 *         reports if the prop was previously only read.
+	 * - false: disabled (production)
+	 * - 'warn': console.warn on violations (default in dev)
+	 * - 'error': throw on violations (debug)
+	 */
+	checkReactivity: 'warn' as false | 'warn' | 'error',
+
+	/**
+	 * When true, latch() wraps content in a fragment with a default dev error boundary.
+	 * Renders a visible error panel in the DOM instead of a blank screen on unhandled throws.
+	 * Defaults to true in dev mode (not production, not test).
+	 */
+	devCatch: isDevMode,
+}
+
+/** Preset for production: no reactivity checks, no rebuild detection overhead */
+export const prodPreset: Partial<typeof pounceOptions> = {
+	maxRebuildsPerWindow: 0,
+	checkReactivity: false,
+	devCatch: false,
+}
+
+/** Preset for development (default): reactivity checks warn, rebuild detection on */
+export const devPreset: Partial<typeof pounceOptions> = {
+	maxRebuildsPerWindow: 1000,
+	checkReactivity: 'warn',
+	devCatch: true,
+}
+
+/** Preset for debug: reactivity violations throw, stricter write-to-read-only handling */
+export const debugPreset: Partial<typeof pounceOptions> = {
+	maxRebuildsPerWindow: 1000,
+	checkReactivity: 'error',
+	devCatch: true,
 }
 
 try {

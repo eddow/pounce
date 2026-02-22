@@ -1,5 +1,3 @@
-// TODO: to review
-// TODO: Hungry dog
 import type { VariantProps } from '../shared/types'
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -30,14 +28,14 @@ export type MultiselectItemState<T> = {
 export type MultiselectModel<T> = {
 	/** Per-item state — iterate to render the dropdown list */
 	readonly items: MultiselectItemState<T>[]
-	/** Spreadable attrs for the `<details>` element */
-	readonly details: JSX.IntrinsicElements['details'] & {
-		readonly use: (el: HTMLDetailsElement) => void
-	}
+	/** Spreadable attrs for the `<details>` element (no meta-attributes) */
+	readonly details: JSX.IntrinsicElements['details']
 	/** Spreadable attrs for the `<summary>` element */
 	readonly summary: JSX.IntrinsicElements['summary'] & {
 		readonly onClick: (e: MouseEvent) => void
 	}
+	/** Mount callback — pass to `use:mount` or call manually with the details element */
+	readonly onMount: (el: HTMLDetailsElement) => void
 }
 
 // ── Hook ────────────────────────────────────────────────────────────────────
@@ -53,7 +51,7 @@ export type MultiselectModel<T> = {
  * const Multiselect = <T,>(props: MultiselectProps<T>) => {
  *   const model = multiselectModel(props)
  *   return (
- *     <details {...model.details}>
+ *     <details use:mount={model.onMount} {...model.details}>
  *       <summary {...model.summary}>{props.children}</summary>
  *       <ul>
  *         <for each={model.items}>
@@ -91,12 +89,11 @@ export function multiselectModel<T>(props: MultiselectProps<T>): MultiselectMode
 			})
 		},
 		get details() {
-			return {
-				get use() {
-					return (el: HTMLDetailsElement) => {
-						detailsEl = el
-					}
-				},
+			return {}
+		},
+		get onMount() {
+			return (el: HTMLDetailsElement) => {
+				detailsEl = el
 			}
 		},
 		get summary() {

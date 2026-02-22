@@ -38,7 +38,7 @@ export default defineConfig({
 			},
 			dts: {
 				rollupTypes: true,
-				exclude: ['**/node_modules/**', '**/mutts/**', '**/*.spec.ts', '**/*.spec.tsx'],
+				exclude: ['**/node_modules/**', '**/mutts/**', '**/*.spec.ts', '**/*.spec.tsx', '**/src/demo/**', '**/src/entry.ts'],
 				afterBuild() {
 					// Copy JSX types to dist, rewriting relative imports to point to rolled-up dom.d.ts
 					const jsxSource = readFileSync(join(projectRootDir, 'src/types/jsx.d.ts'), 'utf8')
@@ -81,7 +81,7 @@ export default defineConfig({
 				'@babel/plugin-transform-react-jsx',
 				'@babel/plugin-transform-typescript',
 				'vite', 'vite-plugin-dts',
-				'node:path', 'node:url', 'node:async_hooks',
+				'node:fs', 'node:path', 'node:url', 'node:async_hooks',
 			],
 		},
 		outDir: 'dist',

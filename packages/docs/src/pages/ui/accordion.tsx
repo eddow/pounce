@@ -1,11 +1,10 @@
-import { Accordion, AccordionGroup, Button, Inline, Select, Stack, Switch } from '@pounce/ui'
+import { Accordion, AccordionGroup, Button, Inline, Stack, Switch } from '@pounce'
 import { reactive } from 'mutts'
 import { ApiTable, Demo, Section } from '../../components'
 
 const playgroundSource = `<Accordion
   summary={state.summary}
   open={state.open}
-  variant={state.variant}
 >
   <p>Collapsible content here.</p>
 </Accordion>`
@@ -22,38 +21,31 @@ const controlledSource = `const state = reactive({ open: false })
   Toggle from outside
 </Button>`
 
-const groupSource = `<AccordionGroup name="faq">
+const groupSource = `<AccordionGroup>
   <Accordion summary="Question 1">Answer 1</Accordion>
   <Accordion summary="Question 2">Answer 2</Accordion>
   <Accordion summary="Question 3">Answer 3</Accordion>
+</AccordionGroup>
+
+{/* Multi-open: */}
+<AccordionGroup multi>
+  <Accordion summary="Item 1">Content 1</Accordion>
+  <Accordion summary="Item 2">Content 2</Accordion>
 </AccordionGroup>`
 
 function AccordionPlayground() {
 	const state = reactive({
-		variant: 'primary',
 		open: false,
 		summary: 'Click to expand',
 	})
 
 	return (
 		<Stack gap="md">
-			<Inline gap="md" wrap>
-				<label>
-					variant
-					<Select value={state.variant}>
-						<option value="primary">primary</option>
-						<option value="secondary">secondary</option>
-						<option value="success">success</option>
-						<option value="danger">danger</option>
-						<option value="warning">warning</option>
-					</Select>
-				</label>
-			</Inline>
 			<Inline gap="md">
 				<Switch checked={state.open}>open</Switch>
 			</Inline>
 			<hr />
-			<Accordion summary={state.summary} open={state.open} variant={state.variant}>
+			<Accordion summary={state.summary} open={state.open}>
 				<p>
 					This content is revealed when the accordion is open. The <code>open</code> prop is two-way
 					bound — toggling the accordion updates the switch above.
@@ -113,14 +105,14 @@ export default function AccordionPage() {
 
 			<Section title="AccordionGroup">
 				<p>
-					<code>AccordionGroup</code> wraps accordions with a shared <code>name</code> for
-					exclusive-open behaviour (only one open at a time, via native HTML).
+					Wrap accordions in <code>AccordionGroup</code> to coordinate open state. Default is
+					exclusive (single-open). Pass <code>multi</code> to allow multiple open at once.
 				</p>
 				<Demo
 					title="Exclusive Group"
 					source={groupSource}
 					component={
-						<AccordionGroup name="faq">
+						<AccordionGroup>
 							<Accordion summary="Question 1">
 								<p>Answer 1</p>
 							</Accordion>
@@ -158,12 +150,6 @@ export default function AccordionPage() {
 							required: false,
 						},
 						{
-							name: 'variant',
-							type: 'string',
-							description: "Visual variant. Default: 'primary'",
-							required: false,
-						},
-						{
 							name: 'el',
 							type: 'JSX.GlobalHTMLAttributes',
 							description: 'Pass-through HTML attributes',
@@ -173,29 +159,6 @@ export default function AccordionPage() {
 							name: 'children',
 							type: 'JSX.Children',
 							description: 'Collapsible content',
-							required: false,
-						},
-					]}
-				/>
-				<h4>AccordionGroupProps</h4>
-				<ApiTable
-					props={[
-						{
-							name: 'name',
-							type: 'string',
-							description: 'Shared name for exclusive-open behaviour',
-							required: true,
-						},
-						{
-							name: 'el',
-							type: 'JSX.GlobalHTMLAttributes',
-							description: 'Pass-through HTML attributes',
-							required: false,
-						},
-						{
-							name: 'children',
-							type: 'JSX.Children',
-							description: 'Accordion children',
 							required: false,
 						},
 					]}

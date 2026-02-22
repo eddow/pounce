@@ -13,8 +13,16 @@ import {
 import { perf } from '../perf'
 import { document, Node } from '../shared'
 import { collapse, ReactiveProp } from './composite-attributes'
-import { perfCounters, testing } from './debug'
-import { type Child, type Children, type Env, PounceElement, rootEnv } from './pounce-element'
+import { perfCounters, pounceOptions, testing } from './debug'
+import { devCatchElement } from './dev-catch'
+import {
+	type Child,
+	type Children,
+	DynamicRenderingError,
+	type Env,
+	PounceElement,
+	rootEnv,
+} from './pounce-element'
 import { weakCached } from './utils'
 
 const latchOwners = new WeakMap<Element, string>()
@@ -73,15 +81,15 @@ export function reconcile(parent: Node, newChildren: Node | readonly Node[]): Sc
 			`reconcile:${rid}:end`
 		)
 	}
-	let stopRedraw = () => {}
-	// TODO: re-optimize?
-	//if(isReactive(newChildren))
-	stopRedraw = effect(reconciler)
-	// Anchor the redraw effect to the reactive children so GC doesn't collect it.
-	// Root effects use FinalizationRegistry — if nobody holds the cleanup, GC kills the effect.
-	if (newChildren && typeof newChildren === 'object') link(newChildren, stopRedraw)
-	//} else reconciler()
-	return stopRedraw
+	if (isReactive(newChildren)) {
+		const stopRedraw = effect(reconciler)
+		// Anchor the redraw effect to the reactive children so GC doesn't collect it.
+		// Root effects use FinalizationRegistry — if nobody holds the cleanup, GC kills the effect.
+		link(newChildren, stopRedraw)
+		return stopRedraw
+	}
+	reconciler()
+	return () => {}
 }
 
 /**
@@ -92,7 +100,7 @@ export function reconcile(parent: Node, newChildren: Node | readonly Node[]): Sc
  */
 export function latch(
 	target: string | Element,
-	content: PounceElement | Children | Children[] | Node | Node[] | undefined,
+	content: Children,
 	env: Env = rootEnv
 ): ScopedCallback {
 	let stop: ScopedCallback | undefined
@@ -117,23 +125,8 @@ export function latch(
 		const label = typeof target === 'string' ? (target as string) : `<${tag}>`
 		latchOwners.set(element, label)
 
-		let nodes: Node | readonly Node[]
-		if (content instanceof PounceElement) {
-			nodes = content.render(env)
-		} else if (content instanceof Node) {
-			nodes = content
-		} else if (Array.isArray(content)) {
-			if (content.length > 0 && content[0] instanceof Node) {
-				nodes = content as Node[]
-			} else {
-				nodes = processChildren(content as Children[], env)
-			}
-		} else if (content !== undefined && content !== null) {
-			nodes = processChildren([content as Children], env)
-		} else {
-			console.error('[pounce] Invalid content:', content)
-			throw new Error('Invalid content')
-		}
+		content = h('fragment', pounceOptions.devCatch ? { catch: devCatchElement } : {}, content)
+		const nodes = content.render(env)
 
 		testing.renderingEvent?.('latch', tag, element)
 		stop = reconcile(element, nodes)
@@ -175,14 +168,12 @@ export function latch(
  *   so reading `rendered` (the reactive morph cache) creates a dependency.
  *   Without the wrapper, the flattening would run eagerly at processChildren
  *   call time, outside any subscribing effect.
- *
- * KNOWN PERF TODO — static children:
- *   For non-reactive children (no [cleanup] symbol, isReactive() === false),
- *   the morph effect + reactive cache are wasted. Restore fast paths
- *   that return rendered nodes directly.
  */
 export function processChildren(children: Children, env: Env): Node | readonly Node[] {
-	if (!Array.isArray(children)) return pounceElement(children, env).render(env)
+	while (!isReactive(children) && Array.isArray(children) && children.length === 1)
+		children = children[0]
+	if (!children) return []
+	if (!Array.isArray(children)) children = [children] as Child[]
 	//Idea: keep reactivity for as late as possible
 	const flatInput: Child[] =
 		isReactive(children) || children.some((c) => isReactive(c))
@@ -190,11 +181,11 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 					'flatInput',
 					lift(
 						named('lift:flatInput', () =>
-							unwrap(children.flat(Infinity).filter(Boolean) as Child[])
+							unwrap((children as Child[]).flat(Infinity).filter(Boolean))
 						)
 					)
 				)
-			: children.flat(Infinity).filter(Boolean)
+			: (children as Child[]).flat(Infinity).filter(Boolean)
 
 	const flatElements: readonly PounceElement[] =
 		isReactive(flatInput) || flatInput.some((c) => c instanceof ReactiveProp)
@@ -215,11 +206,34 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 					'conditioned',
 					lift(
 						named('lift:conditioned', () => {
-							// TODO: re-think about 'pick'
+							const picks: Record<string, Set<unknown>> = {}
+							// Pass 1: Gather options
+							for (const e of flatElements)
+								if (e.meta.pick)
+									for (const [key, value] of Object.entries(e.meta.pick)) {
+										let set = picks[key]
+										if (!set) {
+											set = new Set()
+											picks[key] = set
+										}
+										set.add(collapse(value))
+									}
+							// Oracle Phase: Call env to find the winning subsets
+							for (const key of Object.keys(picks)) {
+								const options = picks[key]
+								picks[key] = new Set() // By default, picks nothing if oracle fails/missing
+								if (key in env && typeof env[key] === 'function') {
+									const result = env[key](options)
+									const chosen = Array.isArray(result) || result instanceof Set ? result : [result]
+									picks[key] = new Set(chosen)
+								} else throw new DynamicRenderingError(`Pick oracle "${key}" not found in env`)
+							}
+
+							// Pass 2: Map elements with the newly evaluated subsets
 							let ifOccurred = false
 							return flatElements
 								.map((e) => {
-									const shouldRender = e.shouldRender(ifOccurred, env)
+									const shouldRender = e.shouldRender(ifOccurred, env, picks)
 									if (shouldRender) ifOccurred = true
 									if (shouldRender !== false) return e
 								})

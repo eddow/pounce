@@ -5,14 +5,21 @@ import { buttonModel } from './models/button'
 import { checkboxModel, radioModel, switchModel } from './models/checkbox'
 import { checkButtonModel } from './models/checkbutton'
 import { comboboxModel } from './models/forms'
-import { appShellModel, containerModel, gridModel, inlineModel, spacingValue, stackModel } from './models/layout'
+import {
+	appShellModel,
+	containerModel,
+	gridModel,
+	inlineModel,
+	spacingValue,
+	stackModel,
+} from './models/layout'
 import { menuBarModel, menuItemModel, menuModel } from './models/menu'
 import { multiselectModel } from './models/multiselect'
 import { progressModel } from './models/progress'
 import { radioButtonModel } from './models/radiobutton'
 import { starsModel } from './models/stars'
 import { chipModel } from './models/status'
-import { headingModel, linkModel, textModel } from './models/typography'
+import { headingModel, textModel } from './models/typography'
 import { applyTransition, bindDialog, bindToast, createOverlayStack } from './overlays'
 
 // ── Minimal Env stub ─────────────────────────────────────────────────────────
@@ -124,21 +131,21 @@ describe('useCheckButton', () => {
 		const props = reactive({ checked: false })
 		const state = checkButtonModel(props)
 		expect(props.checked).toBe(false)
-		state.button.onClick(new MouseEvent('click'))
+		state.button.onClick!(new MouseEvent('click'))
 		expect(props.checked).toBe(true)
 	})
 
 	it('calls onCheckedChange on toggle', () => {
 		const cb = vi.fn()
 		const state = checkButtonModel({ onCheckedChange: cb })
-		state.button.onClick(new MouseEvent('click'))
+		state.button.onClick!(new MouseEvent('click'))
 		expect(cb).toHaveBeenCalledWith(true)
 	})
 
 	it('does not toggle when disabled', () => {
 		const props = reactive({ disabled: true, checked: false })
 		const state = checkButtonModel(props)
-		state.button.onClick(new MouseEvent('click'))
+		expect(state.button.onClick).toBeUndefined()
 		expect(props.checked).toBe(false)
 	})
 })
@@ -213,8 +220,8 @@ describe('useCombobox', () => {
 describe('spacingValue', () => {
 	it('resolves named tokens', () => {
 		expect(spacingValue('none')).toBe('0')
-		expect(spacingValue('sm')).toBe('var(--pounce-spacing)')
-		expect(spacingValue('md')).toBe('calc(var(--pounce-spacing) * 1.5)')
+		expect(spacingValue('sm')).toBe('0.5rem')
+		expect(spacingValue('md')).toBe('1rem')
 	})
 
 	it('passes through custom values', () => {
@@ -228,7 +235,7 @@ describe('spacingValue', () => {
 
 describe('useStack', () => {
 	it('defaults gap to md', () => {
-		expect(stackModel({}).gap).toBe('calc(var(--pounce-spacing) * 1.5)')
+		expect(stackModel({}).gap).toBe('1rem')
 	})
 
 	it('resolves align to CSS value', () => {
@@ -242,7 +249,7 @@ describe('useStack', () => {
 
 describe('useInline', () => {
 	it('defaults gap to sm', () => {
-		expect(inlineModel({}).gap).toBe('var(--pounce-spacing)')
+		expect(inlineModel({}).gap).toBe('0.5rem')
 	})
 
 	it('defaults align to center', () => {
@@ -260,7 +267,7 @@ describe('useInline', () => {
 
 describe('useGrid', () => {
 	it('defaults gap to md', () => {
-		expect(gridModel({}).gap).toBe('calc(var(--pounce-spacing) * 1.5)')
+		expect(gridModel({}).gap).toBe('1rem')
 	})
 
 	it('generates repeat columns from number', () => {
@@ -300,7 +307,9 @@ describe('useAppShell', () => {
 	})
 
 	it('shadowOnScroll=false disables it', () => {
-		expect(appShellModel({ header: null as never, shadowOnScroll: false }).shadowOnScroll).toBe(false)
+		expect(appShellModel({ header: null as never, shadowOnScroll: false }).shadowOnScroll).toBe(
+			false
+		)
 	})
 
 	it('setupShadow returns a cleanup function', () => {
@@ -463,16 +472,6 @@ describe('useText', () => {
 	})
 })
 
-describe('useLink', () => {
-	it('defaults underline to true', () => {
-		expect(linkModel({}).underline).toBe(true)
-	})
-
-	it('underline=false disables it', () => {
-		expect(linkModel({ underline: false }).underline).toBe(false)
-	})
-})
-
 // ── createOverlayStack ────────────────────────────────────────────────────────
 
 describe('createOverlayStack', () => {
@@ -482,7 +481,13 @@ describe('createOverlayStack', () => {
 
 	it('push adds entry to stack', async () => {
 		const state = createOverlayStack()
-		const promise = state.push({ mode: 'modal', render: (close) => { void close; return null } })
+		const promise = state.push({
+			mode: 'modal',
+			render: (close) => {
+				void close
+				return null
+			},
+		})
 		expect(state.stack.length).toBe(1)
 		state.stack[0]!.resolve(null)
 		await promise
@@ -490,13 +495,25 @@ describe('createOverlayStack', () => {
 
 	it('hasBackdrop true for modal mode', () => {
 		const state = createOverlayStack()
-		state.push({ mode: 'modal', render: (close) => { void close; return null } })
+		state.push({
+			mode: 'modal',
+			render: (close) => {
+				void close
+				return null
+			},
+		})
 		expect(state.hasBackdrop).toBe(true)
 	})
 
 	it('hasBackdrop false for toast mode', () => {
 		const state = createOverlayStack()
-		state.push({ mode: 'toast', render: (close) => { void close; return null } })
+		state.push({
+			mode: 'toast',
+			render: (close) => {
+				void close
+				return null
+			},
+		})
 		expect(state.hasBackdrop).toBe(false)
 	})
 

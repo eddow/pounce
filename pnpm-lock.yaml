@@ -298,6 +298,9 @@ importers:
       '@pounce/kit':
         specifier: workspace:*
         version: link:../kit
+      dockview-core:
+        specifier: ^5.0.0
+        version: 5.0.0
       mutts:
         specifier: link:../../../mutts
         version: link:../../../mutts
@@ -1750,6 +1753,9 @@ packages:
   diff@8.0.3:
     resolution: {integrity: sha512-qejHi7bcSD4hQAZE0tNAawRK1ZtafHDmMTMkrrIGgSLl7hTnQHmKCeB45xAcbfTqK2zowkM3j3bHt/4b/ARbYQ==}
     engines: {node: '>=0.3.1'}
+
+  dockview-core@5.0.0:
+    resolution: {integrity: sha512-bUgH/e/PTVZ/5Y97QvF30eAs67HPzTQUbcVMojwsWX/RKys5bQCblGMvxPu+KVx+jes2JIhepFvjMepCyz1uNQ==}
 
   electron-to-chromium@1.5.283:
     resolution: {integrity: sha512-3vifjt1HgrGW/h76UEeny+adYApveS9dH2h3p57JYzBSXJIKUJAvtmIytDKjcSCt9xHfrNCFJ7gts6vkhuq++w==}
@@ -3976,6 +3982,8 @@ snapshots:
     optional: true
 
   diff@8.0.3: {}
+
+  dockview-core@5.0.0: {}
 
   electron-to-chromium@1.5.283: {}
 

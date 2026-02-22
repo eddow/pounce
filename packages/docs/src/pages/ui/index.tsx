@@ -1,14 +1,13 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const adapterSetup = `import { setAdapter } from '@pounce/ui'
-import { picoAdapter } from '@pounce/adapter-pico'
+const adapterSetup = `import { setAdapter, picoAdapter } from '@pounce'
 import '@picocss/pico/css/pico.min.css'
 
 // Install the PicoCSS adapter — all components
 // inherit PicoCSS theming automatically.
 setAdapter(picoAdapter)`
 
-const buttonExample = `import { Button } from '@pounce/ui'
+const buttonExample = `import { Button } from '@pounce'
 
 // Variants via the adapter pattern:
 <Button variant="primary">Save</Button>
@@ -21,7 +20,7 @@ const buttonExample = `import { Button } from '@pounce/ui'
 // With icons (via pure-glyf):
 <Button icon="check">Save</Button>`
 
-const overlayExample = `import { StandardOverlays } from '@pounce/ui'
+const overlayExample = `import { StandardOverlays } from '@pounce'
 
 // Wrap your app with StandardOverlays:
 <StandardOverlays>
@@ -36,7 +35,7 @@ env.dialog({ title: 'Confirm', message: 'Are you sure?' })
 
 env.drawer({ children: <SettingsPanel />, side: 'right' })`
 
-const displayContext = `import { DisplayProvider, ThemeToggle } from '@pounce/ui'
+const displayContext = `import { DisplayProvider, ThemeToggle } from '@pounce'
 
 // DisplayProvider manages theme state (light/dark)
 // and provides display context to all descendants.
@@ -213,12 +212,6 @@ export default function UIPage() {
 								<code>Icon</code>
 							</td>
 							<td>Icon rendering via adapter factory</td>
-						</tr>
-						<tr>
-							<td>
-								<code>ErrorBoundary</code>
-							</td>
-							<td>Catches child rendering errors with fallback</td>
 						</tr>
 						<tr>
 							<td>

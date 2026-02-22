@@ -1,6 +1,4 @@
-import { latch } from '@pounce/core'
-import { componentStyle } from '@pounce/kit'
-import { Accordion } from '@pounce/ui'
+import { Accordion, componentStyle, latch } from '@pounce'
 import { reactive } from 'mutts'
 import { Code } from './code'
 
@@ -49,14 +47,14 @@ export type DemoProps = {
 	title?: string
 }
 
-export function Demo({ component, source, title = 'Example' }: DemoProps) {
+export function Demo(props: DemoProps) {
 	const showCode = reactive({ open: false })
 	let unmount: (() => void) | undefined
 
 	// Mount the live demo, return cleanup for teardown
 	const mountDemo = (el: HTMLElement) => {
 		if (el) {
-			unmount = latch(el, component)
+			unmount = latch(el, props.component)
 		}
 		return () => {
 			unmount?.()
@@ -65,7 +63,7 @@ export function Demo({ component, source, title = 'Example' }: DemoProps) {
 
 	return (
 		<div class="demo-component">
-			<h4>{title}</h4>
+			<h4>{props.title ?? 'Example'}</h4>
 
 			{/* Live demo */}
 			<div use={mountDemo} class="demo-live" />
@@ -76,7 +74,7 @@ export function Demo({ component, source, title = 'Example' }: DemoProps) {
 				onToggle={(open) => (showCode.open = open)}
 				summary="View Source Code"
 			>
-				<Code code={source} lang="tsx" />
+				<Code code={props.source} lang="tsx" />
 			</Accordion>
 		</div>
 	)

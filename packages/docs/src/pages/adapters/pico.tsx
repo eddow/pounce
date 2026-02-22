@@ -1,7 +1,6 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const usage = `import { setAdapter } from '@pounce/ui'
-import { picoAdapter } from '@pounce/adapter-pico'
+const usage = `import { setAdapter, picoAdapter } from '@pounce'
 import '@pounce/adapter-pico/css'       // Bridge variables
 import '@picocss/pico/css/pico.min.css' // PicoCSS
 

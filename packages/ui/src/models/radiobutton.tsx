@@ -1,5 +1,5 @@
-// TODO: to review
-// TODO: Hungry dog
+import type { PounceElement } from '@pounce/core'
+import { Icon } from '../icon'
 import type {
 	AriaLabelProps,
 	DisableableProps,
@@ -7,6 +7,7 @@ import type {
 	IconProps,
 	VariantProps,
 } from '../shared/types'
+import type { LogicalSide } from '../shared/utils'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,21 @@ export type RadioButtonModel = {
 	readonly isIconOnly: boolean
 	/** True when children are non-empty */
 	readonly hasLabel: boolean
+	/**
+	 * Icon wrapper group — only defined when an icon is set.
+	 * Spread `model.icon.span` onto the `<span>` wrapping the icon.
+	 * CSS `order` positions the icon logically; `marginInline*` adds spacing when a label is present.
+	 */
+	readonly icon:
+		| {
+				/** Logical position of the icon */
+				readonly position: LogicalSide
+				/** Spreadable attrs for the icon `<span>` wrapper */
+				readonly span: JSX.IntrinsicElements['span']
+				/** Resolved icon element — string icons resolved via `<Icon>`, JSX passed through */
+				readonly element?: JSX.Element
+		  }
+		| undefined
 	/** Spreadable attrs for the `<button>` element */
 	readonly button: JSX.IntrinsicElements['button'] & {
 		readonly role: 'radio'
@@ -56,7 +72,8 @@ export type RadioButtonModel = {
  *       {...model.button}
  *       class={model.checked ? 'checked' : ''}
  *     >
- *       {props.children}
+ *       {model.icon && <span {...model.icon.span}>{model.icon.element}</span>}
+ *       {gather(props.children)}
  *     </button>
  *   )
  * }
@@ -80,6 +97,31 @@ export function radioButtonModel<Value = unknown>(
 		get isIconOnly() {
 			return !!props.icon && !model.hasLabel
 		},
+		get icon() {
+			if (!props.icon) return undefined
+			const position: LogicalSide = props.iconPosition ?? 'start'
+			const isEnd = position === 'end' || position === 'right'
+			const hasLabel = model.hasLabel
+			return {
+				position: (isEnd ? 'end' : 'start') as 'start' | 'end',
+				get element(): PounceElement {
+					return typeof props.icon === 'string' ? (
+						<Icon name={props.icon} />
+					) : (
+						(props.icon as PounceElement)
+					)
+				},
+				get span() {
+					return {
+						style: {
+							order: isEnd ? 1 : -1,
+							marginInlineEnd: !isEnd && hasLabel ? '0.5em' : undefined,
+							marginInlineStart: isEnd && hasLabel ? '0.5em' : undefined,
+						},
+					}
+				},
+			}
+		},
 		get button() {
 			return {
 				role: 'radio' as const,
@@ -93,7 +135,19 @@ export function radioButtonModel<Value = unknown>(
 				},
 				get onClick() {
 					if (props.disabled) return undefined
-					return props.onClick
+					return (e: MouseEvent) => {
+						props.el?.onClick?.(e)
+						if (e.defaultPrevented) return
+						props.onClick?.(e)
+						// Radio selection: write to group binding
+						if (props.value !== undefined) props.group = props.value
+					}
+				},
+				get disabled() {
+					return props.disabled || undefined
+				},
+				get 'aria-disabled'() {
+					return props.disabled || undefined
 				},
 			}
 		},

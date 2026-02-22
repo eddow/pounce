@@ -1,6 +1,6 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const routerExample = `import { Router, A } from '@pounce/kit'
+const routerExample = `import { Router, A } from '@pounce'
 
 const routes = [
   { path: '/', view: HomePage },
@@ -23,7 +23,7 @@ function App() {
   )
 }`
 
-const clientExample = `import { client } from '@pounce/kit'
+const clientExample = `import { client } from '@pounce'
 
 // client is a reactive object with browser state:
 client.url.pathname    // current URL path
@@ -35,7 +35,7 @@ client.direction       // 'ltr' | 'rtl'
 // Navigate programmatically:
 client.navigate('/about')`
 
-const storedExample = `import { stored } from '@pounce/kit'
+const storedExample = `import { stored } from '@pounce'
 
 // stored() creates a reactive value backed by localStorage.
 // Changes persist across page reloads.

@@ -29,7 +29,7 @@ describe('aria-current [object Object] bug', () => {
 				</a>
 			)
 		}
-		const active = (<MyLink href="/active" data-testid="active">Active</MyLink>).render() as HTMLElement
+		const active = (<MyLink href="/active" data-testid="active">Active</MyLink>).render()[0] as HTMLElement
 		expect(active.dataset.testval).toBe('value')
 		expect(active.dataset.testid).toBe('active')
 		expect(active.getAttribute('aria-current')).toBe('page')

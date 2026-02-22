@@ -14,7 +14,7 @@ describe('Component association debug tools', () => {
 		const Conditional = () => <div>{state.show ? <span id="true-branch">True</span> : <span id="false-branch">False</span>}</div>
 
 		const mount = h(Conditional, {})
-		const root = (mount.render() as HTMLElement)
+		const root = (mount.render()[0] as HTMLElement)
 
 		const trueSpan = root.querySelector('#true-branch') as HTMLElement
 		expect(getComponentInstance(trueSpan)?.name).toBe('Conditional')
@@ -28,14 +28,10 @@ describe('Component association debug tools', () => {
 	test('should work with morphing', () => {
 		const state = reactive({ items: ['A', 'B'] })
 
-		const ListComponent = () => h('ul', {},
-			h('for', { each: state.items } as any,
-				r(() => (item: string) => h('li', { class: 'item' }, item)) as any
-			)
-		)
+		const ListComponent = () => <ul><for each={state.items}>{(item) => <li class="item">{item}</li>}</for></ul>
 
 		const mount = h(ListComponent, {})
-		const root = (mount.render() as HTMLElement)
+		const root = (mount.render()[0] as HTMLElement)
 
 		const items = root.querySelectorAll('.item')
 		expect(items.length).toBe(2)

@@ -6,7 +6,7 @@ export type {
 	RouterRender,
 	RouteSpecification,
 } from './components'
-export { A, Router } from './components'
+export { Router } from './components'
 export type { AssertSchema, RouteDefinition } from './defs'
 export { defineRoute } from './defs'
 export * from './logic'

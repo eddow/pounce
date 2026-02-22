@@ -1,4 +1,4 @@
-import { componentStyle } from '@pounce/kit'
+import { componentStyle } from '@pounce'
 import { Code } from './code'
 
 componentStyle.sass`

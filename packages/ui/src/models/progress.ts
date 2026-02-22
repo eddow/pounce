@@ -1,16 +1,13 @@
-// TODO: to review
-// TODO: Hungry dog
-import type { ElementPassthroughProps, VariantProps } from '../shared/types'
+import type { ElementPassthroughProps } from '../shared/types'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
-export type ProgressProps = VariantProps &
-	ElementPassthroughProps<'progress'> & {
-		/** Current value. Omit for indeterminate mode. */
-		value?: number
-		/** Maximum value. @default 100 */
-		max?: number
-	}
+export type ProgressProps = ElementPassthroughProps<'progress'> & {
+	/** Current value. Omit for indeterminate mode. */
+	value?: number
+	/** Maximum value. @default 100 */
+	max?: number
+}
 
 export type ProgressModel = {
 	/** True when value is undefined (indeterminate spinner) */

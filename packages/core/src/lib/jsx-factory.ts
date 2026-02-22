@@ -47,14 +47,12 @@ export const intrinsicComponentAliases: Record<string, ComponentFunction> = exte
 		}
 		// Lock to fence on purpose
 		const cb = memoize.lenient(body as (item: T) => Children)
-		return new PounceElement(
-			() =>
-				processChildren(
-					morph(() => collapse(props.each), cb),
-					env
-				),
-			'for'
-		)
+		// morph and processChildren must be called here (component body, runs once) — NOT inside produce.
+		// produce runs inside the render:for effect; any reactive reads there (including processChildren
+		// reading the morph cache) would subscribe render:for to array mutations → rebuild fence fires.
+		const morphed = morph(() => collapse(props.each), cb)
+		const nodes = processChildren(morphed, env)
+		return new PounceElement(() => nodes, 'for')
 	},
 	dynamic(props: { tag: any; children?: any } & Record<string, any>, _env: Env) {
 		// @ts-expect-error `fromAttribute` is not registered in the type

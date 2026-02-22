@@ -24,9 +24,9 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Ang
 - **Reactive env inheritance**: Components receive a prototype‑inherited reactive `env`. Components can set `env.foo = ...` and descendants see it. Angular uses DI/injector hierarchy and `@Input()`/providers; no prototype env.
 - **`<env>` helper**: Adds values/functions to `env` for descendants without extra DOM.
 
-### Refs and Directives
+### Refs and Meta-attributes
 - **Refs via `this`**: `this={sink}` receives `HTMLElement` (elements) or `Node | Node[]` (components). Angular uses `@ViewChild`/`ElementRef` and template reference variables.
-- **Directives via `use:`**: `use={...}` one‑shot mount callback, `use:name={value}` calls a env-based mixin (may return cleanup). Angular directives/components are class‑based with DI and lifecycle.
+- **Meta-attributes via `use:`**: `use={...}` one‑shot mount callback, `use:name={value}` calls a env-based mixin (may return cleanup). Angular directives/components are class‑based with DI and lifecycle.
 
 ### Events
 - **Native DOM events**: `onClick`, `onInput`, … directly attach to DOM. Angular uses `(click)`, `(input)` and `@Output()` for component events.
@@ -44,7 +44,7 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Ang
 See also:
 - `docs/reactivity.md` (memoize, effect)
 - `docs/binding.md` (two‑way binding and `update:prop`)
-- `docs/advanced.md` (Env, control flow, directives)
+- `docs/advanced.md` (Env, control flow, meta-attributes)
 - `docs/api-reference.md`
 
 

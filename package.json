@@ -8,7 +8,8 @@
 		"test": "turbo run test",
 		"lint": "turbo run lint && biome check packages/",
 		"dev": "turbo run dev",
-		"biome": "biome check --write packages/",
+		"biome": "biome check packages/",
+		"biome:fix": "biome check --write packages/",
 		"biome:unsafe": "biome check --write --unsafe packages/",
 		"profile:ui": "turbo run profile --filter=@pounce/ui",
 		"dev:all": "turbo run build && (turbo run dev --filter=@pounce/adapter-pico & pnpm --dir ../red-hist run dev & wait)"

@@ -1,4 +1,3 @@
-// TODO: Hungry dog
 import { reactive } from 'mutts'
 
 // ── Overlay Manager Types ────────────────────────────────────────────────────
@@ -8,10 +7,12 @@ export type OverlayMode = string
 export interface OverlaySpec<T = unknown> {
 	/** Unique ID for tracking. Generated if not provided. */
 	id?: string
-	/** Stacking and layout behaviour. */
+	/** Stacking and layout behavior. */
 	mode: OverlayMode
-	/** Renders the overlay content. */
-	render: (close: (value: T) => void) => JSX.Children
+	/** Renders the overlay content. If not provided, adapter must handle the mode. */
+	render?: (close: (value: T) => void) => JSX.Children
+	/** Custom properties passed to the overlay. */
+	props?: any
 	/** Whether backdrop click / Escape dismisses the overlay. */
 	dismissible?: boolean
 	/**
@@ -188,6 +189,8 @@ export interface OverlayStackState {
 	readonly hasBackdrop: boolean
 	/** Push a new overlay onto the stack */
 	readonly push: PushOverlayFunction
+	/** Register the mounted DOM element for an overlay (enables CSS exit transitions) */
+	readonly registerElement: (id: string, el: HTMLElement) => void
 	/** Keydown handler — wire to the overlay manager container */
 	readonly onKeydown: (e: KeyboardEvent) => void
 	/** Backdrop click handler */
@@ -258,6 +261,7 @@ export function createOverlayStack(options: OverlayStackOptions = {}): OverlaySt
 			return stack.some((e) => backdropModes.includes(e.mode))
 		},
 		push,
+		registerElement: (id: string, el: HTMLElement) => overlayElements.set(id, el),
 		get onKeydown() {
 			return (e: KeyboardEvent) => {
 				if (stack.length === 0) return
@@ -305,17 +309,18 @@ export interface DialogOptions {
  */
 export function dialogSpec(options: DialogOptions | string): OverlaySpec {
 	const opts = typeof options === 'string' ? { message: options } : options
-	const titleId = `dialog-title-${Math.random().toString(36).slice(2, 7)}`
-	const descId = `dialog-desc-${Math.random().toString(36).slice(2, 7)}`
+	const titleId = opts.title ? `dialog-title-${Math.random().toString(36).slice(2, 7)}` : undefined
+	const descId = opts.message ? `dialog-desc-${Math.random().toString(36).slice(2, 7)}` : undefined
 	return {
 		mode: 'modal',
 		dismissible: opts.dismissible ?? true,
 		autoFocus: true,
 		aria: {
-			labelledby: opts.title ? titleId : undefined,
-			describedby: opts.message ? descId : undefined,
+			labelledby: titleId,
+			describedby: descId,
 		},
-		render: opts.render ?? (() => null),
+		props: { ...opts, titleId, descId },
+		render: opts.render,
 	}
 }
 
@@ -326,6 +331,8 @@ export interface ToastOptions {
 	variant?: 'success' | 'danger' | 'warning' | 'primary' | 'secondary'
 	/** Auto-close duration in ms. 0 = no auto-close. @default 3000 */
 	duration?: number
+	/** Render function — if provided, overrides message */
+	render?: (close: (value: unknown) => void) => JSX.Children
 }
 
 /**
@@ -338,13 +345,12 @@ export function toastSpec(options: ToastOptions | string): OverlaySpec {
 		mode: 'toast',
 		dismissible: false,
 		autoFocus: false,
+		props: opts,
 		render: (close) => {
 			if (duration > 0) {
-				const id = setTimeout(() => close(null), duration)
-				// Return a wrapper that clears the timeout — adapter must call close to dismiss
-				void id
+				setTimeout(() => close(null), duration)
 			}
-			return opts.message
+			return opts.render?.(close) ?? opts.message
 		},
 	}
 }
@@ -357,6 +363,8 @@ export interface DrawerOptions {
 	footer?: JSX.Children
 	side?: 'left' | 'right'
 	dismissible?: boolean
+	/** Render function — if provided, overrides children */
+	render?: (close: (value: unknown) => void) => JSX.Children
 }
 
 /**
@@ -372,7 +380,8 @@ export function drawerSpec(options: DrawerOptions): OverlaySpec {
 		aria: {
 			labelledby: options.title ? titleId : undefined,
 		},
-		render: () => options.children,
+		props: { ...options, titleId },
+		render: options.render,
 	}
 }
 

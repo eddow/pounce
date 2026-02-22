@@ -31,7 +31,12 @@ describe('Multiselect', () => {
 			<Multiselect
 				items={colors}
 				value={selected}
-				renderItem={(c, on) => <span>{on ? '✓ ' : ''}{c}</span>}
+				renderItem={(c, on) => (
+					<span>
+						{on ? '✓ ' : ''}
+						{c}
+					</span>
+				)}
 			>
 				<button>Pick</button>
 			</Multiselect>
@@ -44,11 +49,7 @@ describe('Multiselect', () => {
 		resetAdapter()
 		const selected = new Set<string>()
 		render(
-			<Multiselect
-				items={colors}
-				value={selected}
-				renderItem={(c) => <span>{c}</span>}
-			>
+			<Multiselect items={colors} value={selected} renderItem={(c) => <span>{c}</span>}>
 				<button>Pick</button>
 			</Multiselect>
 		)
@@ -59,11 +60,7 @@ describe('Multiselect', () => {
 	it('renders summary with trigger element', () => {
 		const selected = new Set<string>()
 		render(
-			<Multiselect
-				items={colors}
-				value={selected}
-				renderItem={(c) => <span>{c}</span>}
-			>
+			<Multiselect items={colors} value={selected} renderItem={(c) => <span>{c}</span>}>
 				<button>Pick color</button>
 			</Multiselect>
 		)
@@ -75,11 +72,7 @@ describe('Multiselect', () => {
 	it('renders listbox with options', () => {
 		const selected = new Set<string>()
 		render(
-			<Multiselect
-				items={colors}
-				value={selected}
-				renderItem={(c) => <span>{c}</span>}
-			>
+			<Multiselect items={colors} value={selected} renderItem={(c) => <span>{c}</span>}>
 				<button>Pick</button>
 			</Multiselect>
 		)
@@ -93,11 +86,7 @@ describe('Multiselect', () => {
 	it('uses adapter menu class', () => {
 		const selected = new Set<string>()
 		render(
-			<Multiselect
-				items={colors}
-				value={selected}
-				renderItem={(c) => <span>{c}</span>}
-			>
+			<Multiselect items={colors} value={selected} renderItem={(c) => <span>{c}</span>}>
 				<button>Pick</button>
 			</Multiselect>
 		)
@@ -111,7 +100,12 @@ describe('Multiselect', () => {
 			<Multiselect
 				items={colors}
 				value={selected}
-				renderItem={(c, on) => <span>{on ? '✓ ' : ''}{c}</span>}
+				renderItem={(c, on) => (
+					<span>
+						{on ? '✓ ' : ''}
+						{c}
+					</span>
+				)}
 			>
 				<button>Pick</button>
 			</Multiselect>
@@ -127,7 +121,7 @@ describe('Multiselect', () => {
 			<Multiselect
 				items={colors}
 				value={selected}
-				renderItem={(c) => c === 'green' ? false : <span>{c}</span>}
+				renderItem={(c) => (c === 'green' ? false : <span>{c}</span>)}
 			>
 				<button>Pick</button>
 			</Multiselect>

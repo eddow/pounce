@@ -2,7 +2,7 @@
  * Test CSS injection functionality
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { __injectCSS, getSSRStyles } from './css'
+import { __injectCSS, getSSRStyles } from '../css'
 
 // Mock the CSS module to access internal state if needed,
 // strictly speaking we test behavior through public API and DOM/SSR output.

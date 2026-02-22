@@ -418,24 +418,6 @@ import { InfiniteScroll } from '@pounce/ui'
 **CSS classes**: `.pounce-infinite-scroll`, `.pounce-infinite-scroll-content`, `.pounce-infinite-scroll-item`, `.pounce-infinite-scroll-item--fixed`  
 **Directives used**: `resize`, `scroll`
 
----
-
-### ErrorBoundary
-
-Catches errors thrown by child components during render and reactive effects.
-
-```tsx
-import { ErrorBoundary } from '@pounce/ui'
-
-<ErrorBoundary fallback={(error) => <div>Error: {error.message}</div>}>
-  <RiskyComponent />
-</ErrorBoundary>
-```
-
-See also: `ProductionErrorBoundary` for a simpler fallback.
-
----
-
 ### Layout
 
 Flexbox and grid layout primitives. All support adapter class overrides via `getAdapter('Layout')`.

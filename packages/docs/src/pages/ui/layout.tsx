@@ -1,4 +1,4 @@
-import { Button, Card, Grid, Inline, Select, Stack, Switch, Toolbar } from '@pounce/ui'
+import { Button, Card, Grid, Inline, Select, Stack, Switch, Toolbar } from '@pounce'
 import { reactive } from 'mutts'
 import { ApiTable, Code, Demo, Section } from '../../components'
 
@@ -140,22 +140,22 @@ function GridDemo() {
 			<hr />
 			<Grid columns={state.columns} gap={state.gap}>
 				<Card>
-					<Card.Body el:style={box}>1</Card.Body>
+					<Card.Body el={{ style: box }}>1</Card.Body>
 				</Card>
 				<Card>
-					<Card.Body el:style={box}>2</Card.Body>
+					<Card.Body el={{ style: box }}>2</Card.Body>
 				</Card>
 				<Card>
-					<Card.Body el:style={box}>3</Card.Body>
+					<Card.Body el={{ style: box }}>3</Card.Body>
 				</Card>
 				<Card>
-					<Card.Body el:style={box}>4</Card.Body>
+					<Card.Body el={{ style: box }}>4</Card.Body>
 				</Card>
 				<Card>
-					<Card.Body el:style={box}>5</Card.Body>
+					<Card.Body el={{ style: box }}>5</Card.Body>
 				</Card>
 				<Card>
-					<Card.Body el:style={box}>6</Card.Body>
+					<Card.Body el={{ style: box }}>6</Card.Body>
 				</Card>
 			</Grid>
 		</Stack>

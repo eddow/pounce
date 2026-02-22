@@ -1,5 +1,4 @@
-import type { Env } from '@pounce/core'
-import type { ClientRouteDefinition } from '@pounce/kit'
+import type { ClientRouteDefinition, Env } from '@pounce'
 import CreatingAdapterPage from './pages/adapters/creating'
 import AdaptersIndexPage from './pages/adapters/index'
 import PicoAdapterPage from './pages/adapters/pico'
@@ -10,10 +9,11 @@ import BoardRoutingPage from './pages/board/routing'
 import BoardSsrPage from './pages/board/ssr'
 import ComponentsPage from './pages/core/components'
 import ComposePage from './pages/core/compose'
-import DirectivesPage from './pages/core/directives'
 import ScopePage from './pages/core/env'
 import CorePage from './pages/core/index'
 import JsxPage from './pages/core/jsx'
+import MetaAttributesPage from './pages/core/meta-attributes'
+import MetaComponentsPage from './pages/core/meta-components'
 import SSRPage from './pages/core/ssr'
 import ConceptsPage from './pages/getting-started/concepts'
 import GettingStartedPage from './pages/getting-started/index'
@@ -38,7 +38,6 @@ import CardPage from './pages/ui/card'
 import CssVariablesPage from './pages/ui/css-variables'
 import UiDirectivesPage from './pages/ui/directives'
 import DisplayPage from './pages/ui/display'
-import ErrorBoundaryPage from './pages/ui/error-boundary'
 import FormsPage from './pages/ui/forms'
 import UIPage from './pages/ui/index'
 import InfiniteScrollPage from './pages/ui/infinite-scroll'
@@ -62,7 +61,8 @@ const routes: AppRoute[] = [
 	{ path: '/core', view: CorePage },
 	{ path: '/core/jsx', view: JsxPage },
 	{ path: '/core/components', view: ComponentsPage },
-	{ path: '/core/directives', view: DirectivesPage },
+	{ path: '/core/meta-attributes', view: MetaAttributesPage },
+	{ path: '/core/meta-components', view: MetaComponentsPage },
 	{ path: '/core/env', view: ScopePage },
 	{ path: '/core/compose', view: ComposePage },
 	{ path: '/core/ssr', view: SSRPage },
@@ -84,7 +84,6 @@ const routes: AppRoute[] = [
 	{ path: '/ui/adapter', view: AdapterPage },
 	{ path: '/ui/status', view: StatusPage },
 	{ path: '/ui/stars', view: StarsPage },
-	{ path: '/ui/error-boundary', view: ErrorBoundaryPage },
 	{ path: '/ui/menu', view: MenuPage },
 	{ path: '/ui/typography', view: TypographyPage },
 	{ path: '/ui/infinite-scroll', view: InfiniteScrollPage },

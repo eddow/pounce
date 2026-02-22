@@ -1,4 +1,4 @@
-import { Button, ButtonGroup, Inline, Select, Stack, Switch } from '@pounce/ui'
+import { Button, ButtonGroup, Inline, Select, Stack, Switch } from '@pounce'
 import { reactive } from 'mutts'
 import { ApiTable, Code, Demo, Section } from '../../components'
 
@@ -103,7 +103,7 @@ function ButtonPlayground() {
 			<hr />
 			<div>
 				<Button
-					variant={state.variant}
+					variant={state.variant as 'primary'}
 					disabled={state.disabled}
 					icon={state.icon || undefined}
 					iconPosition={state.iconPosition}
@@ -135,9 +135,9 @@ function ButtonGroupPlayground() {
 			</label>
 			<hr />
 			<ButtonGroup>
-				<Button variant={state.variant}>Left</Button>
-				<Button variant={state.variant}>Center</Button>
-				<Button variant={state.variant}>Right</Button>
+				<Button variant={state.variant as 'primary'}>Left</Button>
+				<Button variant={state.variant as 'primary'}>Center</Button>
+				<Button variant={state.variant as 'primary'}>Right</Button>
 			</ButtonGroup>
 		</Stack>
 	)

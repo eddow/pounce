@@ -1,11 +1,12 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
-import { pounceMinimalPackage } from '@pounce/core/plugin'
+import { pounceBarrelPlugin, pounceMinimalPackage } from '@pounce/core/plugin'
 
 export default defineConfig({
   root: resolve(import.meta.dirname, '.'),
   plugins: [
     ...pounceMinimalPackage(),
+    pounceBarrelPlugin({ skeleton: 'front-end', adapter: '@pounce/adapter-pico' }),
   ],
   resolve: {
     alias: {

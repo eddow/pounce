@@ -1,4 +1,4 @@
-import { A } from '@pounce/kit'
+import { A } from '@pounce'
 import { Code, Section } from '../../components'
 
 const viteConfig = `import { defineConfig } from 'vite'
@@ -44,9 +44,7 @@ const indexHtml = `<!DOCTYPE html>
 </body>
 </html>`
 
-const mainTsx = `import { latch } from '@pounce/core'
-import { setAdapter } from '@pounce/ui'
-import { picoAdapter } from '@pounce/adapter-pico'
+const mainTsx = `import { latch, setAdapter, picoAdapter } from '@pounce'
 
 setAdapter(picoAdapter)
 

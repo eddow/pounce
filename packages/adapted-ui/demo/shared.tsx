@@ -1,6 +1,6 @@
 import type { Env as EnvType } from '@pounce/core'
 import { A, Router, type RouteWildcard } from '@pounce/kit'
-import { AppShell, Container, ErrorBoundary, Heading, Inline, Link, StandardOverlays, Text, ThemeToggle, Toolbar } from '../src'
+import { AppShell, Container, Heading, Inline, Link, StandardOverlays, Text, ThemeToggle, Toolbar } from '../src'
 import { Env, type EnvSettings } from '@pounce/kit/env'
 import { reactive } from 'mutts'
 import { badge, intersect, loading, pointer, resize, scroll } from '../src/directives'
@@ -98,13 +98,15 @@ export function DemoApp(options: DemoAppOptions) {
 						}
 					>
 						<Container tag="main" style="padding: 1rem 0;">
-							<ErrorBoundary fallback={(error) => (
-								<Text variant="danger">
-									<strong>Error:</strong> {error.message}
-								</Text>
-							)}>
-								<Router routes={sections} notFound={renderNotFound} />
-							</ErrorBoundary>
+							<Router
+								routes={sections}
+								notFound={renderNotFound}
+								catch={(error: any) => (
+									<Text variant="danger">
+										<strong>Error:</strong> {error.message}
+									</Text>
+								)}
+							/>
 						</Container>
 					</AppShell>
 				</StandardOverlays>

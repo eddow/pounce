@@ -4,13 +4,12 @@ const adapterPattern = `// The adapter pattern decouples component logic from CS
 // Components call getAdapter('Button') to get variant classes, configs, etc.
 // Swap the adapter to change the entire look without touching component code.
 
-import { setAdapter } from '@pounce/ui'
-import { picoAdapter } from '@pounce/adapter-pico'
+import { setAdapter, picoAdapter } from '@pounce'
 
 // Install once at app startup:
 setAdapter(picoAdapter)`
 
-const adapterStructure = `import type { FrameworkAdapter } from '@pounce/ui'
+const adapterStructure = `import type { FrameworkAdapter } from '@pounce'
 
 // An adapter is a Partial<FrameworkAdapter> with:
 const myAdapter: Partial<FrameworkAdapter> = {
@@ -49,7 +48,7 @@ const picoDetails = `// @pounce/adapter-pico maps Pounce's CSS variables to Pico
 // data-attribute-based theming (e.g., [data-variant="primary"]).
 
 import '@picocss/pico/css/pico.min.css'
-import { picoAdapter } from '@pounce/adapter-pico'
+import { setAdapter, picoAdapter } from '@pounce'
 setAdapter(picoAdapter)`
 
 const customAdapter = `// To create a custom adapter:
@@ -58,7 +57,7 @@ const customAdapter = `// To create a custom adapter:
 // 3. Optionally define transitions and icon factory
 // 4. Call setAdapter() with your adapter
 
-import { setAdapter } from '@pounce/ui'
+import { setAdapter } from '@pounce'
 
 setAdapter({
   variants: {

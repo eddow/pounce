@@ -20,7 +20,7 @@
    - **`defaults()` proxy**: `const p = defaults(props, { gap: 'md' })` — zero-cost proxy, `p.gap` is `props.gap ?? 'md'` with `undefined` stripped from the type. Use `p.xxx` for defaulted keys, `props.xxx` for the rest.
    - **Getter object**: `const state = { get variant() { return props.variant } }` — deferred until evaluated.
    - **Callback/effect**: reads inside `effect()`, `attend()`, event handlers, or `<for each>` callbacks are fine.
-2. **`variantProps(undefined)` returns `{}`** — no need to default variants to `'primary'`. Pass `props.variant` directly.
+2. **Adapter architecture**: `@pounce/ui` is headless (models + types only). Import components from the adapter: `import { Button } from '@pounce/adapter-pico'`. No `setAdapter`, no `FrameworkAdapter`, no registry. `DisplayProvider` is DOM-only — import from `@pounce/kit/dom`.
 
 ## Babel Plugin Binding Rules
 1. **Two-way** (`r(getter, setter)`): member expressions (`state.name`, `props.count`) and mutable bare identifiers (`let`/`var`).

@@ -125,10 +125,11 @@ function attachAttributeValue(
 
 	// 3. Style
 	if (key === 'style') {
-		element.style.cssText = ''
-		Object.assign(element.style, value)
+		element.removeAttribute('style')
+		if (value && typeof value === 'object' && Object.keys(value).length > 0)
+			Object.assign(element.style, value)
 		return () => {
-			element.style.cssText = ''
+			element.removeAttribute('style')
 		}
 	}
 

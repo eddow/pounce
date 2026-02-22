@@ -34,7 +34,11 @@ describe('Select', () => {
 	})
 
 	it('renders full width', () => {
-		render(<Select fullWidth={true}><option>X</option></Select>)
+		render(
+			<Select fullWidth={true}>
+				<option>X</option>
+			</Select>
+		)
 		const select = container.querySelector('.pounce-select')
 		expect(select?.classList.contains('pounce-select-full')).toBe(true)
 	})
@@ -105,7 +109,11 @@ describe('Checkbox', () => {
 	})
 
 	it('targets input with el and label-wrapper with namespaced label props', () => {
-		render(<Checkbox el={{ id: 'foo', tabIndex: 5 }} {...({ 'label:class': 'custom-label' } as any)}>Label</Checkbox>)
+		render(
+			<Checkbox el={{ id: 'foo', tabIndex: 5 }} {...({ 'label:class': 'custom-label' } as any)}>
+				Label
+			</Checkbox>
+		)
 		const input = container.querySelector('input[type="checkbox"]') as HTMLInputElement
 		expect(input?.id).toBe('foo')
 		expect(input?.tabIndex).toBe(5)

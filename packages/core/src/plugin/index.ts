@@ -1,8 +1,11 @@
 import { type PluginItem, transformSync } from '@babel/core'
 import dts, { type PluginOptions as DtsPluginOptions } from 'vite-plugin-dts'
 import { pounceBabelPlugin } from './babel'
+import { pounceBarrelPlugin } from './barrel'
 
 export { pounceBabelPlugin }
+export { pounceBarrelPlugin }
+export type { BarrelSkeleton, PounceBarrelPluginOptions } from './barrel'
 
 export interface DtsConfigOptions {
 	insertTypesEntry?: boolean

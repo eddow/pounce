@@ -137,6 +137,15 @@ Logical margins (`marginInlineEnd`/`marginInlineStart`) are set by the model whe
 
 See `src/models.md` for the full recipe before creating/modifying models.
 
+## Entry Points
+
+| Import | Who uses it | What it exports |
+|---|---|---|
+| `@pounce/ui` | App consumers | Complete components (`InfiniteScroll`) + everything in `./internal` |
+| `@pounce/ui/internal` | Adapter authors | Models, props types, `uiComponent`, `gather`, `options`, directives, overlays, shared types/utils |
+
+Adapters should import from `@pounce/ui/internal` rather than `@pounce/ui` to make the dependency boundary explicit.
+
 ## Source Map
 
 ```

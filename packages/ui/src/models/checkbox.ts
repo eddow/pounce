@@ -83,6 +83,7 @@ export type RadioModel = {
 	readonly input: InputRadio & {
 		readonly type: 'radio'
 		checked: boolean
+		readonly name?: string
 		readonly disabled?: boolean
 		readonly onChange?: (e: Event) => void
 		readonly style: { readonly order: -1 | 0 }
@@ -175,6 +176,9 @@ export function radioModel(props: RadioProps): RadioModel {
 		get input() {
 			const input: RadioModel['input'] = {
 				type: 'radio' as const,
+				get name() {
+					return props.name
+				},
 				get style() {
 					return { order: inputOrder(props) }
 				},

@@ -127,14 +127,15 @@ Examples
   </>
 </env>
 
-// when: calls env method
+// when: env predicate — permission guard
 function App(_p: {}, env: Env) {
-  env.can = (perm: string) => env.role === 'admin' && perm === 'edit'
+  const auth = reactive({ rights: new Set(['view', 'comment']) })
+  env.hasRights = (right: string) => auth.rights.has(right)
   return (
-    <>
-      <div when:can={"edit"}>You can edit</div>
-      <div else>You cannot edit</div>
-    </>
+    <nav>
+      <a href="/edit"   when:hasRights={'edit'}>Edit</a>
+      <a href="/view"   when:hasRights={'view'}>View</a>
+    </nav>
   )
 }
 
@@ -144,6 +145,40 @@ function App(_p: {}, env: Env) {
   <div else if:status={"error"}>Something went wrong</div>
   <div else>Done</div>
 </>
+```
+
+### `catch={fn}` — Error Boundary
+
+Turns any element into an error boundary. Children that throw during render or in a reactive effect are caught; the element's content is reactively swapped to the fallback.
+
+**Signature:** `catch={(error: unknown, reset?: () => void) => JSX.Element}`
+
+- `error` — the thrown value
+- `reset` — restores original content if a successful render preceded the error
+- Errors bubble through `env.catch` to the nearest ancestor boundary if no local `catch` is set
+- Setting `catch` clears `env.catch` for all descendants (no double-catching)
+
+```tsx
+<div catch={(error) => <span class="error">{(error as Error).message}</span>}>
+  <UnreliableComponent />
+</div>
+```
+
+### `pick:name={value}` — Oracle-Based Selection
+
+Multi-sibling selection driven by an env oracle. All siblings with `pick:name` declare a candidate value; `env[name](options: Set)` is called as an oracle and returns which value(s) render.
+
+**Requires** `env[name]` to be a function — throws if missing.
+
+```tsx
+// Oracle: pick the smallest declared maxSize that fits the container
+env.maxSize = (options: Set<number>) => {
+  const sorted = [...options].sort((a, b) => a - b)
+  return sorted.find((s) => s >= state.containerWidth) ?? sorted.at(-1)
+}
+<img src="/img-400.webp"  pick:maxSize={400}  alt="small" />
+<img src="/img-800.webp"  pick:maxSize={800}  alt="medium" />
+<img src="/img-1600.webp" pick:maxSize={1600} alt="large" />
 ```
 
 ### Update Syntax

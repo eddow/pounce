@@ -19,7 +19,7 @@ function resize(target: Node | Node[], value: ResizeValue, _env: Env) {
 			// Support two shapes:
 			// - callback: (w, h) => void
 			// - getter: () => { width, height }
-			//TODO: for this to `collapse` the argument directly, we should add an effect per mount
+
 			value(width, height)
 		} else if (value && typeof value === 'object') {
 			value.width = width

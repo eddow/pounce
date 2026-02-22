@@ -4,7 +4,11 @@
 		"outDir": "./dist",
 		"declaration": true,
 		"declarationMap": true,
-		"sourceMap": true
+		"sourceMap": true,
+		"jsx": "react",
+		"jsxFactory": "h",
+		"jsxFragmentFactory": "Fragment",
+		"lib": ["ESNext", "DOM", "DOM.Iterable"]
 	},
 	"include": ["src/**/*"],
 	"exclude": ["dist", "demo", "node_modules"]

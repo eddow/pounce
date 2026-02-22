@@ -1,6 +1,6 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const customAdapter = `import { FrameworkAdapter } from '@pounce/ui'
+const customAdapter = `import { type FrameworkAdapter } from '@pounce'
 
 export const myAdapter: FrameworkAdapter = {
   // 1. Global Icon system

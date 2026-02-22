@@ -1,33 +1,22 @@
-import { Inline, Progress, Select, Stack, Switch } from '@pounce/ui'
+import { Inline, Progress, Stack, Switch } from '@pounce'
 import { reactive } from 'mutts'
 import { ApiTable, Demo, Section } from '../../components'
 
 const playgroundSource = `<Progress
   value={state.indeterminate ? undefined : state.value}
   max={state.max}
-  variant={state.variant}
 />`
 
 function ProgressPlayground() {
 	const state = reactive({
 		value: 65,
 		max: 100,
-		variant: 'primary',
 		indeterminate: false,
 	})
 
 	return (
 		<Stack gap="md">
 			<Inline gap="md" wrap>
-				<label>
-					variant
-					<Select value={state.variant}>
-						<option value="primary">primary</option>
-						<option value="success">success</option>
-						<option value="danger">danger</option>
-						<option value="warning">warning</option>
-					</Select>
-				</label>
 				<label>
 					value
 					<input
@@ -48,11 +37,7 @@ function ProgressPlayground() {
 				<Switch checked={state.indeterminate}>indeterminate</Switch>
 			</Inline>
 			<hr />
-			<Progress
-				value={state.indeterminate ? undefined : state.value}
-				max={state.max}
-				variant={state.variant}
-			/>
+			<Progress value={state.indeterminate ? undefined : state.value} max={state.max} />
 		</Stack>
 	)
 }
@@ -89,12 +74,6 @@ export default function ProgressPage() {
 							name: 'max',
 							type: 'number',
 							description: 'Maximum value. Default: 100',
-							required: false,
-						},
-						{
-							name: 'variant',
-							type: 'string',
-							description: "Visual variant. Default: 'primary'",
 							required: false,
 						},
 						{

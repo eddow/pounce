@@ -36,25 +36,41 @@ describe('Stack', () => {
 	})
 
 	it('applies custom gap spacing', () => {
-		render(<Stack gap="lg"><div>Item</div></Stack>)
+		render(
+			<Stack gap="lg">
+				<div>Item</div>
+			</Stack>
+		)
 		const stack = container.querySelector('.pounce-stack') as HTMLElement
 		expect(stack?.style.gap).toContain('var(--pounce-spacing)')
 	})
 
 	it('applies alignment', () => {
-		render(<Stack align="center"><div>Item</div></Stack>)
+		render(
+			<Stack align="center">
+				<div>Item</div>
+			</Stack>
+		)
 		const stack = container.querySelector('.pounce-stack') as HTMLElement
 		expect(stack?.style.alignItems).toBe('center')
 	})
 
 	it('applies justify content', () => {
-		render(<Stack justify="between"><div>Item</div></Stack>)
+		render(
+			<Stack justify="between">
+				<div>Item</div>
+			</Stack>
+		)
 		const stack = container.querySelector('.pounce-stack') as HTMLElement
 		expect(stack?.style.justifyContent).toBe('space-between')
 	})
 
 	it('supports custom classes', () => {
-		render(<Stack class="custom-stack"><div>Item</div></Stack>)
+		render(
+			<Stack class="custom-stack">
+				<div>Item</div>
+			</Stack>
+		)
 		const stack = container.querySelector('.pounce-stack')
 		expect(stack?.classList.contains('custom-stack')).toBe(true)
 	})
@@ -92,25 +108,41 @@ describe('Inline', () => {
 	})
 
 	it('applies scrollable modifier', () => {
-		render(<Inline scrollable><div>Item</div></Inline>)
+		render(
+			<Inline scrollable>
+				<div>Item</div>
+			</Inline>
+		)
 		const inline = container.querySelector('.pounce-inline')
 		expect(inline?.classList.contains('pounce-inline--scrollable')).toBe(true)
 	})
 
 	it('applies wrap style', () => {
-		render(<Inline wrap><div>Item</div></Inline>)
+		render(
+			<Inline wrap>
+				<div>Item</div>
+			</Inline>
+		)
 		const inline = container.querySelector('.pounce-inline') as HTMLElement
 		expect(inline?.style.flexWrap).toBe('wrap')
 	})
 
 	it('applies nowrap by default', () => {
-		render(<Inline><div>Item</div></Inline>)
+		render(
+			<Inline>
+				<div>Item</div>
+			</Inline>
+		)
 		const inline = container.querySelector('.pounce-inline') as HTMLElement
 		expect(inline?.style.flexWrap).toBe('nowrap')
 	})
 
 	it('applies custom gap', () => {
-		render(<Inline gap="xl"><div>Item</div></Inline>)
+		render(
+			<Inline gap="xl">
+				<div>Item</div>
+			</Inline>
+		)
 		const inline = container.querySelector('.pounce-inline') as HTMLElement
 		expect(inline?.style.gap).toContain('var(--pounce-spacing)')
 	})
@@ -148,31 +180,51 @@ describe('Grid', () => {
 	})
 
 	it('applies column count', () => {
-		render(<Grid columns={3}><div>Item</div></Grid>)
+		render(
+			<Grid columns={3}>
+				<div>Item</div>
+			</Grid>
+		)
 		const grid = container.querySelector('.pounce-grid') as HTMLElement
 		expect(grid?.style.gridTemplateColumns).toMatch(/repeat\(3, minmax\(0(px)?, 1fr\)\)/)
 	})
 
 	it('applies custom column template', () => {
-		render(<Grid columns="1fr 2fr"><div>Item</div></Grid>)
+		render(
+			<Grid columns="1fr 2fr">
+				<div>Item</div>
+			</Grid>
+		)
 		const grid = container.querySelector('.pounce-grid') as HTMLElement
 		expect(grid?.style.gridTemplateColumns).toBe('1fr 2fr')
 	})
 
 	it('applies minItemWidth for auto-fit', () => {
-		render(<Grid minItemWidth="200px"><div>Item</div></Grid>)
+		render(
+			<Grid minItemWidth="200px">
+				<div>Item</div>
+			</Grid>
+		)
 		const grid = container.querySelector('.pounce-grid') as HTMLElement
 		expect(grid?.style.gridTemplateColumns).toBe('repeat(auto-fit, minmax(200px, 1fr))')
 	})
 
 	it('applies custom gap', () => {
-		render(<Grid gap="sm"><div>Item</div></Grid>)
+		render(
+			<Grid gap="sm">
+				<div>Item</div>
+			</Grid>
+		)
 		const grid = container.querySelector('.pounce-grid') as HTMLElement
 		expect(grid?.style.gap).toContain('var(--pounce-spacing)')
 	})
 
 	it('applies alignment', () => {
-		render(<Grid align="center"><div>Item</div></Grid>)
+		render(
+			<Grid align="center">
+				<div>Item</div>
+			</Grid>
+		)
 		const grid = container.querySelector('.pounce-grid') as HTMLElement
 		expect(grid?.style.alignItems).toBe('center')
 	})
@@ -197,20 +249,32 @@ describe('Container', () => {
 	}
 
 	it('renders with default container class', () => {
-		render(<Container><div>Content</div></Container>)
+		render(
+			<Container>
+				<div>Content</div>
+			</Container>
+		)
 		const containerEl = container.querySelector('.container')
 		expect(containerEl).toBeTruthy()
 	})
 
 	it('renders with fluid class when fluid prop is true', () => {
-		render(<Container fluid><div>Content</div></Container>)
+		render(
+			<Container fluid>
+				<div>Content</div>
+			</Container>
+		)
 		const containerEl = container.querySelector('.container-fluid')
 		expect(containerEl).toBeTruthy()
 		expect(container.querySelector('.container')).toBeFalsy()
 	})
 
 	it('supports custom tag', () => {
-		render(<Container tag="section"><div>Content</div></Container>)
+		render(
+			<Container tag="section">
+				<div>Content</div>
+			</Container>
+		)
 		const containerEl = container.querySelector('.container')
 		expect(containerEl?.tagName).toBe('SECTION')
 	})
@@ -243,7 +307,7 @@ describe('AppShell', () => {
 
 		const shell = container.querySelector('.pounce-app-shell')
 		expect(shell).toBeTruthy()
-		
+
 		const header = shell?.querySelector('.pounce-app-shell-header')
 		expect(header).toBeTruthy()
 		expect(header?.querySelector('.test-header')).toBeTruthy()

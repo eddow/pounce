@@ -62,7 +62,7 @@ describe('PounceResponse', () => {
 
 	it('should throw if body is read from standard Response then converted to PounceResponse', async () => {
 		const standardRes = new Response('{"test": "data"}')
-		
+
 		// Consume the body of the standard response
 		await standardRes.text()
 

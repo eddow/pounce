@@ -1,9 +1,7 @@
-import { A } from '@pounce/kit'
+import { A } from '@pounce'
 import { Code, Section } from '../components'
 
-const helloApp = `import { latch } from '@pounce/core'
-import { setAdapter } from '@pounce/ui'
-import { picoAdapter } from '@pounce/adapter-pico'
+const helloApp = `import { latch, setAdapter, picoAdapter } from '@pounce'
 import '@picocss/pico/css/pico.min.css'
 import { reactive } from 'mutts'
 

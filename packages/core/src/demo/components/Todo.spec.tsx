@@ -26,7 +26,7 @@ describe('TodoWebComponent', () => {
 			{},
 			h('for', { each: items }, ((item: any) => h('span', {}, item.text)) as any)
 		)
-		const root = mount.render(rootEnv) as HTMLElement
+		const root = mount.render(rootEnv)[0] as HTMLElement
 
 		expect(root.querySelectorAll('span').length).toBe(0)
 
@@ -40,7 +40,7 @@ describe('TodoWebComponent', () => {
 	it('adds a second todo to the DOM', () => {
 		const todos = reactive<Todo[]>([])
 		const mount = h('div', {}, h(TodoWebComponent, { todos }))
-		const root = mount.render(rootEnv) as HTMLElement
+		const root = mount.render(rootEnv)[0] as HTMLElement
 
 		expect(root.querySelectorAll('.todo-item').length).toBe(0)
 
@@ -55,13 +55,13 @@ describe('TodoWebComponent', () => {
 	it('shows correct text after remove and re-add', () => {
 		const todos = reactive<Todo[]>([])
 		const mount = h('div', {}, h(TodoWebComponent, { todos }))
-		const root = mount.render(rootEnv) as HTMLElement
+		const root = mount.render(rootEnv)[0] as HTMLElement
 
 		todos.push({ id: 1, text: 'a', completed: false, createdAt: new Date() })
 		expect(root.querySelector('.todo-item .todo-text')?.textContent).toBe('a')
 
 		// Filter out the todo with id 1
-		const filtered = todos.filter(todo => todo.id !== 1)
+		const filtered = todos.filter((todo) => todo.id !== 1)
 		todos.splice(0, todos.length, ...filtered)
 		expect(root.querySelectorAll('.todo-item').length).toBe(0)
 

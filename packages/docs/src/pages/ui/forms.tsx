@@ -5,12 +5,13 @@ import {
 	Combobox,
 	Inline,
 	Multiselect,
+	type PicoVariant,
 	Radio,
 	RadioButton,
 	Select,
 	Stack,
 	Switch,
-} from '@pounce/ui'
+} from '@pounce'
 import { reactive } from 'mutts'
 import { ApiTable, Demo, Section } from '../../components'
 
@@ -106,7 +107,7 @@ function CheckboxDemo() {
 		notifications: true,
 		alerts: false,
 		disabled: false,
-		variant: 'primary',
+		variant: 'primary' as PicoVariant,
 	})
 	return (
 		<Stack gap="md">
@@ -144,7 +145,7 @@ function CheckboxDemo() {
 }
 
 function RadioDemo() {
-	const state = reactive({ color: 'red', variant: 'primary' })
+	const state = reactive({ color: 'red', variant: 'primary' as PicoVariant })
 	return (
 		<Stack gap="md">
 			<label>
@@ -176,7 +177,7 @@ function SwitchDemo() {
 	const state = reactive({
 		dark: false,
 		notifications: true,
-		variant: 'primary',
+		variant: 'primary' as PicoVariant,
 		labelPosition: 'end' as 'start' | 'end',
 	})
 	return (
@@ -221,7 +222,7 @@ function SwitchDemo() {
 }
 
 function CheckButtonDemo() {
-	const state = reactive({ checked: false, variant: 'primary', icon: '' })
+	const state = reactive({ checked: false, variant: 'primary' as PicoVariant, icon: '' })
 	return (
 		<Stack gap="md">
 			<Inline gap="md" wrap>
@@ -262,7 +263,7 @@ function CheckButtonDemo() {
 }
 
 function RadioButtonDemo() {
-	const state = reactive({ selected: 'a' as string, variant: 'primary' })
+	const state = reactive({ selected: 'a' as string, variant: 'primary' as PicoVariant })
 	return (
 		<Stack gap="md">
 			<label>

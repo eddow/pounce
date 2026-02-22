@@ -1,6 +1,7 @@
 /// <reference path="../types/jsx.d.ts" />
 
-import { Fragment, h } from './jsx-factory'
+import { c } from './composite-attributes'
+import { Fragment, h, r } from './jsx-factory'
 
 // Singleton verification — detects dual-module hazard (e.g. bundled + external copies)
 const GLOBAL_POUNCE_KEY = '__POUNCE_CORE_INSTANCE__'
@@ -19,7 +20,18 @@ if (globalScope) {
 	globalScope[GLOBAL_POUNCE_KEY] = stamp
 }
 
-export * from '../shared'
+export {
+	CustomEvent,
+	crypto,
+	DocumentFragment,
+	document,
+	Event,
+	entryPoint,
+	HTMLElement,
+	Node,
+	setPlatformAPIs,
+	window,
+} from '../shared'
 export * from './composite-attributes'
 export * from './debug'
 export * from './jsx-factory'
@@ -39,7 +51,8 @@ export {
 export { type StyleInput, styles } from './styles'
 export * from './utils'
 
-// TODO: either globalize all (h, r, c) or none
 const g = globalThis as any
 g.h = h
 g.Fragment = Fragment
+g.r = r
+g.c = c

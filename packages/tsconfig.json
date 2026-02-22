@@ -9,15 +9,44 @@
 		"strict": true,
 		"noEmit": true,
 		"types": [],
+		"lib": [
+			"ESNext",
+			"DOM",
+			"DOM.Iterable"
+		],
 		"jsx": "react",
 		"jsxFactory": "h",
 		"jsxFragmentFactory": "Fragment",
 		"paths": {
-			"@pounce/core": ["./core/src"],
-			"@pounce/ui": ["./ui/src"],
-			"@pounce/kit": ["./kit/src"],
-			"mutts": ["../mutts/src"]
+			"@pounce/core": [
+				"./core/src"
+			],
+			"@pounce/core/*": [
+				"./core/src/*"
+			],
+			"@pounce/ui": [
+				"./ui/src"
+			],
+			"@pounce/ui/*": [
+				"./ui/src/*"
+			],
+			"@pounce/kit": [
+				"./kit/src"
+			],
+			"@pounce/kit/*": [
+				"./kit/src/*"
+			],
+			"mutts": [
+				"../mutts/src"
+			],
+			"mutts/*": [
+				"../mutts/src/*"
+			]
 		}
 	},
-	"exclude": ["node_modules", "dist", "build"]
+	"exclude": [
+		"node_modules",
+		"dist",
+		"build"
+	]
 }

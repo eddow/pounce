@@ -3,7 +3,7 @@
  */
 
 import { latch } from '@pounce/core'
-import { Register, reactive } from 'mutts'
+import { reactive } from 'mutts'
 import CounterComponent from './components/Counter'
 import TodoComponent, { type Todo } from './components/Todo'
 import WrapperComponent from './components/Wrapper'
@@ -12,14 +12,14 @@ import WrapperComponent from './components/Wrapper'
 const state = reactive({
 	sharedCount: 5,
 	parentMessage: 'Parent controls this counter',
+	todos: [] as Todo[],
 })
 
-const todos = new Register<Todo, number>((t) => t.id)
 // Build the app virtual tree and render to a DocumentFragment
 const refs = reactive({
-	input: undefined as HTMLInputElement | undefined,
-	counter: undefined as Node | readonly Node[] | undefined,
-	todos: undefined as Node | readonly Node[] | undefined,
+	input: null! as HTMLInputElement,
+	counter: null! as Node | readonly Node[],
+	todos: null! as Node | readonly Node[],
 })
 const App = () => (
 	<>
@@ -88,7 +88,7 @@ const App = () => (
 				}}
 			/>
 			<WrapperComponent>
-				<TodoComponent this={refs.todos} todos={todos} />
+				<TodoComponent this={refs.todos} todos={state.todos} />
 			</WrapperComponent>
 		</div>
 	</>

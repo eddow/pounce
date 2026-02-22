@@ -24,9 +24,9 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Vue
 - **Reactive env inheritance**: Components receive a prototype‑inherited reactive `env`. Components can set `env.foo = ...` and descendants see it. Vue uses `provide/inject` (explicit), not prototype inheritance.
 - **`<env>` helper**: Adds values/functions to `env` for descendants without extra DOM.
 
-### Refs and Directives
+### Refs and Meta-attributes
 - **Refs via `this`**: `this={sink}` receives `HTMLElement` (elements) or `Node | Node[]` (components). Vue uses `ref`/`template ref` objects.
-- **Directives via `use:`**: `use={...}` one‑shot mount callback, `use:name={value}` calls a env-based mixin (may return cleanup). Vue has `v-*` directives with lifecycle hooks.
+- **Meta-attributes via `use:`**: `use={...}` one‑shot mount callback, `use:name={value}` calls a env-based mixin (may return cleanup). Vue has `v-*` directives with lifecycle hooks.
 
 ### Events
 - **Native DOM events**: `onClick`, `onInput`, … directly attach to DOM; no synthetic system. Vue uses event modifiers and emits for component events.
@@ -45,7 +45,7 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Vue
 See also:
 - `docs/reactivity.md` (memoize, effect)
 - `docs/binding.md` (two‑way binding and `update:prop`)
-- `docs/advanced.md` (Env, control flow, directives)
+- `docs/advanced.md` (Env, control flow, meta-attributes)
 - `docs/api-reference.md`
 
 

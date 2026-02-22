@@ -6,7 +6,7 @@ describe('Attribute Merging (Class & Style)', () => {
 	it('merges string classes from multiple layers', () => {
 		const props = c({ class: 'inner' }, { class: 'extra' })
 		const mount = h('div', { class: 'base' }, h('span', props))
-		const root = mount.render(rootEnv) as HTMLElement
+		const root = mount.render(rootEnv)[0] as HTMLElement
 		const span = root.querySelector('span')
 		expect(span?.className).toBe('inner extra')
 	})
@@ -15,7 +15,7 @@ describe('Attribute Merging (Class & Style)', () => {
 		const classes = { active: true, hidden: false }
 		const props = c({ class: ['btn', 'large'] }, { class: 'base' }, { class: classes })
 		const mount = h('div', {}, h('button', props))
-		const root = mount.render(rootEnv) as HTMLElement
+		const root = mount.render(rootEnv)[0] as HTMLElement
 		const button = root.querySelector('button')
 		expect(button?.className).toBe('btn large base active')
 	})
@@ -23,7 +23,7 @@ describe('Attribute Merging (Class & Style)', () => {
 	it('merges styles from multiple layers', () => {
 		const props = c({ style: { fontWeight: 'bold' } }, { style: 'font-size: 12px;' })
 		const mount = h('div', { style: 'color: red;' }, h('span', props))
-		const root = mount.render(rootEnv) as HTMLElement
+		const root = mount.render(rootEnv)[0] as HTMLElement
 		const span = root.querySelector('span') as HTMLElement
 		expect(span.style.color).toBe('') // color was on parent
 		expect(span.style.fontWeight).toBe('bold')
@@ -37,7 +37,7 @@ describe('Attribute Merging (Class & Style)', () => {
 			{ style: { padding: '20px' } }
 		)
 		const mount = h('div', props)
-		const node = mount.render(rootEnv) as HTMLElement
+		const node = mount.render(rootEnv)[0] as HTMLElement
 		expect(node.style.color).toBe('blue')
 		expect(node.style.padding).toBe('20px')
 	})
@@ -49,7 +49,7 @@ describe('Attribute Merging (Class & Style)', () => {
 			{ class: r(() => (state.isActive ? 'active' : '')) }
 		)
 		const mount = h('div', {}, h('span', props))
-		const root = mount.render(rootEnv) as HTMLElement
+		const root = mount.render(rootEnv)[0] as HTMLElement
 		const span = root.querySelector('span')
 
 		expect(span?.className).toBe('static')
@@ -61,7 +61,7 @@ describe('Attribute Merging (Class & Style)', () => {
 	it('standard attributes do NOT merge (last one wins)', () => {
 		const props = c({ id: 'inner' }, { id: 'override' }, { title: 'B' })
 		const mount = h('div', { id: 'first', title: 'A' }, h('span', props))
-		const root = mount.render(rootEnv) as HTMLElement
+		const root = mount.render(rootEnv)[0] as HTMLElement
 		const span = root.querySelector('span')
 		expect(span?.id).toBe('override')
 		expect(span?.title).toBe('B')

@@ -1,5 +1,3 @@
-// TODO: to review
-// TODO: Hungry dog
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type MenuProps = {

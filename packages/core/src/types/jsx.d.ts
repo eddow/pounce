@@ -75,7 +75,7 @@ declare global {
 		type ElementResult<T> =
 			RenderOutput<T> extends infer R
 				? R extends readonly Node[]
-					? readonly Node[]
+					? Node | readonly Node[]
 					: R extends Node
 						? R
 						: R extends null | undefined
@@ -104,6 +104,7 @@ declare global {
 					if?: any
 					else?: true
 					use?: (target: N) => void
+					catch?: (error: unknown, reset?: () => void) => JSX.Element
 			  } & MetaAttributes<Meta, N>)
 		type MetaAttributes<M, N extends Node | readonly Node[] = Node | readonly Node[]> = {
 			[K in string & keyof M as `use:${K}`]?: M[K] extends (
@@ -115,6 +116,8 @@ declare global {
 				: never
 		} & {
 			[K in string & keyof M as `if:${K}`]?: M[K]
+		} & {
+			[K in string & keyof M as `pick:${K}`]?: M[K]
 		} & {
 			[K in string & keyof M as `when:${K}`]?: M[K] extends (value: infer V) => boolean ? V : never
 		}

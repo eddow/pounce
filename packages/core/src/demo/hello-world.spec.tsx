@@ -5,7 +5,7 @@ import { HelloWorld } from './hello-world'
 describe('HelloWorld Component', () => {
 	it('renders with default props', () => {
 		const mount = h(HelloWorld, {})
-		const rootElement = mount.render(rootEnv) as HTMLElement
+		const rootElement = mount.render(rootEnv)[0] as HTMLElement
 
 		const greetingElement = rootElement.querySelector('.greeting')
 		const messageElement = rootElement.querySelector('.message')
@@ -16,7 +16,7 @@ describe('HelloWorld Component', () => {
 
 	it('renders with custom name', () => {
 		const mount = h(HelloWorld, { name: 'Alice' })
-		const rootElement = mount.render(rootEnv) as HTMLElement
+		const rootElement = mount.render(rootEnv)[0] as HTMLElement
 
 		const greetingElement = rootElement.querySelector('.greeting')
 		expect(greetingElement?.textContent).toBe('Hello, Alice!')
@@ -24,7 +24,7 @@ describe('HelloWorld Component', () => {
 
 	it('renders with custom greeting', () => {
 		const mount = h(HelloWorld, { greeting: 'Hi', name: 'Bob' })
-		const rootElement = mount.render(rootEnv) as HTMLElement
+		const rootElement = mount.render(rootEnv)[0] as HTMLElement
 
 		const greetingElement = rootElement.querySelector('.greeting')
 		expect(greetingElement?.textContent).toBe('Hi, Bob!')
@@ -32,7 +32,7 @@ describe('HelloWorld Component', () => {
 
 	it('has correct CSS classes', () => {
 		const mount = h(HelloWorld, {})
-		const rootElement = mount.render(rootEnv) as HTMLElement
+		const rootElement = mount.render(rootEnv)[0] as HTMLElement
 
 		// The root element itself should have the hello-world class
 		expect(rootElement.classList.contains('hello-world')).toBe(true)
@@ -46,7 +46,7 @@ describe('HelloWorld Component', () => {
 
 	it('renders h1 and p elements with correct tags', () => {
 		const mount = h(HelloWorld, {})
-		const rootElement = mount.render(rootEnv) as HTMLElement
+		const rootElement = mount.render(rootEnv)[0] as HTMLElement
 
 		const h1Element = rootElement.querySelector('h1')
 		const pElement = rootElement.querySelector('p')

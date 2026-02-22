@@ -1,7 +1,7 @@
-import { A } from '@pounce/kit'
+import { A } from '@pounce'
 import { Code, PackageHeader, Section } from '../../components'
 
-const bindAppExample = `import { latch } from '@pounce/core'
+const bindAppExample = `import { latch } from '@pounce'
 
 function App() {
   return <h1>Hello World</h1>

@@ -232,7 +232,7 @@ Folders wrapped in parentheses are **not included in the URL** but allow shared 
 
 ### mutts Reactivity (FE + BE)
 ```ts
-import { reactive, effect, memoize } from 'mutts/reactive';
+import { reactive, effect, memoize } from 'mutts';
 
 const state = reactive({ count: 0 });
 effect(() => console.log(state.count)); // Re-runs on change

@@ -1,4 +1,4 @@
-import { Menu } from '@pounce/ui'
+import { Menu } from '@pounce'
 import { ApiTable, Code, Demo, Section } from '../../components'
 
 const menuSource = `<Menu summary="Options">
@@ -30,7 +30,7 @@ const a11yNote = `// Menu enforces a11y in dev mode:
 function MenuDemo() {
 	return (
 		<Menu summary="Actions">
-			<ul>
+			<ul role="menu">
 				<li role="none">
 					<Menu.Item href="/ui/button">Buttons</Menu.Item>
 				</li>

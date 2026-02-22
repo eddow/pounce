@@ -1,6 +1,6 @@
 import { ApiTable, Code, Section } from '../../components'
 
-const setup = `import { StandardOverlays } from '@pounce/ui'
+const setup = `import { StandardOverlays } from '@pounce/adapter-pico'
 
 // StandardOverlays is a wrapper component that provides
 // dialog, toast, and drawer helpers via env.

@@ -1,4 +1,4 @@
-import { Heading, Inline, Link, Select, Stack, Switch, Text } from '@pounce/ui'
+import { Heading, Inline, Link, Select, Stack, Switch, Text } from '@pounce'
 import { reactive } from 'mutts'
 import { ApiTable, Demo, Section } from '../../components'
 
@@ -10,7 +10,7 @@ const textSource = `<Text size={state.size} variant={state.variant} muted={state
   The quick brown fox jumps over the lazy dog.
 </Text>`
 
-const linkSource = `<Link href="/ui/button" variant={state.variant} underline={state.underline}>
+const linkSource = `<Link href="/ui/button" underline={state.underline}>
   Go to Buttons
 </Link>`
 
@@ -106,31 +106,18 @@ function TextDemo() {
 }
 
 function LinkDemo() {
-	const state = reactive({
-		variant: 'primary',
-		underline: true,
-	})
+	const state = reactive({ underline: true })
 	return (
 		<Stack gap="md">
-			<Inline gap="md" wrap>
-				<label>
-					variant
-					<Select value={state.variant}>
-						<option value="primary">primary</option>
-						<option value="secondary">secondary</option>
-						<option value="contrast">contrast</option>
-						<option value="success">success</option>
-						<option value="danger">danger</option>
-					</Select>
-				</label>
+			<Inline gap="md">
 				<Switch checked={state.underline}>underline</Switch>
 			</Inline>
 			<hr />
 			<Inline gap="md">
-				<Link href="/ui/button" variant={state.variant} underline={state.underline}>
+				<Link href="/ui/button" underline={state.underline}>
 					Go to Buttons
 				</Link>
-				<Link href="/ui/forms" variant={state.variant} underline={state.underline}>
+				<Link href="/ui/forms" underline={state.underline}>
 					Go to Forms
 				</Link>
 			</Inline>

@@ -1,6 +1,6 @@
 import { ApiTable, Code, PackageHeader, Section } from '../../components'
 
-const basicUsage = `import { ThemeToggle } from '@pounce/ui'
+const basicUsage = `import { ThemeToggle } from '@pounce'
 import { settings } from './settings' // Your EnvSettings object
 
 function Header() {
@@ -11,7 +11,7 @@ function Header() {
   )
 }`
 
-const themeState = `import { ui } from '@pounce/ui'
+const themeState = `import { ui } from '@pounce'
 
 console.log(ui.theme) // 'light' | 'dark'`
 

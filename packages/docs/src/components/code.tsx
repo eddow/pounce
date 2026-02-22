@@ -1,4 +1,4 @@
-import { componentStyle } from '@pounce/kit'
+import { componentStyle } from '@pounce'
 import hljs from 'highlight.js/lib/core'
 import bash from 'highlight.js/lib/languages/bash'
 import css from 'highlight.js/lib/languages/css'
