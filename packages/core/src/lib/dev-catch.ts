@@ -34,7 +34,13 @@ export function devCatchElement(error: unknown, retry?: () => void): PounceEleme
 		msg.setAttribute('style', 'margin:0;white-space:pre-wrap;word-break:break-word;color:#ffaaaa')
 		msg.textContent =
 			error instanceof Error
-				? `${error.name}: ${error.message}${error.stack ? `\n${error.stack.split('\n').slice(1).join('\n')}` : ''}`
+				? `${error.name}: ${error.message}${
+						(error as any).lineage
+							? `\n\nLineage:\n${(error as any).lineage}`
+							: error.stack
+								? `\n${error.stack.split('\n').slice(1).join('\n')}`
+								: ''
+					}`
 				: String(error)
 
 		panel.appendChild(title)

@@ -9,7 +9,7 @@ export interface MiniCounterProps {
 
 export function MiniCounter(props: MiniCounterProps) {
 	const vm = defaults(props, { list: [] as string[], addedText: Date.now().toString() })
-	effect(({ reaction }) => {
+	effect.named('MiniCounter')(({ reaction }) => {
 		if (reaction) {
 			console.log('MiniCounter component re-running due to reactive change')
 		}

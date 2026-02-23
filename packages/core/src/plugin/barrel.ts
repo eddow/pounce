@@ -15,7 +15,7 @@ export interface PounceBarrelPluginOptions {
 	adapter?: string
 	/**
 	 * Path to write the ambient `declare module` `.d.ts` file for IDE support.
-	 * Defaults to `<name>.d.ts` (e.g. `@pounce.d.ts`) in the project root.
+	 * Defaults to `.generated-types/<name>.d.ts` (e.g. `.generated-types/@pounce.d.ts`) in the project root.
 	 * Set to `false` to disable generation.
 	 */
 	dts?: string | false
@@ -23,17 +23,15 @@ export interface PounceBarrelPluginOptions {
 
 function buildBarrelLines(options: Required<Omit<PounceBarrelPluginOptions, 'dts'>>): string[] {
 	const { skeleton, adapter } = options
-	const hasUI = skeleton === 'front-end' || skeleton === 'full-stack'
-	const hasBoard = skeleton === 'back-end' || skeleton === 'full-stack'
-	const kitEntry = hasUI ? `@pounce/kit` : `@pounce/kit`
+	const hasUI = ['front-end', 'full-stack'].includes(skeleton)
+	const hasBoard = ['back-end', 'full-stack'].includes(skeleton)
 
 	const lines: string[] = []
 	lines.push(`export * from '@pounce/core'`)
-	lines.push(`export * from '${kitEntry}'`)
-	if (hasUI) lines.push(`export * from '@pounce/ui'`)
-	if (hasUI && adapter) {
-		lines.push(`export { WithOverlays, StandardOverlays } from '${adapter}'`)
-		lines.push(`export * from '${adapter}'`)
+	lines.push(`export * from '@pounce/kit'`)
+	if (hasUI) {
+		lines.push(`export * from '@pounce/ui'`)
+		if (adapter) lines.push(`export * from '${adapter}'`)
 	}
 	if (hasBoard) lines.push(`export * from '@pounce/board'`)
 	return lines
@@ -82,7 +80,7 @@ export function pounceBarrelPlugin(options: PounceBarrelPluginOptions = {}) {
 		adapter: options.adapter ?? '',
 	} satisfies Required<Omit<PounceBarrelPluginOptions, 'dts'>>
 
-	const dtsPath = options.dts === false ? false : (options.dts ?? `${name}.d.ts`)
+	const dtsPath = options.dts === false ? false : (options.dts ?? `.generated-types/${name}.d.ts`)
 
 	return {
 		name: 'pounce-barrel',

@@ -93,6 +93,6 @@ test.describe('For component', () => {
 		const eventTypes = events.map(e => e.event)
 		
 		// Should have reconciliation events
-		expect(eventTypes.some(e => e.includes('reconcileChildren'))).toBeTruthy()
+		expect(eventTypes.some(e => e.includes('reconcile (+'))).toBeTruthy()
 	})
 })

@@ -1,7 +1,7 @@
 import { document, type Env, latch } from '@pounce/core'
+import { bindDialog, bindDrawer, bindToast, dialogSpec, toastSpec } from '@pounce/ui'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { bindDialog, bindDrawer, bindToast, dialogSpec, toastSpec } from '../overlays'
-import { WithOverlays } from './with-overlays'
+import { WithOverlays } from './overlays'
 
 describe('WithOverlays (integration)', () => {
 	let container: HTMLElement
@@ -225,7 +225,6 @@ describe('WithOverlays (integration)', () => {
 		const promise = dialog!.confirm('Are you sure?')
 		await tick()
 
-		// resolve via env.overlay directly — find the top entry
 		const manager = document.querySelector('.pounce-overlay-manager') as HTMLElement
 		manager.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
 

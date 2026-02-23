@@ -1,11 +1,10 @@
-import { effect, lift, link, memoize, morph, unreactive } from 'mutts'
+import { effect, isReactive, lift, link, memoize, morph, named, reactive, unreactive } from 'mutts'
 import { perf } from '../perf'
 import { document } from '../shared'
 import {
 	CompositeAttributes,
 	type CompositeAttributesMeta,
 	collapse,
-	fromAttribute,
 	type PerhapsReactive,
 	ReactiveProp,
 } from './composite-attributes'
@@ -16,14 +15,15 @@ import {
 	DynamicRenderingError,
 	type Env,
 	PounceElement,
+	rootEnv,
 } from './pounce-element'
-import { processChildren, reconcile } from './reconciler'
+import { pounceElement, processChildren, reconcile } from './reconciler'
 import { attachAttributes, checkComponentRebuild, isString } from './renderer-internal'
 import { defaults, extend } from './utils'
 
 export const intrinsicComponentAliases: Record<string, ComponentFunction> = extend(null, {
 	env(props: { children?: any; [key: string]: any }, env: Env) {
-		effect(function envEffect() {
+		effect.named('attr:env')(() => {
 			for (const [key, value] of Object.entries(props)) if (key !== 'children') env[key] = value
 		})
 		return props.children
@@ -46,21 +46,29 @@ export const intrinsicComponentAliases: Record<string, ComponentFunction> = exte
 			)
 		}
 		// Lock to fence on purpose
-		const cb = memoize.lenient(body as (item: T) => Children)
+		const cb = (item: T) => {
+			perfCounters.forIterations++
+			perf?.mark('for:iter:start')
+			const res = (body as (item: T) => Children)(item)
+			perf?.mark('for:iter:end')
+			perf?.measure('for:iter', 'for:iter:start', 'for:iter:end')
+			return res
+		}
+		const memoizedCb = memoize.lenient(cb)
 		// morph and processChildren must be called here (component body, runs once) — NOT inside produce.
 		// produce runs inside the render:for effect; any reactive reads there (including processChildren
 		// reading the morph cache) would subscribe render:for to array mutations → rebuild fence fires.
-		const morphed = morph(() => collapse(props.each), cb)
-		const nodes = processChildren(morphed, env)
-		return new PounceElement(() => nodes, 'for')
+		const morphed = morph(() => collapse(props.each), memoizedCb)
+		const nodes = lift(() => {
+			perf?.mark('for:update:start')
+			const res = processChildren(morphed, env)
+			perf?.mark('for:update:end')
+			perf?.measure('for:update', 'for:update:start', 'for:update:end')
+			return res
+		})
+		return new PounceElement(() => nodes as any, 'for')
 	},
-	dynamic(props: { tag: any; children?: any } & Record<string, any>, _env: Env) {
-		// @ts-expect-error `fromAttribute` is not registered in the type
-		return lift(() => produceDOM(props.tag, props[fromAttribute], props.children, {}))
-	},
-	fragment(props: { children: PounceElement[] }, env: Env) {
-		return new PounceElement(() => processChildren(props.children, env), 'fragment')
-	},
+	fragment: 'fragment' as any,
 })
 
 /**
@@ -163,6 +171,50 @@ export function produceDOM(
 	children: Children,
 	meta: CompositeAttributesMeta
 ): PounceElement {
+	if (tagName === 'dynamic') {
+		const tagProp = inAttrs.getSingle('tag')
+		const cache = new Map<any, PounceElement>()
+		const produce = (tag: any) => {
+			let res = cache.get(tag)
+			if (!res) {
+				res =
+					typeof tag === 'function'
+						? produceComponent(tag as ComponentFunction, inAttrs, children, meta)
+						: produceDOM(tag as string, inAttrs, children, meta)
+				cache.set(tag, res)
+			}
+			return res
+		}
+		return new PounceElement(
+			(env) => {
+				const nodes = reactive<Node[]>([])
+				link(
+					nodes,
+					effect(
+						named('render:dynamic:internal', () => {
+							perf?.mark('dynamic:switch:start')
+							const nextNodes = produce(collapse(tagProp)).render(env)
+							nodes.splice(0, nodes.length, ...nextNodes)
+							perf?.mark('dynamic:switch:end')
+							perf?.measure('dynamic:switch', 'dynamic:switch:start', 'dynamic:switch:end')
+						})
+					)
+				)
+				return nodes
+			},
+			'dynamic',
+			meta
+		)
+	}
+
+	const processedChildren =
+		Array.isArray(children) && !isReactive(children)
+			? children.map((c) => pounceElement(c, rootEnv))
+			: []
+
+	const allChildrenStatic =
+		processedChildren.length > 0 && processedChildren.every((c) => c.isStatic)
+
 	return new PounceElement(
 		function elementRender(env: Env) {
 			perfCounters.elementRenders++
@@ -176,15 +228,21 @@ export function produceDOM(
 			}
 
 			testing.renderingEvent?.('create element', tagName, element)
+			link(
+				element,
+				attachAttributes(element, inAttrs),
+				reconcile(element, processChildren(children, env))
+			)
 
-			attachAttributes(element, inAttrs)
-
-			link(element, reconcile(element, processChildren(children, env)))
+			perf?.mark(`element:${tagName}:end`)
+			perf?.measure(`element:${tagName}`, `element:${tagName}:start`, `element:${tagName}:end`)
 
 			return element
 		},
 		tagName,
-		meta
+		meta,
+		!inAttrs.isReactive && (processedChildren.length === 0 || allChildrenStatic),
+		true
 	)
 }
 

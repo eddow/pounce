@@ -12,7 +12,7 @@ export interface PureGlyfConfig {
 
 	/**
 	 * Path to write the d.ts file to.
-	 * Defaults to 'pure-glyf.d.ts' in the project root.
+	 * Defaults to '.generated-types/pure-glyf.d.ts' in the project root.
 	 */
 	dts?: string
 }
@@ -22,7 +22,7 @@ export function pureGlyfPlugin(config: PureGlyfConfig): Plugin {
 	const resolvedVirtualModuleId = `\0${virtualModuleId}`
 	const virtualModuleIdCSS = 'pure-glyf/icons.css'
 	const resolvedVirtualModuleIdCSS = `\0${virtualModuleIdCSS}`
-	const dtsPath = config.dts || 'pure-glyf.d.ts'
+	const dtsPath = config.dts || '.generated-types/pure-glyf.d.ts'
 
 	let lastResult: GeneratorResult | null = null
 	let server: ViteDevServer | null = null

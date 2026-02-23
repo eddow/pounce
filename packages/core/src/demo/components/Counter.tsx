@@ -20,11 +20,6 @@ export default function CounterWebComponent(props: {
 	showInput?: boolean
 	label?: string
 }) {
-	effect(({ reaction }) => {
-		if (reaction) {
-			console.log('Counter component re-running due to reactive change')
-		}
-	})
 	const state = extend(
 		{
 			maxValue: 100,
@@ -38,7 +33,7 @@ export default function CounterWebComponent(props: {
 		props
 	)
 
-	effect(() => {
+	effect.named('Counter')(() => {
 		console.log('🎯 Counter component mounted!')
 		return () => {
 			console.log('👋 Counter component unmounted!', { finalCount: state.count })

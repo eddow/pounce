@@ -1,4 +1,4 @@
-import { atomic, biDi, effect, type ScopedCallback } from 'mutts'
+import { atomic, biDi, effect, named, reactiveOptions, type ScopedCallback } from 'mutts'
 import { type CompositeAttributes, ReactiveProp } from './composite-attributes'
 import { pounceOptions, testing } from './debug'
 import { classNames } from './styles'
@@ -59,7 +59,7 @@ export function checkComponentRebuild(componentCtor: Function) {
 	tracker.count++
 
 	if (tracker.count > maxRebuildsPerWindow) {
-		console.error(
+		reactiveOptions.warn(
 			`[pounce] Component "${componentCtor.name}" rebuilt ${tracker.count} times in ${rebuildWindowMs}ms - possible infinite loop!`
 		)
 		// Reset to avoid spamming, then pause for debugging
@@ -174,13 +174,28 @@ function attachAttribute(
 			}
 		} else if (element.tagName === 'SELECT') {
 			if (key === 'value') {
-				cleanup = listen(element, 'change', () => provide((element as HTMLSelectElement).value))
+				const handler = () => {
+					const val = (element as HTMLSelectElement).value
+					console.error(`[pounce] SELECT event: val=${val}`)
+					provide(val)
+				}
+				cleanup = listen(element, 'change', handler)
+				const cleanupInput = listen(element, 'input', handler)
+				const originalCleanup = cleanup
+				cleanup = () => {
+					originalCleanup()
+					cleanupInput()
+				}
 				// Re-apply value after children (<option>) are typically mounted (microtask)
-				queueMicrotask(() => setHtmlProperty(element, 'value', binding.get()))
+				queueMicrotask(() => {
+					const val = binding.get()
+					console.error(`[pounce] SELECT microtask: val=${val}`)
+					setHtmlProperty(element, 'value', val)
+				})
 			}
 		}
 
-		const eff = effect(() => setHtmlProperty(element, key, binding.get()))
+		const eff = effect(named(`attr:${key}`, () => setHtmlProperty(element, key, binding.get())))
 
 		return () => {
 			cleanup?.()
@@ -190,7 +205,7 @@ function attachAttribute(
 
 	// One-way binding/setter
 	return value instanceof ReactiveProp
-		? effect(() => attachAttributeValue(element, key, value.get()))
+		? effect(named(`attr:${key}:setter`, () => attachAttributeValue(element, key, value.get())))
 		: attachAttributeValue(element, key, value)
 }
 
@@ -205,19 +220,15 @@ export function attachAttributes(
 	attributes.mask('class')
 	attributes.mask('style')
 
-	cleanups.class = attachAttribute(
-		element,
-		'class',
-		new ReactiveProp(() => attributes.mergeClasses())
-	)
-	cleanups.style = attachAttribute(
-		element,
-		'style',
-		new ReactiveProp(() => attributes.mergeStyles())
-	)
+	cleanups.class = attributes.requiresEffect('class')
+		? attachAttribute(element, 'class', new ReactiveProp(() => attributes.mergeClasses()))
+		: attachAttributeValue(element, 'class', attributes.mergeClasses())
+	cleanups.style = attributes.requiresEffect('style')
+		? attachAttribute(element, 'style', new ReactiveProp(() => attributes.mergeStyles()))
+		: attachAttributeValue(element, 'style', attributes.mergeStyles())
 
 	if (attributes.isReactive) {
-		const stop = effect(() => {
+		const stop = effect.named('attrs:update')(() => {
 			const newKeys = attributes.keys
 			for (const key of newKeys)
 				if (!(key in cleanups)) cleanups[key] = attachAttribute(element, key, attributes.get(key))
@@ -233,10 +244,9 @@ export function attachAttributes(
 			stop()
 			cleanAll()
 		}
-	}
-
-	for (const key of attributes.keys)
-		cleanups[key] = attachAttribute(element, key, attributes.get(key))
+	} else
+		for (const key of attributes.keys)
+			cleanups[key] = attachAttribute(element, key, attributes.get(key))
 
 	return cleanAll
 }

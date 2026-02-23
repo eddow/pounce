@@ -75,45 +75,45 @@ select:focus
   outline-offset: 2px
 
 .pounce-overlay-item
-	&.pounce-closing
-		pointer-events: none
-		
-		.pounce-mode-modal &
-			animation: pounce-dialog-out var(--pounce-transition-duration) ease-in forwards
-		
-		.pounce-mode-drawer-left &
-			animation: pounce-drawer-out-left var(--pounce-transition-duration) ease-in forwards
-		
-		.pounce-mode-drawer-right &
-			animation: pounce-drawer-out-right var(--pounce-transition-duration) ease-in forwards
-		
-		.pounce-mode-toast &
-			animation: pounce-toast-out var(--pounce-transition-duration) ease-in forwards
+  &.pounce-closing
+    pointer-events: none
+    
+    .pounce-mode-modal &
+      animation: pounce-dialog-out var(--pounce-transition-duration) ease-in forwards
+    
+    .pounce-mode-drawer-left &
+      animation: pounce-drawer-out-left var(--pounce-transition-duration) ease-in forwards
+    
+    .pounce-mode-drawer-right &
+      animation: pounce-drawer-out-right var(--pounce-transition-duration) ease-in forwards
+    
+    .pounce-mode-toast &
+      animation: pounce-toast-out var(--pounce-transition-duration) ease-in forwards
 
 @keyframes pounce-dialog-out
-	from
-		opacity: 1
-		transform: scale(1)
-	to
-		opacity: 0
-		transform: scale(0.95)
+  from
+    opacity: 1
+    transform: scale(1)
+  to
+    opacity: 0
+    transform: scale(0.95)
 
 @keyframes pounce-drawer-out-left
-	from
-		transform: translateX(0)
-	to
-		transform: translateX(-100%)
+  from
+    transform: translateX(0)
+  to
+    transform: translateX(-100%)
 
 @keyframes pounce-drawer-out-right
-	from
-		transform: translateX(0)
-	to
-		transform: translateX(100%)
+  from
+    transform: translateX(0)
+  to
+    transform: translateX(100%)
 
 @keyframes pounce-toast-out
-	from
-		opacity: 1
-		transform: translateY(0)
-	to
-		opacity: 0
-		transform: translateY(-1rem)
+  from
+    opacity: 1
+    transform: translateY(0)
+  to
+    opacity: 0
+    transform: translateY(-1rem)

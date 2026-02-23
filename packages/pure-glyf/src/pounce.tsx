@@ -1,5 +1,5 @@
 import type { JSX } from '@pounce/core'
-import type { DisplayContext } from '@pounce/ui'
+import type { DisplayContext } from '@pounce/kit'
 
 /**
  * Creates an iconFactory for @pounce/ui from a pure-glyf icon map.
@@ -26,9 +26,7 @@ export function createGlyfIconFactory(
 ): (name: string, size: string | number | undefined, context: DisplayContext) => JSX.Element {
 	return (name: string, size: string | number | undefined, _context: DisplayContext) => {
 		const cls = icons[name]
-		if (!cls) {
-			return <span class="pounce-icon">{name}</span>
-		}
+		if (!cls) return <span class="pounce-icon">{name}</span>
 		const fontSize = size ? (typeof size === 'number' ? `${size}px` : size) : undefined
 		return <span class={cls} style={fontSize ? { fontSize } : undefined} />
 	}

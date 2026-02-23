@@ -38,7 +38,7 @@ export interface CompositeAttributesMeta {
 }
 function report(msg: string) {
 	if (pounceOptions.checkReactivity === 'error') throw new Error(msg)
-	console.warn(msg)
+	reactiveOptions.warn(msg)
 }
 
 function trackRead(rp: ReactiveProp<any>) {
@@ -233,6 +233,20 @@ export class CompositeAttributes {
 		return this.layers.some(isReactive)
 	}
 
+	requiresEffect(key: string): boolean {
+		if (this.isReactive) return true
+		for (const layer of this.layers) {
+			if (Object.hasOwn(layer, key) || key in layer) {
+				if ((layer as any)[key] instanceof ReactiveProp) return true
+			}
+			const prefix = `${key}:`
+			for (const k of stringKeys(layer)) {
+				if (k.startsWith(prefix) && (layer as any)[k] instanceof ReactiveProp) return true
+			}
+		}
+		return false
+	}
+
 	extractMeta(): CompositeAttributesMeta {
 		// Return structured meta as expected by h logic
 		return {
@@ -288,7 +302,7 @@ export function bind<T>(dst: ReactiveProp<T>, src: ReactiveProp<T>, defaultValue
 	if (!dst.set) throw new Error('dst is read-only')
 	if (defaultValue !== undefined && src.get() === undefined) src.set!(defaultValue)
 	let writing = false
-	const stopSrcToDst = effect(() => {
+	const stopSrcToDst = effect.named('bind:srcToDst')(() => {
 		const v = src.get()
 		if (!writing) {
 			writing = true
@@ -299,7 +313,7 @@ export function bind<T>(dst: ReactiveProp<T>, src: ReactiveProp<T>, defaultValue
 			}
 		}
 	})
-	const stopDstToSrc = effect(() => {
+	const stopDstToSrc = effect.named('bind:dstToSrc')(() => {
 		const v = dst.get()
 		if (!writing) {
 			writing = true

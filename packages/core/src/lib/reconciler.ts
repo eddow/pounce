@@ -6,6 +6,7 @@ import {
 	link,
 	morph,
 	named,
+	reactiveOptions,
 	type ScopedCallback,
 	tag,
 	unwrap,
@@ -32,12 +33,12 @@ export function pounceElement(child: Children, env: Env): PounceElement {
 	return child instanceof PounceElement
 		? child
 		: child === null || child === undefined
-			? new PounceElement(() => [], 'empty')
+			? new PounceElement(() => [], 'empty', {}, true)
 			: Array.isArray(child)
 				? new PounceElement(() => processChildren(child, env))
 				: child instanceof Node
-					? new PounceElement(() => child)
-					: new PounceElement(() => document.createTextNode(String(child)), '#text')
+					? new PounceElement(() => child, undefined, {}, false, true)
+					: new PounceElement(() => document.createTextNode(String(child)), '#text', {}, true, true)
 }
 
 let reconcileCount = 0
@@ -83,13 +84,12 @@ export function reconcile(parent: Node, newChildren: Node | readonly Node[]): Sc
 		)
 	}
 	if (isReactive(newChildren)) {
-		const stopRedraw = effect(reconciler)
+		const stopRedraw = effect.named('reconciler:redraw')(reconciler)
 		// Anchor the redraw effect to the reactive children so GC doesn't collect it.
 		// Root effects use FinalizationRegistry — if nobody holds the cleanup, GC kills the effect.
 		link(newChildren, stopRedraw)
 		return stopRedraw
-	}
-	reconciler()
+	} else reconciler()
 	return () => {}
 }
 
@@ -107,19 +107,21 @@ export function latch(
 	let stop: ScopedCallback | undefined
 	let element: Element | null = null
 	function actuallyLatch() {
+		perf?.mark('app:render:start')
 		element =
 			typeof target === 'string'
 				? (document.querySelector(target as string) as Element | null)
 				: (target as Element | null)
 		if (!element) {
-			console.error(`[pounce] latch target not found: ${target}`)
+			reactiveOptions.warn(`[pounce] latch target not found: ${target}`)
 			return
 		}
 
+		perf?.mark('app:mount:start')
 		const tag = element.tagName?.toLowerCase() ?? String(target)
 		const existing = latchOwners.get(element)
 		if (existing) {
-			console.warn(
+			reactiveOptions.warn(
 				`[pounce] latch conflict on <${tag}>: already latched by "${existing}". Previous content will be replaced.`
 			)
 		}
@@ -135,6 +137,10 @@ export function latch(
 
 		testing.renderingEvent?.('latch', tag, element)
 		stop = reconcile(element, nodes)
+		perf?.mark('app:mount:end')
+		perf?.measure('app:mount', 'app:mount:start', 'app:mount:end')
+		perf?.mark('app:render:end')
+		perf?.measure('app:render', 'app:render:start', 'app:render:end')
 	}
 
 	if (document.readyState === 'loading')
@@ -185,28 +191,30 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 			? tag(
 					'flatInput',
 					lift(
-						named('lift:flatInput', () =>
+						named('link:flatInput', () =>
 							unwrap((children as Child[]).flat(Infinity).filter(Boolean))
 						)
 					)
 				)
 			: (children as Child[]).flat(Infinity).filter(Boolean)
 
-	const flatElements: readonly PounceElement[] =
-		isReactive(flatInput) || flatInput.some((c) => c instanceof ReactiveProp)
-			? tag(
-					'flatElements',
-					morph(
-						flatInput,
-						named('morph:flatElements', (c) => pounceElement(collapse(c), env)),
-						{
-							pure: (c) => !(c instanceof ReactiveProp),
-						}
-					)
+	const needsMorph = isReactive(flatInput) || flatInput.some((c) => c instanceof ReactiveProp)
+
+	const flatElements: readonly PounceElement[] = needsMorph
+		? tag(
+				'flatElements',
+				morph(
+					flatInput,
+					named('flatElements', (c) => pounceElement(collapse(c), env)),
+					{
+						pure: (c) => !(c instanceof ReactiveProp),
+					}
 				)
-			: (flatInput.map((c) => pounceElement(c, env)) as readonly PounceElement[])
+			)
+		: (flatInput.map((c) => pounceElement(c, env)) as readonly PounceElement[])
+
 	const conditioned: readonly PounceElement[] =
-		isReactive(flatElements) || flatElements.some((e) => e.conditional)
+		needsMorph || flatElements.some((e) => e.conditional)
 			? tag(
 					'conditioned',
 					lift(
@@ -254,15 +262,22 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 				morph.pure(
 					conditioned,
 					named(
-						'morph:rendered',
+						'rendered',
 						weakCached((e: PounceElement) => e.render(env))
 					)
 				)
 			)
 		: conditioned.map((e: PounceElement) => e.render(env))
 
+	// Skip lift:nodes when all conditioned elements are guaranteed single-node producers
+	// (DOM elements always return exactly 1 node; their reactive wrapper never changes length).
+	// Exclude elements with meta.catch — their render result is a reactive array whose content
+	// can be swapped by the error boundary mechanism (rv.splice), so lift:nodes is needed.
+	const allSingleNode =
+		!isReactive(conditioned) &&
+		conditioned.every((e) => (e.isStatic || e.isSingleNode) && !e.meta.catch)
 	const nodes =
-		isReactive(rendered) || rendered.some((r) => isReactive(r))
+		!allSingleNode && (isReactive(rendered) || rendered.some((r) => isReactive(r)))
 			? tag('nodes', lift(named('lift:nodes', () => rendered.flat(Infinity) as Node[])))
 			: (rendered.flat(Infinity) as Node[])
 

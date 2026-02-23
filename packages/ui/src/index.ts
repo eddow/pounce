@@ -1,7 +1,6 @@
 export { type UiComponent, uiComponent, type WithVariant } from './component'
 export * from './components/dockview'
 export * from './components/infinite-scroll'
-export * from './components/with-overlays'
 export * from './directives'
 export * from './icon'
 export * from './models'

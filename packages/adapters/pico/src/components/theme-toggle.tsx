@@ -2,6 +2,8 @@ import type { Env } from '@pounce/core'
 import { useDisplayContext } from '@pounce/kit'
 import { type ThemeValue, themeToggleModel } from '@pounce/ui'
 
+export type { ThemeValue } from '@pounce/ui'
+
 export type ThemeToggleProps = {
 	/** Reactive object with a `theme` property — mutated on click */
 	settings: { theme: ThemeValue }

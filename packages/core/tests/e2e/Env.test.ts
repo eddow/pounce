@@ -94,6 +94,6 @@ test.describe('Env component', () => {
 		const events = await page.evaluate(() => window.__pounceEvents?.renderingEvents || [])
 		const eventTypes = events.map(e => e.event)
 		
-		expect(eventTypes.some(e => e.includes('reconcileChildren'))).toBeTruthy()
+		expect(eventTypes.some(e => e.includes('reconcile (+'))).toBeTruthy()
 	})
 })

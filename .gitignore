@@ -7,8 +7,8 @@ playwright-report/
 test-results/
 blob-report/
 sandbox/
-pure-glyf.d.ts
 *.tsbuildinfo
 .turbo
 .vscode
 .git/hooks/
+.generated-types/

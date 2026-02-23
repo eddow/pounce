@@ -1,6 +1,6 @@
+import type { Env } from '@pounce/core'
 import { componentStyle } from '@pounce/kit'
 import {
-	WithOverlays as BaseWithOverlays,
 	type DialogOptions,
 	type DrawerOptions,
 	dialogModel,
@@ -9,6 +9,8 @@ import {
 	type ToastOptions,
 	toastModel,
 	trapFocus,
+	type WithOverlaysProps,
+	withOverlaysModel,
 } from '@pounce/ui'
 
 componentStyle.sass`
@@ -108,7 +110,7 @@ componentStyle.sass`
 		border-top: 1px solid var(--pico-muted-border-color)
 `
 
-export const Dialog = (props: DialogOptions & { close: (v: any) => void }) => {
+export const Dialog = (props: DialogOptions & { close: (v: unknown) => void }) => {
 	const model = dialogModel(props, props.close)
 	return (
 		<div {...model.dialog}>
@@ -123,7 +125,7 @@ export const Dialog = (props: DialogOptions & { close: (v: any) => void }) => {
 	)
 }
 
-export const Toast = (props: ToastOptions & { close: (v: any) => void }) => {
+export const Toast = (props: ToastOptions & { close: (v: unknown) => void }) => {
 	const model = toastModel(props, props.close)
 	return (
 		<div {...model.toast}>
@@ -134,7 +136,7 @@ export const Toast = (props: ToastOptions & { close: (v: any) => void }) => {
 	)
 }
 
-export const Drawer = (props: DrawerOptions & { close: (v: any) => void }) => {
+export const Drawer = (props: DrawerOptions & { close: (v: unknown) => void }) => {
 	const model = drawerModel(props, props.close)
 	return (
 		<div {...model.drawer}>
@@ -150,12 +152,11 @@ export const Drawer = (props: DrawerOptions & { close: (v: any) => void }) => {
 
 function OverlayRenderer(props: { entry: OverlayEntry }) {
 	const entry = props.entry
-	const close = (v: any) => entry.resolve(v)
+	const close = (v: unknown) => entry.resolve(v)
 
 	const setupFocus = (el: HTMLElement) => {
 		if (!el) return
-		const stopTrap = trapFocus(el)
-		return stopTrap
+		return trapFocus(el)
 	}
 
 	if (entry.render) {
@@ -179,21 +180,76 @@ function OverlayRenderer(props: { entry: OverlayEntry }) {
 	return null
 }
 
-export function WithOverlays(props: { children?: JSX.Children }) {
+function renderOverlay(entry: OverlayEntry) {
+	return <OverlayRenderer entry={entry} />
+}
+
+function renderLayer(
+	stack: ReturnType<typeof withOverlaysModel>['stack'],
+	model: ReturnType<typeof withOverlaysModel>,
+	mode: string
+) {
+	const toast = mode === 'toast'
 	return (
-		<BaseWithOverlays renderOverlay={(entry) => <OverlayRenderer entry={entry} />}>
-			{props.children}
-		</BaseWithOverlays>
+		<div
+			class={['pounce-layer', `pounce-mode-${mode}`]}
+			role={toast ? 'log' : undefined}
+			aria-live={toast ? 'polite' : undefined}
+		>
+			<for each={stack.stack}>
+				{(entry) =>
+					entry.mode === mode ? (
+						<div {...model.overlayItem(entry)}>{renderOverlay(entry)}</div>
+					) : null
+				}
+			</for>
+		</div>
 	)
 }
 
-export function StandardOverlays(props: { children?: JSX.Children }) {
+export function WithOverlays(props: WithOverlaysProps, env: Env) {
+	const model = withOverlaysModel(props, env)
 	return (
-		<BaseWithOverlays
-			layers={['modal', 'toast', 'drawer-left', 'drawer-right']}
-			renderOverlay={(entry) => <OverlayRenderer entry={entry} />}
-		>
+		<fragment>
 			{props.children}
-		</BaseWithOverlays>
+			<div {...model.manager}>
+				<div
+					if={model.stack.hasBackdrop}
+					class="pounce-backdrop"
+					onClick={model.stack.onBackdropClick}
+				/>
+				{props.layers ? (
+					<for each={props.layers}>{(mode) => renderLayer(model.stack, model, mode)}</for>
+				) : (
+					<div class="pounce-layer pounce-flat">
+						<for each={model.stack.stack}>
+							{(entry) => <div {...model.overlayItem(entry)}>{renderOverlay(entry)}</div>}
+						</for>
+					</div>
+				)}
+			</div>
+		</fragment>
+	)
+}
+
+export function StandardOverlays(props: { children?: JSX.Children }, env: Env) {
+	const model = withOverlaysModel(
+		{ ...props, layers: ['modal', 'toast', 'drawer-left', 'drawer-right'] },
+		env
+	)
+	return (
+		<fragment>
+			{props.children}
+			<div {...model.manager}>
+				<div
+					if={model.stack.hasBackdrop}
+					class="pounce-backdrop"
+					onClick={model.stack.onBackdropClick}
+				/>
+				<for each={['modal', 'toast', 'drawer-left', 'drawer-right'] as string[]}>
+					{(mode) => renderLayer(model.stack, model, mode)}
+				</for>
+			</div>
+		</fragment>
 	)
 }

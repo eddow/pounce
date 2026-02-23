@@ -1,6 +1,8 @@
 import { isDev, reactiveOptions } from 'mutts'
 import { window } from '../shared'
 
+// (removed redundant import)
+
 export * from './debug-helpers'
 
 // ... (rest of imports)
@@ -45,21 +47,23 @@ if (debugMutts) {
 		endChain() {
 			console.groupEnd()
 			console.log('Effects:', counters.shift())
-		} /*
-		touched(obj: any, evolution: Evolution, props?: any[], deps?: Set<ScopedCallback>) {
-			console.groupCollapsed('touched', obj, evolution)
-			console.log('props:', props)
-			console.log('deps:', deps)
-			console.groupEnd()
 		},
-		enter(fn: Function) {
-			console.group('enter', fn.name || fn.toString())
-			console.log('effect:', fn)
+		effectRun(_effect: Function, reaction: boolean | any) {
+			if (!reaction) perfCounters.effectCreations++
+			else perfCounters.effectReactions++
 		},
-		leave() {
-			console.groupEnd()
-		},*/,
 	})
+}
+
+reactiveOptions.effectRun = (effect: any, reaction: boolean | any) => {
+	if (!reaction) {
+		perfCounters.effectCreations++
+		perfLog(effect.name || effect.label || 'anonymous')
+	} else {
+		perfCounters.effectReactions++
+		const name = (effect as any).name || (effect as any).label || 'anonymous'
+		perfCounters.byNameReactions[name] = (perfCounters.byNameReactions[name] || 0) + 1
+	}
 }
 
 reactiveOptions.maxEffectChain = 5000
@@ -70,13 +74,37 @@ export const testing: {
 	renderingEvent?: (evt: string, ...args: any[]) => void
 } = {}
 
-export const perfCounters = {
+export function perfLog(name: string) {
+	perfCounters.byName[name] = (perfCounters.byName[name] || 0) + 1
+}
+
+export interface PerfCounters {
+	componentRenders: number
+	elementRenders: number
+	renderCacheHits: number
+	reconciliations: number
+	forIterations: number
+	dynamicSwitches: number
+	effectCreations: number
+	effectReactions: number
+	byName: Record<string, number>
+	byNameReactions: Record<string, number>
+	reset(): void
+	readonly cacheHitRatio: number
+	readonly totalNodes: number
+}
+
+export const perfCounters: PerfCounters = {
 	componentRenders: 0,
 	elementRenders: 0,
 	renderCacheHits: 0,
 	reconciliations: 0,
 	forIterations: 0,
 	dynamicSwitches: 0,
+	effectCreations: 0,
+	effectReactions: 0,
+	byName: {},
+	byNameReactions: {},
 	reset() {
 		this.componentRenders = 0
 		this.elementRenders = 0
@@ -84,10 +112,20 @@ export const perfCounters = {
 		this.reconciliations = 0
 		this.forIterations = 0
 		this.dynamicSwitches = 0
+		this.effectCreations = 0
+		this.effectReactions = 0
+		this.byName = {}
+		this.byNameReactions = {}
 	},
 	get cacheHitRatio() {
 		const total = this.componentRenders + this.elementRenders + this.renderCacheHits
 		return total === 0 ? 0 : this.renderCacheHits / total
+	},
+	get totalNodes() {
+		const walker = document.createTreeWalker(document, -1) // -1 is SHOW_ALL
+		let count = 0
+		while (walker.nextNode()) count++
+		return count + 1
 	},
 }
 

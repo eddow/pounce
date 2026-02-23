@@ -1,4 +1,4 @@
-import { caught, effect, formatCleanupReason, link, named, reactive } from 'mutts'
+import { caught, effect, formatCleanupReason, link, named, reactive, reactiveOptions } from 'mutts'
 import { perf } from '../perf'
 import { type CompositeAttributesMeta, collapse, ReactiveProp } from './composite-attributes'
 import { pounceOptions } from './debug'
@@ -17,8 +17,8 @@ export class DynamicRenderingError extends Error {
  */
 export type NodeDesc = Node | string | number
 
-export type Child = Node | string | number | null | undefined | PounceElement | ReactiveProp<Child>
-export type Children = Child | readonly Children[]
+export type Child = Node | string | number | null | undefined | PounceElement
+export type Children = Child | readonly Children[] | ReactiveProp<Children>
 
 export type Env<T = any> = Record<PropertyKey, T>
 
@@ -31,7 +31,9 @@ export class PounceElement {
 	constructor(
 		public produce: (env: Env) => Node | readonly Node[],
 		public tag?: string | ComponentFunction,
-		public meta: CompositeAttributesMeta = {}
+		public meta: CompositeAttributesMeta = {},
+		public isStatic = false,
+		public isSingleNode = false
 	) {}
 	get conditional() {
 		return this.meta.condition || this.meta.if || this.meta.when || this.meta.else || this.meta.pick
@@ -86,7 +88,7 @@ export class PounceElement {
 			for (const [key, v] of Object.entries(this.meta.use) as [string, any]) {
 				if (typeof env[key] !== 'function')
 					throw new DynamicRenderingError(`${key} in env is not a function`)
-				effect(() => env[key](target, collapse(v), env))
+				effect.named(`attr:${key}:use`)(() => env[key](target, collapse(v), env))
 			}
 	}
 
@@ -104,10 +106,19 @@ export class PounceElement {
 			// set error for if it was caught in the component constructor
 			error = Array.isArray(partial) ? partial : reactive([partial])
 			// replace error if it was caught while rendering
-			rv?.splice(0, rv.length, ...error)
+			rv?.splice(0, rv.length, ...(error || []))
 		}
 
 		perf?.mark(`render:${tagName}:start`)
+		if (this.isStatic) {
+			const partial = this.produce(env)
+			if (!partial) throw new DynamicRenderingError('Static renderer returned no content')
+			this.mountCallbacks(partial, env)
+			perf?.mark(`render:${tagName}:end`)
+			perf?.measure(`render:${tagName}`, `render:${tagName}:start`, `render:${tagName}:end`)
+			return (Array.isArray(partial) ? partial : [partial]) as any
+		}
+
 		const stopRender = effect(
 			named(`render:${tagName}`, ({ reaction }) => {
 				// If there is a catch clause, we must return a stable mount point (a ReactiveProp)
@@ -132,7 +143,7 @@ export class PounceElement {
 						'\nIt means the component definition refers a reactive value that has been modified, though the component has not been rebuilt as it is considered forbidden to avoid infinite events loops.',
 					].join(' ')
 					if (pounceOptions.checkReactivity === 'error') throw new DynamicRenderingError(msg)
-					console.warn(msg)
+					reactiveOptions.warn(msg)
 				} else {
 					const partial = this.produce(env)
 					if (error) rv = error

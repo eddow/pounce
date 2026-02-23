@@ -134,4 +134,35 @@ describe('if={condition} on intrinsic elements', () => {
 		expect(container.querySelector('.sibling1')).not.toBeNull()
 		expect(container.querySelector('.sibling2')).not.toBeNull()
 	})
+
+	it('if={} on props.children is respected by the parent component', () => {
+		const state = reactive({ show: false })
+		const Wrapper: ComponentFunction = (props) => <div class="wrapper">{props.children}</div>
+
+		unmount = latch(
+			container,
+			<Wrapper>
+				<span if={state.show} class="target">visible</span>
+			</Wrapper>
+		)
+		expect(container.querySelector('.target')).toBeNull()
+		state.show = true
+		expect(container.querySelector('.target')).not.toBeNull()
+		state.show = false
+		expect(container.querySelector('.target')).toBeNull()
+	})
+
+	it('if={} on a conditional element returned by a ReactiveProp getter is respected', () => {
+		// Regression: a ReactiveProp in a static children array (isReactive(flatInput)=false,
+		// needsMorph=true) that resolves to a conditional PounceElement after collapse().
+		// anyConditional must be true (via needsMorph) so lift:conditioned runs.
+		const state = reactive({ show: false })
+		const child = <span if={state.show} class="target">visible</span>
+		unmount = latch(container, <div>{child}</div>)
+		expect(container.querySelector('.target')).toBeNull()
+		state.show = true
+		expect(container.querySelector('.target')).not.toBeNull()
+		state.show = false
+		expect(container.querySelector('.target')).toBeNull()
+	})
 })
