@@ -3,8 +3,16 @@ import { generateId } from '../shared/utils'
 
 // ── Select ──────────────────────────────────────────────────────────────────
 
+export type ValidationProps = {
+	/** Whether the field is currently valid. 'true' | 'false' | 'warning' */
+	valid?: boolean | 'warning'
+	/** Error or validation message to display */
+	validationMessage?: JSX.Children
+}
+
 export type SelectProps = VariantProps &
 	DisableableProps &
+	ValidationProps &
 	JSX.IntrinsicElements['select'] & {
 		fullWidth?: boolean
 	}
@@ -15,6 +23,7 @@ export type ComboboxOption = string | { value: string; label?: string }
 
 export type ComboboxProps = VariantProps &
 	DisableableProps &
+	ValidationProps &
 	Omit<JSX.IntrinsicElements['input'], 'list'> & {
 		options?: readonly ComboboxOption[]
 	}
@@ -39,9 +48,7 @@ export type ComboboxModel = {
  *   return (
  *     <div>
  *       <input {...props} {...model.input} />
- *       <datalist id={model.listId}>
- *         <for each={props.options ?? []}>{(opt) => <option value={opt} />}</for>
- *       </datalist>
+ *       {model.dataList}
  *     </div>
  *   )
  * }

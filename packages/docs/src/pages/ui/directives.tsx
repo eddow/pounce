@@ -61,6 +61,32 @@ const trailSnippet = `<div use:tail style="height: 200px; overflow: auto">
   <for each={messages}>{(msg) => <p>{msg}</p>}</for>
 </div>`
 
+const sizeableSnippet = `function SidebarLayout() {
+  const state = stored({ width: 300 })
+
+  return (
+    <div style={{ display: 'flex', height: '100vh' }}>
+      <aside use:sizeable={state.width}>
+        Sidebar Content
+      </aside>
+      <main style={{ flex: 1 }}>
+        Main Content
+      </main>
+    </div>
+  )
+}`
+
+const sizeableOptionsSnippet = `/* CSS controls min/max via clamp() on the parent */
+.my-layout {
+  --sizeable-width: 300px;
+  grid-template-columns: clamp(180px, var(--sizeable-width), 520px) 1fr;
+}
+
+/* Customize handle size */
+.my-layout {
+  --pounce-resize-handle-width: 8px;
+}`
+
 export default function UiDirectivesPage() {
 	return (
 		<article>
@@ -129,6 +155,32 @@ export default function UiDirectivesPage() {
 					user has scrolled up to read history.
 				</p>
 				<Code code={trailSnippet} lang="tsx" />
+			</Section>
+
+			<Section title="sizeable">
+				<p>
+					Makes an element resizable by dragging its edge. Pass a reactive number as the value — it
+					is read for initialization and written back on every resize.
+				</p>
+				<p>
+					The directive auto-detects the layout direction and finds the single <code>flex: 1</code>{' '}
+					sibling to determine which edge gets the handle. Min/max constraints are handled entirely
+					in CSS via <code>clamp()</code>.
+				</p>
+				<Code code={sizeableSnippet} lang="tsx" />
+				<Section title="CSS Variables">
+					<Code code={sizeableOptionsSnippet} lang="css" />
+					<ul>
+						<li>
+							<code>--sizeable-width</code> / <code>--sizeable-height</code> — set on the parent,
+							updated during drag
+						</li>
+						<li>
+							<code>--pounce-resize-handle-width</code> / <code>--pounce-resize-handle-height</code>{' '}
+							— handle hit area (default: 5px)
+						</li>
+					</ul>
+				</Section>
 			</Section>
 		</article>
 	)

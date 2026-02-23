@@ -344,4 +344,92 @@ function DebouncedSearch() {
 }
 ```
 
+## Bidirectional Binding — `bind:` Statement
+
+For synchronizing two reactive state slices symmetrically, Pounce provides the `bind:` labeled statement. Unlike JSX attributes (which bind a component prop to state), `bind:` lives in the **component body** and wires two reactive values together so that changes to either side propagate to the other.
+
+### Syntax
+
+```ts
+bind: dst = src
+bind: dst = src ??= defaultValue
+```
+
+- **`dst`** and **`src`** must be assignable expressions (member expression or mutable `let`/`var` variable).
+- The optional `??= defaultValue` sets `src` to `defaultValue` if `src` is `null` or `undefined` at mount time, before syncing.
+
+### Basic Example
+
+```ts
+import { reactive } from 'mutts'
+
+const form = reactive({ name: 'Alice' })
+const mirror = reactive({ name: '' })
+
+// Keep form.name and mirror.name in sync — changes to either propagate to the other
+bind: mirror.name = form.name
+```
+
+### With Default Value
+
+```ts
+const settings = reactive<{ theme: string | undefined }>({ theme: undefined })
+const local = reactive({ theme: '' })
+
+// Sets settings.theme = 'light' if it was null/undefined, then syncs both ways
+bind: local.theme = settings.theme ??= 'light'
+```
+
+### In a Component
+
+```tsx
+function ThemeSync(_props: {}, env: { globalTheme: { value: string } }) {
+  const local = reactive({ value: 'light' })
+
+  // Bidirectionally sync local.value with the env-provided global theme
+  bind: local.value = env.globalTheme.value
+
+  return <select value={local.value}>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+  </select>
+}
+```
+
+### How It Works
+
+The Babel plugin transforms `bind: dst = src` into:
+
+```ts
+bind(r(() => dst, _v => dst = _v), r(() => src, _v => src = _v))
+```
+
+The `bind()` runtime function:
+1. Applies the default value imperatively (before effects run) if `src` is `null`/`undefined`
+2. Creates two reactive effects — one syncing `src → dst`, one syncing `dst → src`
+3. Uses a shared `writing` sentinel to suppress infinite loops
+4. Returns a cleanup function that stops both effects
+
+### Capturing the Cleanup
+
+When used as a statement (`bind: dst = src`), the return value is discarded and cleanup is tied to the enclosing component's lifecycle. To stop the binding manually, call `bind()` directly:
+
+```ts
+import { bind, ReactiveProp } from '@pounce/core'
+
+const stop = bind(
+  new ReactiveProp(() => a.x, v => { a.x = v }),
+  new ReactiveProp(() => b.x, v => { b.x = v })
+)
+
+// Later:
+stop()
+```
+
+### Rules
+
+- Both sides must be **assignable** — the plugin throws a build-time error for literals or `const` identifiers.
+- `bind` and `r` are **auto-imported** from `@pounce/core` by the plugin. Do not import them manually in files using the `bind:` label.
+- Biome's `noUnusedLabels` rule is disabled in `biome.json` — do not re-enable it.
+
 

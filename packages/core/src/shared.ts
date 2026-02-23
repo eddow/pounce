@@ -1,14 +1,13 @@
-const g = typeof globalThis !== 'undefined' ? globalThis : ({} as any)
-
-export let window: Window = g.window
-export let document: Document = g.document
-export let Node: typeof globalThis.Node = g.Node
-export let HTMLElement: typeof globalThis.HTMLElement = g.HTMLElement
-export let Event: typeof globalThis.Event = g.Event
-export let CustomEvent: typeof globalThis.CustomEvent = g.CustomEvent
-export let Text: typeof globalThis.Text = g.Text
-export let DocumentFragment: typeof globalThis.DocumentFragment = g.DocumentFragment
-export let crypto: Crypto = g.crypto
+const _g = globalThis as any
+export let window: Window = _g.window
+export let document: Document = _g.document
+export let Node: typeof globalThis.Node = _g.Node
+export let HTMLElement: typeof globalThis.HTMLElement = _g.HTMLElement
+export let Event: typeof globalThis.Event = _g.Event
+export let CustomEvent: typeof globalThis.CustomEvent = _g.CustomEvent
+export let Text: typeof globalThis.Text = _g.Text
+export let DocumentFragment: typeof globalThis.DocumentFragment = _g.DocumentFragment
+export let crypto: Crypto = _g.crypto
 
 /**
  * Sets the active window and derives all other DOM globals from it.

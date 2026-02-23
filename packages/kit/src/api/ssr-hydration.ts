@@ -1,3 +1,4 @@
+import { isDev } from 'mutts'
 import { getContext } from './context.js'
 
 export type SSRDataMap = Record<string, { id: string; data: unknown }>
@@ -66,14 +67,14 @@ export function getSSRData<T>(id: string): T | undefined {
 
 		const script = document.getElementById(id)
 		if (!script) {
-			if (process.env.NODE_ENV === 'development') {
+			if (isDev) {
 				console.warn(`[@pounce/board] SSR hydration: Script tag with ID "${id}" not found.`)
 			}
 			return undefined
 		}
 
 		if (!script.textContent) {
-			if (process.env.NODE_ENV === 'development') {
+			if (isDev) {
 				console.warn(`[@pounce/board] SSR hydration: Script tag "${id}" is empty.`)
 			}
 			return undefined
@@ -85,7 +86,7 @@ export function getSSRData<T>(id: string): T | undefined {
 			script.remove()
 			return data
 		} catch (err) {
-			if (process.env.NODE_ENV === 'development') {
+			if (isDev) {
 				console.warn(`[@pounce/board] SSR hydration: Failed to parse JSON for "${id}".`, err)
 			}
 			return undefined

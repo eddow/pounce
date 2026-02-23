@@ -16,10 +16,10 @@ export default defineConfig({
 			],
 		},
 		projects: [
-			'packages/core',
-			'packages/kit',
-			'packages/ui',
-			'packages/board',
+			'packages/core/vitest.config.ts',
+			'packages/kit/vitest.config.ts',
+			'packages/ui/vitest.config.ts',
+			'packages/board/vitest.config.ts',
 		],
 	},
 })

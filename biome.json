@@ -72,7 +72,8 @@
 				"noUnusedFunctionParameters": {
 					"level": "info",
 					"fix": "safe"
-				}
+				},
+				"noUnusedLabels": "off"
 			},
 			"nursery": {},
 			"a11y": {

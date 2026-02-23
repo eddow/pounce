@@ -12,16 +12,7 @@
     "forceConsistentCasingInFileNames": true,
     "paths": {
       "@pounce": ["./@pounce.d.ts"],
-      "@pounce/core": ["../core/src/lib/index.ts"],
-      "@pounce/core/*": ["../core/src/*"],
-      "@pounce/kit": ["../kit/src/dom/index.ts"],
-      "@pounce/kit/*": ["../kit/src/*"],
-      "@pounce/ui": ["../ui/src/index.ts"],
-      "@pounce/adapter-pico": ["../adapters/pico/src/index.ts"],
-      "mutts": ["../../../mutts/dist/index.d.ts"],
-      "mutts/*": ["../../../mutts/dist/*"],
-      "pure-glyf": ["../pure-glyf/src/index.ts"],
-      "pure-glyf/*": ["../pure-glyf/src/*"]
+      
     }
   },
   "include": ["src/**/*"],

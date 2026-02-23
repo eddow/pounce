@@ -92,13 +92,13 @@ function contentRenderer(
 
 	return {
 		element,
-		init: ({ api, params, title }: GroupPanelPartInitParameters) => {
+		init: ({ api: panelApi, params, title }: GroupPanelPartInitParameters) => {
 			params = reactive(params)
 			Object.assign(props, {
 				title: {
 					get: () => title,
 					set: (v: string) => {
-						api.setTitle(v)
+						panelApi.setTitle(v)
 						title = v
 					},
 				},
@@ -107,15 +107,16 @@ function contentRenderer(
 				context: {},
 			})
 			cleanups.push(
-				api.onDidTitleChange((e: any) => (title = typeof e === 'string' ? e : e.title)).dispose,
-				effect(() => api.updateParameters(params)),
-				api.onDidParametersChange((payload: any) => {
+				panelApi.onDidTitleChange((e: any) => (title = typeof e === 'string' ? e : e.title))
+					.dispose,
+				effect(() => panelApi.updateParameters(params)),
+				panelApi.onDidParametersChange((payload: any) => {
 					Object.assign(params, payload)
 				}).dispose,
 				latch(
 					element,
 					<Widget {...(props as DockviewWidgetProps)} />,
-					extend(scope, { panelApi: unreactive(api) })
+					extend(scope, { panelApi: unreactive(panelApi) })
 				)
 			)
 		},
@@ -140,11 +141,11 @@ function tabRenderer(
 
 	return {
 		element,
-		init: ({ api }: GroupPanelPartInitParameters) => {
+		init: ({ api: panelApi }: GroupPanelPartInitParameters) => {
 			cleanup = latch(
 				element,
 				<Widget {...(props as DockviewWidgetProps)} />,
-				extend(scope, { panelApi: unreactive(api) })
+				extend(scope, { panelApi: unreactive(panelApi) })
 			)
 		},
 		dispose() {
@@ -214,60 +215,70 @@ export const Dockview = (
 	const initDockview = (element: HTMLElement) => {
 		if (initialized) throw new Error('Dockview already initialized')
 		initialized = true
-		let api: DockviewApi | undefined
+		let instanceApi: DockviewApi | undefined
 		try {
-			props.api =
-				scope.api =
-				api =
-					unreactive(
-						createDockview(element, {
-							createComponent({ id, name }: { id: string; name: string }) {
-								const widget = props.widgets[name]
-								if (!widget) throw new Error(`Widget ${name} not found`)
-								const context = reactive({})
-								contexts.set(id, context)
-								return contentRenderer(
-									widget,
-									context,
-									() => {
-										contexts.delete(id)
-									},
-									scope
-								)
+			const activeApi = unreactive(
+				createDockview(element, {
+					createComponent({ id, name }: { id: string; name: string }) {
+						const widget = props.widgets[name]
+						if (!widget) throw new Error(`Widget ${name} not found`)
+						const context = reactive({})
+						contexts.set(id, context)
+						return contentRenderer(
+							widget,
+							context,
+							() => {
+								contexts.delete(id)
 							},
-							createTabComponent({ id, name }: { id: string; name: string }) {
-								const widget = props.tabs?.[name] ?? DefaultTab
-								const context = contexts.get(id)
-								if (!context) throw new Error(`Context ${id} not found`)
-								return tabRenderer(widget, context as DockviewWidgetProps, scope)
-							},
-						})
-					)
+							scope
+						)
+					},
+					createTabComponent({ id, name }: { id: string; name: string }) {
+						const widget = props.tabs?.[name] ?? DefaultTab
+						const context = contexts.get(id)
+						if (!context) throw new Error(`Context ${id} not found`)
+						return tabRenderer(widget, context as DockviewWidgetProps, scope)
+					},
+				})
+			)
+			try {
+				if (scope && typeof scope === 'object' && !Object.isFrozen(scope)) {
+					scope.api = activeApi
+				}
+			} catch (_e) {
+				// Fallback or ignore if scope is strictly read-only
+			}
+			instanceApi = activeApi
+			// Only set props.api if it's a reactive prop (has a setter)
+			// we can check this by seeing if the parent passed a reactive prop
+			if (props.api instanceof Object && 'set' in props.api) props.api = activeApi
 		} catch (e) {
 			console.error('[Dockview] createDockview CRASHED (sync):', e)
 			return
 		}
 		const provideLayout = biDi(
 			(v) => {
-				if (v) api!.fromJSON(v)
-				else api!.closeAllGroups()
+				if (v) instanceApi!.fromJSON(v)
+				else instanceApi!.closeAllGroups()
 			},
 			{
 				get: () => props.layout,
 				set: (v) => (props.layout = v),
 			}
 		)
-		api.onDidLayoutChange(() => {
-			provideLayout(api!.toJSON())
+		instanceApi.onDidLayoutChange(() => {
+			provideLayout(instanceApi!.toJSON())
 		})
 		const emptyOptions: Record<string, any> = {}
 		effect(() => {
-			api!.updateOptions(props.options ? { ...emptyOptions, ...props.options } : emptyOptions)
+			instanceApi!.updateOptions(
+				props.options ? { ...emptyOptions, ...props.options } : emptyOptions
+			)
 			if (props.options) for (const k of Object.keys(props.options)) emptyOptions[k] = undefined
 		})
 		effect(function maintainHeaderActions() {
 			const { headerLeft, headerRight, headerPrefix } = props
-			api!.updateOptions({
+			instanceApi!.updateOptions({
 				createLeftHeaderActionComponent:
 					headerLeft &&
 					((group: DockviewGroupPanel) => {
@@ -285,7 +296,7 @@ export const Dockview = (
 					}),
 			})
 		})
-		effect(() => () => api?.dispose())
+		effect(() => () => instanceApi?.dispose())
 	}
 
 	return (

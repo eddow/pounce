@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { pounceCorePlugin } from '../packages/core/src/plugin/index'
 import { playwright } from '@vitest/browser-playwright'
 
+// @ts-expect-error Leave vite do his stuffs
 const rootDir = fileURLToPath(new URL('.', import.meta.url))
 const isBrowser = process.env.TEST_ENV === 'browser'
 
@@ -32,6 +33,7 @@ export const createBaseConfig = (packageDir: string) => {
 				'@pounce/core/plugin': resolve(rootDir, '../packages/core/src/plugin/index.ts'),
 			},
 		},
+		root: packageDir,
 		test: {
 			include: ['**/*.spec.{ts,tsx}'],
 			exclude: ['**/node_modules/**', '**/dist/**'],

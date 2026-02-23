@@ -52,7 +52,7 @@ export const WithOverlays = (props: WithOverlaysProps, env: Env) => {
 		const modal = isModalMode(entry.mode)
 		return (
 			<div
-				class={['pounce-overlay-item', entry.closing ? 'pounce-closing' : '']}
+				class={['pounce-overlay-item', state.isClosing(entry.id) ? 'pounce-closing' : '']}
 				role={modal ? 'dialog' : undefined}
 				aria-modal={modal ? 'true' : undefined}
 				aria-labelledby={entry.aria?.labelledby}

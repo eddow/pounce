@@ -282,3 +282,36 @@ export class CompositeAttributes {
 }
 
 export const c = (...args: object[]) => new CompositeAttributes(...args)
+
+export function bind<T>(dst: ReactiveProp<T>, src: ReactiveProp<T>, defaultValue?: T) {
+	if (!src.set) throw new Error('src is read-only')
+	if (!dst.set) throw new Error('dst is read-only')
+	if (defaultValue !== undefined && src.get() === undefined) src.set!(defaultValue)
+	let writing = false
+	const stopSrcToDst = effect(() => {
+		const v = src.get()
+		if (!writing) {
+			writing = true
+			try {
+				dst.set!(v)
+			} finally {
+				writing = false
+			}
+		}
+	})
+	const stopDstToSrc = effect(() => {
+		const v = dst.get()
+		if (!writing) {
+			writing = true
+			try {
+				src.set!(v)
+			} finally {
+				writing = false
+			}
+		}
+	})
+	return () => {
+		stopSrcToDst()
+		stopDstToSrc()
+	}
+}

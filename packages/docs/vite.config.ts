@@ -8,15 +8,6 @@ export default defineConfig({
     ...pounceMinimalPackage(),
     pounceBarrelPlugin({ skeleton: 'front-end', adapter: '@pounce/adapter-pico' }),
   ],
-  resolve: {
-    alias: {
-      '@pounce/core': resolve(import.meta.dirname, '../core/src'),
-      '@pounce/kit': resolve(import.meta.dirname, '../kit/src'),
-      '@pounce/ui': resolve(import.meta.dirname, '../ui/src'),
-      '@pounce/adapter-pico': resolve(import.meta.dirname, '../adapters/pico/src'),
-      'mutts': resolve(import.meta.dirname, '../../../mutts/src'),
-    },
-  },
   build: {
     chunkSizeWarningLimit: 600,
     rollupOptions: {

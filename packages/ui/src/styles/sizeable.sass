@@ -1,0 +1,45 @@
+// Sizeable directive styles
+.sizeable
+	position: relative
+	
+	&.dragging
+		user-select: none
+		-webkit-user-select: none
+
+.sizeable-handle
+	position: absolute
+	background: transparent
+	transition: background 0.15s
+	z-index: 10
+	
+	&:hover, &.dragging
+		background: var(--pounce-primary, #3b82f6)
+		opacity: 0.5
+
+.sizeable-handle-left
+	right: calc(var(--pounce-resize-handle-width, 5px) * -1)
+	top: 0
+	bottom: 0
+	width: var(--pounce-resize-handle-width, 5px)
+	cursor: col-resize
+
+.sizeable-handle-right
+	left: calc(var(--pounce-resize-handle-width, 5px) * -1)
+	top: 0
+	bottom: 0
+	width: var(--pounce-resize-handle-width, 5px)
+	cursor: col-resize
+
+.sizeable-handle-top
+	bottom: calc(var(--pounce-resize-handle-height, 5px) * -1)
+	left: 0
+	right: 0
+	height: var(--pounce-resize-handle-height, 5px)
+	cursor: row-resize
+
+.sizeable-handle-bottom
+	top: calc(var(--pounce-resize-handle-height, 5px) * -1)
+	left: 0
+	right: 0
+	height: var(--pounce-resize-handle-height, 5px)
+	cursor: row-resize

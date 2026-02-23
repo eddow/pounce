@@ -109,14 +109,13 @@ export function pounceBabelPlugin({
 
 	const IMPORT_SOURCE = '@pounce/core'
 
-	function ensureImports(path: NodePath) {
+	function ensureImports(path: NodePath, ...names: string[]) {
 		const programPath = path.findParent((p: NodePath) =>
 			p.isProgram()
 		) as NodePath<t.Program> | null
 		if (!programPath) return
 
 		const ensureImport = (name: string) => {
-			if (programPath.scope.hasBinding(name)) return
 			const alreadyImported = programPath.node.body.some(
 				(node: t.Statement) =>
 					t.isImportDeclaration(node) &&
@@ -147,10 +146,7 @@ export function pounceBabelPlugin({
 			}
 		}
 
-		ensureImport('h')
-		ensureImport('Fragment')
-		ensureImport('c')
-		ensureImport('r')
+		for (const name of names) ensureImport(name)
 	}
 
 	function isMutableBinding(path: NodePath, name: string): boolean {
@@ -174,6 +170,48 @@ export function pounceBabelPlugin({
 	return {
 		name: 'pounce-babel',
 		visitor: {
+			LabeledStatement(path: NodePath<t.LabeledStatement>, _state: PounceBabelPluginState) {
+				if (path.node.label.name !== 'bind') return
+				const body = path.node.body
+				if (!t.isExpressionStatement(body)) return
+				const expr = body.expression
+				if (!t.isAssignmentExpression(expr) || expr.operator !== '=') return
+				// dst is the left side
+				const dstNode = expr.left
+				// right side: either `src` or `src ??= dft`
+				let srcNode: t.Expression
+				let dftNode: t.Expression | null = null
+				const right = expr.right
+				if (t.isAssignmentExpression(right) && right.operator === '??=') {
+					srcNode = right.left as t.Expression
+					dftNode = right.right
+				} else {
+					srcNode = right
+				}
+				// Build r(getter, setter) for an assignable expression
+				const makeRP = (node: t.Expression | t.LVal): t.Expression => {
+					let inner = node as t.Expression
+					if (t.isTSAsExpression(inner)) inner = inner.expression
+					if (
+						!t.isMemberExpression(inner) &&
+						!(t.isIdentifier(inner) && isMutableBinding(path, inner.name))
+					) {
+						throw path.buildCodeFrameError(
+							`[bind] operands must be assignable (member expression or mutable identifier), got ${inner.type}`
+						)
+					}
+					const getter = t.arrowFunctionExpression([], node as t.Expression)
+					const setter = t.arrowFunctionExpression(
+						[t.identifier('_v')],
+						t.assignmentExpression('=', inner as t.LVal, t.identifier('_v'))
+					)
+					return t.callExpression(t.identifier('r'), [getter, setter])
+				}
+				ensureImports(path, 'bind', 'r')
+				const args: t.Expression[] = [makeRP(dstNode), makeRP(srcNode)]
+				if (dftNode) args.push(dftNode)
+				path.replaceWith(t.expressionStatement(t.callExpression(t.identifier('bind'), args)))
+			},
 			CallExpression(path: NodePath<t.CallExpression>, _state: PounceBabelPluginState) {
 				if (!path.isCallExpression()) return
 				const callee = path.node.callee
@@ -190,11 +228,11 @@ export function pounceBabelPlugin({
 				if (!shouldTransform) return
 				if (!isAttributesMergeCall(path)) return
 				if (!path.node.arguments.length) return
-				ensureImports(path)
+				ensureImports(path, 'c')
 				path.replaceWith(buildCompositeCall(path.node.arguments))
 			},
 			JSXElement(path: NodePath<JSXElement>, _state: PounceBabelPluginState) {
-				ensureImports(path)
+				ensureImports(path, 'h', 'Fragment', 'c', 'r')
 				// Traverse all JSX children and attributes
 				for (let index = 0; index < path.node.children.length; index++) {
 					const child = path.node.children[index]

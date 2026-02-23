@@ -2,6 +2,8 @@
  * Test Intl formatting components — locale resolution, caching, and output
  */
 import { beforeEach, describe, expect, it } from 'vitest'
+import { setPlatform } from '../platform/shared'
+import { createTestAdapter } from '../platform/test'
 import {
 	cachedDateTimeFormat,
 	cachedDisplayNames,
@@ -15,6 +17,7 @@ import { resolveLocale, setLocaleResolver } from './locale'
 describe('resolveLocale', () => {
 	beforeEach(() => {
 		setLocaleResolver(() => undefined)
+		setPlatform(createTestAdapter())
 	})
 
 	it('returns explicit locale when provided', () => {

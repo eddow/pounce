@@ -24,6 +24,7 @@ export const navigation: NavSection[] = [
 			{ title: 'Components', href: '/core/components' },
 			{ title: 'Meta-attributes', href: '/core/meta-attributes' },
 			{ title: 'Meta-components', href: '/core/meta-components' },
+			{ title: 'Bidirectional Binding', href: '/core/bind' },
 			{ title: 'Scope', href: '/core/scope' },
 			{ title: 'SSR', href: '/core/ssr' },
 		],

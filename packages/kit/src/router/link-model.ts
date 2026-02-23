@@ -50,7 +50,7 @@ export function linkModel(props: LinkProps): LinkModel {
 		},
 		get onClick() {
 			return (event: MouseEvent) => {
-				props.onClick?.(event as any)
+				props.onClick?.(event)
 				if (!event || event.defaultPrevented) return
 				const href = props.href
 				if (typeof href === 'string' && href.startsWith('/')) {

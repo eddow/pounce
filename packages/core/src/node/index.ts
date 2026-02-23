@@ -1,4 +1,6 @@
+import '../init'
 import { JSDOM } from 'jsdom'
+import { isTest } from 'mutts'
 import { setPlatformAPIs } from '../shared'
 import { createAlsProxy } from './proxy-factory'
 
@@ -21,7 +23,7 @@ if (typeof window !== 'undefined') {
 		DocumentFragment: globalThis.DocumentFragment,
 		crypto: globalThis.crypto,
 	})
-} else if (process.env.NODE_ENV === 'test') {
+} else if (isTest) {
 	// Test environment without Vitest DOM (e.g., core package's own tests)
 	// Set up JSDOM manually
 	const jsdom = new JSDOM(

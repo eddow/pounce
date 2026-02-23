@@ -29,7 +29,7 @@ export default defineConfig({
         index: resolve(projectRootDir, 'src/index.ts'),
         dom: resolve(projectRootDir, 'src/dom/index.ts'),
         node: resolve(projectRootDir, 'src/node/index.ts'),
-        models: resolve(projectRootDir, 'src/models/index.ts'),
+        models: resolve(projectRootDir, 'src/models.ts'),
       },
       formats: ['es', 'cjs'],
       fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'js' : 'cjs'}`,
@@ -37,7 +37,7 @@ export default defineConfig({
     rollupOptions: {
       external: [
         'mutts',
-        /^@pounce\/core/,
+        /^@pounce\//,
         'jsdom',
         'arktype',
         'node:async_hooks',

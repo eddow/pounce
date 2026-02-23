@@ -1,4 +1,6 @@
-export type ThemeValue = 'auto' | 'light' | 'dark'
+import type { Env } from '@pounce/core'
+import { useDisplayContext } from '@pounce/kit'
+import { type ThemeValue, themeToggleModel } from '@pounce/ui'
 
 export type ThemeToggleProps = {
 	/** Reactive object with a `theme` property — mutated on click */
@@ -9,22 +11,25 @@ export type ThemeToggleProps = {
 
 const ICONS: Record<ThemeValue, string> = { auto: '🌓', light: '☀️', dark: '🌙' }
 
-const cycle = (t: ThemeValue): ThemeValue =>
-	t === 'auto' ? 'light' : t === 'light' ? 'dark' : 'auto'
-
 /**
  * ThemeToggle - cycles 'auto' → 'light' → 'dark' → 'auto'.
  * Mutates `props.settings.theme`. Pair with DisplayProvider which owns the data-theme DOM attribute.
  */
-export const ThemeToggle = (props: ThemeToggleProps) => (
-	<button
-		onClick={() => (props.settings.theme = cycle(props.settings.theme))}
-		aria-label={`Theme: ${props.settings.theme}. Click to cycle.`}
-		title={`Theme: ${props.settings.theme}. Click to cycle.`}
-		{...props.el}
-	>
-		{props.simple
-			? ICONS[props.settings.theme]
-			: `${ICONS[props.settings.theme]} ${props.settings.theme}`}
-	</button>
-)
+export const ThemeToggle = (props: ThemeToggleProps, env: Env) => {
+	const dc = useDisplayContext(env)
+	const m = themeToggleModel({ settings: props.settings, resolvedTheme: dc.theme })
+
+	return (
+		<div class="pounce-theme-toggle" use={m.clickOutside}>
+			<button {...m.button} {...props.el}>
+				{props.simple ? ICONS[m.themeSetting] : `${ICONS[m.themeSetting]} ${m.currentLabel}`}
+			</button>
+			<div if={m.menuOpen} role="menu" class="pounce-theme-menu">
+				<button {...m.autoButton}>Auto</button>
+				<for each={m.allThemes}>
+					{(theme: string) => <button {...m.optionButton(theme)}>{theme}</button>}
+				</for>
+			</div>
+		</div>
+	)
+}

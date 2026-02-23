@@ -107,6 +107,22 @@ describe('Overlays', () => {
 			el.remove()
 			vi.useRealTimers()
 		})
+
+		it('isClosing tracks closing state reactively', async () => {
+			vi.useFakeTimers()
+			const state = createOverlayStack()
+			const promise = state.push({ mode: 'modal', render: () => null })
+			const entry = state.stack[0]
+
+			expect(state.isClosing(entry.id)).toBe(false)
+			entry.resolve(null)
+			expect(state.isClosing(entry.id)).toBe(true)
+
+			await promise
+			vi.advanceTimersByTime(400)
+			expect(state.isClosing(entry.id)).toBe(false)
+			vi.useRealTimers()
+		})
 	})
 
 	describe('helpers', () => {

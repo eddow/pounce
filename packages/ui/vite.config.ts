@@ -11,8 +11,9 @@ export default defineConfig({
 			},
 			formats: ['es'],
 		},
+		sourcemap: true,
 		rollupOptions: {
-			external: [/^@pounce\/core/, /^mutts/],
+			external: [/^@pounce\//, /^mutts/],
 		},
 	},
 	plugins: [

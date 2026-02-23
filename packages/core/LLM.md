@@ -293,7 +293,47 @@ At `buildStart`, the plugin writes an ambient `declare module` `.d.ts` file to d
 
 Used by `@pounce/docs` and `mARC` (and any app that wants a single import namespace).
 
-### 13. Known Issue: Premature Effect Cleanup in `jsx-factory`
+### 13. `bind:` — Bidirectional Binding Statement
+
+**Syntax**: `bind: dst = src` or `bind: dst = src ??= defaultValue`
+
+A **labeled statement** (not JSX) that the Babel plugin transforms into a `bind(r(dst), r(src)[, default])` call. It lives in component bodies or plain `.ts` files — anywhere, not in the element tree.
+
+```ts
+const a = reactive({ x: 1 })
+const b = reactive({ x: 0 })
+
+// Simple bidirectional sync
+bind: b.x = a.x
+
+// With default: sets a.x = 7 if a.x is null/undefined, then syncs
+bind: b.x = a.x ??= 7
+```
+
+**What the plugin emits:**
+```ts
+// bind: b.x = a.x
+bind(r(() => b.x, _v => b.x = _v), r(() => a.x, _v => a.x = _v))
+
+// bind: b.x = a.x ??= 7
+bind(r(() => b.x, _v => b.x = _v), r(() => a.x, _v => a.x = _v), 7)
+```
+
+**Runtime (`bind` in `composite-attributes.ts`):**
+- `bind(dst, src, defaultValue?)` — `dst` is first arg, `src` is second (mirrors the `dst = src` read order)
+- Applies `defaultValue` **imperatively** before effects run (if `src.get() == null`)
+- Two effects, each tracking only one side, with a shared `writing` sentinel for loop suppression
+- Returns a cleanup function `() => void` that stops both effects
+
+**Constraints:**
+- Both operands must be **assignable** (member expression or mutable `let`/`var` identifier) — the plugin throws at build time otherwise
+- `bind` and `r` are **auto-imported** from `@pounce/core` by the plugin — do not import manually in files that use the label syntax (the plugin injects them)
+
+**Biome config:** `noUnusedLabels` is set to `"off"` in `biome.json` — do not re-enable it, it would strip `bind:` labels.
+
+**TS language server note:** Having `bind:` labels in a file can confuse the LSP into resolving the `bind` identifier to `assert.bind`. The fix is ensuring `tests/unit/tsconfig.json` has `"@pounce/core": ["../src/lib/index.ts"]` in `paths` (already done).
+
+### 14. Known Issue: Premature Effect Cleanup in `jsx-factory`
 
 **Status:** Open / Mitigated (Workaround Active)
 

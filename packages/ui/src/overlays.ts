@@ -191,6 +191,8 @@ export interface OverlayStackState {
 	readonly push: PushOverlayFunction
 	/** Register the mounted DOM element for an overlay (enables CSS exit transitions) */
 	readonly registerElement: (id: string, el: HTMLElement) => void
+	/** Whether the overlay with the given id is in the closing (exit animation) state */
+	isClosing(id: string): boolean
 	/** Keydown handler — wire to the overlay manager container */
 	readonly onKeydown: (e: KeyboardEvent) => void
 	/** Backdrop click handler */
@@ -221,30 +223,37 @@ export interface OverlayStackState {
 export function createOverlayStack(options: OverlayStackOptions = {}): OverlayStackState {
 	const backdropModes = options.backdropModes ?? ['modal', 'drawer-left', 'drawer-right']
 	const stack = reactive<OverlayEntry[]>([])
+	// Separate reactive set for closing IDs — avoids rebuild-fence issues when
+	// mutating entry objects that are already tracked inside a <for> render.
+	const closingIds = reactive(new Set<string>())
 	const overlayElements = new Map<string, HTMLElement>()
 
 	const push: PushOverlayFunction = <T>(spec: OverlaySpec<T>): Promise<T | null> => {
 		return new Promise((resolve) => {
+			const id = spec.id ?? Math.random().toString(36).slice(2, 9)
 			const entry: OverlayEntry = {
 				...spec,
-				id: spec.id ?? Math.random().toString(36).slice(2, 9),
+				id,
 				closing: false,
-				resolve: (value) => {
-					const index = stack.findIndex((e) => e.id === entry.id)
+				resolve: (value: unknown) => {
+					const index = stack.findIndex((e) => e.id === id)
 					if (index !== -1) {
 						entry.closing = true
+						closingIds.add(id)
 						const config = options.transitions?.[entry.mode] ?? { duration: 300 }
-						const el = overlayElements.get(entry.id)
+						const el = overlayElements.get(id)
 						if (el) {
 							applyTransition(el, 'exit', config, () => {
-								const idx = stack.findIndex((e) => e.id === entry.id)
+								const idx = stack.findIndex((e) => e.id === id)
 								if (idx !== -1) stack.splice(idx, 1)
-								overlayElements.delete(entry.id)
+								overlayElements.delete(id)
+								closingIds.delete(id)
 							})
 						} else {
 							setTimeout(() => {
-								const idx = stack.findIndex((e) => e.id === entry.id)
+								const idx = stack.findIndex((e) => e.id === id)
 								if (idx !== -1) stack.splice(idx, 1)
+								closingIds.delete(id)
 							}, config.duration ?? 300)
 						}
 					}
@@ -262,6 +271,7 @@ export function createOverlayStack(options: OverlayStackOptions = {}): OverlaySt
 		},
 		push,
 		registerElement: (id: string, el: HTMLElement) => overlayElements.set(id, el),
+		isClosing: (id: string) => closingIds.has(id),
 		get onKeydown() {
 			return (e: KeyboardEvent) => {
 				if (stack.length === 0) return

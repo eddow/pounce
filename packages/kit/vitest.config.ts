@@ -11,4 +11,7 @@ export default mergeConfig(baseConfig, defineConfig({
     name: 'kit',
     environment: 'jsdom',
   },
+  resolve: {
+    conditions: ['browser', 'development', 'import', 'default'],
+  },
 }))

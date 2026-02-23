@@ -15,6 +15,7 @@ import { document, Node } from '../shared'
 import { collapse, ReactiveProp } from './composite-attributes'
 import { perfCounters, pounceOptions, testing } from './debug'
 import { devCatchElement } from './dev-catch'
+import { h } from './jsx-factory'
 import {
 	type Child,
 	type Children,
@@ -125,8 +126,12 @@ export function latch(
 		const label = typeof target === 'string' ? (target as string) : `<${tag}>`
 		latchOwners.set(element, label)
 
-		content = h('fragment', pounceOptions.devCatch ? { catch: devCatchElement } : {}, content)
-		const nodes = content.render(env)
+		const wrapped = h(
+			'fragment',
+			pounceOptions.devCatch ? { catch: devCatchElement } : {},
+			...(Array.isArray(content) ? content : [content])
+		)
+		const nodes = wrapped.render(env)
 
 		testing.renderingEvent?.('latch', tag, element)
 		stop = reconcile(element, nodes)

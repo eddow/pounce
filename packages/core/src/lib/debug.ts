@@ -1,4 +1,4 @@
-import { reactiveOptions } from 'mutts'
+import { isDev, reactiveOptions } from 'mutts'
 import { window } from '../shared'
 
 export * from './debug-helpers'
@@ -95,11 +95,7 @@ export const perfCounters = {
  * Pounce framework configuration options
  * These can be modified at runtime to adjust framework behavior
  */
-const isDevMode =
-	(typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV) ||
-	(typeof process !== 'undefined' &&
-		process.env?.NODE_ENV !== 'production' &&
-		process.env?.NODE_ENV !== 'test')
+const isDevMode = isDev
 
 export const pounceOptions = {
 	/**

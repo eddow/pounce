@@ -23,9 +23,9 @@ function ensure(operation: string): PlatformAdapter {
 
 /** Reactive client state — delegates to the active platform adapter. */
 export const client: Client = new Proxy({} as Client, {
-	get(_, prop, receiver) {
-		if (!_platform) return undefined
-		return Reflect.get(_platform.client, prop, receiver)
+	get(_, prop) {
+		const c = ensure('client.get').client
+		return Reflect.get(c, prop, c)
 	},
 	set(_, prop, value) {
 		return Reflect.set(ensure('client.set').client, prop, value)

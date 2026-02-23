@@ -120,7 +120,7 @@ export const Router = <
 	function renderElements(jsx: JSX.Element | JSX.Element[]): Node[] {
 		const els = Array.isArray(jsx) ? jsx : [jsx]
 		return els.flatMap((el) => {
-			if (!(el instanceof PounceElement)) return []
+			if (!(el instanceof PounceElement)) throw new Error('Invalid JSX element for route')
 			const nodes = el.render(scope)
 			return Array.isArray(nodes) ? Array.from(nodes) : [nodes]
 		})

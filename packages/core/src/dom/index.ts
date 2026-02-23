@@ -1,3 +1,4 @@
+import '../init'
 import { setPlatformAPIs } from '../shared'
 
 // Auto-execute bootstrap when this module is imported in a browser environment

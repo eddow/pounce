@@ -1,4 +1,7 @@
 import { type PluginItem, transformSync } from '@babel/core'
+import babelPluginDecorators from '@babel/plugin-proposal-decorators'
+import babelPluginJsx from '@babel/plugin-transform-react-jsx'
+import babelPluginTs from '@babel/plugin-transform-typescript'
 import dts, { type PluginOptions as DtsPluginOptions } from 'vite-plugin-dts'
 import { pounceBabelPlugin } from './babel'
 import { pounceBarrelPlugin } from './barrel'
@@ -43,9 +46,9 @@ export interface PounceBabelPluginsOptions {
 export function createPounceBabelPlugins(options: PounceBabelPluginsOptions): PluginItem[] {
 	return [
 		[pounceBabelPlugin],
-		['@babel/plugin-proposal-decorators', { version: '2023-05' }],
+		[babelPluginDecorators, { version: '2023-05' }],
 		[
-			'@babel/plugin-transform-react-jsx',
+			babelPluginJsx,
 			{
 				runtime: 'classic',
 				pragma: 'h',
@@ -54,7 +57,7 @@ export function createPounceBabelPlugins(options: PounceBabelPluginsOptions): Pl
 			},
 		],
 		[
-			'@babel/plugin-transform-typescript',
+			babelPluginTs,
 			{
 				isTSX: options.isTSX,
 				allowDeclareFields: true,

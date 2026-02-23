@@ -1,6 +1,16 @@
 import { latch } from '@pounce/core'
-import { A, Router, type RouteWildcard } from '../../src/dom/index'
-import { client } from '../../src/dom/client'
+import { Router, type RouteWildcard } from '../../src/dom/index'
+import { client } from '../../src/platform/shared'
+import { linkModel, type LinkProps } from '../../src/router/link-model'
+
+function A(props: LinkProps) {
+	const model = linkModel(props)
+	return (
+		<a {...props} onClick={model.onClick} aria-current={model.ariaCurrent}>
+			{props.children}
+		</a>
+	)
+}
 
 type Route = {
 	readonly path: RouteWildcard

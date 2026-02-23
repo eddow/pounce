@@ -7,6 +7,7 @@ import BoardIndexPage from './pages/board/index'
 import BoardMiddlewarePage from './pages/board/middleware'
 import BoardRoutingPage from './pages/board/routing'
 import BoardSsrPage from './pages/board/ssr'
+import BindPage from './pages/core/bind'
 import ComponentsPage from './pages/core/components'
 import ComposePage from './pages/core/compose'
 import ScopePage from './pages/core/env'
@@ -65,6 +66,7 @@ const routes: AppRoute[] = [
 	{ path: '/core/meta-components', view: MetaComponentsPage },
 	{ path: '/core/env', view: ScopePage },
 	{ path: '/core/compose', view: ComposePage },
+	{ path: '/core/bind', view: BindPage },
 	{ path: '/core/ssr', view: SSRPage },
 	{ path: '/kit', view: KitPage },
 	{ path: '/kit/router', view: RouterPage },

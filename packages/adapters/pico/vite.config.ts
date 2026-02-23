@@ -7,7 +7,7 @@ export default defineConfig({
 		dts({
 			include: ['src'],
 			exclude: ['demo'],
-			outputDir: 'dist',
+			outDir: 'dist',
 			rollupTypes: true,
 		}),
 	],
@@ -18,14 +18,9 @@ export default defineConfig({
 			formats: ['es', 'cjs'],
 			fileName: (format) => `index.${format === 'es' ? 'mjs' : 'cjs'}`,
 		},
+		sourcemap: true,
 		rollupOptions: {
-			external: ['@pounce/core', '@pounce/ui', '@picocss/pico'],
-		},
-	},
-	resolve: {
-		alias: {
-			'@pounce/core': resolve(__dirname, '../../core/src'),
-			'@pounce/ui': resolve(__dirname, '../../ui/src'),
+			external: [/^@pounce\//, /^mutts/, /^pure-glyf/, '@picocss/pico', 'arktype'],
 		},
 	},
 })

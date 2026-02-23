@@ -1,4 +1,6 @@
 export * from './api'
 export * from './css'
+export * from './display'
 export * from './intl'
+export * from './models'
 export * from './router'

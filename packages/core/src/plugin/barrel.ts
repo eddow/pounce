@@ -25,13 +25,16 @@ function buildBarrelLines(options: Required<Omit<PounceBarrelPluginOptions, 'dts
 	const { skeleton, adapter } = options
 	const hasUI = skeleton === 'front-end' || skeleton === 'full-stack'
 	const hasBoard = skeleton === 'back-end' || skeleton === 'full-stack'
-	const kitEntry = hasUI ? `@pounce/kit/dom` : `@pounce/kit`
+	const kitEntry = hasUI ? `@pounce/kit` : `@pounce/kit`
 
 	const lines: string[] = []
 	lines.push(`export * from '@pounce/core'`)
 	lines.push(`export * from '${kitEntry}'`)
 	if (hasUI) lines.push(`export * from '@pounce/ui'`)
-	if (hasUI && adapter) lines.push(`export * from '${adapter}'`)
+	if (hasUI && adapter) {
+		lines.push(`export { WithOverlays, StandardOverlays } from '${adapter}'`)
+		lines.push(`export * from '${adapter}'`)
+	}
 	if (hasBoard) lines.push(`export * from '@pounce/board'`)
 	return lines
 }

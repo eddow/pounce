@@ -1,4 +1,4 @@
-import { Heading, Inline, Link, Select, Stack, Switch, Text } from '@pounce'
+import { A, Heading, Inline, Select, Stack, Switch, Text } from '@pounce'
 import { reactive } from 'mutts'
 import { ApiTable, Demo, Section } from '../../components'
 
@@ -10,9 +10,9 @@ const textSource = `<Text size={state.size} variant={state.variant} muted={state
   The quick brown fox jumps over the lazy dog.
 </Text>`
 
-const linkSource = `<Link href="/ui/button" underline={state.underline}>
+const linkSource = `<A href="/ui/button" underline={state.underline}>
   Go to Buttons
-</Link>`
+</A>`
 
 function HeadingDemo() {
 	const state = reactive({
@@ -114,12 +114,12 @@ function LinkDemo() {
 			</Inline>
 			<hr />
 			<Inline gap="md">
-				<Link href="/ui/button" underline={state.underline}>
+				<A href="/ui/button" underline={state.underline}>
 					Go to Buttons
-				</Link>
-				<Link href="/ui/forms" underline={state.underline}>
+				</A>
+				<A href="/ui/forms" underline={state.underline}>
 					Go to Forms
-				</Link>
+				</A>
 			</Inline>
 		</Stack>
 	)
@@ -130,8 +130,8 @@ export default function TypographyPage() {
 		<article>
 			<h1>Typography</h1>
 			<p>
-				Semantic text components: <code>Heading</code>, <code>Text</code>, and <code>Link</code>.
-				All support variant coloring via the adapter pattern.
+				Semantic text components: <code>Heading</code>, <code>Text</code>, and <code>A</code>. All
+				support variant coloring via the adapter pattern.
 			</p>
 
 			<Section title="Heading">
@@ -231,12 +231,12 @@ export default function TypographyPage() {
 				/>
 			</Section>
 
-			<Section title="Link">
+			<Section title="A">
 				<p>
 					Styled anchor using <code>{'<A>'}</code> from <code>@pounce/kit</code> for client-side
 					routing. Supports variant coloring and optional underline.
 				</p>
-				<Demo title="Link" source={linkSource} component={<LinkDemo />} />
+				<Demo title="A" source={linkSource} component={<LinkDemo />} />
 				<ApiTable
 					props={[
 						{

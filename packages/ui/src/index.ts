@@ -5,6 +5,12 @@ export * from './components/with-overlays'
 export * from './directives'
 export * from './icon'
 export * from './models'
+export {
+	type ComboboxModel,
+	type ComboboxOption,
+	type ComboboxProps,
+	comboboxModel,
+} from './models'
 export { options } from './options'
 export * from './overlays'
 export * from './shared/types'

@@ -3,7 +3,14 @@
 	"version": "1.0.0",
 	"description": "Routing, i18n, and application utilities for Pounce",
 	"type": "module",
-	"sideEffects": false,
+	"sideEffects": [
+		"./dist/dom.js",
+		"./dist/node.js",
+		"./src/dom/index.ts",
+		"./src/dom/client.ts",
+		"./src/node/index.ts",
+		"./src/node/context.ts"
+	],
 	"keywords": [
 		"pounce",
 		"router",

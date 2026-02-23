@@ -1,5 +1,6 @@
-import { createScope, getContext, type RequestScope, runWithContext } from '../api/context.js'
+import { createScope, getContext, type RequestScope } from '../api/context.js'
 import { escapeJson, type SSRDataMap } from '../api/ssr-hydration.js'
+import { runWithContext } from './context.js'
 
 // Re-export universal hydration utilities for convenience
 export {
