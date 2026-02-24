@@ -4,7 +4,7 @@
 
 import { effect, watch } from 'mutts'
 import './Counter.scss'
-import { extend } from '../../lib'
+import { defaults } from '../../lib'
 
 export default function CounterWebComponent(props: {
 	count: number
@@ -20,47 +20,44 @@ export default function CounterWebComponent(props: {
 	showInput?: boolean
 	label?: string
 }) {
-	const state = extend(
-		{
-			maxValue: 100,
-			minValue: 0,
-			step: 1,
-			disabled: false,
-			showSlider: true,
-			showInput: true,
-			label: 'Counter Component (JSX)',
-		},
-		props
-	)
+	const vm = defaults(props, {
+		maxValue: 100,
+		minValue: 0,
+		step: 1,
+		disabled: false,
+		showSlider: true,
+		showInput: true,
+		label: 'Counter Component (JSX)',
+	})
 
 	effect.named('Counter')(() => {
 		console.log('🎯 Counter component mounted!')
 		return () => {
-			console.log('👋 Counter component unmounted!', { finalCount: state.count })
+			console.log('👋 Counter component unmounted!', { finalCount: vm.count })
 		}
 	})
 	watch(
-		() => state.count,
-		(v, o) => state.onCountChanged?.(v, o!)
+		() => vm.count,
+		(v, o) => vm.onCountChanged?.(v, o!)
 	)
 
 	function increment() {
-		state.count = state.count + 1
-		state.onCountIncremented?.(state.count)
+		vm.count = vm.count + 1
+		vm.onCountIncremented?.(vm.count)
 	}
 
 	function decrement() {
-		state.count = state.count - 1
-		state.onCountDecremented?.(state.count)
+		vm.count = vm.count - 1
+		vm.onCountDecremented?.(vm.count)
 	}
 
 	function reset() {
-		state.count = 0
-		state.onCountReset?.()
+		vm.count = 0
+		vm.onCountReset?.()
 	}
 
 	const counterTextStyle = () => {
-		const normalized = Math.max(0, Math.min(100, state.count))
+		const normalized = Math.max(0, Math.min(100, vm.count))
 		const red = Math.round(255 * (1 - normalized / 100))
 		const green = Math.round(255 * (normalized / 100))
 		return `color: rgb(${red}, ${green}, 0); transition: color 0.3s ease;`
@@ -68,74 +65,66 @@ export default function CounterWebComponent(props: {
 
 	return (
 		<>
-			<h2>{state.label}</h2>
+			<h2>{vm.label}</h2>
 			<div class="count-display">
 				Count:{' '}
 				<span class="counter-text" style={counterTextStyle()}>
-					{state.count}
+					{vm.count}
 				</span>
 			</div>
 			<div class="message">
-				{state.count === 0 ? 'Click the button to increment!' : `Current count: ${state.count}`}
+				{vm.count === 0 ? 'Click the button to increment!' : `Current count: ${vm.count}`}
 			</div>
-			{state.showSlider && (
-				<div class="slider-container">
-					<label class="slider-label" htmlFor="count-slider">
-						Set Count: {state.count}
-					</label>
-					<input
-						type="range"
-						id="count-slider"
-						class="slider"
-						min={state.minValue}
-						max={state.maxValue}
-						step={state.step}
-						value={state.count}
-						update:value={(v: number) => {
-							state.count = v
-						}}
-						disabled={state.disabled || state.maxValue === state.minValue}
-					/>
-				</div>
-			)}
-			{state.showInput && (
-				<div class="input-container">
-					<label class="input-label" htmlFor="count-input">
-						Direct Input:
-					</label>
-					<input
-						type="number"
-						id="count-input"
-						class="count-input"
-						min={state.minValue}
-						max={state.maxValue}
-						step={state.step}
-						value={state.count}
-						update:value={(v: number) => {
-							state.count = v
-						}}
-						disabled={state.disabled || state.maxValue === state.minValue}
-					/>
-				</div>
-			)}
+			<div if={vm.showSlider} class="slider-container">
+				<label class="slider-label" htmlFor="count-slider">
+					Set Count: {vm.count}
+				</label>
+				<input
+					type="range"
+					id="count-slider"
+					class="slider"
+					min={vm.minValue}
+					max={vm.maxValue}
+					step={vm.step}
+					value={vm.count}
+					update:value={(v: number) => {
+						vm.count = v
+					}}
+					disabled={vm.disabled || vm.maxValue === vm.minValue}
+				/>
+			</div>
+			<div if={vm.showInput} class="input-container">
+				<label class="input-label" htmlFor="count-input">
+					Direct Input:
+				</label>
+				<input
+					type="number"
+					id="count-input"
+					class="count-input"
+					min={vm.minValue}
+					max={vm.maxValue}
+					step={vm.step}
+					value={vm.count}
+					update:value={(v: number) => {
+						vm.count = v
+					}}
+					disabled={vm.disabled || vm.maxValue === vm.minValue}
+				/>
+			</div>
 			<div class="controls">
 				<button
 					class="decrement"
-					disabled={state.disabled || state.count <= state.minValue}
+					disabled={vm.disabled || vm.count <= vm.minValue}
 					onClick={decrement}
 				>
 					-
 				</button>
-				<button
-					class="reset"
-					disabled={state.disabled || state.count === state.minValue}
-					onClick={reset}
-				>
+				<button class="reset" disabled={vm.disabled || vm.count === vm.minValue} onClick={reset}>
 					Reset
 				</button>
 				<button
 					class="increment"
-					disabled={state.disabled || state.count >= state.maxValue}
+					disabled={vm.disabled || vm.count >= vm.maxValue}
 					onClick={increment}
 				>
 					+

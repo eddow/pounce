@@ -4,14 +4,11 @@ export type { LinkProps }
 
 export function A(props: LinkProps) {
 	const model = linkModel(props)
+	// TODO: 1- shouldn't untrack, whut ??!? 2- therefore not updated
 	return (
-		<a
-			{...props}
-			onClick={model.onClick}
-			aria-current={model.ariaCurrent}
-			style={model.underline ? undefined : { textDecoration: 'none' }}
-		>
+		//untracked(() => (
+		<a {...model} {...props}>
 			{props.children}
 		</a>
-	)
+	) //)
 }

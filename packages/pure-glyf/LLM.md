@@ -90,9 +90,9 @@ export default defineConfig({
 ```typescript
 import { tablerSun, tablerMoon } from 'pure-glyf/icons'
 import { createGlyfIconFactory } from 'pure-glyf/pounce'
+import { options } from '@pounce/ui'
 
-const iconFactory = createGlyfIconFactory({ sun: tablerSun, moon: tablerMoon })
-setAdapter(myAdapter, { iconFactory })
+options.iconFactory = createGlyfIconFactory({ sun: tablerSun, moon: tablerMoon })
 ```
 
 Build note: `vite.config.ts` uses `pounceCorePlugin` for JSX transform on `pounce.tsx`, and `beforeWriteFile` in `vite-plugin-dts` rewrites relative `../ui/dist/...` paths back to `@pounce/ui` in generated `.d.ts` files.

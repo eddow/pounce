@@ -34,7 +34,6 @@
     "./dist/dom.cjs",
     "./dist/node.js",
     "./dist/node.cjs",
-    "./src/init.ts",
     "./src/dom/index.ts",
     "./src/node/index.ts"
   ],

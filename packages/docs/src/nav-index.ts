@@ -68,7 +68,6 @@ export const navigation: NavSection[] = [
 		links: [
 			{ title: 'Overview', href: '/adapters' },
 			{ title: 'PicoCSS', href: '/adapters/pico' },
-			{ title: 'Vanilla', href: '/adapters/vanilla' },
 			{ title: 'Creating Adapters', href: '/adapters/creating' },
 		],
 	},

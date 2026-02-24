@@ -269,6 +269,10 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 			)
 		: conditioned.map((e: PounceElement) => e.render(env))
 
+	function recurReactive(arr: readonly (Node | readonly Node[])[]): boolean {
+		if (isReactive(arr)) return true
+		return arr.some((e) => Array.isArray(e) && recurReactive(e))
+	}
 	// Skip lift:nodes when all conditioned elements are guaranteed single-node producers
 	// (DOM elements always return exactly 1 node; their reactive wrapper never changes length).
 	// Exclude elements with meta.catch — their render result is a reactive array whose content
@@ -277,9 +281,9 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 		!isReactive(conditioned) &&
 		conditioned.every((e) => (e.isStatic || e.isSingleNode) && !e.meta.catch)
 	const nodes =
-		!allSingleNode && (isReactive(rendered) || rendered.some((r) => isReactive(r)))
+		!allSingleNode || recurReactive(rendered)
 			? tag('nodes', lift(named('lift:nodes', () => rendered.flat(Infinity) as Node[])))
-			: (rendered.flat(Infinity) as Node[])
+			: ((rendered as any[]).flat(Infinity) as Node[])
 
 	if (isReactive(nodes)) {
 		return link(nodes, flatInput, flatElements, conditioned, rendered)

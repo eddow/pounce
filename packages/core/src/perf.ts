@@ -3,8 +3,8 @@
  * Conditionally exports native Performance API in development
  */
 
-import { isDev } from 'mutts'
+import { isProd } from 'mutts'
 
-const enabled = isDev
+const enabled = !isProd
 
 export const perf = enabled && typeof performance !== 'undefined' ? performance : undefined

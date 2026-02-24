@@ -173,7 +173,6 @@ const ButtonPage = () => (
 
 /adapters                           Adapter ecosystem overview
 /adapters/pico                      PicoCSS adapter — setup, features, bridge CSS
-/adapters/vanilla                   Vanilla adapter — default styling
 /adapters/creating                  How to write a custom adapter
 
 /mutts                              mutts overview — reactive primitives
@@ -243,7 +242,6 @@ packages/docs/
 │   │   ├── adapters/
 │   │   │   ├── index.tsx
 │   │   │   ├── pico.tsx
-│   │   │   ├── vanilla.tsx
 │   │   │   └── creating.tsx
 │   │   ├── mutts/
 │   │   │   ├── index.tsx

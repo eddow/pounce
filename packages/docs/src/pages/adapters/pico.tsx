@@ -1,10 +1,9 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const usage = `import { setAdapter, picoAdapter } from '@pounce'
-import '@pounce/adapter-pico/css'       // Bridge variables
-import '@picocss/pico/css/pico.min.css' // PicoCSS
-
-setAdapter(picoAdapter)`
+const usage = `// vite.config.ts
+pounceBarrelPlugin({
+	adapter: '@pounce/adapter-pico'
+})`
 
 export default function PicoAdapterPage() {
 	return (

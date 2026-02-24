@@ -2,8 +2,11 @@ import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
 import { resolve } from 'node:path'
 
+import { pounceCorePlugin } from '@pounce/core/plugin'
+
 export default defineConfig({
 	plugins: [
+		pounceCorePlugin(),
 		dts({
 			include: ['src'],
 			exclude: ['demo'],

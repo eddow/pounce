@@ -6,9 +6,12 @@ export * from './icon'
 export * from './models'
 export {
 	type ComboboxModel,
-	type ComboboxOption,
 	type ComboboxProps,
 	comboboxModel,
+	type Option,
+	type SelectModel,
+	type SelectProps,
+	selectModel,
 } from './models'
 export { options } from './options'
 export * from './overlays'

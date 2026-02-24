@@ -50,6 +50,7 @@ function getProperty(direction: Direction): string {
 	return direction === 'horizontal' ? '--sizeable-width' : '--sizeable-height'
 }
 
+// TODO: Not at all a perhapsReactive: should be a reactive object
 export function sizeable(target: Node | readonly Node[], value: PerhapsReactive<number>) {
 	const el = resolveElement(target as Node | Node[])
 	if (!el) return

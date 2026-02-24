@@ -248,10 +248,7 @@ export const Dockview = (
 			} catch (_e) {
 				// Fallback or ignore if scope is strictly read-only
 			}
-			instanceApi = activeApi
-			// Only set props.api if it's a reactive prop (has a setter)
-			// we can check this by seeing if the parent passed a reactive prop
-			if (props.api instanceof Object && 'set' in props.api) props.api = activeApi
+			props.api = instanceApi = activeApi
 		} catch (e) {
 			console.error('[Dockview] createDockview CRASHED (sync):', e)
 			return
@@ -302,7 +299,7 @@ export const Dockview = (
 	return (
 		<div
 			{...props.el}
-			class={['pounce-dockview', props.el?.class]}
+			class="pounce-dockview"
 			data-testid="dockview-theme-container"
 			use={initDockview}
 		></div>

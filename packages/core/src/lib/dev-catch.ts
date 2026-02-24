@@ -7,6 +7,7 @@ import { PounceElement } from './pounce-element'
  * Only used when pounceOptions.devCatch is true (dev mode, not prod/test).
  */
 export function devCatchElement(error: unknown, retry?: () => void): PounceElement {
+	console.log(error)
 	return new PounceElement(() => {
 		const panel = document.createElement('div')
 		panel.setAttribute(

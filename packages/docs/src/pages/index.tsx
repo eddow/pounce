@@ -1,11 +1,8 @@
 import { A } from '@pounce'
 import { Code, Section } from '../components'
 
-const helloApp = `import { latch, setAdapter, picoAdapter } from '@pounce'
-import '@picocss/pico/css/pico.min.css'
+const helloApp = `import { latch } from '@pounce'
 import { reactive } from 'mutts'
-
-setAdapter(picoAdapter)
 
 function Counter() {
   const state = reactive({ count: 0 })

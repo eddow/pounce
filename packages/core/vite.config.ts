@@ -28,7 +28,8 @@ export default defineConfig({
 	resolve: {
 		conditions: ['browser', 'default', 'import'],
 		alias: {
-			'@pounce/core': resolvePath(projectRootDir, 'src/lib/index.ts'),
+			// for demo purpose - no '@pounce/core' in lib
+			'@pounce/core': resolvePath(projectRootDir, 'src/dom/index.ts'),
 		},
 	},
 	plugins: [

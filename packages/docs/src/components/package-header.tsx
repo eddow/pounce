@@ -25,14 +25,14 @@ export interface PackageHeaderProps {
 	install?: string
 }
 
-export function PackageHeader({ name, description, install }: PackageHeaderProps) {
-	const installCmd = install ?? `pnpm add ${name}`
+export function PackageHeader(p: PackageHeaderProps) {
+	const installCmd = () => p.install ?? `pnpm add ${p.name}`
 
 	return (
 		<header class="package-header">
-			<span class="package-name">{name}</span>
-			<p class="package-description">{description}</p>
-			<Code code={installCmd} lang="bash" />
+			<span class="package-name">{p.name}</span>
+			<p class="package-description">{p.description}</p>
+			<Code code={installCmd()} lang="bash" />
 		</header>
 	)
 }

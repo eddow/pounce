@@ -70,8 +70,8 @@ PicoCSS uses simple BEM-like classes:
 - [ ] Checkbox
 - [ ] Radio
 - [ ] Switch
-- [ ] Select
-- [ ] Combobox
+- [x] Select
+- [x] Combobox
 - [ ] Input
 - [ ] Textarea
 - [ ] Card

@@ -30,7 +30,6 @@ export type { CardProps, CardSectionProps } from './card'
 export { Card } from './card'
 export { Checkbox } from './checkbox'
 export { CheckButton } from './checkbutton'
-export { Combobox, Select } from './forms'
 export type {
 	ContainerProps,
 	HeadingProps,
@@ -45,6 +44,7 @@ export type { MenuBarProps, MenuItemProps, MenuProps } from './menu'
 export { Menu, MenuItem } from './menu'
 export type { MultiselectAdapterProps } from './multiselect'
 export { Multiselect } from './multiselect'
+export { Combobox, Select } from './options'
 export { StandardOverlays, WithOverlays } from './overlays'
 export { Progress } from './progress'
 export { Radio } from './radio'

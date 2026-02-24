@@ -332,15 +332,3 @@ bind(r(() => b.x, _v => b.x = _v), r(() => a.x, _v => a.x = _v), 7)
 **Biome config:** `noUnusedLabels` is set to `"off"` in `biome.json` — do not re-enable it, it would strip `bind:` labels.
 
 **TS language server note:** Having `bind:` labels in a file can confuse the LSP into resolving the `bind` identifier to `assert.bind`. The fix is ensuring `tests/unit/tsconfig.json` has `"@pounce/core": ["../src/lib/index.ts"]` in `paths` (already done).
-
-### 14. Known Issue: Premature Effect Cleanup in `jsx-factory`
-
-**Status:** Open / Mitigated (Workaround Active)
-
-When `attend()` creates effects for event listeners (via `listen()`), the effect's cleanup function is sometimes called **immediately** (15-30ms) after creation during the initial render, even though the element remains in the DOM. This causes `addEventListener` listeners to be removed instantly.
-
-**Workaround:** `jsx-factory.ts` uses direct property assignment (`element.onclick = handler`) as a primary binding mechanism for standard events. This persists even if the reactive effect is disposed. `listen()` is still called as a fallback for custom events, but may be unreliable until the root cause (interaction between `cleanedBy` and `reconciler`) is fixed.
-
-**Implication for Contributors:**
-- Do not remove the `element[propName] = handler` assignment in `eventEffect`.
-- Be aware that `effect()` cleanup logic on DOM elements might run earlier than expected.

@@ -300,7 +300,7 @@ export const c = (...args: object[]) => new CompositeAttributes(...args)
 export function bind<T>(dst: ReactiveProp<T>, src: ReactiveProp<T>, defaultValue?: T) {
 	if (!src.set) throw new Error('src is read-only')
 	if (!dst.set) throw new Error('dst is read-only')
-	if (defaultValue !== undefined && src.get() === undefined) src.set!(defaultValue)
+	if (defaultValue !== undefined && src.get() == null) src.set!(defaultValue)
 	let writing = false
 	const stopSrcToDst = effect.named('bind:srcToDst')(() => {
 		const v = src.get()

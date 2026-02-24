@@ -57,6 +57,19 @@ const routes: Route[] = [
 			</section>
 		),
 	},
+	{
+		path: '/long',
+		label: 'Long',
+		view: () => (
+			<section data-testid="long-view" style="height: 2000px; padding: 20px;">
+				<h1>Long Page</h1>
+				<p>Scroll down to find the footer link.</p>
+				<div style="margin-top: 1800px;">
+					<A href="/" data-testid="link-home-bottom">Back to Home</A>
+				</div>
+			</section>
+		),
+	},
 ]
 
 const notFound = (ctx: { url: string }) => (

@@ -230,14 +230,14 @@ import { Button } from '@my-adapter'
 <Button onClick={...}>Click</Button>
 ```
 
-### Icon registration (unchanged concept, simplified API)
+### Icon registration (simplified API via options)
 ```typescript
-// Before
+// Before (adapted-ui)
 setAdapter({ iconFactory: (name, size, ctx) => <i class={`icon-${name}`} /> })
 
 // After
-import { setIconFactory } from '@pounce/ui'
-setIconFactory((name, size) => <i class={`icon-${name}`} />)
+import { options } from '@pounce/ui'
+options.iconFactory = (name, size, dc) => <i class={`icon-${name}`} />
 ```
 The `DisplayContext` parameter is removed — icons don't need theme/direction context at the `@pounce/ui` level. If an adapter needs it, it wraps `setIconFactory` with its own context.
 
@@ -277,6 +277,7 @@ test('icon-only when icon present and no children', () => {
   - Dot-syntax accessors (`Button.primary`)
   - Dev-mode unknown variant warnings
 - **Documentation**: LLM.md updated to reflect actual implementation
+- **Barrel Plugin**: The docs app (`packages/docs`) already has this right in `vite.config.ts` — it configures the `@pounce` barrel plugin with the `adapter` and imports components from `@pounce`.
 
 ### 🚧 In Progress
 - **Reference Adapter**: `@pounce/adapter-pico` skeleton created

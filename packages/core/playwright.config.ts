@@ -1,6 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const projectRootDir = decodeURIComponent(new URL('.', import.meta.url).pathname)
 const port = 5273
 
 export default defineConfig({
@@ -11,15 +10,11 @@ export default defineConfig({
 	expect: {
 		timeout: 5_000,
 	},
-	reporter: [['list'], ['html', { open: 'never' }]],
+	reporter: [['html', { open: 'never' }]],
 	use: {
 		baseURL: `http://127.0.0.1:${port}`,
 		headless: true,
 		trace: 'retain-on-failure',
-		// Enable memoization discrepancy check in the browser
-		launchOptions: {
-			args: ['--js-flags="--expose-gc"'], // Just in case
-		},
 	},
 	projects: [
 		{
@@ -31,8 +26,8 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: `node_modules/.bin/vite --host=127.0.0.1 --port=${port} --strictPort`,
-		cwd: projectRootDir,
+		command: `node_modules/.bin/vite --host=127.0.0.1 --port=${port} --strictPort --mode test`,
+		cwd: '.',
 		port,
 		timeout: 120_000,
 		reuseExistingServer: true,

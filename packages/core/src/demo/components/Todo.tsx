@@ -4,7 +4,7 @@
 
 import { memoize } from 'mutts'
 import './Todo.scss'
-import { extend } from '../../lib/utils'
+import { defaults } from '../../lib/utils'
 
 export interface Todo {
 	id: number
@@ -23,20 +23,17 @@ export default function TodoWebComponent(props: {
 	filter?: 'all' | 'active' | 'completed'
 	newTodoText?: string
 }) {
-	const state = extend(
-		{
-			placeholder: 'Add a new todo...',
-			showFilters: true,
-			showClearCompleted: true,
-			filter: 'all',
-			newTodoText: '',
-		},
-		props
-	)
+	const vm = defaults(props, {
+		placeholder: 'Add a new todo...',
+		showFilters: true,
+		showClearCompleted: true,
+		filter: 'all',
+		newTodoText: '',
+	})
 	function addTodo() {
-		const text = state.newTodoText.trim()
-		const allowEmptyTodos = state.allowEmptyTodos ?? false
-		const maxTodos = state.maxTodos
+		const text = vm.newTodoText.trim()
+		const allowEmptyTodos = vm.allowEmptyTodos ?? false
+		const maxTodos = vm.maxTodos
 
 		// Validate based on typed props
 		if (!text && !allowEmptyTodos) return
@@ -50,7 +47,7 @@ export default function TodoWebComponent(props: {
 		}
 
 		props.todos.push(newTodo)
-		state.newTodoText = ''
+		vm.newTodoText = ''
 	}
 
 	function deleteTodo(removeId: number) {
@@ -76,7 +73,7 @@ export default function TodoWebComponent(props: {
 			return props.todos.reduce((count, todo) => count + (todo.completed ? 1 : 0), 0)
 		},
 		get filteredTodos() {
-			switch (state.filter) {
+			switch (vm.filter) {
 				case 'active':
 					return props.todos.filter((todo) => !todo.completed)
 				case 'completed':
@@ -96,8 +93,8 @@ export default function TodoWebComponent(props: {
 				<input
 					type="text"
 					class="todo-input"
-					placeholder={state.placeholder}
-					value={state.newTodoText}
+					placeholder={vm.placeholder}
+					value={vm.newTodoText}
 					onKeypress={(e: KeyboardEvent) => e.key === 'Enter' && addTodo()}
 				/>
 				<button class="add-button" onClick={addTodo}>
@@ -106,22 +103,22 @@ export default function TodoWebComponent(props: {
 			</div>
 
 			{/* Filter buttons */}
-			<div if={state.showFilters} class="filters">
+			<div if={vm.showFilters} class="filters">
 				<button
-					class={['filter-button', { active: state.filter === 'all' }]}
-					onClick={() => (state.filter = 'all')}
+					class={['filter-button', { active: vm.filter === 'all' }]}
+					onClick={() => (vm.filter = 'all')}
 				>
 					All
 				</button>
 				<button
-					class={['filter-button', { active: state.filter === 'active' }]}
-					onClick={() => (state.filter = 'active')}
+					class={['filter-button', { active: vm.filter === 'active' }]}
+					onClick={() => (vm.filter = 'active')}
 				>
 					Active ({computed.activeCount})
 				</button>
 				<button
-					class={['filter-button', { active: state.filter === 'completed' }]}
-					onClick={() => (state.filter = 'completed')}
+					class={['filter-button', { active: vm.filter === 'completed' }]}
+					onClick={() => (vm.filter = 'completed')}
 				>
 					Completed ({computed.completedCount})
 				</button>
@@ -143,12 +140,12 @@ export default function TodoWebComponent(props: {
 					</for>
 				</div>
 				<div else class="empty-message">
-					{props.todos.length === 0 ? 'No todos yet. Add one above!' : `No ${state.filter} todos.`}
+					{props.todos.length === 0 ? 'No todos yet. Add one above!' : `No ${vm.filter} todos.`}
 				</div>
 			</>
 
 			{/* Clear completed section */}
-			<div if={state.showClearCompleted && computed.completedCount > 0} class="clear-section">
+			<div if={vm.showClearCompleted && computed.completedCount > 0} class="clear-section">
 				<button class="clear-button" onClick={clearCompleted}>
 					Clear {computed.completedCount} completed
 				</button>

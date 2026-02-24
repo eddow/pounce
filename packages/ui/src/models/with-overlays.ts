@@ -34,6 +34,7 @@ export interface WithOverlaysModel {
 }
 
 export function withOverlaysModel(props: WithOverlaysProps, env: Env): WithOverlaysModel {
+	// TODO: understand the overlay system and think it might be a good idea to use `untracked` here as we miht avoid adding/removing modes while running
 	const stack = createOverlayStack({ backdropModes: props.backdropModes })
 
 	env.overlay = stack.push

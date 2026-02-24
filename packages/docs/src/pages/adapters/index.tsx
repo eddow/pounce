@@ -1,14 +1,11 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const adapterPattern = `import { setAdapter, picoAdapter } from '@pounce'
-
-// Mix and match adapters
-setAdapter(
-  picoAdapter,
-  { 
-    iconFactory: (name) => <i class={\`icon-\${name}\`} /> 
-  }
-)`
+const adapterPattern = `// vite.config.ts
+pounceBarrelPlugin({
+  adapter: '@pounce/adapter-pico',
+  // Global options can also be configured here, e.g.:
+  iconFactory: (name) => <i class={\`icon-\${name}\`} />
+})`
 
 const registrySnippet = `import { getAdapter } from '@pounce/ui/adapter'
 

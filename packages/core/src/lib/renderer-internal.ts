@@ -1,5 +1,5 @@
 import { atomic, biDi, effect, named, reactiveOptions, type ScopedCallback } from 'mutts'
-import { type CompositeAttributes, ReactiveProp } from './composite-attributes'
+import { CompositeAttributes, ReactiveProp } from './composite-attributes'
 import { pounceOptions, testing } from './debug'
 import { classNames } from './styles'
 
@@ -173,34 +173,21 @@ function attachAttribute(
 				cleanup = listen(element, 'input', () => provide((element as HTMLTextAreaElement).value))
 			}
 		} else if (element.tagName === 'SELECT') {
+			// TODO: debug me
 			if (key === 'value') {
-				const handler = () => {
-					const val = (element as HTMLSelectElement).value
-					console.error(`[pounce] SELECT event: val=${val}`)
-					provide(val)
-				}
-				cleanup = listen(element, 'change', handler)
+				const handler = () => provide((element as HTMLSelectElement).value)
 				const cleanupInput = listen(element, 'input', handler)
-				const originalCleanup = cleanup
+				const cleanupChange = listen(element, 'change', handler)
 				cleanup = () => {
-					originalCleanup()
 					cleanupInput()
+					cleanupChange()
 				}
-				// Re-apply value after children (<option>) are typically mounted (microtask)
-				queueMicrotask(() => {
-					const val = binding.get()
-					console.error(`[pounce] SELECT microtask: val=${val}`)
-					setHtmlProperty(element, 'value', val)
-				})
 			}
 		}
 
-		const eff = effect(named(`attr:${key}`, () => setHtmlProperty(element, key, binding.get())))
+		//const eff = effect(named(`attr:${key}`, () => setHtmlProperty(element, key, binding.get())))
 
-		return () => {
-			cleanup?.()
-			eff?.()
-		}
+		return cleanup
 	}
 
 	// One-way binding/setter
@@ -213,6 +200,8 @@ export function attachAttributes(
 	element: HTMLElement,
 	attributes: CompositeAttributes
 ): ScopedCallback | undefined {
+	if (!(attributes instanceof CompositeAttributes))
+		throw new Error('attributes must be an instance of CompositeAttributes')
 	const cleanups: Record<string, ScopedCallback | undefined> = {}
 	const cleanAll = () => {
 		for (const cleanup of Object.values(cleanups)) cleanup?.()

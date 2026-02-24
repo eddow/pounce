@@ -1,4 +1,3 @@
-import '../init'
 import { JSDOM } from 'jsdom'
 import { isTest } from 'mutts'
 import { setPlatformAPIs } from '../shared'
@@ -75,5 +74,10 @@ if (typeof window !== 'undefined') {
 
 // Re-export the core API
 export * from '..'
+
+import setGlobals from '../init'
+
+setGlobals()
+
 // Also export the withSSR helper which is Node-specific
 export { renderToString, renderToStringAsync, withSSR } from './server'

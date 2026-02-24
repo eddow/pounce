@@ -79,6 +79,12 @@ export default function EnvPage() {
 					Every component receives <code>env</code> as its second parameter. When a parent calls{' '}
 					<code>extend(env, {'{ ... }'})</code>, it creates a new env object whose prototype is the
 					parent's env. Descendants inherit all values via JavaScript's prototype chain.
+					Alternatively, you can assign values directly to the <code>env</code> object:
+					<code>
+						env.theme = reactive({'{'} dark: false {'}'})
+					</code>
+					. Since every component receives a fresh env object whose prototype is the parent's env,
+					direct assignments are scoped to the current component and its descendants.
 				</p>
 				<Code code={envBasics} lang="tsx" />
 			</Section>

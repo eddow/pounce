@@ -1,5 +1,5 @@
 import { memoize } from 'mutts'
-import { extend } from '../../lib'
+import { defaults } from '../../lib'
 import './Wrapper.scss'
 
 export default function WrapperComponent(props: {
@@ -11,31 +11,28 @@ export default function WrapperComponent(props: {
 	children?: JSX.Element | JSX.Element[]
 	tag?: JSX.HTMLElementTag
 }) {
-	const state = extend(
-		{
-			title: 'Wrapper Component',
-			description: 'This wrapper contains children:',
-			class: 'wrapper',
-			showChildren: true,
-			tag: 'div',
-		},
-		props
-	)
+	const vm = defaults(props, {
+		title: 'Wrapper Component',
+		description: 'This wrapper contains children:',
+		class: 'wrapper',
+		showChildren: true,
+		tag: 'div',
+	})
 
 	const computed = memoize({
 		get childrenArray() {
-			return Array.isArray(state.children) ? state.children : state.children ? [state.children] : []
+			return Array.isArray(vm.children) ? vm.children : vm.children ? [vm.children] : []
 		},
 		get childrenToShow() {
-			return state.maxChildren ? this.childrenArray.slice(0, state.maxChildren) : this.childrenArray
+			return vm.maxChildren ? this.childrenArray.slice(0, vm.maxChildren) : this.childrenArray
 		},
 	})
 
 	return (
-		<dynamic tag={state.tag} class={state.class}>
-			<h3>{state.title}</h3>
-			<p>{state.description}</p>
-			{state.showChildren && <div class="children">{computed.childrenToShow}</div>}
+		<dynamic tag={vm.tag} class={vm.class}>
+			<h3>{vm.title}</h3>
+			<p>{vm.description}</p>
+			{vm.showChildren && <div class="children">{computed.childrenToShow}</div>}
 		</dynamic>
 	)
 }

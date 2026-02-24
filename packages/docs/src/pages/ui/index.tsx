@@ -1,11 +1,7 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const adapterSetup = `import { setAdapter, picoAdapter } from '@pounce'
-import '@picocss/pico/css/pico.min.css'
-
-// Install the PicoCSS adapter — all components
-// inherit PicoCSS theming automatically.
-setAdapter(picoAdapter)`
+const adapterSetup = `import '@pounce/adapter-pico/css'
+import '@picocss/pico/css/pico.min.css'`
 
 const buttonExample = `import { Button } from '@pounce'
 

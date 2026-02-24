@@ -2,7 +2,6 @@ import type { ClientRouteDefinition, Env } from '@pounce'
 import CreatingAdapterPage from './pages/adapters/creating'
 import AdaptersIndexPage from './pages/adapters/index'
 import PicoAdapterPage from './pages/adapters/pico'
-import VanillaAdapterPage from './pages/adapters/vanilla'
 import BoardIndexPage from './pages/board/index'
 import BoardMiddlewarePage from './pages/board/middleware'
 import BoardRoutingPage from './pages/board/routing'
@@ -94,7 +93,6 @@ const routes: AppRoute[] = [
 	{ path: '/ui/display', view: DisplayPage },
 	{ path: '/adapters', view: AdaptersIndexPage },
 	{ path: '/adapters/pico', view: PicoAdapterPage },
-	{ path: '/adapters/vanilla', view: VanillaAdapterPage },
 	{ path: '/adapters/creating', view: CreatingAdapterPage },
 	{ path: '/board', view: BoardIndexPage },
 	{ path: '/board/routing', view: BoardRoutingPage },

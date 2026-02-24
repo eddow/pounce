@@ -42,16 +42,25 @@ export type CodeProps = {
 	class?: string
 }
 
-export function Code({ code, lang = 'tsx', class: className = '' }: CodeProps) {
-	// Highlight the code
-	const highlighted = hljs.highlight(code, {
-		language: lang === 'tsx' ? 'typescript' : lang,
-	})
+export function Code(p: CodeProps) {
+	const model = {
+		get lang() {
+			return p.lang ?? 'tsx'
+		},
+		get className() {
+			return p.class ?? ''
+		},
+		get highlighted() {
+			return hljs.highlight(p.code, {
+				language: this.lang === 'tsx' ? 'typescript' : this.lang,
+			})
+		},
+	}
 
 	return (
-		<div class={`code-block ${className}`}>
+		<div class={`code-block ${model.className}`}>
 			<pre>
-				<code innerHTML={highlighted.value} class={`hljs language-${lang}`} />
+				<code innerHTML={model.highlighted.value} class={`hljs language-${model.lang}`} />
 			</pre>
 		</div>
 	)

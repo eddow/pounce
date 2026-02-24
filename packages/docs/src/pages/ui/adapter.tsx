@@ -1,13 +1,15 @@
 import { Code, Section } from '../../components'
 
-const adapterPattern = `// The adapter pattern decouples component logic from CSS framework styling.
-// Components call getAdapter('Button') to get variant classes, configs, etc.
-// Swap the adapter to change the entire look without touching component code.
+const adapterPattern = `// Adapters are configured in vite.config.ts via the @pounce barrel plugin.
+// This decouples component logic from CSS framework styling.
+// Components import Button, Card etc. from '@pounce' and get the adapted version.
 
-import { setAdapter, picoAdapter } from '@pounce'
-
-// Install once at app startup:
-setAdapter(picoAdapter)`
+// vite.config.ts
+pounceBarrelPlugin({
+  name: '@pounce',
+  skeleton: 'front-end',
+  adapter: '@pounce/adapter-pico', // The adapter is chosen here
+})`
 
 const adapterStructure = `import type { FrameworkAdapter } from '@pounce'
 
@@ -44,30 +46,23 @@ const picoDetails = `// @pounce/adapter-pico maps Pounce's CSS variables to Pico
 //   --pounce-border     → --pico-border-color
 //   etc.
 //
-// It also provides variant attribute bags that map to PicoCSS's
-// data-attribute-based theming (e.g., [data-variant="primary"]).
+// To use it, configure the barrel plugin:
+// vite.config.ts
+pounceBarrelPlugin({
+  adapter: '@pounce/adapter-pico',
+})
 
 import '@picocss/pico/css/pico.min.css'
-import { setAdapter, picoAdapter } from '@pounce'
-setAdapter(picoAdapter)`
+import '@pounce/adapter-pico/css'`
 
-const customAdapter = `// To create a custom adapter:
-// 1. Define variants (JSX-spreadable attribute bags)
-// 2. Define component configs (base classes, sub-element classes)
-// 3. Optionally define transitions and icon factory
-// 4. Call setAdapter() with your adapter
+const uiOptions = `import { options } from '@pounce/ui'
 
-import { setAdapter } from '@pounce'
+// Global UI options are configured by mutating the 'options' object.
+// This is typical for app-wide settings like icon rendering.
 
-setAdapter({
-  variants: {
-    primary: { class: 'bg-blue-500 text-white', 'data-variant': 'primary' },
-    danger: { class: 'bg-red-500 text-white', 'data-variant': 'danger' },
-  },
-  components: {
-    Button: { classes: { base: 'px-4 py-2 rounded' } },
-  },
-})`
+options.iconFactory = (name, size, el, context) => {
+  return <span class={\`icon-\${name}\`} {...el} />
+}`
 
 export default function AdapterPage() {
 	return (
@@ -95,9 +90,11 @@ export default function AdapterPage() {
 				<Code code={picoDetails} lang="tsx" />
 			</Section>
 
-			<Section title="Custom Adapter">
-				<p>Create your own adapter for any CSS framework.</p>
-				<Code code={customAdapter} lang="tsx" />
+			<Section title="UI Options">
+				<p>
+					Configure global UI behavior like icon rendering via the <code>options</code> object.
+				</p>
+				<Code code={uiOptions} lang="tsx" />
 			</Section>
 		</article>
 	)

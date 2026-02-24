@@ -75,16 +75,6 @@ describe('routeMatcher (pre-compiled)', () => {
 	})
 })
 
-describe('linkModel', () => {
-	test('defaults underline to true', () => {
-		expect(linkModel({}).underline).toBe(true)
-	})
-
-	test('underline=false disables it', () => {
-		expect(linkModel({ underline: false }).underline).toBe(false)
-	})
-})
-
 describe('Router reactive view selection', () => {
 	test('different definitions produce different identity checks', () => {
 		const routes = [

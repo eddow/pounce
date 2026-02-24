@@ -1,9 +1,18 @@
-import { caught, effect, formatCleanupReason, link, named, reactive, reactiveOptions } from 'mutts'
+import {
+	addUnreactiveProps,
+	caught,
+	effect,
+	formatCleanupReason,
+	link,
+	reactive,
+	reactiveOptions,
+	unreactive,
+} from 'mutts'
 import { perf } from '../perf'
 import { type CompositeAttributesMeta, collapse, ReactiveProp } from './composite-attributes'
 import { pounceOptions } from './debug'
 
-export const rootEnv: Env = reactive(Object.create(null))
+export const rootEnv: Env = addUnreactiveProps(Object.create(null))
 
 export class DynamicRenderingError extends Error {
 	constructor(message: string) {
@@ -21,10 +30,11 @@ export type Child = Node | string | number | null | undefined | PounceElement
 export type Children = Child | readonly Children[] | ReactiveProp<Children>
 
 export type Env<T = any> = Record<PropertyKey, T>
-
+let maxRenderDependencyLog = 100
 /**
  * PounceElement class - encapsulates JSX element creation and rendering
  */
+@unreactive
 export class PounceElement {
 	// Core properties
 
@@ -119,8 +129,9 @@ export class PounceElement {
 			return (Array.isArray(partial) ? partial : [partial]) as any
 		}
 
-		const stopRender = effect(
-			named(`render:${tagName}`, ({ reaction }) => {
+		const stopRender = effect.named(`render:${tagName}`)(
+			// @ts-expect-error TODO: effect typing: .named -> same type as effect
+			({ reaction }) => {
 				// If there is a catch clause, we must return a stable mount point (a ReactiveProp)
 				// so that when the error occurs, we can dynamically swap the content from the broken nodes to the fallback.
 				if (metaCatch) {
@@ -156,7 +167,13 @@ export class PounceElement {
 						}
 					}
 				}
-			})
+			},
+			{
+				dependencyHook(obj: any, prop: any) {
+					if (maxRenderDependencyLog-- > 0)
+						console.warn('render effect dependency:', prop, 'on', obj)
+				},
+			}
 		)
 		perf?.mark(`render:${tagName}:end`)
 		perf?.measure(`render:${tagName}`, `render:${tagName}:start`, `render:${tagName}:end`)

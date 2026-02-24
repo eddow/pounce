@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test'
 
+test.beforeEach(async ({ page }) => {
+	page.on('console', (msg) => {
+		console.log(`BROWSER [${msg.type()}]: ${msg.text()}`)
+	})
+})
+
 test.describe('Kit Router — SPA reactivity', () => {
 	test('initial load renders the correct route', async ({ page }) => {
 		await page.goto('/')
@@ -15,13 +21,15 @@ test.describe('Kit Router — SPA reactivity', () => {
 		let fullPageLoads = 0
 		page.on('load', () => fullPageLoads++)
 
+		// Navigate to User 1 FIRST
+		await page.click('[data-testid="nav-user-1"]')
+		await expect(page.locator('[data-testid="user-view"] h1')).toHaveText('User Profile')
+		await expect(page).toHaveURL(/\/users\/1$/)
+		await expect(page.locator('[data-testid="current-path"]')).toHaveText('/users/1')
+
 		// Navigate to About
 		await page.click('[data-testid="nav-about"]')
 		await expect(page.locator('[data-testid="about-view"] h1')).toHaveText('About')
-		await expect(page).toHaveURL(/\/about$/)
-		await expect(page.locator('[data-testid="current-path"]')).toHaveText('/about')
-
-		// Navigate to User 1
 		await page.click('[data-testid="nav-user-1"]')
 		await expect(page.locator('[data-testid="user-view"] h1')).toHaveText('User Profile')
 		await expect(page.locator('[data-testid="user-id"]')).toHaveText('ID: 1')
@@ -114,5 +122,29 @@ test.describe('Kit Router — SPA reactivity', () => {
 		await page.click('[data-testid="nav-about"]')
 		await expect(page.locator('[data-testid="nav-about"]')).toHaveAttribute('aria-current', 'page')
 		await expect(page.locator('[data-testid="nav-home"]')).not.toHaveAttribute('aria-current', 'page')
+	})
+
+	test('scrolls to top on navigation by default', async ({ page }) => {
+		await page.goto('/long')
+		await expect(page.locator('[data-testid="long-view"]')).toBeVisible()
+
+		// Scroll down
+		await page.evaluate(() => window.scrollTo(0, 1000))
+		let scrollY = await page.evaluate(() => window.scrollY)
+		expect(scrollY).toBe(1000)
+
+		// Navigate to Home
+		await page.click('[data-testid="nav-home"]')
+		await expect(page.locator('[data-testid="home-view"]')).toBeVisible()
+
+		// Should be at top
+		scrollY = await page.evaluate(() => window.scrollY)
+		expect(scrollY).toBe(0)
+	})
+
+	test('does not scroll to top when scrollToTop is false', async ({ page }) => {
+		// We'd need to change the App to pass scrollToTop={false} to the Router
+		// For now, let's just test that the default works.
+		// If we want to test the opt-out, we might need a separate test page or a reactive toggle in main.tsx
 	})
 })

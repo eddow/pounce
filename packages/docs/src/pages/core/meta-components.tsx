@@ -32,9 +32,7 @@ const state = reactive({ component: HomeView as any })
 function Shell() {
   return (
     <main>
-      <dynamic when={state.component}>
-        {(Component: any) => <Component />}
-      </dynamic>
+      <dynamic tag={state.component} />
     </main>
   )
 }
@@ -90,8 +88,9 @@ export default function MetaComponentsPage() {
 
 			<Section title="dynamic">
 				<p>
-					<code>{'<dynamic when={...}>'}</code> renders a component chosen at runtime. Pass a
-					reactive value and a render function — the component swaps when the value changes.
+					<code>{'<dynamic tag={...}>'}</code> renders a component chosen at runtime. Pass a
+					reactive value (string or component function) — the component swaps when the value
+					changes.
 				</p>
 				<Code code={dynamicMeta} lang="tsx" />
 			</Section>
@@ -108,7 +107,8 @@ export default function MetaComponentsPage() {
 				<p>
 					<code>{'<env>'}</code> injects values into the env chain without adding a DOM wrapper
 					element. All descendants inherit the injected values — a declarative alternative to{' '}
-					<code>extend()</code>.
+					<code>extend()</code>. Note that assigning directly to <code>env.prop = value</code> in
+					the code has the same effect.
 				</p>
 				<Code code={envMeta} lang="tsx" />
 			</Section>

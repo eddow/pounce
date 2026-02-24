@@ -64,7 +64,7 @@ export function extend<
 	A extends Record<PropertyKey, any>,
 	B extends Record<PropertyKey, any> | null,
 >(base: B, added?: A): (B extends null ? {} : B) & A {
-	return reactive(Object.create(base, Object.getOwnPropertyDescriptors(added || {})))
+	return Object.create(base, Object.getOwnPropertyDescriptors(added || {}))
 }
 
 export function weakCached<I, O>(fn: (arg: I) => O): (arg: I) => O {

@@ -55,12 +55,7 @@ const directivesExample = `// Conditional rendering
 <div else>Please log in.</div>
 
 // Reactive switch
-<dynamic when={state.view}>
-  {{
-    home: () => <HomePage />,
-    about: () => <AboutPage />,
-  }}
-</dynamic>
+<dynamic tag={state.view} />
 
 // List rendering
 <for each={state.items}>{(item) =>

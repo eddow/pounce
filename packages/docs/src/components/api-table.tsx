@@ -55,7 +55,7 @@ export interface ApiTableProps {
 	props: PropDef[]
 }
 
-export function ApiTable({ props }: ApiTableProps) {
+export function ApiTable(p: ApiTableProps) {
 	return (
 		<div class="api-table">
 			<table>
@@ -68,7 +68,7 @@ export function ApiTable({ props }: ApiTableProps) {
 					</tr>
 				</thead>
 				<tbody>
-					<for each={props}>
+					<for each={p.props}>
 						{(prop: PropDef) => (
 							<tr>
 								<td>

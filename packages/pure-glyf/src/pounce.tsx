@@ -12,13 +12,12 @@ import type { DisplayContext } from '@pounce/kit'
  * ```ts
  * import { tablerSun, tablerMoon } from 'pure-glyf/icons'
  * import { createGlyfIconFactory } from 'pure-glyf/pounce'
+ * import { options } from '@pounce/ui'
  *
- * const iconFactory = createGlyfIconFactory({
+ * options.iconFactory = createGlyfIconFactory({
  *   sun: tablerSun,
  *   moon: tablerMoon,
  * })
- *
- * setAdapter(picoAdapter, { iconFactory })
  * ```
  */
 export function createGlyfIconFactory(

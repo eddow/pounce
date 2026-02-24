@@ -43,10 +43,7 @@ const indexHtml = `<!DOCTYPE html>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>`
-
-const mainTsx = `import { latch, setAdapter, picoAdapter } from '@pounce'
-
-setAdapter(picoAdapter)
+const mainTsx = `import { latch } from '@pounce'
 
 function App() {
   return (
@@ -68,10 +65,10 @@ export default function GettingStartedPage() {
 			<Section title="Installation">
 				<p>Create a new project and install the core packages:</p>
 				<Code
-					code={`mkdir my-app && cd my-app
+					code={`mkdir my - app && cd my - app
 pnpm init
-pnpm add @pounce/core @pounce/kit @pounce/ui @pounce/adapter-pico @picocss/pico mutts
-pnpm add -D vite typescript sass`}
+pnpm add @pounce/core @pounce/kit @pounce/ui @pounce/adapter - pico @picocss/pico mutts
+pnpm add - D vite typescript sass`}
 					lang="bash"
 				/>
 			</Section>

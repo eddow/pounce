@@ -1,5 +1,5 @@
-import { extend, PounceElement } from '@pounce/core'
-import { lift } from 'mutts'
+import { defaults, PounceElement } from '@pounce/core'
+import { effect, lift } from 'mutts'
 import { perf } from '../perf.js'
 import { client } from '../platform/shared.js'
 import {
@@ -12,7 +12,7 @@ import {
 	type RouteParams,
 	type RouteWildcard,
 } from './logic.js'
-
+// TODO: Router should scroll=0 on reload - r is it something else than router ? (more general)
 // Re-export core types
 export type {
 	ParsedPathSegment,
@@ -54,6 +54,11 @@ export type RouterNotFound<Definition extends ClientRouteDefinition> = (
 export interface RouterProps<Definition extends ClientRouteDefinition> {
 	readonly routes: readonly Definition[]
 	readonly notFound: RouterNotFound<Definition>
+	/**
+	 * Whether to scroll to the top of the window on route changes.
+	 * @default true
+	 */
+	readonly scrollToTop?: boolean
 }
 
 /** Pre-compiled route matcher function. */
@@ -107,15 +112,20 @@ export const Router = <
 	scope: Record<PropertyKey, unknown>
 ) => {
 	// TODO: Lazy loading road + "loading" or youtube-like progress
-	const state = extend(
-		{
-			get url() {
-				return client.url.pathname
-			},
+	const vm = defaults(props, {
+		get url() {
+			return client.url.pathname
 		},
-		props
-	)
-	const matcher = routeMatcher(state.routes)
+		scrollToTop: true,
+	})
+	const matcher = routeMatcher(vm.routes)
+
+	effect.named('router:scroll')(() => {
+		console.log('router:scroll effect triggered, url:', vm.url)
+		if (vm.url && vm.scrollToTop && typeof window !== 'undefined') {
+			window.scrollTo(0, 0)
+		}
+	})
 
 	function renderElements(jsx: JSX.Element | JSX.Element[]): Node[] {
 		const els = Array.isArray(jsx) ? jsx : [jsx]
@@ -125,17 +135,21 @@ export const Router = <
 			return Array.isArray(nodes) ? Array.from(nodes) : [nodes]
 		})
 	}
-
-	const rendered = lift(function routerCompute() {
+	// TODO: Why do we need `renderElements`? Can't we just return `lift` the PounceElement directly?
+	return lift(function routerCompute() {
+		console.log('routerCompute START, client.url.pathname:', client.url.pathname)
 		try {
 			perf?.mark('route:match:start')
-			const match = matcher(state.url)
+			const url = client.url.pathname
+			const match = matcher(url)
 			perf?.mark('route:match:end')
 			perf?.measure('route:match', 'route:match:start', 'route:match:end')
+			console.log('Router matching:', url, match ? match.definition.path : 'NOT FOUND')
 			if (match && (match.unusedPath === '' || match.unusedPath === '/')) {
 				try {
 					perf?.mark('route:render:start')
 					const output = renderElements(match.definition.view(match, scope))
+					console.log('Router rendering view for:', match.definition.path, 'params:', match.params)
 					perf?.mark('route:render:end')
 					perf?.measure('route:render', 'route:render:start', 'route:render:end')
 					return output
@@ -156,7 +170,7 @@ export const Router = <
 				}
 			}
 			perf?.mark('route:not-found:start')
-			const output = renderElements(state.notFound({ routes: state.routes, url: state.url }, scope))
+			const output = renderElements(vm.notFound({ routes: vm.routes, url: vm.url }, scope))
 			perf?.mark('route:not-found:end')
 			perf?.measure('route:not-found', 'route:not-found:start', 'route:not-found:end')
 			return output
@@ -170,6 +184,4 @@ export const Router = <
 			)
 		}
 	})
-	// TODO: Do we really want to `new PounceElement` here? shouldn't we simply remove `renderElements` ?
-	return new PounceElement(() => rendered, 'Router')
 }

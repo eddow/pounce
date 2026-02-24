@@ -1,4 +1,3 @@
-import '../init'
 import { setPlatformAPIs } from '../shared'
 
 // Auto-execute bootstrap when this module is imported in a browser environment
@@ -18,3 +17,7 @@ setPlatformAPIs('DOM/Browser', {
 
 // Re-export the core API
 export * from '..'
+
+import setGlobals from '../init'
+
+setGlobals()

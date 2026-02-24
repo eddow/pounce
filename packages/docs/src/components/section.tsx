@@ -23,23 +23,23 @@ export interface SectionProps {
 	children: JSX.Children
 }
 
-export function Section({ title, id, children }: SectionProps) {
-	const anchor =
-		id ??
-		title
+export function Section(p: SectionProps) {
+	const anchor = () =>
+		p.id ??
+		p.title
 			.toLowerCase()
 			.replace(/\s+/g, '-')
 			.replace(/[^\w-]/g, '')
 
 	return (
-		<section class="doc-section" id={anchor}>
+		<section class="doc-section" id={anchor()}>
 			<h2>
-				{title}
-				<a class="anchor" href={`#${anchor}`}>
+				{p.title}
+				<a class="anchor" href={`#${anchor()}`}>
 					#
 				</a>
 			</h2>
-			{children}
+			{p.children}
 		</section>
 	)
 }

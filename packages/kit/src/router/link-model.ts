@@ -1,3 +1,4 @@
+import type { StyleInput } from '@pounce/core'
 import { perf } from '../perf'
 import { client } from '../platform/shared'
 
@@ -10,7 +11,7 @@ export type LinkProps = JSX.IntrinsicElements['a'] & {
 
 export type LinkModel = {
 	/** Whether underline is shown */
-	readonly underline: boolean
+	readonly style: StyleInput
 	/** Click handler — intercepts internal hrefs for SPA navigation */
 	readonly onClick: (event: MouseEvent) => void
 	/** aria-current value — 'page' when href matches current pathname */
@@ -45,22 +46,20 @@ export type LinkModel = {
  */
 export function linkModel(props: LinkProps): LinkModel {
 	return {
-		get underline() {
-			return props.underline ?? true
+		get style() {
+			return props.underline !== false ? undefined : { textDecoration: 'none' }
 		},
-		get onClick() {
-			return (event: MouseEvent) => {
-				props.onClick?.(event)
-				if (!event || event.defaultPrevented) return
-				const href = props.href
-				if (typeof href === 'string' && href.startsWith('/')) {
-					event.preventDefault()
-					if (client.url.pathname !== href) {
-						perf?.mark('route:click:start')
-						client.navigate(href)
-						perf?.mark('route:click:end')
-						perf?.measure('route:click', 'route:click:start', 'route:click:end')
-					}
+		onClick(event: MouseEvent) {
+			props.onClick?.(event)
+			if (!event || event.defaultPrevented) return
+			const href = props.href
+			if (typeof href === 'string' && href.startsWith('/')) {
+				event.preventDefault()
+				if (client.url.pathname !== href) {
+					perf?.mark('route:click:start')
+					client.navigate(href)
+					perf?.mark('route:click:end')
+					perf?.measure('route:click', 'route:click:start', 'route:click:end')
 				}
 			}
 		},
