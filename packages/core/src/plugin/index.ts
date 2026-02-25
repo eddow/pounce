@@ -6,7 +6,7 @@ import dts, { type PluginOptions as DtsPluginOptions } from 'vite-plugin-dts'
 import { pounceBabelPlugin, pounceSpreadPlugin } from './babel'
 import { pounceBarrelPlugin } from './barrel'
 
-export { pounceBabelPlugin }
+export { pounceBabelPlugin, pounceSpreadPlugin }
 export { pounceBarrelPlugin }
 export type { BarrelSkeleton, PounceBarrelPluginOptions } from './barrel'
 
@@ -27,7 +27,14 @@ export function createStandardDtsPlugin(options: DtsConfigOptions = {}) {
 		rollupTypes: options.rollupTypes ?? false,
 		copyDtsFiles: options.copyDtsFiles,
 		include: options.include,
-		exclude: options.exclude ?? ['**/node_modules/**', '**/mutts/**'],
+		exclude: options.exclude ?? [
+			'**/*.spec.ts',
+			'**/*.spec.tsx',
+			'**/*.test.ts',
+			'**/*.test.tsx',
+			'**/node_modules/**',
+			'**/mutts/**',
+		],
 		compilerOptions: {
 			preserveSymlinks: false,
 			composite: false,

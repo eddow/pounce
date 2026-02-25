@@ -9,7 +9,7 @@ export default defineConfig({
 		pounceCorePlugin(),
 		dts({
 			include: ['src'],
-			exclude: ['demo'],
+			exclude: ['demo', '**/*.spec.ts', '**/*.spec.tsx', '**/*.test.ts', '**/*.test.tsx'],
 			outDir: 'dist',
 			rollupTypes: true,
 		}),

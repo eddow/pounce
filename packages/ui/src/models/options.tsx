@@ -56,8 +56,8 @@ export function selectModel(props: SelectProps): SelectModel {
 				<for each={props.options ?? []}>
 					{(opt) =>
 						typeof opt === 'string' ? (
-							<option value={opt}>
-								{opt} selected={initValue === opt}
+							<option value={opt} selected={initValue === opt}>
+								{opt}
 							</option>
 						) : (
 							<option value={opt.value} disabled={opt.disabled} selected={initValue === opt.value}>

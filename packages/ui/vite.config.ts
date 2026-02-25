@@ -21,7 +21,7 @@ export default defineConfig({
 		pounceCorePlugin(),
 		dts({
 			include: ['src/**/*.ts', 'src/**/*.tsx'],
-			exclude: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
+			exclude: ['src/**/*.spec.ts', 'src/**/*.spec.tsx', 'src/**/*.test.ts', 'src/**/*.test.tsx'],
 		}),
 	],
 })

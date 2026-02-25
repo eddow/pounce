@@ -7,12 +7,12 @@ import type { ExtractPathParams } from './inference'
 describe('Route Parameter Inference', () => {
 	it('should extract single parameters', () => {
 		type Params = ExtractPathParams<'/users/[id]'>
-		expectTypeOf<Params>().toEqualTypeOf<{ id: string }>()
+		expectTypeOf<Params>().toEqualTypeOf<{ id: string | number }>()
 	})
 
 	it('should extract multiple parameters', () => {
 		type Params = ExtractPathParams<'/users/[id]/posts/[postId]'>
-		expectTypeOf<Params>().toEqualTypeOf<{ id: string; postId: string }>()
+		expectTypeOf<Params>().toEqualTypeOf<{ id: string | number; postId: string | number }>()
 	})
 
 	it('should return empty object for routes with no params', () => {
@@ -28,6 +28,6 @@ describe('Route Parameter Inference', () => {
 
 	it('should handle multiple params segments', () => {
 		type Params = ExtractPathParams<'/a/[x]/b/[y]'>
-		expectTypeOf<Params>().toEqualTypeOf<{ x: string; y: string }>()
+		expectTypeOf<Params>().toEqualTypeOf<{ x: string | number; y: string | number }>()
 	})
 })

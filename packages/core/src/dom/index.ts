@@ -45,10 +45,7 @@ function syncRegistry(root: Node, action: 'add' | 'delete') {
 }
 const observer = new MutationObserver((mutations) => {
 	for (const mutation of mutations) {
-		// 1. Handle Added Nodes
 		mutation.addedNodes.forEach((node) => syncRegistry(node, 'add'))
-
-		// 2. Handle Removed Nodes
 		mutation.removedNodes.forEach((node) => syncRegistry(node, 'delete'))
 	}
 })

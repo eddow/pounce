@@ -39,7 +39,22 @@ let maxRenderDependencyLog = 100
 @unreactive
 export class PounceElement {
 	// Core properties
-
+	static text(retrieve: () => string | number) {
+		return new PounceElement(
+			() => {
+				let node: Text | undefined
+				effect.named('PounceElement.text')(() => {
+					if (node) node.data = String(retrieve())
+					else node = document.createTextNode(String(retrieve()))
+				})
+				return node!
+			},
+			'#text',
+			{},
+			true,
+			true
+		)
+	}
 	constructor(
 		public produce: (env: Env) => Node | readonly Node[],
 		public tag?: string | ComponentFunction,

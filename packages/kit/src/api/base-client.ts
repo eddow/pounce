@@ -65,21 +65,7 @@ function matchPattern(urlString: string, pattern: string | RegExp): boolean {
 	return pathname === pattern
 }
 
-export interface ApiClientInstance<P extends string = string> {
-	get: <T>(
-		...params: keyof ExtractPathParams<P> extends never
-			? [params?: Record<string, string>]
-			: [params: ExtractPathParams<P>]
-	) => HydratedPromise<T>
-	post: <T>(body: unknown) => Promise<T>
-	put: <T>(body: unknown) => Promise<T>
-	del: <T>(
-		...params: keyof ExtractPathParams<P> extends never
-			? [params?: Record<string, string>]
-			: [params: ExtractPathParams<P>]
-	) => Promise<T>
-	patch: <T>(body: unknown) => Promise<T>
-}
+// ApiClientInstance interface is defined at the end of the file
 
 export interface HydratedPromise<T> extends Promise<T> {
 	hydrated: T | undefined
@@ -198,30 +184,50 @@ export function createApiClientFactory(executor: RequestExecutor) {
 		maybeOptions: any = {}
 	): ApiClientInstance<any> {
 		let url: URL
+		let template: string | undefined
 		let options = paramsOrOptions
 
-		if (typeof input === 'object' && input !== null && 'buildUrl' in input) {
-			const routeDef = input as RouteDefinition
-			const params = paramsOrOptions
-			options = maybeOptions
-			const builtUrl = routeDef.buildUrl(params)
-
+		const buildUrlObj = (inputStr: string): URL => {
+			if (inputStr.startsWith('http://') || inputStr.startsWith('https://')) {
+				return new URL(inputStr)
+			}
 			const ctx = getContext()
 			const origin =
 				typeof window !== 'undefined' && window.location
 					? window.location.origin
 					: ctx?.origin || 'http://localhost'
 
-			if (builtUrl.startsWith('http')) {
-				url = new URL(builtUrl)
-			} else {
-				url = new URL(builtUrl, origin)
+			if (inputStr.startsWith('/')) {
+				return new URL(inputStr, origin)
 			}
+			if (inputStr.startsWith('.')) {
+				const base =
+					typeof window !== 'undefined' && window.location
+						? window.location.href
+						: ctx?.origin || 'http://localhost'
+				return new URL(inputStr, base)
+			}
+			return new URL(`/${inputStr}`, origin)
+		}
+
+		if (typeof input === 'object' && input !== null && 'buildUrl' in input) {
+			const routeDef = input as RouteDefinition
+			const params = paramsOrOptions
+			options = maybeOptions
+			url = buildUrlObj(routeDef.buildUrl(params))
 		} else {
 			if (typeof input === 'object' && input !== null && !(input instanceof URL)) {
-				return input as ApiClientInstance
+				return input as ApiClientInstance<any>
 			}
 			options = paramsOrOptions
+			if (typeof input === 'string') {
+				if (input.includes('[') && input.includes(']')) {
+					template = input
+				}
+				url = buildUrlObj(input)
+			} else {
+				url = input
+			}
 		}
 
 		const ctx = getContext()
@@ -231,41 +237,11 @@ export function createApiClientFactory(executor: RequestExecutor) {
 		const maxRetries = options.retries ?? currentConfig.retries
 		const retryDelay = options.retryDelay ?? currentConfig.retryDelay
 
-		if (!url!) {
-			if (typeof input === 'string') {
-				if (input.startsWith('http://') || input.startsWith('https://')) {
-					url = new URL(input)
-				} else if (input.startsWith('/')) {
-					const ctx = getContext()
-					const origin =
-						typeof window !== 'undefined' && window.location
-							? window.location.origin
-							: ctx?.origin || 'http://localhost'
-					url = new URL(input, origin)
-				} else if (input.startsWith('.')) {
-					const ctx = getContext()
-					const base =
-						typeof window !== 'undefined' && window.location
-							? window.location.href
-							: ctx?.origin || 'http://localhost'
-					url = new URL(input, base)
-				} else {
-					const ctx = getContext()
-					const origin =
-						typeof window !== 'undefined' && window.location
-							? window.location.origin
-							: ctx?.origin || 'http://localhost'
-					url = new URL(`/${input}`, origin)
-				}
-			} else {
-				url = input
-			}
-		}
-
 		async function requestWithRetry<T>(
 			method: HttpMethod,
 			currentUrl: URL,
-			body?: unknown
+			body?: unknown,
+			signal?: AbortSignal
 		): Promise<T> {
 			const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
 			const requestHeaders: Record<string, string> = isFormData
@@ -304,6 +280,7 @@ export function createApiClientFactory(executor: RequestExecutor) {
 							method,
 							headers: requestHeaders,
 							body: requestBody,
+							signal: signal ?? options.signal,
 						})
 
 						const finalHandler = async (req: Request): Promise<PounceResponse> => {
@@ -358,14 +335,37 @@ export function createApiClientFactory(executor: RequestExecutor) {
 		}
 
 		return {
-			get<T>(...args: [params?: any]): HydratedPromise<T> {
-				const params = args[0] as Record<string, string> | undefined
-				const currentUrl = new URL(url)
-				if (params) {
+			get<T>(
+				params?: Record<string, string | number>,
+				options?: { signal?: AbortSignal }
+			): HydratedPromise<T> {
+				let currentUrl: URL
+
+				if (template && params) {
+					let builtPath = template
+					const usedKeys = new Set<string>()
 					for (const [key, value] of Object.entries(params)) {
-						currentUrl.searchParams.set(key, value)
+						const placeholder = `[${key}]`
+						if (builtPath.includes(placeholder)) {
+							builtPath = builtPath.replace(placeholder, String(value))
+							usedKeys.add(key)
+						}
+					}
+					currentUrl = buildUrlObj(builtPath)
+					for (const [key, value] of Object.entries(params)) {
+						if (!usedKeys.has(key)) {
+							currentUrl.searchParams.set(key, String(value))
+						}
+					}
+				} else {
+					currentUrl = new URL(url)
+					if (params) {
+						for (const [key, value] of Object.entries(params)) {
+							currentUrl.searchParams.set(key, String(value))
+						}
 					}
 				}
+
 				const currentSsrId = getSSRId(currentUrl)
 				const activeCtx = getContext()
 				const isSSR = activeCtx ? (activeCtx.config.ssr ?? config.ssr) : config.ssr
@@ -377,29 +377,51 @@ export function createApiClientFactory(executor: RequestExecutor) {
 
 				const promise = (async () => {
 					if (cachedData !== undefined) return cachedData
-					return requestWithRetry<T>('GET', currentUrl)
+					return requestWithRetry<T>('GET', currentUrl, undefined, options?.signal)
 				})()
 
 				return withHydration(promise, cachedData)
 			},
-			async post<T>(body: unknown): Promise<T> {
-				return requestWithRetry<T>('POST', url, body)
+			async post<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T> {
+				return requestWithRetry<T>('POST', url, body, options?.signal)
 			},
-			async put<T>(body: unknown): Promise<T> {
-				return requestWithRetry<T>('PUT', url, body)
+			async put<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T> {
+				return requestWithRetry<T>('PUT', url, body, options?.signal)
 			},
-			async del<T>(...args: [params?: any]): Promise<T> {
-				const params = args[0] as Record<string, string> | undefined
-				const currentUrl = new URL(url)
-				if (params) {
+			async del<T>(
+				params?: Record<string, string | number>,
+				options?: { signal?: AbortSignal }
+			): Promise<T> {
+				let currentUrl: URL
+
+				if (template && params) {
+					let builtPath = template
+					const usedKeys = new Set<string>()
 					for (const [key, value] of Object.entries(params)) {
-						currentUrl.searchParams.set(key, value)
+						const placeholder = `[${key}]`
+						if (builtPath.includes(placeholder)) {
+							builtPath = builtPath.replace(placeholder, String(value))
+							usedKeys.add(key)
+						}
+					}
+					currentUrl = buildUrlObj(builtPath)
+					for (const [key, value] of Object.entries(params)) {
+						if (!usedKeys.has(key)) {
+							currentUrl.searchParams.set(key, String(value))
+						}
+					}
+				} else {
+					currentUrl = new URL(url)
+					if (params) {
+						for (const [key, value] of Object.entries(params)) {
+							currentUrl.searchParams.set(key, String(value))
+						}
 					}
 				}
-				return requestWithRetry<T>('DELETE', currentUrl)
+				return requestWithRetry<T>('DELETE', currentUrl, undefined, options?.signal)
 			},
-			async patch<T>(body: unknown): Promise<T> {
-				return requestWithRetry<T>('PATCH', url, body)
+			async patch<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T> {
+				return requestWithRetry<T>('PATCH', url, body, options?.signal)
 			},
 		}
 	}
@@ -416,7 +438,7 @@ export function createApiClientFactory(executor: RequestExecutor) {
 			}
 			return Reflect.get(target, prop, receiver)
 		},
-	}) as unknown as ApiClient & ApiClientInstance
+	}) as unknown as ApiClient & ApiClientInstance<any>
 
 	return api
 }
@@ -424,12 +446,26 @@ export function createApiClientFactory(executor: RequestExecutor) {
 export interface ApiClient {
 	<P extends string>(
 		input: P | URL | object,
-		options?: { timeout?: number; retries?: number; retryDelay?: number }
+		options?: { timeout?: number; retries?: number; retryDelay?: number; signal?: AbortSignal }
 	): ApiClientInstance<P>
 
 	<P extends string, Q extends AssertSchema>(
 		routeDef: RouteDefinition<P, Q>,
 		params: any,
-		options?: { timeout?: number; retries?: number; retryDelay?: number }
+		options?: { timeout?: number; retries?: number; retryDelay?: number; signal?: AbortSignal }
 	): ApiClientInstance<string>
+}
+
+export interface ApiClientInstance<P extends string> {
+	get<T>(
+		params?: ExtractPathParams<P> | Record<string, string | number>,
+		options?: { signal?: AbortSignal }
+	): HydratedPromise<T>
+	post<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T>
+	put<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T>
+	del<T>(
+		params?: ExtractPathParams<P> | Record<string, string | number>,
+		options?: { signal?: AbortSignal }
+	): Promise<T>
+	patch<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T>
 }

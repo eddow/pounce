@@ -27,7 +27,8 @@ describe('spread attribute babel transform', () => {
 
 	it('wraps spread with other attrs: mixed case via pounceSpreadPlugin', () => {
 		const out = transform(`<Comp id="x" {...state.attrs} />`)
-		expect(out).toContain('c(()=>state.attrs)')
+		expect(out).toContain('c({id:"x"},')
+		expect(out).toContain('()=>state.attrs')
 	})
 
 	it('wraps spread of a plain identifier', () => {
@@ -43,6 +44,13 @@ describe('spread attribute babel transform', () => {
 	it('auto-imports c from @pounce/core', () => {
 		const out = transform(`<div {...state} />`)
 		expect(out).toMatch(/import\s*\{[^}]*\bc\b[^}]*\}.*from"@pounce\/core"/)
+	})
+
+	it('wraps multiple spreads in a single c() with multiple arguments', () => {
+		const out = transform(`<Comp value={state.count} {...counts[state.locale]} />`)
+		// Should be: c({ value: r(() => state.count, val => state.count = val) }, () => counts[state.locale])
+		expect(out).toMatch(/c\(\{[^}]*value[^}]*\},\(\)=>counts\[state\.locale\]\)/)
+		expect(out).toContain('r(')
 	})
 
 	it('does not transform regular object spreads outside JSX', () => {

@@ -40,7 +40,7 @@ export default defineConfig({
 			},
 			dts: {
 				rollupTypes: true,
-				exclude: ['**/node_modules/**', '**/mutts/**', '**/*.spec.ts', '**/*.spec.tsx', '**/src/demo/**', '**/src/entry.ts'],
+				exclude: ['**/node_modules/**', '**/mutts/**', '**/*.spec.ts', '**/*.spec.tsx', '**/src/demo/**', '**/src/entry.ts', '**/tests/**'],
 				afterBuild() {
 					// Copy JSX types to dist, rewriting relative imports to point to rolled-up dom.d.ts
 					const jsxSource = readFileSync(join(projectRootDir, 'src/types/jsx.d.ts'), 'utf8')

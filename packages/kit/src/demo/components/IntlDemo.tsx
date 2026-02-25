@@ -1,14 +1,15 @@
 import { reactive } from 'mutts'
+import { DisplayProvider } from '../../components'
 import { componentStyle } from '../../css'
 import {
 	DisplayNames,
 	Date as IntlDate,
 	List as IntlList,
 	Number as IntlNumber,
+	type IntlPluralCases,
 	Plural,
 	RelativeTime,
 } from '../../intl'
-import { setLocaleResolver } from '../../intl/locale'
 
 componentStyle.css`
 	.id-section { margin-bottom: 32px; }
@@ -63,113 +64,135 @@ const state = reactive({
 	count: 3,
 })
 
-setLocaleResolver(() => state.locale)
-
 const fixedDate = new globalThis.Date('2023-06-15T10:30:00Z')
-
+const counts: Record<string, IntlPluralCases> = {
+	'en-US': {
+		one: 'one item',
+		other: (n) => `${n} items`,
+	},
+	'fr-FR': {
+		one: (n) => `${n} truc`,
+		other: (n) => `${n} trucs`,
+	},
+	'ar-EG': {
+		zero: 'لا شيء',
+		one: 'شيء واحد',
+		two: 'شيئان', // 'two' is a specific category in Arabic
+		few: (n) => `${n} أشياء`, // 3 to 10
+		many: (n) => `${n} شيئًا`, // 11 to 99
+		other: (n) => `${n} شيء`, // 100+ and decimals
+	},
+	'ja-JP': {
+		// Japanese is a "root" plural language.
+		// Intl.PluralRules('ja-JP').select(n) ALWAYS returns 'other'.
+		other: (n) => (n === 1 ? '一つ' : n === 2 ? '二つ' : `${n} つ`),
+	},
+}
 export default function IntlDemo() {
 	function setLocale(l: string) {
 		state.locale = l
 	}
 
 	return (
-		<section class="id-section">
-			<h2>Intl Components</h2>
-			<p style="font-size:13px;color:#94a3b8;margin:0 0 16px">
-				All 6 Intl components — output updates reactively when locale changes.
-			</p>
+		<DisplayProvider locale={state.locale}>
+			<section class="id-section">
+				<h2>Intl Components</h2>
+				<p style="font-size:13px;color:#94a3b8;margin:0 0 16px">
+					All 6 Intl components — output updates reactively when locale changes.
+				</p>
 
-			<div class="id-locale-bar">
-				<for each={LOCALES}>
-					{(l) => (
-						<button
-							class={`id-locale-btn${state.locale === l ? ' active' : ''}`}
-							onClick={() => setLocale(l)}
-						>
-							{l}
-						</button>
-					)}
-				</for>
-			</div>
+				<div class="id-locale-bar">
+					<for each={LOCALES}>
+						{(l) => (
+							<button
+								class={`id-locale-btn${state.locale === l ? ' active' : ''}`}
+								onClick={() => setLocale(l)}
+							>
+								{l}
+							</button>
+						)}
+					</for>
+				</div>
 
-			<div class="id-slider-row">
-				<span style="font-size:12px;color:#64748b;font-family:monospace;min-width:100px">
-					count (Plural):
-				</span>
-				<input
-					type="range"
-					min="0"
-					max="10"
-					value={String(state.count)}
-					update:value={(v: string) => {
-						state.count = globalThis.Number(v)
-					}}
-				/>
-				<span class="id-slider-val">{state.count}</span>
-			</div>
+				<div class="id-slider-row">
+					<span style="font-size:12px;color:#64748b;font-family:monospace;min-width:100px">
+						count (Plural):
+					</span>
+					<input
+						type="range"
+						min="0"
+						max="10"
+						value={String(state.count)}
+						update:value={(v: string) => {
+							state.count = globalThis.Number(v)
+						}}
+					/>
+					<span class="id-slider-val">{state.count}</span>
+				</div>
 
-			<div class="id-rows">
-				<div class="id-row">
-					<div class="id-content">
-						<span class="id-out">
-							<IntlNumber value={1234567.89} style="currency" currency="EUR" />
-						</span>
+				<div class="id-rows">
+					<div class="id-row">
+						<div class="id-content">
+							<span class="id-out">
+								<IntlNumber value={1234567.89} style="currency" currency="EUR" />
+							</span>
+						</div>
+						<div class="id-key">
+							&lt;Number value={1234567.89} style="currency" currency="EUR" /&gt;
+						</div>
 					</div>
-					<div class="id-key">
-						&lt;Number value={1234567.89} style="currency" currency="EUR" /&gt;
+					<div class="id-row">
+						<div class="id-content">
+							<span class="id-out">
+								<IntlNumber value={0.874} style="percent" />
+							</span>
+						</div>
+						<div class="id-key">&lt;Number value={0.874} style="percent" /&gt;</div>
+					</div>
+					<div class="id-row">
+						<div class="id-content">
+							<span class="id-out">
+								<IntlDate value={fixedDate} dateStyle="long" />
+							</span>
+						</div>
+						<div class="id-key">&lt;Date value={String(fixedDate)} dateStyle="long" /&gt;</div>
+					</div>
+					<div class="id-row">
+						<div class="id-content">
+							<span class="id-out">
+								<RelativeTime value={-3} unit="day" />
+							</span>
+						</div>
+						<div class="id-key">&lt;RelativeTime value={-3} unit="day" /&gt;</div>
+					</div>
+					<div class="id-row">
+						<div class="id-content">
+							<span class="id-out">
+								<IntlList value={['apples', 'bananas', 'cherries']} />
+							</span>
+						</div>
+						<div class="id-key">&lt;List value={['apples', 'bananas', 'cherries']} /&gt;</div>
+					</div>
+					<div class="id-row">
+						<div class="id-content">
+							<span class="id-out">
+								<Plural value={state.count} {...counts[state.locale]} />
+							</span>
+						</div>
+						<div class="id-key">
+							&lt;Plural value={'{count}'} {'{...counts[state.locale]}'} /&gt;
+						</div>
+					</div>
+					<div class="id-row">
+						<div class="id-content">
+							<span class="id-out">
+								<DisplayNames value="US" type="region" />
+							</span>
+						</div>
+						<div class="id-key">&lt;DisplayNames value="US" type="region" /&gt;</div>
 					</div>
 				</div>
-				<div class="id-row">
-					<div class="id-content">
-						<span class="id-out">
-							<IntlNumber value={0.874} style="percent" />
-						</span>
-					</div>
-					<div class="id-key">&lt;Number value={0.874} style="percent" /&gt;</div>
-				</div>
-				<div class="id-row">
-					<div class="id-content">
-						<span class="id-out">
-							<IntlDate value={fixedDate} dateStyle="long" />
-						</span>
-					</div>
-					<div class="id-key">&lt;Date value={String(fixedDate)} dateStyle="long" /&gt;</div>
-				</div>
-				<div class="id-row">
-					<div class="id-content">
-						<span class="id-out">
-							<RelativeTime value={-3} unit="day" />
-						</span>
-					</div>
-					<div class="id-key">&lt;RelativeTime value={-3} unit="day" /&gt;</div>
-				</div>
-				<div class="id-row">
-					<div class="id-content">
-						<span class="id-out">
-							<IntlList value={['apples', 'bananas', 'cherries']} />
-						</span>
-					</div>
-					<div class="id-key">&lt;List value={['apples', 'bananas', 'cherries']} /&gt;</div>
-				</div>
-				<div class="id-row">
-					<div class="id-content">
-						<span class="id-out">
-							<Plural value={state.count} one="item" other="items">
-								{state.count}{' '}
-							</Plural>
-						</span>
-					</div>
-					<div class="id-key">&lt;Plural value={'{count}'} one="item" other="items" /&gt;</div>
-				</div>
-				<div class="id-row">
-					<div class="id-content">
-						<span class="id-out">
-							<DisplayNames value="US" type="region" />
-						</span>
-					</div>
-					<div class="id-key">&lt;DisplayNames value="US" type="region" /&gt;</div>
-				</div>
-			</div>
-		</section>
+			</section>
+		</DisplayProvider>
 	)
 }

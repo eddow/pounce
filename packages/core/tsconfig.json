@@ -12,7 +12,7 @@
 		"baseUrl": ".",
 		"paths": {
 			"@pounce/core": [
-				"src/lib/index.ts"
+				"src/dom/index.ts"
 			]
 		},
 		"allowImportingTsExtensions": true,

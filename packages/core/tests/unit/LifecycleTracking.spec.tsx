@@ -23,7 +23,7 @@ describe('Lifecycle Tracking Propagation', () => {
 			renderCount++
 			const onMount = (_el: HTMLElement) => {
 				// Reading reactive state here should NOT cause the component to depend on it
-				const _v = state.count
+				state.count; // Reading state to ensure it's NOT tracked
 			}
 			return <div use={onMount}>Static Content</div>
 		}

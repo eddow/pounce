@@ -1,8 +1,0 @@
-export { Date, type IntlDateProps } from './date'
-export { DisplayNames, type IntlDisplayNamesProps } from './display-names'
-export { type IntlListProps, List } from './list'
-export { resolveLocale, setLocaleResolver } from './locale'
-export { Intl, type IntlProps } from './main'
-export { type IntlNumberProps, Number } from './number'
-export { type IntlPluralProps, Plural } from './plural'
-export { type IntlRelativeTimeProps, RelativeTime } from './relative-time'

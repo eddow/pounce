@@ -26,6 +26,15 @@ function buildCompositeCall(
 		if (t.isSpreadElement(arg)) {
 			layers.push(t.arrowFunctionExpression([], t.cloneNode(arg.argument)))
 		} else if (t.isObjectExpression(arg) && arg.properties.length === 0) {
+		} else if (t.isCallExpression(arg) && t.isIdentifier(arg.callee, { name: 'c' })) {
+			// If it's already a c() call, merge its arguments
+			for (const cArg of arg.arguments) {
+				if (t.isArrowFunctionExpression(cArg)) {
+					layers.push(cArg)
+				} else if (t.isExpression(cArg)) {
+					layers.push(t.arrowFunctionExpression([], cArg))
+				}
+			}
 		} else if (t.isExpression(arg)) {
 			layers.push(t.cloneNode(arg))
 		}

@@ -170,15 +170,13 @@ export class CompositeAttributes {
 	get keys(): Set<string> {
 		const keys = new Set<string>()
 		for (const layer of this.layers.map(collapseLayer)) {
-			if (layer instanceof CompositeAttributes) for (const key of layer.keys) keys.add(key)
-			else
-				for (const key of stringKeys(layer)) {
-					if (typeof key === 'string') {
-						const colonIndex = key.indexOf(':')
-						const rootKey = colonIndex > 0 ? key.slice(0, colonIndex) : key
-						if (!this.masked.has(rootKey)) keys.add(rootKey)
-					}
+			for (const key of stringKeys(layer)) {
+				if (typeof key === 'string') {
+					const colonIndex = key.indexOf(':')
+					const rootKey = colonIndex > 0 ? key.slice(0, colonIndex) : key
+					if (!this.masked.has(rootKey)) keys.add(rootKey)
 				}
+			}
 		}
 		return keys
 	}
@@ -192,10 +190,7 @@ export class CompositeAttributes {
 			if (nonReactive && (typeof rawLayer === 'function' || isReactive(rawLayer))) continue
 			const layer = collapseLayer(rawLayer)
 
-			if (layer instanceof CompositeAttributes) {
-				const inner = layer.getSingle(key, nonReactive)
-				if (inner !== undefined) return inner
-			} else if (layer && key in layer) {
+			if (layer && key in layer) {
 				if (nonReactive) this.mask(key)
 				return layer[key]
 			}
@@ -209,17 +204,9 @@ export class CompositeAttributes {
 
 		// Reverse iteration for precedence (last one wins)
 		for (let i = this.layers.length - 1; i >= 0; i--) {
-			const layer = collapseLayer(this.layers[i])
-			if (nonReactive && isReactive(layer)) continue
-
-			if (layer instanceof CompositeAttributes) {
-				const inner = layer.getCategory(category, nonReactive)
-				if (inner) {
-					result ??= {}
-					Object.assign(result, inner)
-				}
-				continue
-			}
+			const rawLayer = this.layers[i]
+			if ((nonReactive && typeof rawLayer === 'function') || isReactive(rawLayer)) continue
+			const layer = collapseLayer(rawLayer)
 
 			for (const key of Object.keys(layer)) {
 				if (key.startsWith(prefix)) {
@@ -272,10 +259,6 @@ export class CompositeAttributes {
 	requiresEffect(key: string): boolean {
 		if (this.isReactive) return true
 		for (const layer of this.layers.map(collapseLayer)) {
-			if (layer instanceof CompositeAttributes) {
-				if (layer.requiresEffect(key)) return true
-				continue
-			}
 			if (Object.hasOwn(layer, key) || key in layer) {
 				if (layer[key] instanceof ReactiveProp) return true
 			}
