@@ -22,6 +22,7 @@ export type SelectProps = VariantProps &
 	JSX.IntrinsicElements['select'] & {
 		fullWidth?: boolean
 		options?: readonly Option[]
+		onInput?: (value: string) => void
 	}
 
 export type SelectModel = {

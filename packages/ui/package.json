@@ -33,13 +33,18 @@
 		"dist",
 		"src",
 		"!src/**/*.spec.*",
+		"!src/**/*.test.*",
+		"!src/demo",
+		"!tests",
 		"README.md",
 		"LLM.md"
 	],
 	"scripts": {
 		"build": "vite build",
+		"demo": "tsc --project tsconfig.demo.json && vite",
 		"test": "vitest run",
 		"test:watch": "vitest",
+		"test:e2e": "playwright test",
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {

@@ -88,7 +88,6 @@ export function pounceCorePlugin(options: PounceCorePluginOptions = {}) {
 		onlyRemoveTypeImports: true,
 		...options,
 	}
-	console.error('--- pounceCorePlugin FACTORY called ---')
 	return {
 		name: 'pounce-core',
 		enforce: 'pre' as const,

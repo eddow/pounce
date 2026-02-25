@@ -13,6 +13,12 @@
 		"paths": {
 			"@pounce/core": [
 				"src/dom/index.ts"
+			],
+			"mutts": [
+				"../../mutts/dist"
+			],
+			"mutts/*": [
+				"../../mutts/dist/*"
 			]
 		},
 		"allowImportingTsExtensions": true,

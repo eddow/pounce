@@ -39,6 +39,7 @@ export const createBaseConfig = (packageDir: string) => {
 			include: ['**/*.spec.{ts,tsx}'],
 			exclude: ['**/node_modules/**', '**/dist/**'],
 			resolveSnapshotPath: (testPath, snapExtension) => testPath + snapExtension,
+			setupFiles: [resolve(rootDir, 'test-setup.ts')],
 			browser: {
 				enabled: isBrowser,
 				headless: true,

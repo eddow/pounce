@@ -31,22 +31,22 @@
 				"./src/server/index.ts"
 			],
 			"pounce-ts": [
-				"../core/src/lib/index.ts"
+				"../core/dist/lib/index"
 			],
 			"pounce-ts/*": [
-				"../core/src/*"
+				"../core/dist/lib/*"
 			],
 			"pounce-ui": [
-				"../ui/src/index.ts"
+				"../ui/dist/index"
 			],
 			"pounce-ui/*": [
-				"../ui/src/*"
+				"../ui/dist/*"
 			],
 			"@pounce/kit": [
-				"../kit/src/index.ts"
+				"../kit/dist/index"
 			],
 			"@pounce/kit/*": [
-				"../kit/src/*"
+				"../kit/dist/*"
 			],
 			"@pounce/board": [
 				"./src/index.ts"
@@ -55,10 +55,10 @@
 				"./src/*"
 			],
 			"mutts": [
-				"../../../mutts/src/index.ts"
+				"../../../mutts/dist/index"
 			],
 			"mutts/*": [
-				"../../../mutts/src/*"
+				"../../../mutts/dist/*"
 			],
 			"npc-script": [
 				"../../../npcs/src/index.ts"

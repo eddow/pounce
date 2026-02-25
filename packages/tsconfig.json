@@ -37,10 +37,10 @@
 				"./kit/src/*"
 			],
 			"mutts": [
-				"../mutts/src"
+				"../mutts/dist"
 			],
 			"mutts/*": [
-				"../mutts/src/*"
+				"../mutts/dist/*"
 			]
 		}
 	},

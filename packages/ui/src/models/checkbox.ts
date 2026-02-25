@@ -24,6 +24,7 @@ type ControlBaseProps = VariantProps &
 
 export type CheckboxProps = ControlBaseProps & {
 	checked?: boolean
+	indeterminate?: boolean
 }
 
 export type RadioProps<Value = unknown> = ControlBaseProps & {
@@ -145,6 +146,11 @@ export function checkboxModel(props: CheckboxProps): CheckboxModel {
 									if (e.target instanceof HTMLInputElement) props.onChange!(e.target.checked)
 								}
 							: undefined
+					},
+					get ref() {
+						return (el: HTMLInputElement | null) => {
+							if (el) el.indeterminate = props.indeterminate ?? false
+						}
 					},
 				},
 				props,

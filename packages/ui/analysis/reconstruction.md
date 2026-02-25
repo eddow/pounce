@@ -187,7 +187,6 @@ The skeleton covers the most-used component domains. Remaining hooks to implemen
 | Accordion | `useAccordion` | `components/accordion.tsx` |
 | Menu | `useMenu` | `components/menu.tsx` |
 | Overlays | `useDialog`, `useToast`, `useDrawer` | `overlays/` |
-| ErrorBoundary | stays as component (no hook) | `components/error-boundary.tsx` |
 | Layout | stays as component (no hook) | `components/layout.tsx` |
 | Typography | stays as component (no hook) | `components/typography.tsx` |
 | DisplayProvider | stays as component (no hook) | `display/` |

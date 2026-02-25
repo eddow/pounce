@@ -25,12 +25,6 @@
 | `Accordion` + `AccordionGroup` | native `<details>`/`<summary>`, `open`/`onToggle`, group for exclusive-open |
 | `Progress` | native `<progress>`, indeterminate when value===undefined, aria attrs |
 | `Badge` | tag, icon (leading), variant |
-| `Pill` | tag, icon (leading), trailingIcon, variant |
-| `Chip` | tag, icon, dismissible + dismiss button, `onDismiss`, reactive `local.open` |
-| `Stars` | single value or `[min,max]` range, drag to adjust, double-click to collapse range, zeroElement, readonly, custom icon names (before/inside/after) |
-| `InfiniteScroll` | virtualized list, fixed-height fast path OR variable-height with ResizeObserver + binary-search offset table, stickyLast, perf marks |
-| `Dockview` | wraps `dockview-core`, widgets/tabs/headerLeft/headerRight/headerPrefix, reactive params, layout serialization, DefaultTab with close button |
-| `ErrorBoundary` | `ErrorReceiver` inner pattern, `caught()`, fallback(error, {componentStack}), `onError`, `ProductionErrorBoundary` variant |
 | `Menu` + `Menu.Item` + `Menu.Bar` | `<details>`/`<summary>` dropdown, a11y structure check in dev, auto-close on internal link click, responsive MenuBar (mobile hamburger / desktop inline) |
 | `Stack` / `Inline` / `Grid` | flex/grid layout primitives, SpacingToken scale (none/xs/sm/md/lg/xl), align/justify maps |
 | `Container` | fluid/fixed, dynamic tag |
@@ -84,9 +78,6 @@ The old adapter system (registry, `setAdapter`, `getAdapter`, `renderStructure` 
 **Dockview**
 - Entirely missing: `useDockview` hook (wraps dockview-core, widget/tab renderers, layout serialization)
 
-**ErrorBoundary**
-- Entirely missing: headless component (ErrorReceiver pattern, `caught()`, fallback) — requires `onEffectThrow` from `@pounce/core`, not expressible as a plain hook
-
 ### Remaining open items
 - `useSelect` hook (native `<select>` wrapper with fullWidth, variant) — types present in `forms.ts`, hook body not implemented
 - Directive/nav integration tests — jsdom lacks ResizeObserver/IntersectionObserver/scroll geometry; needs e2e or adapter-level tests
@@ -134,7 +125,6 @@ The old adapter system (registry, `setAdapter`, `getAdapter`, `renderStructure` 
 22. ✅ `useInfiniteScroll` — fixed-height O(1) fast path + variable-height ResizeObserver + prefix-sum offset table
 23. ✅ `useMenu`, `useMenuItem`, `useMenuBar` — details/summary semantics, dev-mode a11y checks, auto-close on link
 24. ❌ `useDockview` — not implemented (dockview-core dependency, low priority)
-25. ❌ `ErrorBoundary` headless component — requires core `onEffectThrow`, not a plain hook
 
 ---
 
@@ -164,7 +154,6 @@ All files marked `// TODO: Hungry dog` are implemented in `@pounce/ui` but have 
 
 ### Low priority / deferred
 - `useDockview` — dockview-core integration
-- `ErrorBoundary` headless component — requires `@pounce/core` `onEffectThrow`
 - Integration/e2e tests for directives and nav utilities
 
 ---
@@ -194,7 +183,6 @@ A headless component is needed when:
 | Accordion / AccordionGroup | `useAccordion` hook + `AccordionGroup` headless component | Group exclusive-open needs parent coordination |
 | Menu / MenuBar | Headless component | Compound (trigger + items), keyboard nav, a11y structure |
 | Dialog, Drawer, Toast | Headless component | Focus trap, portal, overlay lifecycle |
-| ErrorBoundary | Headless component (ErrorReceiver pattern) | Requires `onEffectThrow`, not expressible as a hook |
 | InfiniteScroll | `useInfiniteScroll` hook | All logic is self-contained in one scroll container |
 | Dockview | `useDockview` hook | Wraps external lib, single container |
 

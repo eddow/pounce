@@ -2,6 +2,9 @@ import { latch } from '@pounce/core'
 import { Router, type RouteWildcard } from '../../src/dom/index'
 import { client } from '../../src/platform/shared'
 import { linkModel, type LinkProps } from '../../src/router/link-model'
+import StorageTests from './fixtures/StorageTests'
+import IntlTests from './fixtures/IntlTests'
+import ApiTests from './fixtures/ApiTests'
 
 function A(props: LinkProps) {
 	const model = linkModel(props)
@@ -19,6 +22,21 @@ type Route = {
 }
 
 const routes: Route[] = [
+	{
+		path: '/storage',
+		label: 'Storage',
+		view: () => <StorageTests />
+	},
+	{
+		path: '/intl',
+		label: 'Intl',
+		view: () => <IntlTests />
+	},
+	{
+		path: '/api',
+		label: 'API',
+		view: () => <ApiTests />
+	},
 	{
 		path: '/users/[id]',
 		label: 'User',

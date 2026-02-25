@@ -135,33 +135,31 @@ describe('Effect topology and error propagation', () => {
 		expect(logs).toContain('parent-after-children-access')
 	})
 
-	it('ErrorBoundary catches child errors during initial render', () => {
+	it('catch meta-attribute catches child errors during initial render', () => {
 		let parentCaught = false
 		const logs: string[] = []
-
-		const ErrorBoundary: ComponentFunction = (props) => {
-			logs.push('boundary-start')
-
-			caught((err) => {
-				parentCaught = true
-				logs.push(`caught: ${err.message}`)
-			})
-
-			logs.push('boundary-end')
-			return <div>{props.children}</div>
-		}
 
 		const ThrowingChild = () => {
 			logs.push('child-start')
 			throw new Error('Child error')
 		}
 
-		const tree = <ErrorBoundary><ThrowingChild /></ErrorBoundary>
+		const tree = (
+			<div
+				catch={(err: any) => {
+					parentCaught = true
+					logs.push(`caught: ${err.message}`)
+					return <div>Error: {err.message}</div>
+				}}
+			>
+				<ThrowingChild />
+			</div>
+		)
+
 		try {
 			tree.render()
-		} catch {
-			// DynamicRenderingError escapes because the child produced no content —
-			// fallback rendering is a separate concern
+		} catch (e) {
+			// Subtree failure is expected if no fallback is returned or if it's a DynamicRenderingError
 		}
 
 		expect(parentCaught).toBe(true)

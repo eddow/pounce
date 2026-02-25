@@ -278,20 +278,32 @@ const dangerTrait: Trait = {
 
 `buildTraitChain(traits)` merges an array of Traits into `{ chain, classes, styles }` for DOM application.
 
-### 3.8 Error Boundaries
+### 3.8 Error Boundaries (the `catch` attribute)
+
+Pounce handles errors via the `catch` meta-attribute. It can be applied to any element or component to create an error boundary.
 
 ```tsx
-import { onEffectThrow } from 'mutts'
-
-const ErrorBoundary = (props) => {
-  const state = reactive({ error: null })
-  onEffectThrow((err) => { state.error = err })
-  return <>
-    <div if={state.error}>{state.error.message}</div>
-    <div if={!state.error}>{props.children}</div>
-  </>
+const MyPage = () => {
+  return (
+    <section 
+      catch={(error, reset) => (
+        <div class="error-fallback">
+          <p>Something went wrong: {error.message}</p>
+          <button onClick={reset}>Try Again</button>
+        </div>
+      )}
+    >
+      <DeeplyNestedThrowingComponent />
+    </section>
+  )
 }
 ```
+
+**Key Features**:
+- **Automatic Cleanup**: When an error occurs, the broken subtree is automatically unmounted and cleaned up.
+- **Recovery**: The `reset` callback (second argument) allows you to re-render the original content when the error is resolved.
+- **Propagation**: Errors bubble up to the nearest `catch` boundary in the component tree.
+- **Single Point of Failure**: Only the subtree managed by the tag with the `catch` attribute is replaced.
 
 `onEffectThrow` in a component body registers on the component's render effect. Child errors propagate up the effect parent chain.
 

@@ -253,7 +253,7 @@ export class CompositeAttributes {
 	}
 
 	get isReactive(): boolean {
-		return this.layers.some(isReactive)
+		return this.layers.some((l) => isReactive(l) || typeof l === 'function')
 	}
 
 	requiresEffect(key: string): boolean {
@@ -296,7 +296,7 @@ export class CompositeAttributes {
 	mergeClasses() {
 		const classes: any[] = []
 		for (const layer of this.layers.map(collapseLayer)) {
-			if ('class' in layer) {
+			if (layer && 'class' in layer) {
 				const val = collapse(layer.class)
 				if (Array.isArray(val)) classes.push(...val.flat(Infinity))
 				else if (val) classes.push(val)
@@ -309,7 +309,7 @@ export class CompositeAttributes {
 		// Collect all styles
 		const stylesInput: any[] = []
 		for (const layer of this.layers.map(collapseLayer)) {
-			if ('style' in layer) {
+			if (layer && 'style' in layer) {
 				const val = collapse(layer.style)
 				if (Array.isArray(val)) stylesInput.push(...val.flat(Infinity))
 				else if (val) stylesInput.push(val)

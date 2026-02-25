@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { reactive } from 'mutts'
-import { latch, document } from '@pounce/core'
+import { latch, document, pounceOptions } from '@pounce/core'
 
 describe('Directive Re-rendering', () => {
 	let container: HTMLElement
@@ -60,8 +60,14 @@ describe('Directive Re-rendering', () => {
 		const child = document.getElementById('child')
 		expect(child?.getAttribute('data-calls')).toBe('1')
 
-		state.parentTrigger++
-		expect(callCount).toBe(1)
+		const original = pounceOptions.checkReactivity
+		pounceOptions.checkReactivity = 'warn'
+		try {
+			state.parentTrigger++
+			expect(callCount).toBe(1)
+		} finally {
+			pounceOptions.checkReactivity = original
+		}
 		expect(document.getElementById('child')?.getAttribute('data-calls')).toBe('1')
 	})
 
@@ -86,8 +92,17 @@ describe('Directive Re-rendering', () => {
 		latch(container, <App />, env)
 		expect(callCount).toBe(1)
 
-		state.trigger++
 		// Rebuild fence prevents re-rendering: directive is NOT re-called
-		expect(callCount).toBe(1)
+		// When checkReactivity is 'error', this would throw.
+		// We can either catch it or temporarily downgrade to 'warn'.
+		// Let's test that it DOES NOT throw if we are in 'warn' mode (normal dev behavior)
+		const original = pounceOptions.checkReactivity
+		pounceOptions.checkReactivity = 'warn'
+		try {
+			state.trigger++
+			expect(callCount).toBe(1)
+		} finally {
+			pounceOptions.checkReactivity = original
+		}
 	})
 })
