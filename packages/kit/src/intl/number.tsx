@@ -1,3 +1,5 @@
+import { document, PounceElement } from '@pounce/core'
+import { effect } from 'mutts'
 import { cachedNumberFormat } from './cache'
 import { resolveLocale } from './locale'
 
@@ -9,7 +11,13 @@ export interface IntlNumberProps extends Intl.NumberFormatOptions {
 
 /** Formats a number according to locale. Returns a text node. */
 export function Number(props: IntlNumberProps) {
-	const { value, locale, ...options } = props
-	const fmt = cachedNumberFormat(resolveLocale(locale), options)
-	return <>{fmt.format(value)}</>
+	return new PounceElement(() => {
+		let node: Text | undefined
+		effect.named('number.intl')(() => {
+			const txt = cachedNumberFormat(resolveLocale(props.locale), props).format(props.value)
+			if (node) node.data = txt
+			else node = document.createTextNode(txt)
+		})
+		return node!
+	})
 }

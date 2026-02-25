@@ -100,12 +100,17 @@ const propsProxy: ProxyHandler<{
 		}
 	},
 	set(target, prop, value) {
-		if (typeof prop === 'string' && !(prop in target.superLayer)) {
-			const rp = target.composite.get(prop)
-			if (rp instanceof ReactiveProp) return trackWrite(rp, value)
+		if (typeof prop === 'string') {
+			if (!(prop in target.superLayer)) {
+				const rp = target.composite.get(prop)
+				if (rp instanceof ReactiveProp) return trackWrite(rp, value)
+				//reactiveOptions.warn(`[pounce] Cannot set read-only property "${prop}"`)
+			}
+			// try setting value in superLayer?? Is it a good idea?
+			target.superLayer[prop] = value
+			return true
 		}
-		// TODO: warn?
-		return true
+		return false
 	},
 
 	has: (target, prop) =>
@@ -219,7 +224,7 @@ export class CompositeAttributes {
 			for (const key of Object.keys(layer)) {
 				if (key.startsWith(prefix)) {
 					const name = key.slice(prefix.length)
-					if (name && !this.masked.has(name) && !result?.hasOwnProperty(name)) {
+					if (name && !this.masked.has(name) && !(result && Object.hasOwn(result, name))) {
 						if (nonReactive) this.mask(key)
 						result ??= {}
 						result[name] = layer[key]

@@ -43,6 +43,10 @@ Two layers:
 
 `defineRoute()` in `router/defs.ts` creates typed route definitions with `buildUrl()` and optional `querySchema` (arktype).
 
+`linkModel(props: LinkProps)` in `router/link-model.ts` — headless hook for `<a>` elements: intercepts clicks for SPA navigation, computes `ariaCurrent`. `LinkProps` extends `JSX.IntrinsicElements['a']` with:
+- `underline?: boolean` — controls text-decoration
+- `matchPrefix?: boolean` — `aria-current="page"` activates on any sub-route (uses `startsWith(href + '/')` to avoid false matches like `/router` → `/router-other`)
+
 ### API Client
 
 - **`api/core.ts`** — HTTP types, `ApiError`, middleware runner with `Server-Timing`, security headers, compression

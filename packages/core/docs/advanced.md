@@ -24,34 +24,36 @@ function App() {
 }
 ```
 
-### `if:name={value}` strict env comparison
+### `if:path={value}` strict env comparison
 
-Strict-compare a value against `env.name`:
+Strict-compare a value against `env[path]`. The `path` can use dashes to access nested properties (e.g., `user-role` resolves to `env.user?.role`):
 
 ```tsx
-<env role="admin">
+<env user={{ name: 'Alice', role: 'admin' }}>
   <>
-    <div if:role={"admin"}>Admin Dashboard</div>
+    <div if:user-role={"admin"}>Admin Dashboard</div>
     <div else>User Dashboard</div>
   </>
 </env>
 ```
 
-### `when:name={arg}` calling an env function
 
-Use `when:` to call a function exposed on `env` and render if it returns a truthy value:
+### `when:path={arg}` calling an env function
+
+Use `when:` to call a function exposed on `env` and render if it returns a truthy value. Dash-separated paths are supported:
 
 ```tsx
 function Area(props: {}, env: Env) {
-  env.has = (perm: string) => env.user?.permissions?.includes(perm)
+  env.auth = { has: (perm: string) => env.user?.permissions?.includes(perm) }
   return (
     <>
-      <div when:has={"write"}>You can write</div>
+      <div when:auth-has={"write"}>You can write</div>
       <div else>You cannot write</div>
     </>
   )
 }
 ```
+
 
 ### `else` and `else if` chains
 

@@ -1,4 +1,5 @@
-import { ReactiveProp } from '@pounce/core'
+import { mountedNodes, ReactiveProp } from '@pounce/core'
+import { effect } from 'mutts'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { sizeable } from './sizeable'
 
@@ -30,10 +31,19 @@ describe('sizeable directive', () => {
 		container.appendChild(parent)
 		document.body.appendChild(container)
 
+		mountedNodes.add(container)
+		mountedNodes.add(parent)
+		mountedNodes.add(element)
+		mountedNodes.add(flexSibling)
+
 		flexSibling.style.flex = '1'
 	})
 
 	afterEach(() => {
+		mountedNodes.delete(container)
+		mountedNodes.delete(parent)
+		mountedNodes.delete(element)
+		mountedNodes.delete(flexSibling)
 		document.body.removeChild(container)
 	})
 
@@ -114,5 +124,43 @@ describe('sizeable directive', () => {
 		cleanup?.()
 		expect(element.querySelector('.sizeable-handle')).toBeNull()
 		expect(element.classList.contains('sizeable')).toBe(false)
+	})
+
+	it('defers setup until element is mounted', async () => {
+		const unmounted = document.createElement('div')
+		const flex = document.createElement('div')
+		flex.style.flex = '1'
+
+		let cleanup: (() => void) | undefined
+		const stop = effect(() => {
+			cleanup?.()
+			cleanup = sizeable(unmounted, rp(300)) as any
+		})
+
+		expect(unmounted.classList.contains('sizeable')).toBe(false)
+		expect(unmounted.querySelector('.sizeable-handle')).toBeNull()
+
+		// Clear parent from beforeEach setup
+		parent.innerHTML = ''
+
+		// Now mount it
+		parent.appendChild(unmounted)
+		parent.appendChild(flex)
+
+		// Manually trigger mounted state (simulating observer)
+		mountedNodes.add(unmounted)
+		mountedNodes.add(flex)
+
+		// Wait for effect to re-run
+		await Promise.resolve()
+
+		// sizeable should now trigger within the effect because isMounted(unmounted) changed
+		expect(unmounted.classList.contains('sizeable')).toBe(true)
+		expect(unmounted.querySelector('.sizeable-handle')).toBeTruthy()
+
+		stop()
+		cleanup?.()
+		mountedNodes.delete(unmounted)
+		mountedNodes.delete(flex)
 	})
 })

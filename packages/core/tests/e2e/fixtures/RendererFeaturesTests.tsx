@@ -85,15 +85,6 @@ const controls = {
 		state.list.push({ id, label: label ?? `Item ${id}` })
 	},
 }
-
-declare global {
-	interface Window {
-		__rendererControls?: typeof controls
-	}
-}
-
-window.__rendererControls = controls
-
 let nextListInstance = 1
 
 function DynamicDemo() {
@@ -117,13 +108,15 @@ function DynamicDemo() {
 }
 
 function IfDemo(_: any, env: Env) {
-	effect(() => {
-		env.currentRole = state.role
-	})
 	env.allows = (perm: string) => {
 		if (perm === 'analytics') return state.role !== 'guest'
 		if (perm === 'admin') return state.role === 'admin'
 		return false
+	}
+	env.user = {
+		get role() {
+			return state.role
+		}
 	}
 	return (
 		<section data-testid="if-demo">
@@ -136,10 +129,10 @@ function IfDemo(_: any, env: Env) {
 				</div>
 			</>
 			<>
-				<div data-testid="role-admin" if:currentRole="admin">
+				<div data-testid="role-admin" if:user-role="admin">
 					Admin control
 				</div>
-				<div data-testid="role-member" else if:currentRole="member">
+				<div data-testid="role-member" else if:user-role="member">
 					Member area
 				</div>
 				<div data-testid="role-guest" else>
@@ -162,24 +155,24 @@ function UseDemo(_: any, env: Env) {
 	env.marker = (target: Node | Node[], value: string) => {
 		const node = Array.isArray(target) ? target[0] : target
 		if (!(node instanceof HTMLElement)) return
-		return effect(() => {
-			node.dataset.marker = String(value)
-			state.mixinUpdates++
-			return () => {
-				node.removeAttribute('data-marker')
-			}
-		})
+		node.dataset.marker = String(value)
+		state.mixinUpdates++
+		return () => {
+			node.removeAttribute('data-marker')
+		}
 	}
 	return (
 		<section data-testid="use-demo">
 			<div if={state.showUseTarget}
 				data-testid="use-target"
 				use={(target: HTMLElement) => {
-					if (target.dataset.mounted !== 'yes') {
-						target.dataset.mounted = 'yes'
-						state.useMounts++
-					}
-					target.dataset.mountCount = String(state.useMounts)
+					effect(()=> {
+						if (target.dataset.mounted !== 'yes') {
+							target.dataset.mounted = 'yes'
+							state.useMounts++
+						}
+						target.dataset.mountCount = String(state.useMounts)
+					})
 				}}
 				use:marker={state.variant}
 			>

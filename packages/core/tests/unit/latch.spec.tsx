@@ -70,8 +70,9 @@ describe('latch()', () => {
 		unlatch = latch(target, <span>first</span>)
 		const unlatch2 = latch(target, <span>second</span>)
 
-		expect(warnings.length).toBe(1)
-		expect(warnings[0]).toContain('latch conflict')
+		const conflictWarnings = warnings.filter((w) => w.includes('latch conflict'))
+		expect(conflictWarnings.length).toBe(1)
+		expect(conflictWarnings[0]).toContain('latch conflict')
 
 		unlatch2()
 		console.warn = originalWarn

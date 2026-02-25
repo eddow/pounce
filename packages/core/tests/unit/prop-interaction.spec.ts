@@ -1,6 +1,6 @@
 import { reactive } from 'mutts'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ReactiveProp, c, pounceOptions } from '@pounce/core'
+import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest'
+import { ReactiveProp, c, h, pounceOptions, r } from '@pounce/core'
 import type { PropInteraction } from '@pounce/core'
 
 describe('PropInteraction tracking', () => {
@@ -114,5 +114,18 @@ describe('PropInteraction tracking', () => {
 		proxy.x = 1
 		expect(rp.interaction).toBe<PropInteraction>('none')
 		expect(warnSpy).not.toHaveBeenCalled()
+	})
+})
+
+describe('propsProxy write guard', () => {
+	test('assigning a one-way binding in strict mode throws TypeError', () => {
+		const comp = (props: { value: string }) => {
+			'use strict'
+			props.value = 'test'
+			return []
+		}
+		expect(() => {
+			h(comp, { value: r(() => 'initial') }).render({})
+		}).toThrow(TypeError)
 	})
 })

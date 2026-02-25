@@ -83,6 +83,16 @@ Filters an array in-place.
 
 **Returns:** Boolean (false when done)
 
+### `isMounted(node)`
+
+Reactive utility that returns true if the node is currently mounted in the DOM.
+
+**Parameters:**
+- `node` - The DOM Node to check
+
+**Returns:** Boolean (reactive)
+
+
 ## Debug Utilities
 
 Note: advanced debug helpers are internal; prefer `effect()` and `onEffectTrigger()` in userland.
@@ -106,8 +116,8 @@ onEffectTrigger((obj, evolution) => {
 ### Conditional Rendering
 
 - `if={condition}` — Render the node when `condition` is truthy.
-- `if:name={value}` — Strict-compare `value === env.name` to decide rendering.
-- `when:name={arg}` — Call `env[name](arg)`; render when the returned value is truthy.
+- `if:path={value}` — Strict-compare `value === env[path]` to decide rendering (supports dash-separated paths like `role-name`).
+- `when:path={arg}` — Call `env[path](arg)`; render when the returned value is truthy (supports dash-separated paths).
 - `else` — Render this node only if no previous sibling in the same fragment has rendered via an `if`/`when` condition. Can be chained as `else if={...}`.
 
 Notes
@@ -164,9 +174,10 @@ Turns any element into an error boundary. Children that throw during render or i
 </div>
 ```
 
-### `pick:name={value}` — Oracle-Based Selection
+### `pick:path={value}` — Oracle-Based Selection
 
-Multi-sibling selection driven by an env oracle. All siblings with `pick:name` declare a candidate value; `env[name](options: Set)` is called as an oracle and returns which value(s) render.
+Multi-sibling selection driven by an env oracle. All siblings with `pick:path` declare a candidate value; `env[path]` (where `path` supports dash-separation like `user-role`) is called as an oracle and returns which value(s) render.
+
 
 **Requires** `env[name]` to be a function — throws if missing.
 
@@ -216,9 +227,11 @@ Attach an inline mount callback directly on an element or component.
 **Signature:** `use={(target: Node | Node[], env) => void}`
 
 **Behavior:**
-- Called once after the target is rendered.
+- Called once after the target is rendered (during creation).
 - `target` is the rendered node for intrinsic elements, or `Node | Node[]` for components.
-- No cleanup or reactive re-run; for reactive behavior/cleanup, use `use:name` with a env-based mixin.
+- **Synchronous**: Called directly, NOT within a reactive effect.
+- No cleanup or reactive re-run.
+
 
 **Example:**
 ```tsx
@@ -236,9 +249,11 @@ Attach an inline mount callback directly on an element or component.
 
 Attach a env-provided mixin to the rendered target.
 
-- Define on env: `env.name(target: Node | Node[], value: any | undefined, env)`
-- Use in JSX: `use:name={value}` (value optional)
-- May return a cleanup function.
+- Define on env: `env[path](target: Node | Node[], value: any | undefined, access: EffectAccess)`
+- Use in JSX: `use:path={value}` (value optional, `path` supports dash-separation)
+- **Effect-bound**: Called WITHIN a reactive effect; re-runs when `value` or other dependencies change.
+- May return a cleanup function (`EffectCloser`).
+
 
 Example:
 

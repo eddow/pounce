@@ -34,8 +34,9 @@ See [Component Reactivity Rules](./component-reactivity.md) for detailed example
 ### Control Flow and Lists
 - **Built‑in condition attributes**: Instead of ternaries in JSX, use:
   - `if={boolean}`
-  - `if:name={value}` (strict comparison against `env.name`)
-  - `when:name={arg}` (calls `env[name](arg)` and checks truthiness)
+  - `if:path={value}` (strict comparison against `env[path]`, supports dash-separated paths like `user-role`)
+  - `when:path={arg}` (calls `env[path](arg)` and checks truthiness)
+
   - `else`, `else if={...}` and `else when={...}` chaining inside a fragment
 - **Lists**: Prefer `<for each={array}>` with a render function. You can also use `project(array, fn)` for reactive mappings; combine with `memoize` for stable item rendering when needed. Keys are not required; stability is handled by the renderer/memoization and, if keys are needed, mutts offers a `register` class (extended array with key)
 

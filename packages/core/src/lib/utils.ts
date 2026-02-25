@@ -1,4 +1,5 @@
 import { reactive } from 'mutts'
+import type { Env } from './pounce-element'
 import { isWeakKey } from './renderer-internal'
 
 const defaultsProxy: ProxyHandler<any> & Record<symbol, unknown> = {
@@ -79,4 +80,16 @@ export function* stringKeys(o: object) {
 
 export function* range(start: number, end: number) {
 	for (let i = start; i < end; i++) yield `${i}`
+}
+
+/**
+ * Resolves a deep path in the environment
+ * @param {Object} env - The static context object
+ * @param {string} path - e.g., 'user-role' or 'settings-theme'
+ * @returns {*} The resolved value or undefined
+ */
+export function getEnvPath(env: Env, path: string): unknown {
+	return path.split('-').reduce((acc, key) => {
+		return acc && typeof acc === 'object' ? acc[key] : undefined
+	}, env)
 }

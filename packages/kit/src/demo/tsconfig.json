@@ -1,0 +1,13 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@pounce/kit": ["../dom/index.ts"]
+		}
+	},
+	"include": [
+		"./**/*",
+		"../dom/index.ts"
+	]
+}

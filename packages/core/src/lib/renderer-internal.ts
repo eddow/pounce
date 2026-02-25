@@ -146,8 +146,8 @@ function attachAttribute(
 	key: string,
 	value: any
 ): ScopedCallback | undefined {
-	// Two-way Binding (BiDi) - only for ReactiveProp with explicit .set
-	if (value instanceof ReactiveProp && value.set) {
+	// Two-way Binding (BiDi) - only for ReactiveProp with explicit .set, never for event handlers
+	if (value instanceof ReactiveProp && value.set && !/^on[A-Z]/.test(key)) {
 		const binding = {
 			get: value.get.bind(value),
 			set: value.set.bind(value),

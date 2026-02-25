@@ -64,6 +64,7 @@
 		"LLM.md"
 	],
 	"scripts": {
+		"demo": "vite",
 		"build": "vite build",
 		"test": "vitest run",
 		"test:e2e": "playwright test",

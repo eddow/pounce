@@ -39,8 +39,9 @@ See the [Advanced Features Guide](./advanced.md#environment-management) for more
 
 Conditional rendering with env
 - `if={...}`: boolean condition
-- `if:name={value}`: compares `value === env.name`
-- `when:name={arg}`: calls `env[name](arg)` and checks the returned value
+- `if:path={value}`: compares `value === env[path]` (supports dash-separated paths like `user-role`)
+- `when:path={arg}`: calls `env[path](arg)` and checks the returned value
+
 - `else` and `else if={...}`: use inside fragments to chain branches
 
 ## Default Props
@@ -284,6 +285,8 @@ Attach an inline mount callback without defining a mixin on `env`.
 - Signature: `use={(target, env) => void}`
 - `target`: `Node | Node[]` — the rendered target. Intrinsic elements receive a single `Node`. Components may yield a `Node` or `Node[]`.
 - `env`: the current reactive environment object.
+- **Synchronous**: Called once during creation, NOT within a reactive effect.
+
 
 > **Important**: The Pounce-TS Babel plugin **automatically transforms** `use={handler}` into `use={() => handler}`.
 > You should **NOT** write `use={() => handler}` manually, as this would result in a double-wrapped function (`() => () => handler`) which will not work as expected.
@@ -318,9 +321,11 @@ Notes:
 - This is a convenience alternative to `use:name` when you don't need to reuse the behavior via `env`.
 - The callback is invoked once on mount and does not support reactive updates or cleanup return values. For reactive behavior or cleanup, prefer `use:name` implemented as an env mixin.
 - `target`: `Node | Node[]` — the rendered node(s). For components, handle either a single node or an array.
-- `value`: any | undefined — the value passed from `use:myMixin={...}`; bare `use:myMixin` yields `undefined`.
-- `env`: the current environment object.
-- Return value: optional cleanup function `() => void` (called on dispose/re-run), or nothing.
+- `value`: any | undefined — the value passed from `use:path={...}`; bare `use:path` yields `undefined`.
+- `access`: `EffectAccess` — provides control over the reactive effect.
+- **Effect-bound**: Called WITHIN a reactive effect; re-runs when `value` or other dependencies change.
+- Return value: optional cleanup function `EffectCloser` (called on dispose/re-run), or nothing.
+
 
 Example: resize mixin with ResizeObserver
 

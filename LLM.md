@@ -28,5 +28,14 @@
 3. **No wrapping**: `const` variables, imports, function declarations, parameters, literals, arrow functions, safe objects/arrays — `isSafeExpression` returns `true`.
 4. The check uses Babel's `path.scope.getBinding(name).kind` to distinguish `let`/`var` from `const`/`module`/`param`/`hoisted`.
 
+## Renderer Gotchas
+1. **Event handler props get bidi `ReactiveProp` from babel**: `props.onClick` is a member expression → babel wraps as `r(() => props.onClick, val => props.onClick = val)` with a setter. `attachAttribute` in `renderer-internal.ts` must guard `on[A-Z]` keys from the bidi path, otherwise the handler is silently swallowed by `setHtmlProperty`. Guard: `value.set && !/^on[A-Z]/.test(key)`.
+
+## Mount Callbacks Design (`dom-lifecycle.ts`)
+- `registerMount(target, cb)`: defers `cb` until target node(s) are connected to the DOM. If already connected, calls immediately.
+- `checkRegistrations()`: called by `reconcile` after every DOM update to flush the queue.
+- `use:` effects in `mountCallbacks` are created **synchronously** (correct reactive parent/GC scope), but their first invocation is deferred via `registerMount`. Uses `registered`/`mounted`/`pendingVal` flags to prevent duplicate registrations if the value changes before mount fires.
+- `this`/`mount` callbacks are deferred entirely — they only fire once after DOM insertion.
+
 ## Reconciler Gotchas
 1. **Don't double-wrap in `processChildren`**: `renderChild` must return `renderer.render(scope)` array results directly — NOT wrapped in another `processChildren()`. `render()` already returns a `processChildren` result for components/fragments. Double-wrapping stores a reactive array inside a reactive array. When the inner one is replaced, mutts' `recursiveTouching` (same prototype → recursive diff path) swallows the identity-change notification, so the outer `flattenNodes` lift is never notified and `reconcile` never updates the DOM.

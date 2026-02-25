@@ -10,12 +10,14 @@ export interface IntlDateProps extends Intl.DateTimeFormatOptions {
 
 /** Formats a date/time according to locale. Returns a text node. */
 export function Date(props: IntlDateProps, env: Env) {
-	const { value, locale, ...options } = props
-
-	const date = value instanceof globalThis.Date ? value : new globalThis.Date(value)
-	const resolvedLocale = resolveLocale(locale || env.locale)
-	const timeZone = options.timeZone || env.timeZone
-
-	const fmt = cachedDateTimeFormat(resolvedLocale, { ...options, timeZone })
-	return <>{fmt.format(date)}</>
+	return (
+		<>
+			{cachedDateTimeFormat(resolveLocale(props.locale ?? env.locale), {
+				...props,
+				timeZone: props.timeZone ?? env.timeZone,
+			}).format(
+				props.value instanceof globalThis.Date ? props.value : new globalThis.Date(props.value)
+			)}
+		</>
+	)
 }

@@ -124,19 +124,21 @@ export default function MetaAttributesPage() {
 				<Code code={ifElseMeta} lang="tsx" />
 			</Section>
 
-			<Section title="if:name (Env Equality)">
+			<Section title="if:path (Env Equality)">
 				<p>
-					<code>if:name={'{value}'}</code> renders the element only if{' '}
-					<code>env[name] === value</code>. This is a declarative way to guard elements based on
-					environment state.
+					<code>if:some-path={'{value}'}</code> renders the element only if the value at{' '}
+					<code>some-path</code> in <code>env</code> matches. It supports dash-separated paths
+					(e.g., <code>if:user-role="admin"</code> resolves to{' '}
+					<code>env.user?.role === "admin"</code>).
 				</p>
 				<Code code={ifNameMeta} lang="tsx" />
 			</Section>
 
-			<Section title="when:name (Env Predicate)">
+			<Section title="when:path (Env Predicate)">
 				<p>
-					<code>when:name={'{arg}'}</code> calls <code>env[name](arg)</code> and renders the element
-					if the result is truthy. Useful for shared logic like permission checks.
+					<code>when:path={'{arg}'}</code> calls the function at <code>path</code> in{' '}
+					<code>env</code> and renders the element if the result is truthy. Supports dash-separated
+					paths (e.g., <code>when:auth-hasRights="edit"</code>).
 				</p>
 				<Code code={whenNameMeta} lang="tsx" />
 			</Section>
@@ -153,20 +155,22 @@ export default function MetaAttributesPage() {
 
 			<Section title="use / update">
 				<p>
-					<code>use</code> applies a directive (a function that initializes the element). Namespaced
-					variants (<code>use:name={'{value}'}</code>) call{' '}
-					<code>env[name](target, value, env)</code>.<code>update:name</code> provides a two-way
-					binding callback for these mixins.
+					<code>use</code> applies a creation-time mount hook (called once, synchronously, NOT
+					within an effect). Namespaced variants (<code>use:path={'{value}'}</code>) call the
+					function at <code>path</code> in <code>env</code>{' '}
+					<strong>WITHIN a reactive effect</strong>. The mixin receives{' '}
+					<code>(target, value, access)</code> and can return an <code>EffectCloser</code> for
+					cleanup. <code>update:path</code> provides a two-way binding callback for these mixins.
 				</p>
 				<Code code={useMeta} lang="tsx" />
 			</Section>
 
-			<Section title="pick:name (Oracle Selection)">
+			<Section title="pick:path (Oracle Selection)">
 				<p>
-					<code>pick:name={'{value}'}</code> implements oracle-based selection. The reconciler
-					collects all candidate values from sibling elements and asks{' '}
-					<code>env[name](candidates)</code>
-					to pick which value(s) should render.
+					<code>pick:path={'{value}'}</code> implements oracle-based selection. The reconciler
+					collects all candidate values from sibling elements and asks the oracle function at{' '}
+					<code>path</code> in <code>env</code> (supports dash-separated paths) to pick which
+					value(s) should render.
 				</p>
 				<Code code={pickNameMeta} lang="tsx" />
 			</Section>

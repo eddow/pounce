@@ -106,14 +106,16 @@ Meta-attributes are available on **any** element or component. They are not rend
 |-----------|---------|---------|
 | `if={expr}` | Conditional rendering — element exists only when truthy | `<Panel if={isOpen} />` |
 | `else` | Renders when the preceding `if` was falsy | `<Fallback else />` |
-| `if:name={value}` | Env-based condition — renders when `env[name] === value` | `<Admin if:role={'admin'} />` |
-| `when:name={arg}` | Env-based predicate — renders when `env[name](arg)` is truthy | `<Route when:match={'/home'} />` |
-| `use={fn}` | Mount hook — called once with the rendered target | `<div use={(el) => el.focus()} />` |
-| `use:name={value}` | Scoped mixin — calls `env[name](target, value, env)` | `<div use:resize={callback} />` |
-| `update:name={fn}` | Two-way binding callback for env-based mixins | `<input update:value={(v) => state.val = v} />` |
+| `if:path={value}` | Env-based condition — renders when `env[path] === value` | `<Admin if:user-role={'admin'} />` |
+| `when:path={arg}` | Env-based predicate — renders when `env[path](arg)` is truthy | `<Route when:router-match={'/home'} />` |
+| `use={fn}` | Mount hook — called once on creation, NOT in an effect | `<div use={(el) => el.focus()} />` |
+| `use:path={value}` | Scoped mixin — calls `env[path](target, value, access)` (WITHIN effect) | `<div use:resize={callback} />` |
+
+| `update:path={fn}` | Two-way binding callback for env-based mixins | `<input update:value={(v) => state.val = v} />` |
 | `this={ref}` | Captures a reference to the rendered DOM node(s) | `<input this={refs.input} />` |
 | `catch={fn}` | Error boundary — catches render/effect errors in children | `<div catch={(err) => <Fallback />} />` |
-| `pick:name={value}` | Oracle-based selection — renders when `env[name]` picks this value | `<Tab pick:active={'home'} />` |
+| `pick:path={value}` | Oracle-based selection — renders when `env[path]` picks this value | `<Tab pick:active={'home'} />` |
+
 
 **Key point**: `if`, `else`, `when`, `catch` are reactive — the Babel plugin wraps their values in `r()`, so the element appears/disappears automatically when dependencies change. No re-render of the parent component occurs.
 
@@ -123,25 +125,14 @@ Meta-attributes are available on **any** element or component. They are not rend
 <LoginForm else />
 ```
 
-### `if:name={value}` — Env-Based Equality
+### `if:path={value}` — Env-Based Equality
 
-Renders when `env[name] === value` (strict equality). The env value is set by an ancestor component or `<env>` wrapper.
+Renders when `env[path] === value` (strict equality). The `path` can use dashes to access nested properties (e.g., `user-role` resolves to `env.user?.role`).
 
-```tsx
-function Layout(_p: {}, env: Env) {
-  env.role = 'admin'  // or read from auth state
-  return (
-    <>
-      <AdminPanel if:role={'admin'} />
-      <UserPanel  else />
-    </>
-  )
-}
-```
+### `when:path={arg}` — Env-Based Predicate
 
-### `when:name={arg}` — Env-Based Predicate
+Calls `env[path](arg)` and renders when the result is truthy. The env function is the **predicate** — it receives the argument and decides. Dash-separated paths are supported.
 
-Calls `env[name](arg)` and renders when the result is truthy. The env function is the **predicate** — it receives the argument and decides.
 
 Real-world example — permission guard:
 
@@ -202,17 +193,18 @@ const Risky = () => {
 // state.fail = true → content reactively swaps to fallback
 ```
 
-### `pick:name={value}` — Oracle-Based Selection
+### `pick:path={value}` — Oracle-Based Selection
 
-`pick:name` is a multi-sibling selection mechanism driven by an env oracle function. Unlike `if:name` (strict equality), `pick:` lets `env[name]` decide which of several candidates render.
+`pick:path` is a multi-sibling selection mechanism driven by an env oracle function. Unlike `if:path` (strict equality), `pick:` lets `env[path]` decide which of several candidates render. Path support via dash separator is included.
 
 **Protocol:**
-1. All siblings with `pick:name` declare their candidate value
-2. The reconciler collects all candidate values into a `Set` and calls `env[name](options: Set)` as an oracle
+1. All siblings with `pick:path` declare their candidate value
+2. The reconciler collects all candidate values into a `Set` and calls `env[path]` as an oracle
 3. The oracle returns the value(s) to render (single value, array, or `Set`)
-4. Only elements whose `pick:name` value is in the oracle's result render
+4. Only elements whose `pick:path` value is in the oracle's result render
 
-**Requires** `env[name]` to be a function — throws `DynamicRenderingError` if missing.
+**Requires** `env[path]` to be a function — throws `DynamicRenderingError` if missing.
+
 
 Real-world example — responsive image variants (render the smallest image larger than the current container width):
 

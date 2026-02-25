@@ -87,7 +87,9 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
 > For `class` and `style` attributes, Pounce **merges** values across layers (e.g., when using spread operators `{...attrs}`) instead of replacing them:
 > *   **Classes**: Cumulate into a single space-separated string. Supports strings, arrays, and objects.
 > *   **Styles**: Merge into a single style object. Later layers override earlier ones for the same property, but distinct properties accumulate.
+> *   **isMounted(node)**: A reactive utility from `mutts` (via `@pounce/core/shared`) that tracks if a node is currently in the DOM.
 > *   **Other attributes**: Standard `Object.assign` behavior (last one wins).
+
 
 ### 3. Components & Props
 *   **Props are Reactive Proxies**: The `props` object passed to a component is a reactive proxy.
@@ -100,8 +102,9 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
     *   **Good**: `const computed = { get x() { return props.foo; } }; return <div>{computed.x}</div>` (Only the binding updates).
 
 ### 4. Directives (`use`)
-*   **`use={handler}`**: The `handler` is called during the **render phase** (untracked) with the mounted element/component instance.
-*   **`use:name={value}`**: Calls `env.name(instance, value, env)`. This allows dependency injection of directives from the scope.
+*   **`use={handler}`**: The `handler` is called during the **render phase** (untracked) with the mounted element/component instance. It is called exactly once on creation, NOT within an effect.
+*   **`use:path={value}`**: Calls `env[path](instance, value, access)`. This is called **WITHIN an effect**, so it re-runs when `value` (or other dependencies) changes, and can return a cleanup function (`EffectCloser`).
+
 
 ### 5. Best Practices & Anti-Patterns
 > [!IMPORTANT]
@@ -186,7 +189,7 @@ See `mutts/LLM.md` for a deeper conceptual explanation of the "Assembly Line vs.
 Component constructors run **once** inside `PounceElement.render`'s effect. A **rebuild fence** prevents re-execution: if the constructor accidentally reads reactive state directly, it warns and does NOT re-render. All reactivity comes from:
 - JSX attributes wrapped by the babel plugin (`r()`)
 - Explicit `effect()`, `attend()`, `lift()`, `project()` inside the body
-- JSX directives (`if={}`, `when={}`, `use:name={}`)
+- JSX directives (`if={}`, `when={}`, `if:path={}`, `when:path={}`, `use:path={}`, `pick:path={}`)
 
 Bare reactive reads in the constructor body (e.g. `state.x` as a statement) are caught by the fence. Use `if={}` attributes for conditional rendering, NOT JS `if` statements.
 
@@ -208,12 +211,14 @@ Bare reactive reads in the constructor body (e.g. `state.x` as a statement) are 
 
 `onEffectThrow` still exists in mutts but is **not** the idiomatic error boundary mechanism — use `catch=` instead.
 
-### 8b. `pick:name={value}` — Oracle-Based Selection
+### 8b. `pick:path={value}` — Oracle-Based Selection
 
-Multi-sibling selection driven by an env oracle function. All siblings with `pick:name` declare a candidate value; the reconciler collects all values into a `Set`, calls `env[name](options: Set)`, and renders only elements whose value is in the oracle's result.
+Multi-sibling selection driven by an env oracle function. All siblings with `pick:path` declare a candidate value; the reconciler collects all values into a `Set`, calls `env[path]` (where `path` can use `-` as a separator for nested objects like `user-role`), and renders only elements whose value is in the oracle's result.
 
-- **Requires** `env[name]` to be a function — throws `DynamicRenderingError` if missing
+- **Requires** `env[path]` to be a function — throws `DynamicRenderingError` if missing
 - Oracle can return a single value, array, or `Set` of winning values (multi-select supported)
+- **Path Support**: `if:some-thing`, `when:some-thing`, `use:some-thing`, and `pick:some-thing` resolve to `env.some?.thing`.
+
 
 ```tsx
 env.tab = (options: Set<string>) => state.active  // oracle picks one

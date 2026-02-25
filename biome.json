@@ -50,6 +50,7 @@
 				"noExplicitAny": "off",
 				"noDebugger": "warn",
 				"noConsole": "off",
+				"noConfusingVoidType": "off",
 				"noAssignInExpressions": "off",
 				"noImplicitAnyLet": "off",
 				"useIterableCallbackReturn": "off",

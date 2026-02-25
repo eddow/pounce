@@ -17,7 +17,8 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Ang
 - **No DI / decorators**: Pounce has no dependency injection, decorators, or modules. Angular relies on DI, `@Component`, `@Injectable`, etc.
 
 ### Control Flow and Lists
-- **Attributes for control flow**: `if={...}`, `if:name={...}`, `when:name={...}`, `else`, `else if={...}`, `else when={...}`. Angular uses `@if`/`*ngIf` and `@else` (or older structural directives), and `@for`/`*ngFor` with `trackBy`.
+- **Attributes for control flow**: `if={...}`, `if:path={...}`, `when:path={...}`, `else`, `else if={...}`, `else when={...}`. Paths support dash-separated keys (e.g., `if:user-role`). Angular uses `@if`/`*ngIf` and `@else` (or older structural directives), and `@for`/`*ngFor` with `trackBy`.
+
 - **Lists**: Use `<for each={array}>` or `project(array, fn)` (optionally with `memoize`). Angular prefers `*ngFor` with `trackBy` for stability.
 
 ### Context/Env vs DI and Injection

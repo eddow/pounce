@@ -1,4 +1,4 @@
-import { collapse, type PerhapsReactive, ReactiveProp } from '@pounce/core'
+import { collapse, isMounted, type PerhapsReactive, ReactiveProp } from '@pounce/core'
 import { resolveElement } from './shared'
 
 type Direction = 'horizontal' | 'vertical'
@@ -20,6 +20,7 @@ function findFlexSibling(element: HTMLElement, siblings: HTMLElement[]): HTMLEle
 		const computed = getComputedStyle(s)
 		return computed.flex === '1 1 0%' || computed.flex === '1' || computed.flexGrow === '1'
 	})
+
 	if (flexSiblings.length !== 1) {
 		console.warn('use:sizeable requires exactly one flex:1 sibling')
 		return null
@@ -53,9 +54,11 @@ function getProperty(direction: Direction): string {
 // TODO: Not at all a perhapsReactive: should be a reactive object
 export function sizeable(target: Node | readonly Node[], value: PerhapsReactive<number>) {
 	const el = resolveElement(target as Node | Node[])
-	if (!el) return
+	if (!el || !isMounted(el)) return
+
 	const element: HTMLElement = el
 	const parent = element.parentElement
+
 	if (!parent) {
 		console.warn('use:sizeable requires a parent element')
 		return

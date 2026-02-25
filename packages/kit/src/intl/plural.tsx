@@ -5,19 +5,28 @@ import { resolveLocale } from './locale'
 export interface IntlPluralProps extends Intl.PluralRulesOptions {
 	value: number
 	locale?: string
-	zero?: JSX.Element
-	one?: JSX.Element
-	two?: JSX.Element
-	few?: JSX.Element
-	many?: JSX.Element
-	other: JSX.Element
+	zero?: JSX.Element | string
+	one?: JSX.Element | string
+	two?: JSX.Element | string
+	few?: JSX.Element | string
+	many?: JSX.Element | string
+	other: JSX.Element | string
 }
 
 /** Selects JSX content based on the plural category of `value`. Returns a fragment. */
 export function Plural(props: IntlPluralProps) {
-	const { value, locale, zero, one, two, few, many, other, ...options } = props
-	const rules = cachedPluralRules(resolveLocale(locale), options)
-	const category = rules.select(value)
-	const slots: Record<string, JSX.Element | undefined> = { zero, one, two, few, many, other }
-	return <>{slots[category] ?? other}</>
+	const slots = () => ({
+		zero: props.zero,
+		one: props.one,
+		two: props.two,
+		few: props.few,
+		many: props.many,
+		other: props.other,
+	})
+	return (
+		<>
+			{slots()[cachedPluralRules(resolveLocale(props.locale), props).select(props.value)] ??
+				props.other}
+		</>
+	)
 }

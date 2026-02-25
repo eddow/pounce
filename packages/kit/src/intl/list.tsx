@@ -9,7 +9,5 @@ export interface IntlListProps extends Intl.ListFormatOptions {
 
 /** Formats a list (e.g. "Alice, Bob, and Charlie") according to locale. Returns a text node. */
 export function List(props: IntlListProps) {
-	const { value, locale, ...options } = props
-	const fmt = cachedListFormat(resolveLocale(locale), options)
-	return <>{fmt.format(value)}</>
+	return <>{cachedListFormat(resolveLocale(props.locale), props).format(props.value)}</>
 }

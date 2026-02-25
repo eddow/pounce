@@ -7,6 +7,8 @@ import { client } from '../platform/shared'
 export type LinkProps = JSX.IntrinsicElements['a'] & {
 	/** Whether to show underline decoration. @default true */
 	underline?: boolean
+	/** Match any sub-route: aria-current="page" when pathname starts with href. @default false */
+	matchPrefix?: boolean
 }
 
 export type LinkModel = {
@@ -64,7 +66,12 @@ export function linkModel(props: LinkProps): LinkModel {
 			}
 		},
 		get ariaCurrent() {
-			return client.url.pathname === props.href ? 'page' : undefined
+			const href = props.href
+			if (typeof href !== 'string') return undefined
+			const pathname = client.url.pathname
+			if (props.matchPrefix)
+				return pathname === href || pathname.startsWith(`${href}/`) ? 'page' : undefined
+			return pathname === href ? 'page' : undefined
 		},
 	}
 }

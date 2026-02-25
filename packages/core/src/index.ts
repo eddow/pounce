@@ -1,3 +1,4 @@
 /// <reference types="./types/jsx.d.ts" />
 export * from './lib'
-export { entryPoint } from './shared'
+// mountedNodes is for unit tests - find an alternative ?
+export { entryPoint, isMounted, mountedNodes } from './shared'

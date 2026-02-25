@@ -1,6 +1,7 @@
 import {
 	addUnreactiveProps,
 	caught,
+	type EffectAccess,
 	effect,
 	formatCleanupReason,
 	link,
@@ -11,6 +12,7 @@ import {
 import { perf } from '../perf'
 import { type CompositeAttributesMeta, collapse, ReactiveProp } from './composite-attributes'
 import { pounceOptions } from './debug'
+import { getEnvPath } from './utils'
 
 export const rootEnv: Env = addUnreactiveProps(Object.create(null))
 
@@ -59,16 +61,17 @@ export class PounceElement {
 			if (meta.condition && !collapse(meta.condition)) return false
 
 			if (this.meta.when)
-				for (const [key, arg] of Object.entries(this.meta.when))
+				for (const [key, arg] of Object.entries(this.meta.when)) {
 					if (!(key in env)) throw new DynamicRenderingError(`${key} not found in env for when`)
-					else if (typeof env[key] !== 'function')
+					const v = getEnvPath(env, key)
+					if (typeof v !== 'function')
 						throw new DynamicRenderingError(`${key} not a predicate in env for when`)
-					else if (!env[key](collapse(arg))) return false
+					else if (!v(collapse(arg))) return false
+				}
 
 			if (this.meta.if)
 				for (const [key, value] of Object.entries(this.meta.if))
-					if (!(key in env)) throw new DynamicRenderingError(`${key} not found in env for if`)
-					else if (collapse(value) !== env[key]) return false
+					if (collapse(value) !== getEnvPath(env, key)) return false
 
 			if (this.meta.pick && picks) {
 				for (const [key, value] of Object.entries(this.meta.pick)) {
@@ -96,9 +99,10 @@ export class PounceElement {
 		// Process use callbacks
 		if (this.meta.use)
 			for (const [key, v] of Object.entries(this.meta.use) as [string, any]) {
-				if (typeof env[key] !== 'function')
+				const usage = getEnvPath(env, key)
+				if (typeof usage !== 'function')
 					throw new DynamicRenderingError(`${key} in env is not a function`)
-				effect.named(`attr:${key}:use`)(() => env[key](target, collapse(v), env))
+				effect.named(`use:${key}`)((access: EffectAccess) => usage(target, collapse(v), access))
 			}
 	}
 

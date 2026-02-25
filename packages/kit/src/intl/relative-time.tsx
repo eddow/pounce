@@ -10,7 +10,9 @@ export interface IntlRelativeTimeProps extends Intl.RelativeTimeFormatOptions {
 
 /** Formats a relative time (e.g. "3 days ago") according to locale. Returns a text node. */
 export function RelativeTime(props: IntlRelativeTimeProps) {
-	const { value, unit, locale, ...options } = props
-	const fmt = cachedRelativeTimeFormat(resolveLocale(locale), options)
-	return fmt.format(value, unit)
+	return (
+		<>
+			{cachedRelativeTimeFormat(resolveLocale(props.locale), props).format(props.value, props.unit)}
+		</>
+	)
 }

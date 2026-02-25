@@ -9,7 +9,7 @@ export interface IntlDisplayNamesProps extends Intl.DisplayNamesOptions {
 
 /** Resolves a code to its display name (e.g. "fr" → "French"). Returns a text node. */
 export function DisplayNames(props: IntlDisplayNamesProps) {
-	const { value, locale, ...options } = props
-	const fmt = cachedDisplayNames(resolveLocale(locale), options)
-	return fmt.of(value) ?? value
+	return (
+		<>{cachedDisplayNames(resolveLocale(props.locale), props).of(props.value) ?? props.value}</>
+	)
 }

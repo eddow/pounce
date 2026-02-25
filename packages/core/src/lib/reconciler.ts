@@ -25,7 +25,7 @@ import {
 	PounceElement,
 	rootEnv,
 } from './pounce-element'
-import { weakCached } from './utils'
+import { getEnvPath, weakCached } from './utils'
 
 const latchOwners = new WeakMap<Element, string>()
 
@@ -235,8 +235,9 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 							for (const key of Object.keys(picks)) {
 								const options = picks[key]
 								picks[key] = new Set() // By default, picks nothing if oracle fails/missing
-								if (key in env && typeof env[key] === 'function') {
-									const result = env[key](options)
+								const oracle = getEnvPath(env, key)
+								if (oracle && typeof oracle === 'function') {
+									const result = oracle(options)
 									const chosen = Array.isArray(result) || result instanceof Set ? result : [result]
 									picks[key] = new Set(chosen)
 								} else throw new DynamicRenderingError(`Pick oracle "${key}" not found in env`)

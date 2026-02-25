@@ -1,5 +1,6 @@
 import type { Children as SourceChildren, PounceElement, Env } from '../lib/pounce-element'
 import type { StyleInput } from '../lib/styles'
+import type { EffectAccess, EffectCloser } from 'mutts'
 
 declare global {
 	var h: (type: any, props?: any, ...children: any[]) => JSX.Element
@@ -85,12 +86,8 @@ declare global {
 
 		type ThisBinding<T> = ElementResult<T> | undefined
 
-		type ComponentIntrinsicAttributes<C> = C extends (
-			props: any,
-			env: any,
-			meta: infer M
-		) => infer N
-			? { this?: ThisBinding<N> } & (M extends Meta ? MetaAttributes<M, N> : {})
+		type ComponentIntrinsicAttributes<C> = C extends (props: any, env: any) => infer N
+			? { this?: ThisBinding<N> } & MetaAttributes<any, N>
 			: {}
 
 		// Override the default JSX children handling
@@ -103,21 +100,21 @@ declare global {
 					this?: ThisBinding<N>
 					if?: any
 					else?: true
-					use?: (target: N) => void
+					use?: (target: N, env: Env) => EffectCloser | undefined | void
 					catch?: (error: unknown, reset?: () => void) => JSX.Element
-			  } & MetaAttributes<Meta, N>)
+			  } & MetaAttributes<any, N>)
 		type MetaAttributes<M, N extends Node | readonly Node[] = Node | readonly Node[]> = {
 			[K in string & keyof M as `use:${K}`]?: M[K] extends (
 				node: N,
 				value: infer V,
-				meta: Meta
-			) => any
+				access: EffectAccess
+			) => EffectCloser | undefined | void
 				? V
 				: never
 		} & {
 			[K in string & keyof M as `if:${K}`]?: M[K]
 		} & {
-			[K in string & keyof M as `pick:${K}`]?: M[K]
+			[K in string & keyof M as `pick:${K}`]?: M[K] // Do this type - if ever we find out how to use meta
 		} & {
 			[K in string & keyof M as `when:${K}`]?: M[K] extends (value: infer V) => boolean ? V : never
 		}
