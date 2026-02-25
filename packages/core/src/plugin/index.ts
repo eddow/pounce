@@ -3,7 +3,7 @@ import babelPluginDecorators from '@babel/plugin-proposal-decorators'
 import babelPluginJsx from '@babel/plugin-transform-react-jsx'
 import babelPluginTs from '@babel/plugin-transform-typescript'
 import dts, { type PluginOptions as DtsPluginOptions } from 'vite-plugin-dts'
-import { pounceBabelPlugin } from './babel'
+import { pounceBabelPlugin, pounceSpreadPlugin } from './babel'
 import { pounceBarrelPlugin } from './barrel'
 
 export { pounceBabelPlugin }
@@ -56,6 +56,7 @@ export function createPounceBabelPlugins(options: PounceBabelPluginsOptions): Pl
 				throwIfNamespace: false,
 			},
 		],
+		[pounceSpreadPlugin],
 		[
 			babelPluginTs,
 			{
@@ -80,6 +81,7 @@ export function pounceCorePlugin(options: PounceCorePluginOptions = {}) {
 		onlyRemoveTypeImports: true,
 		...options,
 	}
+	console.error('--- pounceCorePlugin FACTORY called ---')
 	return {
 		name: 'pounce-core',
 		enforce: 'pre' as const,
@@ -103,6 +105,11 @@ export function pounceCorePlugin(options: PounceCorePluginOptions = {}) {
 			})
 
 			if (!result || !result.code) return null
+			if (id.includes('spread-reactivity.spec.tsx')) {
+				process.stderr.write(
+					`--- TRANSFORMATION RESULT FOR: ${id} ---\n${result.code}\n--- END ---\n`
+				)
+			}
 			return { code: result.code, map: result.map ?? undefined }
 		},
 	}

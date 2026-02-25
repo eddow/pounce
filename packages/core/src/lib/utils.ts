@@ -19,14 +19,12 @@ const defaultsProxy: ProxyHandler<any> & Record<symbol, unknown> = {
 		return Reflect.has(target.props, p) || Reflect.has(target.defs, p)
 	},
 	ownKeys(target) {
-		if (!target.keys) {
-			const keySet = new Set<PropertyKey>([
-				...Reflect.ownKeys(target.props),
-				...Reflect.ownKeys(target.defs),
-			])
-			target.keys = Array.from(keySet).filter((k) => typeof k === 'string')
-		}
-		return target.keys
+		// No key caching, prop can change
+		const keySet = new Set<PropertyKey>([
+			...Reflect.ownKeys(target.props),
+			...Reflect.ownKeys(target.defs),
+		])
+		return Array.from(keySet).filter((k) => typeof k === 'string')
 	},
 	getOwnPropertyDescriptor(target, p) {
 		return (
@@ -54,10 +52,7 @@ export function defaults<P extends Record<string, any>, D extends Record<string,
 ): P & D {
 	//Omit<P, keyof D> & { [K in keyof D & keyof P]-?: NonNullable<P[K]> } {
 	defs = reactive(defs)
-	return new Proxy(
-		{ props, defs, keys: undefined as undefined | string[] } as any,
-		defaultsProxy
-	) as any
+	return new Proxy({ props, defs } as any, defaultsProxy) as any
 }
 
 export function extend<

@@ -1,4 +1,4 @@
-import { type EffectCleanup, effect, isReactive, reactiveOptions } from 'mutts'
+import { type EffectCleanup, effect, isReactive, reactiveOptions, unreactive } from 'mutts'
 import { pounceOptions } from './debug'
 import { styles } from './styles'
 import { stringKeys } from './utils'
@@ -21,6 +21,7 @@ export type PerhapsReactive<T> = T | ReactiveProp<T>
  * establishes tracking in a reactive context); if plain, returned as-is.
  */
 export const collapse = <T>(v: PerhapsReactive<T>): T => (v instanceof ReactiveProp ? v.get() : v)
+// TODO: unused - killme
 export const fromAttribute = Symbol('from attributes')
 export interface CompositeAttributesMeta {
 	this?: ReactiveProp<Node | readonly Node[]>
@@ -83,31 +84,47 @@ function trackWrite(rp: ReactiveProp<any>, value: any): boolean {
 	return true
 }
 
-const propsProxy: ProxyHandler<CompositeAttributes> & Record<symbol, unknown> = {
+const propsProxy: ProxyHandler<{
+	composite: CompositeAttributes
+	superLayer: Record<string, any> & object
+}> &
+	Record<symbol, unknown> = {
 	[Symbol.toStringTag]: 'Properties',
 	get(target, prop) {
-		if (prop === fromAttribute) return target
+		if (prop === fromAttribute) return target.composite
 		if (typeof prop === 'string') {
-			const rp = target.get(prop)
+			if (prop in target.superLayer) return target.superLayer[prop]
+			const rp = target.composite.get(prop)
 			if (rp instanceof ReactiveProp) trackRead(rp)
 			return rp instanceof ReactiveProp ? rp.get() : rp
 		}
 	},
 	set(target, prop, value) {
-		if (typeof prop === 'string') {
-			const rp = target.get(prop)
+		if (typeof prop === 'string' && !(prop in target.superLayer)) {
+			const rp = target.composite.get(prop)
 			if (rp instanceof ReactiveProp) return trackWrite(rp, value)
 		}
-		throw new TypeError(`[pounce] Cannot set property ${String(prop)}`)
+		// TODO: warn?
+		return true
 	},
 
-	has: (target, prop) => typeof prop === 'string' && target.keys.has(prop),
+	has: (target, prop) =>
+		typeof prop === 'string' && (target.composite.keys.has(prop) || prop in target.superLayer),
 	ownKeys(target) {
-		return Array.from(target.keys)
+		const gather = new Set<string>(target.composite.keys)
+		for (const key of Object.keys(target.superLayer)) gather.add(key)
+		return Array.from(gather)
 	},
 	getOwnPropertyDescriptor(target, prop) {
-		if (typeof prop !== 'string' || !target.keys.has(prop)) return
-		const value = target.get(prop)
+		if (typeof prop === 'string' && prop in target.superLayer)
+			return {
+				value: target.superLayer[prop],
+				writable: false,
+				configurable: true,
+				enumerable: true,
+			}
+		if (typeof prop !== 'string' || !target.composite.keys.has(prop)) return
+		const value = target.composite.get(prop)
 		return {
 			enumerable: true,
 			configurable: true,
@@ -127,8 +144,13 @@ const propsProxy: ProxyHandler<CompositeAttributes> & Record<symbol, unknown> = 
 	},
 }
 
+function collapseLayer(layer: any): any {
+	return typeof layer === 'function' ? layer() : layer
+}
+
+@unreactive
 export class CompositeAttributes {
-	public layers: object[]
+	public layers: (object | (() => any))[]
 	private masked: Set<string> = new Set()
 
 	constructor(...layers: any[]) {
@@ -142,16 +164,16 @@ export class CompositeAttributes {
 	//@memoize
 	get keys(): Set<string> {
 		const keys = new Set<string>()
-		for (const layer of this.layers) {
-			for (const key of stringKeys(layer)) {
-				if (typeof key === 'string') {
-					const colonIndex = key.indexOf(':')
-					const rootKey = colonIndex > 0 ? key.slice(0, colonIndex) : key
-					if (!this.masked.has(rootKey)) {
-						keys.add(rootKey)
+		for (const layer of this.layers.map(collapseLayer)) {
+			if (layer instanceof CompositeAttributes) for (const key of layer.keys) keys.add(key)
+			else
+				for (const key of stringKeys(layer)) {
+					if (typeof key === 'string') {
+						const colonIndex = key.indexOf(':')
+						const rootKey = colonIndex > 0 ? key.slice(0, colonIndex) : key
+						if (!this.masked.has(rootKey)) keys.add(rootKey)
 					}
 				}
-			}
 		}
 		return keys
 	}
@@ -160,17 +182,17 @@ export class CompositeAttributes {
 		if (this.masked.has(key)) return undefined
 		// Reverse iteration for precedence (last one wins)
 		for (let i = this.layers.length - 1; i >= 0; i--) {
-			const layer = this.layers[i]
-			if (nonReactive && isReactive(layer)) continue
+			const rawLayer = this.layers[i]
+			//const isDeferred = typeof rawLayer === 'function'
+			if (nonReactive && (typeof rawLayer === 'function' || isReactive(rawLayer))) continue
+			const layer = collapseLayer(rawLayer)
 
-			if (Object.hasOwn(layer, key) || key in layer) {
+			if (layer instanceof CompositeAttributes) {
+				const inner = layer.getSingle(key, nonReactive)
+				if (inner !== undefined) return inner
+			} else if (layer && key in layer) {
 				if (nonReactive) this.mask(key)
-				const value = (layer as any)[key]
-				// Already a ReactiveProp (from babel r() wrapping) — pass through
-				if (value instanceof ReactiveProp) return value
-				// Reactive layer: wrap access lazily so attachAttribute gets per-key tracking
-				if (!nonReactive && isReactive(layer)) return new ReactiveProp(() => (layer as any)[key])
-				return value
+				return layer[key]
 			}
 		}
 		return undefined
@@ -182,16 +204,25 @@ export class CompositeAttributes {
 
 		// Reverse iteration for precedence (last one wins)
 		for (let i = this.layers.length - 1; i >= 0; i--) {
-			const layer = this.layers[i]
+			const layer = collapseLayer(this.layers[i])
 			if (nonReactive && isReactive(layer)) continue
+
+			if (layer instanceof CompositeAttributes) {
+				const inner = layer.getCategory(category, nonReactive)
+				if (inner) {
+					result ??= {}
+					Object.assign(result, inner)
+				}
+				continue
+			}
 
 			for (const key of Object.keys(layer)) {
 				if (key.startsWith(prefix)) {
 					const name = key.slice(prefix.length)
-					if (name) {
+					if (name && !this.masked.has(name) && !result?.hasOwnProperty(name)) {
 						if (nonReactive) this.mask(key)
 						result ??= {}
-						result[name] = (layer as any)[key]
+						result[name] = layer[key]
 					}
 				}
 			}
@@ -235,13 +266,17 @@ export class CompositeAttributes {
 
 	requiresEffect(key: string): boolean {
 		if (this.isReactive) return true
-		for (const layer of this.layers) {
+		for (const layer of this.layers.map(collapseLayer)) {
+			if (layer instanceof CompositeAttributes) {
+				if (layer.requiresEffect(key)) return true
+				continue
+			}
 			if (Object.hasOwn(layer, key) || key in layer) {
-				if ((layer as any)[key] instanceof ReactiveProp) return true
+				if (layer[key] instanceof ReactiveProp) return true
 			}
 			const prefix = `${key}:`
 			for (const k of stringKeys(layer)) {
-				if (k.startsWith(prefix) && (layer as any)[k] instanceof ReactiveProp) return true
+				if (k.startsWith(prefix) && layer[k] instanceof ReactiveProp) return true
 			}
 		}
 		return false
@@ -266,30 +301,32 @@ export class CompositeAttributes {
 	 * Returns a Proxy that acts as a flattened view of the attributes.
 	 * This is useful for passing to components that expect a single props object.
 	 */
-	asProps(): any {
-		return new Proxy(this, propsProxy)
+	asProps(superLayer: Record<string, any> = {}): any {
+		return new Proxy({ composite: this, superLayer }, propsProxy)
 	}
 
 	mergeClasses() {
 		const classes: any[] = []
-		for (const layer of this.layers)
+		for (const layer of this.layers.map(collapseLayer)) {
 			if ('class' in layer) {
 				const val = collapse(layer.class)
 				if (Array.isArray(val)) classes.push(...val.flat(Infinity))
 				else if (val) classes.push(val)
 			}
+		}
 		return classes
 	}
 
 	mergeStyles() {
 		// Collect all styles
 		const stylesInput: any[] = []
-		for (const layer of this.layers)
+		for (const layer of this.layers.map(collapseLayer)) {
 			if ('style' in layer) {
 				const val = collapse(layer.style)
 				if (Array.isArray(val)) stylesInput.push(...val.flat(Infinity))
 				else if (val) stylesInput.push(val)
 			}
+		}
 		// Use the styles utility to merge them correctly into a single object
 		return styles(...stylesInput)
 	}

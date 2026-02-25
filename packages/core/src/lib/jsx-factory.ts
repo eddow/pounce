@@ -19,59 +19,59 @@ import {
 } from './pounce-element'
 import { pounceElement, processChildren, reconcile } from './reconciler'
 import { attachAttributes, checkComponentRebuild, isString } from './renderer-internal'
-import { defaults, extend } from './utils'
+import { extend } from './utils'
 
-export const intrinsicComponentAliases = unreactive(
-	extend(null, {
-		env(props: { children?: any; [key: string]: any }, env: Env) {
-			effect.named('attr:env')(() => {
-				for (const [key, value] of Object.entries(props)) if (key !== 'children') env[key] = value
-			})
-			return props.children
+export const intrinsicComponentAliases = extend(null, {
+	env(props: { children?: any; [key: string]: any }, env: Env) {
+		effect.named('attr:env')(() => {
+			for (const [key, value] of Object.entries(props)) if (key !== 'children') env[key] = value
+		})
+		return props.children
+	},
+	for<T>(
+		props: {
+			each: PerhapsReactive<readonly T[]>
+			children: any
 		},
-		for<T>(
-			props: {
-				each: PerhapsReactive<readonly T[]>
-				children: any
-			},
-			env: Env
-		) {
-			if (Array.isArray(props.children) && props.children.length !== 1)
-				throw new DynamicRenderingError(
-					`[pounce] Invalid children for 'for' component: ${JSON.stringify(props.children)}. Children must evaluate to one function.`
-				)
-			const body = collapse(Array.isArray(props.children) ? props.children[0] : props.children)
-			if (typeof body !== 'function') {
-				throw new DynamicRenderingError(
-					`[pounce] Invalid children for 'for' component: ${JSON.stringify(props.children)}. Children must evaluate to a function.`
-				)
-			}
-			// Lock to fence on purpose
-			const cb = (item: T) => {
-				perfCounters.forIterations++
-				perf?.mark('for:iter:start')
-				const res = (body as (item: T) => Children)(item)
-				perf?.mark('for:iter:end')
-				perf?.measure('for:iter', 'for:iter:start', 'for:iter:end')
-				return res
-			}
-			const memoizedCb = memoize.lenient(cb)
-			// morph and processChildren must be called here (component body, runs once) — NOT inside produce.
-			// produce runs inside the render:for effect; any reactive reads there (including processChildren
-			// reading the morph cache) would subscribe render:for to array mutations → rebuild fence fires.
-			const morphed = morph(() => collapse(props.each), memoizedCb)
-			const nodes = lift(() => {
-				perf?.mark('for:update:start')
-				const res = processChildren(morphed, env)
-				perf?.mark('for:update:end')
-				perf?.measure('for:update', 'for:update:start', 'for:update:end')
-				return res
-			})
-			return new PounceElement(() => nodes as any, 'for')
-		},
-		fragment: 'fragment' as any,
-	}) as object & Record<string, ComponentFunction>
-)
+		env: Env
+	) {
+		if (Array.isArray(props.children) && props.children.length !== 1)
+			throw new DynamicRenderingError(
+				`[pounce] Invalid children for 'for' component: ${JSON.stringify(props.children)}. Children must evaluate to one function.`
+			)
+		const body = collapse(Array.isArray(props.children) ? props.children[0] : props.children)
+		if (typeof body !== 'function') {
+			throw new DynamicRenderingError(
+				`[pounce] Invalid children for 'for' component: ${JSON.stringify(props.children)}. Children must evaluate to a function.`
+			)
+		}
+		// Lock to fence on purpose
+		const cb = (item: T) => {
+			perfCounters.forIterations++
+			perf?.mark('for:iter:start')
+			const res = (body as (item: T) => Children)(item)
+			perf?.mark('for:iter:end')
+			perf?.measure('for:iter', 'for:iter:start', 'for:iter:end')
+			return res
+		}
+		const memoizedCb = memoize.lenient(cb)
+		// morph and processChildren must be called here (component body, runs once) — NOT inside produce.
+		// produce runs inside the render:for effect; any reactive reads there (including processChildren
+		// reading the morph cache) would subscribe render:for to array mutations → rebuild fence fires.
+		const morphed = morph(() => collapse(props.each), memoizedCb)
+		const nodes = lift(() => {
+			perf?.mark('for:update:start')
+			const res = processChildren(morphed, env)
+			perf?.mark('for:update:end')
+			perf?.measure('for:update', 'for:update:start', 'for:update:end')
+			return res
+		})
+		return new PounceElement(() => nodes as any, 'for')
+	},
+	fragment(props: { children: PounceElement[] }, env: Env) {
+		return new PounceElement(() => processChildren(props.children, env), 'fragment')
+	},
+})
 
 /**
  * Custom h() function for JSX rendering - returns a PounceElement
@@ -146,7 +146,7 @@ function produceComponent(
 			testing.renderingEvent?.('render component', componentCtor.name)
 
 			// Component gets the flattened props proxy, potentially restructured for namespaces
-			const result = componentCtor(defaults({ children }, inAttrs.asProps()), info.env)
+			const result = componentCtor(inAttrs.asProps({ children }), info.env)
 			const processed = processChildren(result, info.env)
 
 			link(processed, () => {

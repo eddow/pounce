@@ -27,12 +27,13 @@ function buildBarrelLines(options: Required<Omit<PounceBarrelPluginOptions, 'dts
 	const hasBoard = ['back-end', 'full-stack'].includes(skeleton)
 
 	const lines: string[] = []
-	/* TODO: Why not ?
+	//* TODO: Why not ?
 	lines.push(`export * from '@pounce/core'`)
 	lines.push(`export * from '@pounce/kit'`)
-	*/
+	/*/
 	lines.push(hasUI ? `export * from '@pounce/core/dom'` : `export * from '@pounce/core'`)
 	lines.push(hasUI ? `export * from '@pounce/kit/dom'` : `export * from '@pounce/kit'`)
+	//*/
 	if (hasUI) {
 		lines.push(`export * from '@pounce/ui'`)
 		if (adapter) lines.push(`export * from '${adapter}'`)

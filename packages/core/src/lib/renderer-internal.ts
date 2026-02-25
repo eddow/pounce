@@ -70,18 +70,19 @@ export function checkComponentRebuild(componentCtor: Function) {
 
 export function setHtmlProperty(element: any, key: string, value: any): ScopedCallback | undefined {
 	const normalizedKey = key.toLowerCase()
+	let deleter: ScopedCallback | undefined
 	try {
 		if (normalizedKey in element) {
 			const current = element[normalizedKey]
 			if (typeof current === 'boolean') element[normalizedKey] = Boolean(value)
 			else element[normalizedKey] = value ?? ''
-			return () => delete element[normalizedKey]
+			deleter = () => delete element[normalizedKey]
 		}
 		if (key in element) {
 			const current = element[key]
 			if (typeof current === 'boolean') element[key] = Boolean(value)
 			else element[key] = value ?? ''
-			return () => delete element[key]
+			deleter = () => delete element[key]
 		}
 	} catch {
 		// Fallback to attribute assignment below
@@ -89,12 +90,15 @@ export function setHtmlProperty(element: any, key: string, value: any): ScopedCa
 	if (value === undefined || value === false) {
 		testing.renderingEvent?.('remove attribute', element, normalizedKey)
 		element.removeAttribute(normalizedKey)
-		return
+		return deleter
 	}
 	const stringValue = value === true ? '' : String(value)
 	testing.renderingEvent?.('set attribute', element, normalizedKey, stringValue)
 	element.setAttribute(normalizedKey, stringValue)
-	return () => element.removeAttribute(normalizedKey)
+	return () => {
+		element.removeAttribute(normalizedKey)
+		deleter?.()
+	}
 }
 
 export function applyStyleProperties(element: HTMLElement, computedStyles: Record<string, any>) {
@@ -150,7 +154,10 @@ function attachAttribute(
 		}
 
 		// Helper to push DOM changes back to the signal
-		const provide = biDi((v) => setHtmlProperty(element, key, v), binding)
+		const provide = biDi(
+			named(`attr:${key}`, (v: any) => setHtmlProperty(element, key, v)),
+			binding
+		)
 
 		let cleanup: ScopedCallback | undefined
 		if (element.tagName === 'INPUT') {
@@ -173,7 +180,6 @@ function attachAttribute(
 				cleanup = listen(element, 'input', () => provide((element as HTMLTextAreaElement).value))
 			}
 		} else if (element.tagName === 'SELECT') {
-			// TODO: debug me
 			if (key === 'value') {
 				const handler = () => provide((element as HTMLSelectElement).value)
 				const cleanupInput = listen(element, 'input', handler)
@@ -192,7 +198,7 @@ function attachAttribute(
 
 	// One-way binding/setter
 	return value instanceof ReactiveProp
-		? effect(named(`attr:${key}:setter`, () => attachAttributeValue(element, key, value.get())))
+		? effect.named(`attr:${key}:setter`)(() => attachAttributeValue(element, key, value.get()))
 		: attachAttributeValue(element, key, value)
 }
 

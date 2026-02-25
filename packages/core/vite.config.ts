@@ -6,6 +6,7 @@ import { pounceCorePackage } from './src/plugin/index'
 
 const projectRootDir = dirname(fileURLToPath(import.meta.url))
 
+console.error('--- vite.config.ts LOADED ---')
 export default defineConfig({
 	root: '.',
 	server: {

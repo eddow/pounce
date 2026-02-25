@@ -23,7 +23,6 @@ describe('<catch> meta attribute', () => {
 	it('renders fallback content when child throws during render', () => {
 		const FailingRender = () => {
 			throw new Error('Boom!')
-			// TODO: in another test: return <span>{(() => { throw new Error('Boom!') })()}</span>
 		}
 
 		const el = (

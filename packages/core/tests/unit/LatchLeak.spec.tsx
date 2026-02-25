@@ -19,7 +19,6 @@ describe('Latch re-render behavior', () => {
 
 		const App = () => {
 			appRenderCount.count++
-			console.log('App rendered:', appRenderCount.count)
 			return <div>Count: {state.count}</div>
 		}
 
