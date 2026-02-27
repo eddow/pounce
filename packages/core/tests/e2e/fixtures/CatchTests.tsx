@@ -1,4 +1,4 @@
-import { reactive } from 'mutts'
+import { effect, reactive } from 'mutts'
 
 export default function CatchTests() {
 	const state = reactive({
@@ -8,9 +8,9 @@ export default function CatchTests() {
 	})
 
 	function ThrowingComponent() {
-		if (state.trigger) {
-			throw new Error('Test Error')
-		}
+		effect(() => {
+			if (state.trigger) throw new Error('Test Error')
+		})
 		return <div data-testid="ok-content">Everything is fine</div>
 	}
 
@@ -20,26 +20,26 @@ export default function CatchTests() {
 			<button data-action="trigger-error" onClick={() => state.trigger = true}>
 				Trigger Error
 			</button>
-			<div
-				data-testid="catch-boundary"
-				catch={(err: any, reset) => {
-					setTimeout(() => { state.errorCount++ }, 0)
-					return (
-						<div data-testid="error-fallback">
-							<p>Caught: {err.message}</p>
-							<button data-action="reset-error" onClick={() => {
-								state.trigger = false
-								reset?.()
-							}}>
-								Reset
-							</button>
-						</div>
-					)
-				}}
-			>
-				<ThrowingComponent />
+			<div data-testid="catch-boundary">
+				<try catch={(err: any, reset) => {
+						setTimeout(() => { state.errorCount++ }, 0)
+						return (
+							<div data-testid="error-fallback">
+								<p>Caught: {err.message}</p>
+								<button data-action="reset-error" onClick={() => {
+									state.trigger = false
+									reset?.()
+								}}>
+									Reset
+								</button>
+							</div>
+						)
+					}}
+				>
+					<ThrowingComponent />
+				</try>
+				<p>Error Count: <span data-testid="error-count">{state.errorCount}</span></p>
 			</div>
-			<p>Error Count: <span data-testid="error-count">{state.errorCount}</span></p>
 		</div>
 	)
 }

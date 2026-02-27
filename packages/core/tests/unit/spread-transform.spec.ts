@@ -59,4 +59,16 @@ describe('spread attribute babel transform', () => {
 		expect(out).toContain('...a')
 		expect(out).toContain('...b')
 	})
+
+	it('rewrites `this={lval}` into callback setter (not ReactiveProp)', () => {
+		const out = transform(`<div this={state.ref} />`)
+		expect(out).toContain('this:mounted=>state.ref=mounted')
+		expect(out).not.toContain('this:r(')
+	})
+
+	it('keeps `this={callback}` as callback', () => {
+		const out = transform(`<div this={(mounted) => track(mounted)} />`)
+		expect(out).toContain('this:mounted=>track(mounted)')
+		expect(out).not.toContain('this:r(')
+	})
 })

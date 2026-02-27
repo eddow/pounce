@@ -68,21 +68,26 @@ export function checkComponentRebuild(componentCtor: Function) {
 	}
 }
 
-export function setHtmlProperty(element: any, key: string, value: any): ScopedCallback | undefined {
+export function setHtmlProperty(
+	element: Element,
+	key: string,
+	value: any
+): ScopedCallback | undefined {
 	const normalizedKey = key.toLowerCase()
+	const el = element as any
 	let deleter: ScopedCallback | undefined
 	try {
 		if (normalizedKey in element) {
-			const current = element[normalizedKey]
-			if (typeof current === 'boolean') element[normalizedKey] = Boolean(value)
-			else element[normalizedKey] = value ?? ''
-			deleter = () => delete element[normalizedKey]
+			const current = el[normalizedKey]
+			if (typeof current === 'boolean') el[normalizedKey] = Boolean(value)
+			else el[normalizedKey] = value ?? ''
+			deleter = () => delete el[normalizedKey]
 		}
 		if (key in element) {
-			const current = element[key]
-			if (typeof current === 'boolean') element[key] = Boolean(value)
-			else element[key] = value ?? ''
-			deleter = () => delete element[key]
+			const current = el[key]
+			if (typeof current === 'boolean') el[key] = Boolean(value)
+			else el[key] = value ?? ''
+			deleter = () => delete el[key]
 		}
 	} catch {
 		// Fallback to attribute assignment below
@@ -101,14 +106,14 @@ export function setHtmlProperty(element: any, key: string, value: any): ScopedCa
 	}
 }
 
-export function applyStyleProperties(element: HTMLElement, computedStyles: Record<string, any>) {
+export function applyStyleProperties(element: Element, computedStyles: Record<string, any>) {
 	element.removeAttribute('style')
 	testing.renderingEvent?.('assign style', element, computedStyles)
-	Object.assign(element.style, computedStyles)
+	Object.assign((element as HTMLElement).style, computedStyles)
 }
 
 function attachAttributeValue(
-	element: HTMLElement,
+	element: Element,
 	key: string,
 	value: any
 ): ScopedCallback | undefined {
@@ -131,7 +136,7 @@ function attachAttributeValue(
 	if (key === 'style') {
 		element.removeAttribute('style')
 		if (value && typeof value === 'object' && Object.keys(value).length > 0)
-			Object.assign(element.style, value)
+			Object.assign((element as HTMLElement).style, value)
 		return () => {
 			element.removeAttribute('style')
 		}
@@ -141,11 +146,7 @@ function attachAttributeValue(
 	return setHtmlProperty(element, key, value)
 }
 
-function attachAttribute(
-	element: HTMLElement,
-	key: string,
-	value: any
-): ScopedCallback | undefined {
+function attachAttribute(element: Element, key: string, value: any): ScopedCallback | undefined {
 	// Two-way Binding (BiDi) - only for ReactiveProp with explicit .set, never for event handlers
 	if (value instanceof ReactiveProp && value.set && !/^on[A-Z]/.test(key)) {
 		const binding = {
@@ -162,23 +163,16 @@ function attachAttribute(
 		let cleanup: ScopedCallback | undefined
 		if (element.tagName === 'INPUT') {
 			const input = element as HTMLInputElement
-			if (input.type === 'checkbox' || input.type === 'radio') {
-				if (key === 'checked') {
-					cleanup = listen(element, 'input', () => provide(input.checked))
-				}
-			} else if (input.type === 'number' || input.type === 'range') {
-				if (key === 'value') {
-					cleanup = listen(element, 'input', () => provide(Number(input.value)))
-				}
-			} else {
-				if (key === 'value') {
-					cleanup = listen(element, 'input', () => provide(input.value))
-				}
-			}
+			if (['checkbox', 'radio'].includes(input.type)) {
+				if (key === 'checked') cleanup = listen(element, 'input', () => provide(input.checked))
+				else if (key === 'indeterminate' && input.type === 'checkbox')
+					cleanup = listen(element, 'input', () => provide(input.indeterminate))
+			} else if (['number', 'range'].includes(input.type)) {
+				if (key === 'value') cleanup = listen(element, 'input', () => provide(Number(input.value)))
+			} else if (key === 'value') cleanup = listen(element, 'input', () => provide(input.value))
 		} else if (element.tagName === 'TEXTAREA') {
-			if (key === 'value') {
+			if (key === 'value')
 				cleanup = listen(element, 'input', () => provide((element as HTMLTextAreaElement).value))
-			}
 		} else if (element.tagName === 'SELECT') {
 			if (key === 'value') {
 				const handler = () => provide((element as HTMLSelectElement).value)
@@ -203,7 +197,7 @@ function attachAttribute(
 }
 
 export function attachAttributes(
-	element: HTMLElement,
+	element: Element,
 	attributes: CompositeAttributes
 ): ScopedCallback | undefined {
 	if (!(attributes instanceof CompositeAttributes))

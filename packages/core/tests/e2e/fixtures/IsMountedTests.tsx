@@ -1,5 +1,4 @@
 import { reactive, effect } from 'mutts'
-import { isMounted } from '@pounce/core'
 
 export default function IsMountedTests() {
 	const state = reactive({
@@ -13,7 +12,7 @@ export default function IsMountedTests() {
 	el.textContent = 'I am tracked'
 
 	effect(() => {
-		if (isMounted(el)) {
+		if (el.isConnected) {
 			state.mountedCount++
 		} else {
 			state.unmountedCount++
@@ -32,7 +31,7 @@ export default function IsMountedTests() {
 			<div id="status">
 				<p>Mounted Count: <span id="mounted-count">{state.mountedCount}</span></p>
 				<p>Unmounted Count: <span id="unmounted-count">{state.unmountedCount}</span></p>
-				<p>Currently Mounted: <span id="is-mounted-status">{isMounted(el) ? 'Yes' : 'No'}</span></p>
+				<p>Currently Mounted: <span id="is-mounted-status">{el.isConnected ? 'Yes' : 'No'}</span></p>
 			</div>
 		</div>
 	)

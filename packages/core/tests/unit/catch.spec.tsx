@@ -12,9 +12,9 @@ describe('<catch> meta attribute', () => {
 	it('renders normal content when no error occurs', () => {
 		const NormalRender = () => <span>Success</span>
 		const el = (
-			<div catch={(error: unknown) => <span>Error Caught: {String(error)}</span>}>
+			<try catch={(error: unknown) => <span>Error Caught: {String(error)}</span>}>
 				<NormalRender />
-			</div>
+			</try>
 		)
 		container.replaceChildren(...el.render())
 		expect(container.textContent).toBe('Success')
@@ -26,9 +26,9 @@ describe('<catch> meta attribute', () => {
 		}
 
 		const el = (
-			<div catch={(error: unknown) => <span class="fallback">Error Caught: {(error as Error).message}</span>}>
+			<try catch={(error: unknown) => <span class="fallback">Error Caught: {(error as Error).message}</span>}>
 				<FailingRender />
-			</div>
+			</try>
 		)
 
 		latch(container, el)
@@ -39,14 +39,14 @@ describe('<catch> meta attribute', () => {
 		const state = reactive({ fail: false })
 
 		const ReactiveFailure = () => {
-			effect(()=> { if (state.fail) throw new Error('Delayed Blast!') })
+			effect(() => { if (state.fail) throw new Error('Delayed Blast!') })
 			return <span>Everything is fine</span>
 		}
 
 		const el = (
-			<div catch={(error: unknown) => <span class="recovered">{(error as Error).message}</span>}>
+			<try catch={(error: unknown) => <span class="recovered">{(error as Error).message}</span>}>
 				<ReactiveFailure />
-			</div>
+			</try>
 		)
 
 		latch(container, el)
@@ -71,9 +71,9 @@ describe('<catch> meta attribute', () => {
 		}
 
 		const el = (
-			<section catch={(error: unknown) => <b class="error">{(error as Error).message}</b>}>
+			<try catch={(error: unknown) => <b class="error">{(error as Error).message}</b>}>
 				<Child />
-			</section>
+			</try>
 		)
 		latch(container, el)
 		expect(container.innerHTML).toContain('<b class="error">Deep fail</b>')

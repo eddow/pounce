@@ -9,14 +9,15 @@ import {
 	reactiveOptions,
 	type ScopedCallback,
 	tag,
+	untracked,
 	unwrap,
 } from 'mutts'
 import { perf } from '../perf'
-import { document, Node } from '../shared'
+import { document } from '../shared'
 import { collapse, ReactiveProp } from './composite-attributes'
-import { perfCounters, pounceOptions, testing } from './debug'
-import { devCatchElement } from './dev-catch'
+import { perfCounters, testing } from './debug'
 import { h } from './jsx-factory'
+import { syncRegistry } from './node'
 import {
 	type Child,
 	type Children,
@@ -25,22 +26,24 @@ import {
 	PounceElement,
 	rootEnv,
 } from './pounce-element'
-import { getEnvPath, weakCached } from './utils'
+import { getEnvPath } from './utils'
 
-const latchOwners = new WeakMap<Element, string>()
+export const latchOwners = new WeakMap<Element, string>()
 
 export function pounceElement(child: Children, env: Env): PounceElement {
 	return child instanceof PounceElement
 		? child
 		: child === null || child === undefined
-			? new PounceElement(() => [], 'empty', {}, true)
+			? new PounceElement(() => [], 'empty', undefined, true, true)
 			: Array.isArray(child)
 				? new PounceElement(() => processChildren(child, env))
 				: child instanceof Node
-					? new PounceElement(() => child, undefined, {}, false, true)
-					: new PounceElement(() => document.createTextNode(String(child)), '#text', {}, true, true)
+					? new PounceElement(() => child, undefined, undefined, false, true)
+					: PounceElement.text(() => String(child))
 }
-
+// TODO: keep a "removedNodes" set, add in there the ones to `unlink`,
+// When adding a node, check if it is in the set and remove it.
+// register a batch-cleanup that actually unlink after all reconciliations
 let reconcileCount = 0
 export function reconcile(parent: Node, newChildren: Node | readonly Node[]): ScopedCallback {
 	function reconciler() {
@@ -48,13 +51,16 @@ export function reconcile(parent: Node, newChildren: Node | readonly Node[]): Sc
 		const rid = ++reconcileCount
 		perf?.mark(`reconcile:${rid}:start`)
 		const items = Array.isArray(newChildren) ? newChildren : newChildren ? [newChildren] : []
+		const connecting = untracked(() => parent.isConnected)
 		if (parent instanceof Element && (items.length === 0 || parent.childNodes.length === 0)) {
+			for (const node of parent.childNodes) syncRegistry(node, 'delete', connecting)
 			;(parent as Element).replaceChildren(...items)
+			for (const item of items) syncRegistry(item, 'add', connecting)
 			return
 		}
 		let added = 0
 		let removed = 0
-		const itemsSet = new Set(items)
+		const itemsSet = new Set(items.map((i) => unwrap(i)))
 		// Iterate through items and sync with live DOM
 		items.forEach((item, i) => {
 			const newChild = unwrap(item) as Node
@@ -62,18 +68,23 @@ export function reconcile(parent: Node, newChildren: Node | readonly Node[]): Sc
 			while (i < parent.childNodes.length && !itemsSet.has(currentChild)) {
 				removed++
 				parent.removeChild(currentChild)
+				// TODO: unlink: la chaîne d'effect-stop ne remonte pas jusqu'au `use=...`
+				syncRegistry(currentChild, 'delete', connecting)
 				currentChild = parent.childNodes[i]
 			}
 			if (currentChild !== newChild) {
 				// This handles BOTH moving an existing node and inserting a brand new one
 				parent.insertBefore(newChild, currentChild || null)
+				syncRegistry(newChild, 'add', connecting)
 				added++
 			}
 		})
 
 		while (parent.childNodes.length > items.length) {
 			removed++
-			parent.removeChild(parent.lastChild!)
+			const node = parent.lastChild!
+			parent.removeChild(node)
+			syncRegistry(node, 'delete', connecting)
 		}
 		testing.renderingEvent?.(`reconcile (+${added} -${removed})`, parent, newChildren)
 		perf?.mark(`reconcile:${rid}:end`)
@@ -128,11 +139,7 @@ export function latch(
 		const label = typeof target === 'string' ? (target as string) : `<${tag}>`
 		latchOwners.set(element, label)
 
-		const wrapped = h(
-			'fragment',
-			pounceOptions.devCatch ? { catch: devCatchElement } : {},
-			...(Array.isArray(content) ? content : [content])
-		)
+		const wrapped = h('fragment', {}, ...(Array.isArray(content) ? content : [content]))
 		const nodes = wrapped.render(env)
 
 		testing.renderingEvent?.('latch', tag, element)
@@ -214,7 +221,7 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 		: (flatInput.map((c) => pounceElement(c, env)) as readonly PounceElement[])
 
 	const conditioned: readonly PounceElement[] =
-		needsMorph || flatElements.some((e) => e.conditional)
+		needsMorph || flatElements.some((e) => e.guarded)
 			? tag(
 					'conditioned',
 					lift(
@@ -222,8 +229,8 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 							const picks: Record<string, Set<unknown>> = {}
 							// Pass 1: Gather options
 							for (const e of flatElements)
-								if (e.meta.pick)
-									for (const [key, value] of Object.entries(e.meta.pick)) {
+								if (e.meta?.guards.pick)
+									for (const [key, value] of Object.entries(e.meta.guards.pick)) {
 										let set = picks[key]
 										if (!set) {
 											set = new Set()
@@ -262,10 +269,7 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 				'rendered',
 				morph.pure(
 					conditioned,
-					named(
-						'rendered',
-						weakCached((e: PounceElement) => e.render(env))
-					)
+					named('rendered', (e: PounceElement) => e.render(env))
 				)
 			)
 		: conditioned.map((e: PounceElement) => e.render(env))
@@ -276,11 +280,10 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 	}
 	// Skip lift:nodes when all conditioned elements are guaranteed single-node producers
 	// (DOM elements always return exactly 1 node; their reactive wrapper never changes length).
-	// Exclude elements with meta.catch — their render result is a reactive array whose content
-	// can be swapped by the error boundary mechanism (rv.splice), so lift:nodes is needed.
+	// Exclude components that might return dynamic arrays (like <try>).
+	// <try> returns isSingleNode = false, so it will correctly trigger lift:nodes.
 	const allSingleNode =
-		!isReactive(conditioned) &&
-		conditioned.every((e) => (e.isStatic || e.isSingleNode) && !e.meta.catch)
+		!isReactive(conditioned) && conditioned.every((e) => e.isReactivityLeaf || e.isSingleNode)
 	const nodes =
 		!allSingleNode || recurReactive(rendered)
 			? tag('nodes', lift(named('lift:nodes', () => rendered.flat(Infinity) as Node[])))

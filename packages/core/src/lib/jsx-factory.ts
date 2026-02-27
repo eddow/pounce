@@ -1,10 +1,22 @@
-import { effect, isReactive, lift, link, memoize, morph, named, reactive, unreactive } from 'mutts'
+import {
+	caught,
+	effect,
+	isReactive,
+	lift,
+	link,
+	memoize,
+	morph,
+	reactive,
+	type ScopedCallback,
+	unreactive,
+} from 'mutts'
 import { perf } from '../perf'
 import { document } from '../shared'
 import {
 	CompositeAttributes,
 	type CompositeAttributesMeta,
 	collapse,
+	fromAttribute,
 	type PerhapsReactive,
 	ReactiveProp,
 } from './composite-attributes'
@@ -71,6 +83,66 @@ export const intrinsicComponentAliases = extend(null, {
 	fragment(props: { children: PounceElement[] }, env: Env) {
 		return new PounceElement(() => processChildren(props.children, env), 'fragment')
 	},
+	try(
+		props: {
+			catch?: (error: unknown, resetCb?: () => void) => any
+			children: Children
+		},
+		_env: Env
+	) {
+		return new PounceElement((env) => {
+			const CatchComponent = props.catch || env.catch
+			if (!CatchComponent) {
+				throw new Error('No catch component provided')
+			}
+			const result = reactive({ error: undefined as any })
+
+			let partial: Node | readonly Node[] | undefined
+			let stopRender: ScopedCallback | undefined
+			function tryAgain() {
+				stopRender?.()
+				stopRender = effect.named('try:render')(() => {
+					result.error = undefined
+					caught((error) => {
+						result.error = unreactive(
+							pounceElement(CatchComponent(error, tryAgain), env).render(
+								Object.create(env, { catch: { value: undefined } })
+							)
+						)
+					})
+
+					partial = processChildren(props.children, env)
+				})
+			}
+			tryAgain()
+			const rv = lift(() => {
+				const src = result.error ?? partial
+				return Array.isArray(src) ? src : [src]
+			}) as any
+
+			return link(rv, () => stopRender?.())
+		}, 'try')
+	},
+	dynamic(props: { children?: any; [key: string]: any }, env: Env) {
+		const inAttrs = (props as any)[fromAttribute] as CompositeAttributes
+		const tagProp = inAttrs.getSingle('tag', true)
+
+		const nodes = lift(() => {
+			perf?.mark('dynamic:switch:start')
+			const tag = collapse(tagProp)
+			let res: any
+			if (!tag) {
+				res = []
+			} else {
+				const childArgs = Array.isArray(props.children) ? props.children : [props.children]
+				res = h(tag, inAttrs, ...childArgs).render(env)
+			}
+			perf?.mark('dynamic:switch:end')
+			perf?.measure('dynamic:switch', 'dynamic:switch:start', 'dynamic:switch:end')
+			return res
+		})
+		return new PounceElement(() => nodes as any, 'dynamic')
+	},
 })
 
 /**
@@ -85,13 +157,18 @@ export const h = (
 	const inAttrs =
 		props instanceof CompositeAttributes ? props : new CompositeAttributes(props || {})
 
-	// 2. Extract Meta (Control Flow & Lifecycle & Categories)
-	const meta = inAttrs.extractMeta()
-
 	const resolvedTag =
 		isString(tag) && tag in intrinsicComponentAliases
 			? (intrinsicComponentAliases as any)[tag as string]
 			: tag
+
+	const isDynamicWrapper = resolvedTag === intrinsicComponentAliases.dynamic
+	const meta: CompositeAttributesMeta = isDynamicWrapper
+		? {
+				guards: inAttrs.extractGuards(),
+				directives: () => ({ this: new Set<any>(), use: new Set<any>(), named: undefined }),
+			}
+		: inAttrs.retrieveMeta()
 	const componentCtor = typeof resolvedTag === 'function' && (resolvedTag as ComponentFunction)
 
 	if (!isString(resolvedTag) && !componentCtor) {
@@ -166,6 +243,10 @@ function produceComponent(
 		meta
 	)
 }
+const namespaceTagMap: Record<string, string> = {
+	svg: 'http://www.w3.org/2000/svg',
+	math: 'http://www.w3.org/1998/Math/MathML',
+}
 
 export function produceDOM(
 	tagName: string,
@@ -173,56 +254,23 @@ export function produceDOM(
 	children: Children,
 	meta: CompositeAttributesMeta
 ): PounceElement {
-	if (tagName === 'dynamic') {
-		const tagProp = inAttrs.getSingle('tag')
-		const cache = new Map<any, PounceElement>()
-		const produce = (tag: any) => {
-			let res = cache.get(tag)
-			if (!res) {
-				res =
-					typeof tag === 'function'
-						? produceComponent(tag as ComponentFunction, inAttrs, children, meta)
-						: produceDOM(tag as string, inAttrs, children, meta)
-				cache.set(tag, res)
-			}
-			return res
-		}
-		return new PounceElement(
-			(env) => {
-				const nodes = reactive<Node[]>([])
-				link(
-					nodes,
-					effect(
-						named('render:dynamic:internal', () => {
-							perf?.mark('dynamic:switch:start')
-							const nextNodes = produce(collapse(tagProp)).render(env)
-							nodes.splice(0, nodes.length, ...nextNodes)
-							perf?.mark('dynamic:switch:end')
-							perf?.measure('dynamic:switch', 'dynamic:switch:start', 'dynamic:switch:end')
-						})
-					)
-				)
-				return nodes
-			},
-			'dynamic',
-			meta
-		)
-	}
-
 	const processedChildren =
 		Array.isArray(children) && !isReactive(children)
 			? children.map((c) => pounceElement(c, rootEnv))
 			: []
 
 	const allChildrenStatic =
-		processedChildren.length > 0 && processedChildren.every((c) => c.isStatic)
+		processedChildren.length > 0 && processedChildren.every((c) => c.isReactivityLeaf)
 
 	return new PounceElement(
 		function elementRender(env: Env) {
 			perfCounters.elementRenders++
 			perf?.mark(`element:${tagName}:start`)
 
-			const element = document.createElement(tagName)
+			const namespace = namespaceTagMap[tagName]
+			const element = namespace
+				? document.createElementNS(namespace, tagName)
+				: document.createElement(tagName)
 			const componentToUse = env.component
 			if (componentToUse) {
 				pounceOwner.set(element, componentToUse)

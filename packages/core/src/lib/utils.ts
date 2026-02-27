@@ -1,6 +1,5 @@
 import { reactive } from 'mutts'
 import type { Env } from './pounce-element'
-import { isWeakKey } from './renderer-internal'
 
 const defaultsProxy: ProxyHandler<any> & Record<symbol, unknown> = {
 	[Symbol.toStringTag]: 'Defaulted',
@@ -63,17 +62,6 @@ export function extend<
 	return Object.create(base, Object.getOwnPropertyDescriptors(added || {}))
 }
 
-export function weakCached<I, O>(fn: (arg: I) => O): (arg: I) => O {
-	const cache = new WeakMap<I & WeakKey, O>()
-	return (arg: I) => {
-		if (!isWeakKey(arg)) return fn(arg)
-		if (cache.has(arg)) return cache.get(arg)!
-		const result = fn(arg)
-		cache.set(arg, result)
-		return result
-	}
-}
-
 export function* stringKeys(o: object) {
 	for (const key in o) yield key
 }
@@ -88,7 +76,7 @@ export function* range(start: number, end: number) {
  * @param {string} path - e.g., 'user-role' or 'settings-theme'
  * @returns {*} The resolved value or undefined
  */
-export function getEnvPath(env: Env, path: string): unknown {
+export function getEnvPath<T = unknown>(env: Env, path: string): T {
 	return path.split('-').reduce((acc, key) => {
 		return acc && typeof acc === 'object' ? acc[key] : undefined
 	}, env)

@@ -2,8 +2,8 @@
  * Test directive re-rendering behavior
  */
 import { describe, it, expect, beforeEach } from 'vitest'
-import { reactive } from 'mutts'
-import { latch, document, pounceOptions } from '@pounce/core'
+import { reactive, unreactive } from 'mutts'
+import { c, h, latch, document, pounceOptions } from '@pounce/core'
 
 describe('Directive Re-rendering', () => {
 	let container: HTMLElement
@@ -22,7 +22,7 @@ describe('Directive Re-rendering', () => {
 			el.setAttribute('data-arg', String(arg))
 		}
 
-		const env = reactive({ myDir })
+		const env = unreactive({ myDir })
 
 		const App = () => (
 			<div use:myDir={state.arg} />
@@ -46,7 +46,7 @@ describe('Directive Re-rendering', () => {
 			el.setAttribute('data-calls', String(callCount))
 		}
 
-		const env = reactive({ myDir })
+		const env = unreactive({ myDir })
 
 		const staticChild = <div id="child" use:myDir />
 
@@ -80,7 +80,7 @@ describe('Directive Re-rendering', () => {
 			el.setAttribute('data-calls', String(callCount))
 		}
 
-		const env = reactive({ myDir })
+		const env = unreactive({ myDir })
 
 		const Child = () => {
 			state.trigger // bare reactive read — rebuild fence should prevent re-rendering
@@ -101,6 +101,44 @@ describe('Directive Re-rendering', () => {
 		try {
 			state.trigger++
 			expect(callCount).toBe(1)
+		} finally {
+			pounceOptions.checkReactivity = original
+		}
+	})
+
+	it('isolates reactive directive extraction from render effect dependencies', () => {
+		let renderCount = 0
+		let callCount = 0
+		const state = reactive({ arg: 1 })
+
+		const myDir = (el: HTMLElement, arg: number) => {
+			callCount++
+			el.setAttribute('data-arg', String(arg))
+		}
+
+		const env = unreactive({ myDir })
+		const attrs = c(() => ({ 'use:myDir': state.arg }))
+
+		const App = () => {
+			renderCount++
+			return h('div', attrs)
+		}
+
+		const original = pounceOptions.checkReactivity
+		pounceOptions.checkReactivity = 'error'
+		try {
+			latch(container, <App />, env)
+			expect(renderCount).toBe(1)
+			expect(callCount).toBe(1)
+			expect(container.querySelector('div')?.getAttribute('data-arg')).toBe('1')
+
+			expect(() => {
+				state.arg = 2
+			}).not.toThrow()
+
+			expect(renderCount).toBe(1)
+			expect(callCount).toBe(2)
+			expect(container.querySelector('div')?.getAttribute('data-arg')).toBe('2')
 		} finally {
 			pounceOptions.checkReactivity = original
 		}

@@ -1,17 +1,11 @@
 import { reactive } from 'mutts'
-import { ReactiveProp } from '@pounce/core'
 
 export default function RefTests() {
 	const state = reactive({
 		show: true,
-		refValue: null as HTMLElement | null,
-		callbackRef: null as HTMLElement | null
+		refValue: undefined as HTMLDivElement | undefined,
+		callbackRef: undefined as HTMLElement | undefined
 	})
-
-	const manualRef = new ReactiveProp<HTMLElement | null>(
-		() => state.refValue,
-		(v) => state.refValue = v
-	)
 
 
 	return (
@@ -25,20 +19,20 @@ export default function RefTests() {
 					<>
 						<div
 							data-testid="reactive-prop-ref"
-							this={manualRef as any}
+							this={state.refValue}
 						>
 							ReactiveProp Ref Target
 						</div>
 						<div
 							data-testid="callback-ref"
-							this={state.callbackRef as any}
+							this={(node: Node | readonly Node[]) => state.callbackRef = node as HTMLElement}
 						>
 							Callback Ref Target
 						</div>
 					</>
 				) : null}
 			</div>
-			<p>Manual Ref Set: <span data-testid="reactive-prop-status">{manualRef.get() ? 'Yes' : 'No'}</span></p>
+			<p>Manual Ref Set: <span data-testid="reactive-prop-status">{state.refValue ? 'Yes' : 'No'}</span></p>
 			<p>Callback Ref Set: <span data-testid="callback-status">{state.callbackRef ? 'Yes' : 'No'}</span></p>
 		</div>
 	)

@@ -1,20 +1,23 @@
 import {
 	addUnreactiveProps,
-	caught,
-	type EffectAccess,
+	attend,
 	effect,
 	formatCleanupReason,
 	link,
-	reactive,
 	reactiveOptions,
 	unreactive,
 } from 'mutts'
 import { perf } from '../perf'
-import { type CompositeAttributesMeta, collapse, ReactiveProp } from './composite-attributes'
+import { type CompositeAttributesMeta, collapse, type ReactiveProp } from './composite-attributes'
 import { pounceOptions } from './debug'
+import { devCatchElement } from './dev-catch'
 import { getEnvPath } from './utils'
 
-export const rootEnv: Env = addUnreactiveProps(Object.create(null))
+export const rootEnv: Env = addUnreactiveProps(
+	Object.create(null, {
+		catch: { value: devCatchElement },
+	})
+)
 
 export class DynamicRenderingError extends Error {
 	constructor(message: string) {
@@ -31,6 +34,9 @@ export type NodeDesc = Node | string | number
 export type Child = Node | string | number | null | undefined | PounceElement
 export type Children = Child | readonly Children[] | ReactiveProp<Children>
 
+function arrayed<T>(v: T | readonly T[]): readonly T[] {
+	return Array.isArray(v) ? v : [v as T]
+}
 export type Env<T = any> = Record<PropertyKey, T>
 let maxRenderDependencyLog = 100
 /**
@@ -50,7 +56,7 @@ export class PounceElement {
 				return node!
 			},
 			'#text',
-			{},
+			undefined,
 			true,
 			true
 		)
@@ -58,25 +64,27 @@ export class PounceElement {
 	constructor(
 		public produce: (env: Env) => Node | readonly Node[],
 		public tag?: string | ComponentFunction,
-		public meta: CompositeAttributesMeta = {},
-		public isStatic = false,
+		public meta?: CompositeAttributesMeta,
+		public isReactivityLeaf = false,
 		public isSingleNode = false
 	) {}
-	get conditional() {
-		return this.meta.condition || this.meta.if || this.meta.when || this.meta.else || this.meta.pick
+	get guarded() {
+		const guards = this.meta?.guards
+		return guards && (guards.condition || guards.if || guards.when || guards.else || guards.pick)
 	}
 	shouldRender(
 		alreadyRendered: boolean,
 		env: Env,
 		picks: Record<string, Set<unknown>>
 	): boolean | undefined {
-		const meta = this.meta
-		if (this.conditional) {
+		const guards = this.meta?.guards
+		if (this.guarded) {
+			const meta = guards!
 			if (meta.else && alreadyRendered) return false
 			if (meta.condition && !collapse(meta.condition)) return false
 
-			if (this.meta.when)
-				for (const [key, arg] of Object.entries(this.meta.when)) {
+			if (meta.when)
+				for (const [key, arg] of Object.entries(meta.when)) {
 					if (!(key in env)) throw new DynamicRenderingError(`${key} not found in env for when`)
 					const v = getEnvPath(env, key)
 					if (typeof v !== 'function')
@@ -84,12 +92,12 @@ export class PounceElement {
 					else if (!v(collapse(arg))) return false
 				}
 
-			if (this.meta.if)
-				for (const [key, value] of Object.entries(this.meta.if))
+			if (meta.if)
+				for (const [key, value] of Object.entries(meta.if))
 					if (collapse(value) !== getEnvPath(env, key)) return false
 
-			if (this.meta.pick && picks) {
-				for (const [key, value] of Object.entries(this.meta.pick)) {
+			if (meta.pick && picks) {
+				for (const [key, value] of Object.entries(meta.pick)) {
 					const pickedSet = picks[key]
 					// if no set is provided by the oracle (e.g. key missing from env), it fails to pick
 					if (!pickedSet || !pickedSet.has(collapse(value))) return false
@@ -100,72 +108,71 @@ export class PounceElement {
 
 		return undefined
 	}
-
-	mountCallbacks(target: Node | readonly Node[], env: Env) {
-		const t = this.meta.this as any
-		if (t) {
-			if (t instanceof ReactiveProp && t.set) t.set(target)
-			else if (typeof t === 'function') t(target)
-		}
-
-		// We consider that the mount CBs (mount/use) are not dynamic - it removes an effect and changing it will bounce in the 1-render fence
-		if (this.meta.mount) collapse(this.meta.mount)(target, env)
-
-		// Process use callbacks
-		if (this.meta.use)
-			for (const [key, v] of Object.entries(this.meta.use) as [string, any]) {
-				const usage = getEnvPath(env, key)
-				if (typeof usage !== 'function')
-					throw new DynamicRenderingError(`${key} in env is not a function`)
-				effect.named(`use:${key}`)((access: EffectAccess) => usage(target, collapse(v), access))
-			}
+	/*
+We can build layers like that of processChildren. First one will create objects: this: cb[] use: cb[] and named: Map<cb, arg>
+Now, depending if they are reactive
+this will be treated either with one effect either directly
+use will be attended à la morph ( array-diff, ...)  (we will wrap simple uses in effect, their second argument will be EffectAccess), 
+named will be managed à la morph too
+Note: "à la morph" means it can be attended - if it uses array-diff
+*/
+	applyDirectives(target: Node | readonly Node[], env: Env) {
+		// TODO: applyDirectives is over-reactive!
+		if (!this.meta) return
+		link(
+			target,
+			effect.named(`directives:${this.tag}`)(() => {
+				const directives = this.meta!.directives()
+				effect.named('attr:this')(() => {
+					const these = directives.this
+					for (const usage of these) {
+						if (typeof usage !== 'function')
+							throw new DynamicRenderingError('this directive must resolve to a callback')
+						usage(target)
+					}
+					return () => {
+						for (const usage of these) usage(undefined)
+					}
+				})
+				attend(directives.use, (usage, access) => {
+					const cb = collapse(usage)
+					if (typeof cb !== 'function')
+						throw new DynamicRenderingError('use directive must resolve to a function')
+					return cb(target, access)
+				})
+				if (directives.named)
+					attend(directives.named!, (key, access) => {
+						const arg = collapse(directives.named![key])
+						const cb = getEnvPath<Function>(env, key)
+						if (typeof cb !== 'function')
+							throw new DynamicRenderingError(`use directive ${key} must resolve to a function`)
+						return cb(target, arg, access)
+					})
+			})
+		)
 	}
 
 	/**
 	 * Render the element - executes the produce function with caching
 	 */
 	render(env: Env = Object.create(rootEnv)): readonly Node[] {
+		// TODO? If ! isReactivityLeaf && static children && children.every(i => i.isReactivityLeaf) ==> isReactivityLeaf = true
 		const tagName = typeof this.tag === 'string' ? this.tag : this.tag?.name || 'anonymous'
-		let rv: Node[] | undefined
-		let error: Node[] | undefined
-		let resetCb: (() => void) | undefined
-		const metaCatch = this.meta.catch
-
-		function liftError(partial: Node | readonly Node[]) {
-			// set error for if it was caught in the component constructor
-			error = Array.isArray(partial) ? partial : reactive([partial])
-			// replace error if it was caught while rendering
-			rv?.splice(0, rv.length, ...(error || []))
-		}
 
 		perf?.mark(`render:${tagName}:start`)
-		if (this.isStatic) {
+
+		if (this.isReactivityLeaf) {
 			const partial = this.produce(env)
 			if (!partial) throw new DynamicRenderingError('Static renderer returned no content')
-			this.mountCallbacks(partial, env)
+			this.applyDirectives(partial, env)
 			perf?.mark(`render:${tagName}:end`)
 			perf?.measure(`render:${tagName}`, `render:${tagName}:start`, `render:${tagName}:end`)
 			return (Array.isArray(partial) ? partial : [partial]) as any
 		}
 
+		let partial: Node | readonly Node[] | undefined
 		const stopRender = effect.named(`render:${tagName}`)(
-			// @ts-expect-error TODO: effect typing: .named -> same type as effect
 			({ reaction }) => {
-				// If there is a catch clause, we must return a stable mount point (a ReactiveProp)
-				// so that when the error occurs, we can dynamically swap the content from the broken nodes to the fallback.
-				if (metaCatch) {
-					caught((error) => liftError(metaCatch(error, resetCb).render(env)))
-					// As we are a boundary, we don't need sub-elements to catch by themselves
-					env.catch = undefined
-				} else if (typeof env.catch === 'function') {
-					caught((error) => {
-						const fallback = env.catch(error, resetCb)
-						// Avoid re-entrance if the fallback also throws, the ambient catch has to be removed
-						if (fallback instanceof PounceElement)
-							liftError(fallback.render(Object.create(env, { catch: { value: undefined } })))
-						else throw new DynamicRenderingError('env.catch() did not return a PounceElement')
-					})
-				}
 				if (reaction) {
 					const msg = [
 						`Component <${tagName}> rebuild detected.`,
@@ -175,21 +182,18 @@ export class PounceElement {
 					if (pounceOptions.checkReactivity === 'error') throw new DynamicRenderingError(msg)
 					reactiveOptions.warn(msg)
 				} else {
-					const partial = this.produce(env)
-					if (error) rv = error
-					else {
-						if (!partial) throw new DynamicRenderingError('Renderer returned no content')
-						this.mountCallbacks(partial, env)
-						const arrPartial = (rv = Array.isArray(partial) ? partial : reactive([partial]))
-						resetCb = () => {
-							return partial && rv?.splice(0, rv.length, ...arrPartial)
-						}
-					}
+					partial = this.produce(env)
+					if (!partial) throw new DynamicRenderingError('Renderer returned no content')
+					this.applyDirectives(partial, env)
+				}
+				return () => {
+					// TODO: mark the node as destroyed and throw when trying to re-use it
 				}
 			},
 			{
 				dependencyHook(obj: any, prop: any) {
-					if (maxRenderDependencyLog-- > 0)
+					// TODO: `pounceOptions.checkReactivity` is an option about ReactiveProp read/write check and is unrelated - see why Agents insist to use it here
+					if (pounceOptions.checkReactivity === 'warn' && maxRenderDependencyLog-- > 0)
 						console.warn('render effect dependency:', prop, 'on', obj)
 				},
 			}
@@ -197,10 +201,11 @@ export class PounceElement {
 		perf?.mark(`render:${tagName}:end`)
 		perf?.measure(`render:${tagName}`, `render:${tagName}:start`, `render:${tagName}:end`)
 
+		const rv = arrayed(partial!)
 		// Anchor the render effect to the DOM output so GC doesn't collect it
 		// (root effects use FinalizationRegistry — if nobody holds the cleanup, GC kills all children)
-		return link(rv || error || [new Text('Throwing PounceElement')], stopRender)
+		return link(rv || ([new Text('Throwing PounceElement')] as readonly Node[]), stopRender)
 	}
 }
 export type Component<P = {}, M = Env> = (props: P, meta?: M) => PounceElement
-export const emptyChild = new PounceElement(() => [], 'empty')
+export const emptyChild = new PounceElement(() => [], 'empty', undefined, true, true)

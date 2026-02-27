@@ -84,7 +84,7 @@ declare global {
 							: Node | readonly Node[]
 				: Node | readonly Node[]
 
-		type ThisBinding<T> = ElementResult<T> | undefined
+		type ThisBinding<T> = ElementResult<T> | ((mounted: ElementResult<T>) => void) | undefined
 
 		type ComponentIntrinsicAttributes<C> = C extends (props: any, env: any) => infer N
 			? { this?: ThisBinding<N> } & MetaAttributes<any, N>
@@ -100,8 +100,7 @@ declare global {
 					this?: ThisBinding<N>
 					if?: any
 					else?: true
-					use?: (target: N, env: Env) => EffectCloser | undefined | void
-					catch?: (error: unknown, reset?: () => void) => JSX.Element
+					use?: (target: N, access: EffectAccess) => EffectCloser | undefined | void
 			  } & MetaAttributes<any, N>)
 		type MetaAttributes<M, N extends Node | readonly Node[] = Node | readonly Node[]> = {
 			[K in string & keyof M as `use:${K}`]?: M[K] extends (
@@ -345,12 +344,33 @@ declare global {
 			[K in keyof HTMLElementTagNameMap]?: BaseHTMLAttributes<HTMLElementTagNameMap[K]>
 		}
 
+		type BaseSVGAttributes = DataAttributes &
+			AriaAttributes &
+			MouseReactiveHTMLAttributes & {
+				children?: Children
+				id?: string
+				class?: ClassValue
+				style?: StyleInput
+				[key: string]: any
+			}
+
+		type SVGTagElementsMap = {
+			[K in keyof SVGElementTagNameMap]?: BaseSVGAttributes
+		}
+
+		type MathMLTagElementsMap = {
+			[K in keyof MathMLElementTagNameMap]?: BaseSVGAttributes
+		}
+
 		interface ForElementProps<T = any> {
 			each: readonly T[]
 			children: (item: T, oldItem?: JSX.Element) => JSX.Element | null | undefined | false
 		}
 
-		interface IntrinsicElements extends HTMLTagElementsMap {
+		interface IntrinsicElements
+			extends HTMLTagElementsMap,
+				SVGTagElementsMap,
+				MathMLTagElementsMap {
 			dynamic: BaseHTMLAttributes<HTMLElement> & {
 				tag: HTMLElementTag | ComponentFunction | (string & {})
 				children?: Children
@@ -364,6 +384,10 @@ declare global {
 				children?: Children
 			}
 			for: ElementIntrinsicAttributes<Node[]> & ForElementProps
+			try: ElementIntrinsicAttributes<Node[]> & {
+				catch?: (error: unknown, reset?: () => void) => JSX.Element
+				children?: Children
+			}
 
 			// Form Elements
 			input:

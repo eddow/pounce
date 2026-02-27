@@ -11,6 +11,7 @@ test.describe('Dynamic tag', () => {
 		const target = page.locator('#test-target')
 		
 		// Capture initial marker
+		await target.evaluate((el: any) => el.__marker = Math.random())
 		const initialMarker = await target.evaluate((el: any) => el.__marker)
 		expect(initialMarker).toBeDefined()
 
@@ -36,7 +37,7 @@ test.describe('Dynamic tag', () => {
 		
 		// Initial tag should be button
 		expect(await target.evaluate(el => el.tagName)).toBe('BUTTON')
-		const initialMarker = await target.evaluate((el: any) => el.__marker)
+		await target.evaluate((el: any) => el.__marker = Math.random())
 
 		// Switch tag to div
 		await page.click('#toggle-tag')
@@ -45,17 +46,17 @@ test.describe('Dynamic tag', () => {
 		
 		// Marker should be different (new node)
 		const nextMarker = await target.evaluate((el: any) => el.__marker)
-		expect(nextMarker).not.toBe(initialMarker)
-		expect(nextMarker).toBeDefined()
+		expect(nextMarker).toBeUndefined()
+		
+		// Set marker on DIV
+		await target.evaluate((el: any) => el.__marker = Math.random())
 		
 		// Switch tag back to button
 		await page.click('#toggle-tag')
 		await expect(target).toHaveJSProperty('tagName', 'BUTTON')
 		
 		const lastMarker = await target.evaluate((el: any) => el.__marker)
-		expect(lastMarker).not.toBe(nextMarker)
-		expect(lastMarker).not.toBe(initialMarker)
-		expect(lastMarker).toBeDefined()
+		expect(lastMarker).toBeUndefined()
 	})
 
 	test('should support two-way reactivity', async ({ page }) => {

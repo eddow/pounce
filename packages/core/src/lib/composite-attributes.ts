@@ -1,4 +1,11 @@
-import { type EffectCleanup, effect, isReactive, reactiveOptions, unreactive } from 'mutts'
+import {
+	type EffectAccess,
+	type EffectCleanup,
+	effect,
+	isReactive,
+	reactiveOptions,
+	unreactive,
+} from 'mutts'
 import { pounceOptions } from './debug'
 import { styles } from './styles'
 import { stringKeys } from './utils'
@@ -21,21 +28,30 @@ export type PerhapsReactive<T> = T | ReactiveProp<T>
  * establishes tracking in a reactive context); if plain, returned as-is.
  */
 export const collapse = <T>(v: PerhapsReactive<T>): T => (v instanceof ReactiveProp ? v.get() : v)
-// TODO: unused - killme
 export const fromAttribute = Symbol('from attributes')
-export interface CompositeAttributesMeta {
-	this?: ReactiveProp<Node | readonly Node[]>
-	condition?: ReactiveProp<any>
+export interface CompositeAttributesGuards {
+	condition?: PerhapsReactive<any>
 	pick?: Record<string, any>
 	else?: true
-	mount?: (mounted: Node | readonly Node[], env: Record<PropertyKey, any>) => EffectCleanup
 	when?: Record<string, PerhapsReactive<(arg: unknown) => boolean>>
 	if?: Record<string, PerhapsReactive<unknown> | true | string>
-	use?: Record<
-		string,
-		PerhapsReactive<(mounted: Node | readonly Node[], value: unknown) => EffectCleanup>
-	>
-	catch?: (error: unknown, resetCb?: () => void) => JSX.Element
+}
+
+export type ThisDirective = (mounted: Node | readonly Node[] | undefined) => unknown
+
+export type MountDirective = PerhapsReactive<
+	(mounted: Node | readonly Node[], access: EffectAccess) => EffectCleanup
+>
+
+export interface CompositeAttributesDirectives {
+	this: Set<ThisDirective>
+	use: Set<MountDirective>
+	named?: Record<string, PerhapsReactive<unknown>>
+}
+
+export interface CompositeAttributesMeta {
+	guards: CompositeAttributesGuards
+	directives(): CompositeAttributesDirectives
 }
 function report(msg: string) {
 	if (pounceOptions.checkReactivity === 'error') throw new Error(msg)
@@ -60,9 +76,6 @@ function trackWrite(rp: ReactiveProp<any>, value: any): boolean {
 		rp.set(value)
 		return true
 	}
-	if (rp.interaction === 'read') {
-		report('[pounce] Prop written after read-only interaction — expected bidi but got read-only')
-	}
 	const prevTouched = reactiveOptions.touched
 	let wasTouched = false
 	reactiveOptions.touched = (...args) => {
@@ -81,6 +94,10 @@ function trackWrite(rp: ReactiveProp<any>, value: any): boolean {
 		stopWatcher?.()
 	}
 	rp.interaction = wasTouched ? 'bidi' : rp.interaction === 'read' ? 'read' : 'write'
+	if (rp.interaction === 'read') {
+		report('[pounce] Prop written after read-only interaction — expected bidi but got read-only')
+		rp.interaction = 'bidi'
+	}
 	return true
 }
 
@@ -205,20 +222,32 @@ export class CompositeAttributes {
 		// Reverse iteration for precedence (last one wins)
 		for (let i = this.layers.length - 1; i >= 0; i--) {
 			const rawLayer = this.layers[i]
-			if ((nonReactive && typeof rawLayer === 'function') || isReactive(rawLayer)) continue
+			if (nonReactive && (typeof rawLayer === 'function' || isReactive(rawLayer))) continue
 			const layer = collapseLayer(rawLayer)
 
 			for (const key of Object.keys(layer)) {
 				if (key.startsWith(prefix)) {
 					const name = key.slice(prefix.length)
 					if (name && !this.masked.has(name) && !(result && Object.hasOwn(result, name))) {
-						if (nonReactive) this.mask(key)
+						if (nonReactive) this.mask(category)
 						result ??= {}
 						result[name] = layer[key]
 					}
 				}
 			}
 		}
+		return result
+	}
+
+	getCumulative(key: string, nonReactive = false, includeMasked = false): Set<any> {
+		if (!includeMasked && this.masked.has(key)) return new Set()
+		const result = new Set<any>()
+		for (const rawLayer of this.layers) {
+			if (nonReactive && (typeof rawLayer === 'function' || isReactive(rawLayer))) continue
+			const layer = collapseLayer(rawLayer)
+			if (layer && key in layer) result.add(layer[key])
+		}
+		this.mask(key)
 		return result
 	}
 
@@ -270,18 +299,28 @@ export class CompositeAttributes {
 		return false
 	}
 
-	extractMeta(): CompositeAttributesMeta {
-		// Return structured meta as expected by h logic
+	extractGuards(): CompositeAttributesGuards {
 		return {
-			this: this.getSingle('this', true),
 			condition: this.getSingle('if', true),
 			pick: this.getCategory('pick', true),
 			else: this.getSingle('else', true),
-			mount: this.getSingle('use', true),
 			when: this.getCategory('when', true),
-			use: this.getCategory('use', true),
 			if: this.getCategory('if', true),
-			catch: this.getSingle('catch', true),
+		}
+	}
+
+	retrieveMeta(): CompositeAttributesMeta {
+		const guards = this.extractGuards()
+		this.mask('this')
+		this.mask('use')
+
+		return {
+			guards,
+			directives: () => ({
+				this: this.getCumulative('this', false, true),
+				use: this.getCumulative('use', false, true),
+				named: this.getCategory('use'),
+			}),
 		}
 	}
 

@@ -35,15 +35,6 @@ export default () => {
 					tag={state.tag as any}
 					class={state.className}
 					data-count={state.count}
-					use={(el: HTMLElement) => {
-						// Set a marker to detect recreation
-						if (!(el as any).__marker) {
-							(el as any).__marker = Math.random()
-							console.log('[test:dynamic] Node created', (el as any).__marker)
-						} else {
-							console.log('[test:dynamic] Node reused', (el as any).__marker)
-						}
-					}}
 				>
 					<span id="target-label">{state.text}</span>
 					<span id="target-count">{state.count}</span>

@@ -145,7 +145,7 @@ describe('Effect topology and error propagation', () => {
 		}
 
 		const tree = (
-			<div
+			<try
 				catch={(err: any) => {
 					parentCaught = true
 					logs.push(`caught: ${err.message}`)
@@ -153,7 +153,7 @@ describe('Effect topology and error propagation', () => {
 				}}
 			>
 				<ThrowingChild />
-			</div>
+			</try>
 		)
 
 		try {

@@ -1,12 +1,6 @@
 import { isDev, reactiveOptions } from 'mutts'
 import { window } from '../shared'
 
-// (removed redundant import)
-
-export * from './debug-helpers'
-
-// ... (rest of imports)
-
 export class AssertionError extends Error {
 	constructor(message: string) {
 		super(`Assertion failure: ${message}`)
@@ -192,4 +186,29 @@ try {
 	}
 } catch {
 	// Platform not yet bound, ignore
+}
+export const pounceOwner = new WeakMap<Node, ComponentInfo>()
+
+export const rootComponents = new Set<ComponentInfo>()
+/**
+ * Returns the component instance (ComponentInfo) that "owns" the given DOM element.
+ */
+export function getComponentInstance(element: Node | null): ComponentInfo | undefined {
+	return element ? pounceOwner.get(element) : undefined
+}
+
+/**
+ * Returns the component hierarchy starting from the component that owns the given element
+ * up to the root component.
+ */
+export function getComponentHierarchy(element: Node): ComponentInfo[] {
+	const hierarchy: ComponentInfo[] = []
+	let current = getComponentInstance(element)
+
+	while (current) {
+		hierarchy.push(current)
+		current = current.parent
+	}
+
+	return hierarchy
 }

@@ -4,7 +4,6 @@ import { accordionModel } from './models/accordion'
 import { buttonModel } from './models/button'
 import { checkboxModel, radioModel, switchModel } from './models/checkbox'
 import { checkButtonModel } from './models/checkbutton'
-import { comboboxModel } from './models/forms'
 import {
 	appShellModel,
 	containerModel,
@@ -15,6 +14,7 @@ import {
 } from './models/layout'
 import { menuBarModel, menuItemModel, menuModel } from './models/menu'
 import { multiselectModel } from './models/multiselect'
+import { comboboxModel } from './models/options'
 import { progressModel } from './models/progress'
 import { radioButtonModel } from './models/radiobutton'
 import { starsModel } from './models/stars'

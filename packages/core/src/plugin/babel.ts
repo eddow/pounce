@@ -310,19 +310,26 @@ export function pounceBabelPlugin({
 										innerExpression = expression.expression
 									}
 									if (t.isJSXIdentifier(attr.name) && attr.name.name === 'this') {
-										if (!t.isLVal(innerExpression)) {
+										if (
+											t.isArrowFunctionExpression(innerExpression) ||
+											t.isFunctionExpression(innerExpression)
+										) {
+											attr.value = t.jsxExpressionContainer(expression)
+										} else if (t.isLVal(innerExpression)) {
+											const setter = t.arrowFunctionExpression(
+												[t.identifier('mounted')],
+												t.assignmentExpression(
+													'=',
+													innerExpression as t.LVal,
+													t.identifier('mounted')
+												)
+											)
+											attr.value = t.jsxExpressionContainer(setter)
+										} else {
 											throw path.buildCodeFrameError(
-												`[jsx-reactive] The value of 'this' attribute must be an assignable expression (LVal), got ${innerExpression.type}`
+												`[jsx-reactive] The value of 'this' attribute must be a callback or assignable expression (LVal), got ${innerExpression.type}`
 											)
 										}
-										const setter = t.arrowFunctionExpression(
-											[t.identifier('v')],
-											t.assignmentExpression('=', innerExpression as t.LVal, t.identifier('v'))
-										)
-										const dummyGetter = t.arrowFunctionExpression([], t.identifier('undefined'))
-										attr.value = t.jsxExpressionContainer(
-											t.callExpression(t.identifier('r'), [dummyGetter, setter])
-										)
 									} else if (
 										t.isMemberExpression(innerExpression) ||
 										(t.isIdentifier(innerExpression) &&

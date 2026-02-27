@@ -26,7 +26,7 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: `node_modules/.bin/vite --host=127.0.0.1 --port=${port} --strictPort --mode test`,
+		command: `pnpm exec vite --host=127.0.0.1 --port=${port} --strictPort --mode test`,
 		cwd: '.',
 		port,
 		timeout: 120_000,

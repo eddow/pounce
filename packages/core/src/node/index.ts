@@ -14,12 +14,6 @@ if (typeof window !== 'undefined') {
 	setPlatformAPIs('Test/DOM', {
 		window: globalThis.window,
 		document: globalThis.document,
-		Node: globalThis.Node,
-		HTMLElement: globalThis.HTMLElement,
-		Event: globalThis.Event,
-		CustomEvent: globalThis.CustomEvent,
-		Text: globalThis.Text,
-		DocumentFragment: globalThis.DocumentFragment,
 		crypto: globalThis.crypto,
 	})
 } else if (isTest) {
@@ -36,12 +30,6 @@ if (typeof window !== 'undefined') {
 	const config = {
 		window: window as unknown as Window,
 		document: window.document,
-		Node: window.Node,
-		HTMLElement: window.HTMLElement,
-		Event: window.Event,
-		CustomEvent: window.CustomEvent,
-		Text: window.Text,
-		DocumentFragment: window.DocumentFragment,
 		crypto: window.crypto,
 	}
 
@@ -62,12 +50,6 @@ if (typeof window !== 'undefined') {
 	setPlatformAPIs('Node/SSR', {
 		window: createAlsProxy<Window>('window'),
 		document: createAlsProxy<Document>('document'),
-		Node: createAlsProxy<typeof Node>('Node'),
-		HTMLElement: createAlsProxy<typeof HTMLElement>('HTMLElement'),
-		Event: createAlsProxy<typeof Event>('Event'),
-		CustomEvent: createAlsProxy<typeof CustomEvent>('CustomEvent'),
-		Text: createAlsProxy<typeof Text>('Text'),
-		DocumentFragment: createAlsProxy<typeof DocumentFragment>('DocumentFragment'),
 		crypto: createAlsProxy<Crypto>('crypto'),
 	})
 }

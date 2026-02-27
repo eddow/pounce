@@ -6,9 +6,6 @@ export default function SvgTests() {
 		color: 'red'
 	})
 
-	const Svg = 'svg' as any
-	const Circle = 'circle' as any
-
 	return (
 		<div>
 			<h1>SVG Tests</h1>
@@ -16,15 +13,15 @@ export default function SvgTests() {
 				<button data-action="grow" onClick={() => state.radius += 5}>Grow</button>
 				<button data-action="color-blue" onClick={() => state.color = 'blue'}>Blue</button>
 			</div>
-			<Svg width="200" height="200" data-testid="svg-root">
-				<Circle
+			<svg width="200" height="200" data-testid="svg-root">
+				<circle
 					cx="100"
 					cy="100"
 					r={state.radius}
 					fill={state.color}
 					data-testid="svg-circle"
 				/>
-			</Svg>
+			</svg>
 			<p>Radius: <span data-testid="radius-display">{state.radius}</span></p>
 			<p>Color: <span data-testid="color-display">{state.color}</span></p>
 		</div>
