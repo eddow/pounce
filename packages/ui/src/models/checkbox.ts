@@ -21,7 +21,8 @@ type ControlBaseProps = VariantProps &
 	}
 
 // ── Per-control props ───────────────────────────────────────────────────────
-
+// TODO: checkbox props should have checked?: boolean | null
+// undefined = like before, null = indeterminate
 export type CheckboxProps = ControlBaseProps & {
 	checked?: boolean
 	indeterminate?: boolean

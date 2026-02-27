@@ -157,11 +157,11 @@ function App(_p: {}, env: Env) {
 </>
 ```
 
-### `catch={fn}` — Error Boundary
+### `<try catch={fn}>` — Error Boundary
 
-Turns any element into an error boundary. Children that throw during render or in a reactive effect are caught; the element's content is reactively swapped to the fallback.
+An intrinsic component that acts as an error boundary. Children that throw during render or in a reactive effect are caught; the element's content is reactively swapped to the fallback.
 
-**Signature:** `catch={(error: unknown, reset?: () => void) => JSX.Element}`
+**Signature:** `<try catch={(error: unknown, reset?: () => void) => JSX.Element}>`
 
 - `error` — the thrown value
 - `reset` — restores original content if a successful render preceded the error
@@ -169,9 +169,9 @@ Turns any element into an error boundary. Children that throw during render or i
 - Setting `catch` clears `env.catch` for all descendants (no double-catching)
 
 ```tsx
-<div catch={(error) => <span class="error">{(error as Error).message}</span>}>
+<try catch={(error) => <span class="error">{(error as Error).message}</span>}>
   <UnreliableComponent />
-</div>
+</try>
 ```
 
 ### `pick:path={value}` — Oracle-Based Selection

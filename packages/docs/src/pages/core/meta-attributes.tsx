@@ -50,20 +50,6 @@ function Nav(_p: {}, env: any) {
   )
 }`
 
-const catchMeta = `// catch establishing an error boundary with a reset callback
-function App() {
-  return (
-    <div catch={(error, reset) => (
-      <div class="error-panel">
-        <p>Problem: {String(error)}</p>
-        {reset && <button onClick={reset}>Try Again</button>}
-      </div>
-    )}>
-      <UnreliableComponent />
-    </div>
-  )
-}`
-
 const useMeta = `// 'use' applies a directive function to the DOM element
 import { tooltip } from '@pounce/ui'
 
@@ -141,16 +127,6 @@ export default function MetaAttributesPage() {
 					paths (e.g., <code>when:auth-hasRights="edit"</code>).
 				</p>
 				<Code code={whenNameMeta} lang="tsx" />
-			</Section>
-
-			<Section title="catch">
-				<p>
-					The <code>catch</code> attribute turns any element into an error boundary. It catches
-					rendering or effect errors in its subtree, invoking the fallback function. The boundary
-					provides a <code>reset</code> callback if the original content was successfully rendered
-					before.
-				</p>
-				<Code code={catchMeta} lang="tsx" />
 			</Section>
 
 			<Section title="use / update">

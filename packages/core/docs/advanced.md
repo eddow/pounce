@@ -597,6 +597,6 @@ function processItem(item: any) {
 5. **Handle edge cases**: Always validate props and state
 6. **Clean up effects**: Return cleanup functions to prevent memory leaks
 7. **Use debug mode during development**: Track reactive changes
-8. **Leverage meta-attributes**: Use `if`, `when`, `catch` for fine-grained reactivity.
+8. **Leverage meta-attributes**: Use `if`, `when`, `else` for fine-grained reactivity.
 
 

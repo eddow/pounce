@@ -4,13 +4,11 @@
 
 Pounce is a monorepo containing a collection of packages for building modern web applications with automatic reactivity, type safety, and minimal overhead.
 
-## Packages
+## Ecosystem Status
 
-| Package | Description | Status |
-|---------|-------------|--------|
-| [`@pounce/core`](./packages/core) | Lightweight reactive UI framework with JSX | Stable |
-| [`@pounce/board`](./packages/board) | Full-stack meta-framework with SSR and file-based routing | In Development |
-| [`@pounce/kit`](./packages/kit) | Client utilities, routing, and API helpers | In Development |
+- **[@pounce/core](./packages/core)**: The foundational reactive UI framework with JSX. It is **mostly done** and stable.
+- **[@pounce/kit](./packages/kit)** & **[@pounce/ui](./packages/ui)**: Client utilities, routing, and UI components. These are **quite finished** and work seamlessly with their **[pico adapter](./packages/adapters/pico)**.
+- **[@pounce/board](./packages/board)**: The full-stack meta-framework. It is currently undergoing a **complete rework** from the ground up and is not ready for general use at this time.
 
 ## 🌟 Features
 
@@ -21,9 +19,6 @@ Pounce is a monorepo containing a collection of packages for building modern web
 - **💪 Type-Safe**: Full TypeScript support with type safety
 - **🧩 Component-Based**: Create reusable, composable components
 - **📦 No Runtime Overhead**: Works directly with the DOM
-- **🗂️ File-Based Routing** (Board): Automatic route generation from file structure
-- **🔄 SSR-First** (Board): Server-side rendering with hydration
-- **🛠️ Client Utilities** (Kit): Browser APIs, routing, and helpers
 
 ## Quick Start
 
@@ -31,8 +26,8 @@ Pounce is a monorepo containing a collection of packages for building modern web
 # Install core package
 npm install @pounce/core mutts
 
-# Or install the full-stack framework
-npm install @pounce/board
+# Install Kit, UI, and Pico adapter
+npm install @pounce/kit @pounce/ui @pounce/adapter-pico
 ```
 
 ## Example
@@ -74,8 +69,8 @@ pnpm run lint
 ## Documentation
 
 - **[@pounce/core](./packages/core)** - Core reactive framework documentation
-- **[@pounce/board](./packages/board)** - Full-stack framework documentation
 - **[@pounce/kit](./packages/kit)** - Client utilities and routing documentation
+- **[@pounce/ui](./packages/ui)** - UI components documentation
 
 ## License
 

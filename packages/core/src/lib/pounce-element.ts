@@ -117,7 +117,7 @@ named will be managed à la morph too
 Note: "à la morph" means it can be attended - if it uses array-diff
 */
 	applyDirectives(target: Node | readonly Node[], env: Env) {
-		// TODO: applyDirectives is over-reactive!
+		// TODO: To be done by your human : applyDirectives is over-reactive!
 		if (!this.meta) return
 		link(
 			target,

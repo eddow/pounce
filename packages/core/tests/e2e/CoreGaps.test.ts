@@ -106,17 +106,18 @@ test.describe('Core Feature Gaps', () => {
 		const isIndeterminate = await checkbox.evaluate((el: HTMLInputElement) => el.indeterminate)
 		expect(isIndeterminate).toBe(true)
 		
-		// Toggle disabled
-		await page.click('[data-action="toggle-disabled"]')
-		await expect(button).toBeEnabled()
+		// 1. click on the checkbox (becomes determinate, checked)
+		await checkbox.click()
+		await expect(checkbox).toBeChecked()
+		const isIndeterminateAfterClick = await checkbox.evaluate((el: HTMLInputElement) => el.indeterminate)
+		expect(isIndeterminateAfterClick).toBe(false)
 		
-		// Toggle checked
+		// 2. click on button "toggle checked" (becomes unchecked)
+		await page.click('[data-action="toggle-checked"]')
+		await expect(checkbox).not.toBeChecked()
+		
+		// 3. click on button "toggle checked" (**stays** unchecked - so toBeChecked() will fail here)
 		await page.click('[data-action="toggle-checked"]')
 		await expect(checkbox).toBeChecked()
-		
-		// Toggle indeterminate
-		await page.click('[data-action="toggle-indeterminate"]')
-		const isIndeterminateAfter = await checkbox.evaluate((el: HTMLInputElement) => el.indeterminate)
-		expect(isIndeterminateAfter).toBe(false)
 	})
 })

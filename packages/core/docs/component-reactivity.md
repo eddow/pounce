@@ -113,11 +113,10 @@ Meta-attributes are available on **any** element or component. They are not rend
 
 | `update:path={fn}` | Two-way binding callback for env-based mixins | `<input update:value={(v) => state.val = v} />` |
 | `this={ref}` | Captures a reference to the rendered DOM node(s) | `<input this={refs.input} />` |
-| `catch={fn}` | Error boundary — catches render/effect errors in children | `<div catch={(err) => <Fallback />} />` |
 | `pick:path={value}` | Oracle-based selection — renders when `env[path]` picks this value | `<Tab pick:active={'home'} />` |
 
 
-**Key point**: `if`, `else`, `when`, `catch` are reactive — the Babel plugin wraps their values in `r()`, so the element appears/disappears automatically when dependencies change. No re-render of the parent component occurs.
+**Key point**: `if`, `else`, `when` are reactive — the Babel plugin wraps their values in `r()`, so the element appears/disappears automatically when dependencies change. No re-render of the parent component occurs.
 
 ```tsx
 // Simple boolean
@@ -156,42 +155,7 @@ function App(_p: {}, env: Env) {
 
 When `auth.rights` changes, only the affected links appear/disappear — no component rebuild.
 
-### `catch={fn}` — Error Boundaries
 
-`catch` turns any element into an error boundary. If a child throws during render or in a reactive effect, the element's content is reactively swapped to the fallback returned by `fn`.
-
-**Signature:** `catch={(error: unknown, reset?: () => void) => JSX.Element}`
-
-- `error` — the thrown value (usually an `Error` instance)
-- `reset` — optional callback to restore the original content (available if there was a successful render before the error)
-- The boundary is **stable**: the DOM node itself is preserved; only its children are swapped
-- `env.catch` propagation: if an element has no local `catch`, errors bubble to the nearest ancestor that set `env.catch`
-- Setting `catch` clears `env.catch` for all descendants — no double-catching
-
-```tsx
-// Basic error boundary
-<div catch={(error) => <span class="error">{(error as Error).message}</span>}>
-  <UnreliableComponent />
-</div>
-
-// Nested: deep errors bubble up to the nearest ancestor boundary
-<section catch={(error) => <b class="error">{(error as Error).message}</b>}>
-  <Parent>
-    <GrandChild /> {/* throws — caught by <section> */}
-  </Parent>
-</section>
-
-// Reactive error: effect throws after mount
-const state = reactive({ fail: false })
-const Risky = () => {
-  effect(() => { if (state.fail) throw new Error('Boom') })
-  return <span>OK</span>
-}
-<div catch={(error) => <span class="recovered">{(error as Error).message}</span>}>
-  <Risky />
-</div>
-// state.fail = true → content reactively swaps to fallback
-```
 
 ### `pick:path={value}` — Oracle-Based Selection
 
@@ -240,6 +204,7 @@ Meta-components are custom JSX tags that don't produce DOM elements. They are fr
 | `<fragment>...</fragment>` | Groups children without a DOM wrapper | `<fragment if={cond}>...</fragment>` |
 | `<env key={value}>...</env>` | Creates a child env with injected properties | `<env role="admin">...</env>` |
 | `<dynamic tag={tagOrComponent}>...</dynamic>` | Renders a variable tag or component | `<dynamic tag={props.as ?? 'div'} />` |
+| `<try catch={fn}>...</try>` | Error boundary catching render/effect errors | `<try catch={...}>...</try>` |
 
 **`<for>`** is the idiomatic way to render reactive lists. It uses `project.array` from mutts under the hood, so items are added/removed/reordered efficiently without re-rendering the entire list:
 
@@ -261,6 +226,20 @@ Meta-components are custom JSX tags that don't produce DOM elements. They are fr
 <fragment else>
   <Content />
 </fragment>
+```
+
+**`<try>`** creates an error boundary. If a child throws during render or in a reactive effect, the component's content is reactively swapped to the fallback returned by its `catch` prop:
+
+```tsx
+// Basic error boundary
+<try catch={(error, reset) => (
+  <div class="error-panel">
+    <p>Problem: {String(error)}</p>
+    {reset && <button onClick={reset}>Try Again</button>}
+  </div>
+)}>
+  <UnreliableComponent />
+</try>
 ```
 
 ### Why the distinction matters
