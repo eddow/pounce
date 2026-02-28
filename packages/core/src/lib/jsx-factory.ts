@@ -7,7 +7,7 @@ import {
 	memoize,
 	morph,
 	reactive,
-	type ScopedCallback,
+	unlink,
 	unreactive,
 } from 'mutts'
 import { perf } from '../perf'
@@ -98,29 +98,31 @@ export const intrinsicComponentAliases = extend(null, {
 			const result = reactive({ error: undefined as any })
 
 			let partial: Node | readonly Node[] | undefined
-			let stopRender: ScopedCallback | undefined
-			function tryAgain() {
-				stopRender?.()
-				stopRender = effect.named('try:render')(() => {
-					result.error = undefined
-					caught((error) => {
-						result.error = unreactive(
-							pounceElement(CatchComponent(error, tryAgain), env).render(
-								Object.create(env, { catch: { value: undefined } })
-							)
-						)
-					})
-
-					partial = processChildren(props.children, env)
-				})
-			}
-			tryAgain()
 			const rv = lift(() => {
 				const src = result.error ?? partial
-				return Array.isArray(src) ? src : [src]
+				return Array.isArray(src) ? src : src ? [src] : []
 			}) as any
+			function tryAgain() {
+				unlink(rv)
+				link(
+					rv,
+					effect.named('try:render')(() => {
+						result.error = undefined
+						caught((error) => {
+							result.error = unreactive(
+								pounceElement(CatchComponent(error, tryAgain), env).render(
+									Object.create(env, { catch: { value: undefined } })
+								)
+							)
+						})
 
-			return link(rv, () => stopRender?.())
+						partial = processChildren(props.children, env)
+					})
+				)
+			}
+			tryAgain()
+
+			return rv
 		}, 'try')
 	},
 	dynamic(props: { children?: any; [key: string]: any }, env: Env) {

@@ -30,12 +30,15 @@ export type Middleware = (
 	next: () => Promise<Response>
 ) => Promise<Response>
 
-export type RouteHandler = (context: RequestContext) => Promise<{
-	status: number
-	data?: unknown
-	error?: string
-	headers?: Record<string, string>
-}>
+export type RouteHandler = (context: RequestContext) => Promise<
+	| {
+			status: number
+			data?: unknown
+			error?: string
+			headers?: Record<string, string>
+	  }
+	| Response
+>
 
 export type RouteResponse = {
 	status: number
@@ -62,13 +65,18 @@ export async function runMiddlewares(
 		if (index >= middlewareStack.length) {
 			name = 'handler'
 			const result = await handler(context)
-			response = new Response(result.data ? JSON.stringify(result.data) : result.error, {
-				status: result.status,
-				headers: {
-					'Content-Type': 'application/json',
-					...result.headers,
-				},
-			})
+
+			if (result instanceof Response) {
+				response = result
+			} else {
+				response = new Response(result.data ? JSON.stringify(result.data) : result.error, {
+					status: result.status,
+					headers: {
+						'Content-Type': 'application/json',
+						...result.headers,
+					},
+				})
+			}
 		} else {
 			name = `mw${index}`
 			const middleware = middlewareStack[index]

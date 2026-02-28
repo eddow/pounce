@@ -11,7 +11,7 @@ export default function StarsDemo() {
 		get value() {
 			return state.rating
 		},
-		onChange: (v) => (state.rating = v as number),
+		onChange: (v: any) => (state.rating = v as number),
 		before: 'star-filled',
 		after: 'star-outline',
 	})
@@ -20,7 +20,7 @@ export default function StarsDemo() {
 		get value() {
 			return state.range
 		},
-		onChange: (v) => (state.range = v as [number, number]),
+		onChange: (v: any) => (state.range = v as [number, number]),
 		maximum: 10,
 		size: '2rem',
 	})

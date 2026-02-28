@@ -423,6 +423,107 @@ export function createApiClientFactory(executor: RequestExecutor) {
 			async patch<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T> {
 				return requestWithRetry<T>('PATCH', url, body, options?.signal)
 			},
+			stream<T>(onMessage: (data: T) => void, onError?: (error: Error) => void): () => void {
+				const activeCtx = getContext()
+				const isSSR = activeCtx ? (activeCtx.config.ssr ?? config.ssr) : config.ssr
+
+				// Streaming has no effect on the server-side during SSR.
+				if (isSSR) {
+					return () => {}
+				}
+
+				let currentUrl: URL
+				if (template && paramsOrOptions) {
+					let builtPath = template
+					const usedKeys = new Set<string>()
+					for (const [key, value] of Object.entries(paramsOrOptions)) {
+						const placeholder = `[${key}]`
+						if (builtPath.includes(placeholder)) {
+							builtPath = builtPath.replace(placeholder, String(value))
+							usedKeys.add(key)
+						}
+					}
+					currentUrl = buildUrlObj(builtPath)
+					for (const [key, value] of Object.entries(paramsOrOptions)) {
+						if (!usedKeys.has(key)) {
+							currentUrl.searchParams.set(key, String(value))
+						}
+					}
+				} else {
+					currentUrl = new URL(url)
+					if (paramsOrOptions) {
+						for (const [key, value] of Object.entries(paramsOrOptions)) {
+							currentUrl.searchParams.set(key, String(value))
+						}
+					}
+				}
+
+				const controller = new AbortController()
+
+				const doStream = async () => {
+					try {
+						const request = new Request(currentUrl.toString(), {
+							method: 'GET',
+							headers: { Accept: 'text/event-stream' },
+							signal: controller.signal,
+						})
+
+						const finalHandler = async (req: Request): Promise<PounceResponse> => {
+							// Executor is usually designed for Promise<{body}>, we just use raw fetch for stream
+							// since executor has timeout logic we don't want to enforce on streams.
+							const res = await fetch(req)
+							return PounceResponse.from(res)
+						}
+
+						const response = await runInterceptors(request, finalHandler)
+
+						if (!response.ok) {
+							throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+						}
+
+						if (!response.body) {
+							throw new Error('Response body is null')
+						}
+
+						const reader = response.body.getReader()
+						const decoder = new TextDecoder()
+						let buffer = ''
+
+						while (true) {
+							const { done, value } = await reader.read()
+							if (done) break
+
+							buffer += decoder.decode(value, { stream: true })
+							const lines = buffer.split('\n')
+							buffer = lines.pop() || ''
+
+							for (const line of lines) {
+								if (line.startsWith('data: ')) {
+									const dataStr = line.slice(6).trim()
+									if (dataStr) {
+										try {
+											const data = JSON.parse(dataStr) as T
+											onMessage(data)
+										} catch (err) {
+											console.error('Failed to parse SSE data:', dataStr, err)
+										}
+									}
+								}
+							}
+						}
+					} catch (error: any) {
+						if (error.name !== 'AbortError' && onError) {
+							onError(error)
+						}
+					}
+				}
+
+				doStream()
+
+				return () => {
+					controller.abort()
+				}
+			},
 		}
 	}
 
@@ -468,4 +569,5 @@ export interface ApiClientInstance<P extends string> {
 		options?: { signal?: AbortSignal }
 	): Promise<T>
 	patch<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T>
+	stream<T>(onMessage: (data: T) => void, onError?: (error: Error) => void): () => void
 }

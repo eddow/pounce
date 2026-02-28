@@ -13,13 +13,13 @@ export default function OverlayDemo() {
 		stack.push(
 			dialogSpec({
 				title: 'A Headless Dialog',
-				children: (
+				render: (close: any) => (
 					<div style="background: #1e293b; color: white; padding: 24px; border-radius: 12px; border: 1px solid #475569; position: relative;">
 						<h3 style="margin-top: 0;">Interactive Overlay</h3>
 						<p>This dialog is part of the Pounce overlay stack.</p>
 						<button
 							style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;"
-							onClick={() => stack.pop()}
+							onClick={() => close(null)}
 						>
 							Dismiss
 						</button>
@@ -28,7 +28,7 @@ export default function OverlayDemo() {
 				onClose: () => {
 					state.dialogOpen = false
 				},
-			})
+			} as any)
 		)
 	}
 
@@ -44,7 +44,7 @@ export default function OverlayDemo() {
 			</button>
 
 			<div style="margin-top: 20px;">
-				<for each={stack.entries}>
+				<for each={stack.stack}>
 					{(entry) => (
 						<div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
 							{entry.element}

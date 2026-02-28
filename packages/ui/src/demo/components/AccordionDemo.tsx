@@ -6,19 +6,6 @@ export default function AccordionDemo() {
 		expanded: ['a'],
 	})
 
-	const model = accordionModel({
-		get expanded() {
-			return state.expanded
-		},
-		onToggle: (id: string) => {
-			if (state.expanded.includes(id)) {
-				state.expanded = state.expanded.filter((i) => i !== id)
-			} else {
-				state.expanded = [...state.expanded, id]
-			}
-		},
-	})
-
 	const items = [
 		{
 			id: 'a',
@@ -43,22 +30,36 @@ export default function AccordionDemo() {
 
 			<div style="display: flex; flex-direction: column; gap: 8px;">
 				<for each={items}>
-					{(item) => (
-						<div style="border: 1px solid #475569; border-radius: 4px; overflow: hidden;">
-							<button
-								style={`width: 100%; text-align: left; padding: 12px; background: #334155; border: none; color: white; cursor: pointer; font-weight: bold;`}
-								{...model.trigger(item.id)}
+					{(item) => {
+						const model = accordionModel({
+							get open() {
+								return state.expanded.includes(item.id)
+							},
+							onToggle: (open: boolean) => {
+								if (open && !state.expanded.includes(item.id)) {
+									state.expanded = [...state.expanded, item.id]
+								} else if (!open && state.expanded.includes(item.id)) {
+									state.expanded = state.expanded.filter((i) => i !== item.id)
+								}
+							},
+							summary: null,
+						})
+
+						return (
+							<details
+								style="border: 1px solid #475569; border-radius: 4px; overflow: hidden;"
+								use={model.onMount}
+								{...model.details}
 							>
-								{item.title} {state.expanded.includes(item.id) ? '▾' : '▸'}
-							</button>
-							<div
-								style={`padding: 12px; background: #1e293b; line-height: 1.5;`}
-								{...model.content(item.id)}
-							>
-								{item.content}
-							</div>
-						</div>
-					)}
+								<summary style="padding: 12px; background: #334155; color: white; cursor: pointer; font-weight: bold; list-style: none;">
+									{item.title} {state.expanded.includes(item.id) ? '▾' : '▸'}
+								</summary>
+								<div style="padding: 12px; background: #1e293b; line-height: 1.5;">
+									{item.content}
+								</div>
+							</details>
+						)
+					}}
 				</for>
 			</div>
 		</div>

@@ -30,11 +30,8 @@ export default function CheckboxDemo() {
 			</p>
 
 			<div style="margin-bottom: 16px;">
-				<label
-					{...model.label}
-					style="display: flex; align-items: center; gap: 8px; cursor: pointer;"
-				>
-					<input type="checkbox" {...model.input} />
+				<label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+					<input {...model.input} />
 					Toggle this checkbox
 				</label>
 			</div>

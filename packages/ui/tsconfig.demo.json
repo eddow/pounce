@@ -1,7 +1,10 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
-		"noEmit": true
+		"noEmit": true,
+		"paths": {
+			"@pounce/ui": ["./src/index.ts"]
+		}
 	},
 	"include": [
 		"src/demo/**/*"

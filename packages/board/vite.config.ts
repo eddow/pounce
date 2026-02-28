@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'node:path'
 import { pounceCorePlugin } from '../core/src/plugin/index'
+import dts from 'vite-plugin-dts'
 
 const rootDir = resolve(__dirname, '..')
 const boardDir = __dirname
@@ -9,6 +10,13 @@ export default defineConfig({
   plugins: [
     pounceCorePlugin({
       projectRoot: boardDir,
+    }),
+    dts({
+      rollupTypes: false,
+      insertTypesEntry: true,
+      compilerOptions: {
+        preserveSymlinks: false,
+      }
     }),
   ],
   esbuild: false,

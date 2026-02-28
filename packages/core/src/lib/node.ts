@@ -12,7 +12,9 @@ Object.defineProperty(Node.prototype, 'isConnected', {
 		const nodeTruth = originalIsConnected?.get?.call(this)
 		if (latchOwners.has(this)) return nodeTruth
 		if (nodeTruth !== mountedNodes.has(this)) {
-			throw new Error('Pounce dom has been added/removed by third-party')
+			if (nodeTruth) mountedNodes.add(this)
+			else mountedNodes.delete(this)
+			// third-party modification recovered silently
 		}
 		return nodeTruth
 	},

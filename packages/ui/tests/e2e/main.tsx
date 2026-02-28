@@ -16,6 +16,7 @@ const routes: Record<string, () => Promise<{ default: () => JSX.Element } | any>
 	'#Stars': () => import('./fixtures/StarsTests'),
 	'#ThemeToggle': () => import('./fixtures/ThemeToggleTests'),
 	'#Toast': () => import('./fixtures/ToastTests'),
+	'#Dockview': () => import('./fixtures/DockviewTests'),
 }
 
 function E2EApp() {

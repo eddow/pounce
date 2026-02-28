@@ -69,4 +69,27 @@ test.describe('UI Feature Gaps', () => {
 		await expect(isOpen).toHaveText('No')
 		await expect(status).toHaveText('Closed via button')
 	})
+
+	test('Dockview widget rendering and state changes', async ({ page }) => {
+		page.on('console', msg => console.log('PAGE LOG:', msg.text()))
+		page.on('pageerror', err => console.log('PAGE ERROR:', err))
+		await page.goto('/#Dockview')
+		const initPanelsBtn = page.locator('[data-action="init-panels"]')
+		const updateTitleBtn = page.locator('[data-action="update-title"]')
+		const dockviewTheme = page.locator('.dockview-theme-light')
+		
+		await expect(dockviewTheme).toBeVisible()
+		
+		await initPanelsBtn.click()
+		
+		const title = page.locator('[data-testid="widget-title"]')
+		const content = page.locator('[data-testid="widget-content"]')
+		
+		await expect(title).toHaveText('Test Panel 1')
+		await expect(content).toHaveText('Hello Dockview')
+		
+		await updateTitleBtn.click()
+		
+		await expect(title).toHaveText('Updated Title')
+	})
 })

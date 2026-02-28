@@ -13,7 +13,7 @@ export default function CheckButtonDemo() {
 		get checked() {
 			return state.wifi
 		},
-		onCheckedChange: (v) => (state.wifi = v),
+		onCheckedChange: (v: boolean) => (state.wifi = v),
 		icon: 'wifi',
 		children: 'Wi-Fi',
 	})
@@ -22,7 +22,7 @@ export default function CheckButtonDemo() {
 		get checked() {
 			return state.bluetooth
 		},
-		onCheckedChange: (v) => (state.bluetooth = v),
+		onCheckedChange: (v: boolean) => (state.bluetooth = v),
 		icon: 'bluetooth',
 		children: 'Bluetooth',
 	})

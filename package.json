@@ -25,6 +25,7 @@
 		"pure-glyf": "workspace:*",
 		"turbo": "^2.8.10",
 		"typescript": "^5.9.3",
+		"vite-plugin-dts": "^4.5.4",
 		"vitest": "^4.0.18"
 	},
 	"pnpm": {

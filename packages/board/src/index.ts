@@ -25,4 +25,5 @@ export type {
 export { ApiError } from './lib/http/core.js'
 export { defineProxy, type ProxyConfig, type ProxyEndpointConfig } from './lib/http/proxy.js'
 export { PounceResponse } from './lib/http/response.js'
+export { defineStreamRoute, type StreamCleanup, type StreamHandler } from './lib/http/stream.js'
 export { defineRoute, type RouteDefinition } from './lib/router/defs.js'

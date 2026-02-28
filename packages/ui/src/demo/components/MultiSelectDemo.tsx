@@ -18,7 +18,7 @@ export default function MultiSelectDemo() {
 		items,
 		value: state.selected,
 		closeOnSelect: false,
-		renderItem: (item, checked) => (
+		renderItem: (item: any, checked: boolean) => (
 			<div style="display: flex; align-items: center; gap: 8px;">
 				<div
 					style={`width: 16px; height: 16px; border: 1px solid #475569; border-radius: 3px; display: flex; align-items: center; justify-content: center; background: ${checked ? '#3b82f6' : 'transparent'};`}

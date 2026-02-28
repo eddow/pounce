@@ -15,6 +15,10 @@ import { biDi, effect, reactive, type ScopedCallback, unreactive } from 'mutts'
 import { Icon } from '../icon'
 
 componentStyle.sass`
+.pounce-dockview
+	width: 100%
+	height: 100%
+
 .pounce-dv-item
 	width: 100%
 	height: 100%
@@ -94,21 +98,27 @@ function contentRenderer(
 		element,
 		init: ({ api: panelApi, params, title }: GroupPanelPartInitParameters) => {
 			params = reactive(params)
-			Object.assign(props, {
+			const internalState = reactive({ title })
+			Object.defineProperties(props, {
 				title: {
-					get: () => title,
+					get: () => internalState.title,
 					set: (v: string) => {
 						panelApi.setTitle(v)
-						title = v
+						internalState.title = v
 					},
+					enumerable: true,
+					configurable: true,
 				},
+			})
+			Object.assign(props, {
 				params,
 				size,
 				context: {},
 			})
 			cleanups.push(
-				panelApi.onDidTitleChange((e: any) => (title = typeof e === 'string' ? e : e.title))
-					.dispose,
+				panelApi.onDidTitleChange(
+					(e: any) => (internalState.title = typeof e === 'string' ? e : e.title)
+				).dispose,
 				effect(() => panelApi.updateParameters(params)),
 				panelApi.onDidParametersChange((payload: any) => {
 					Object.assign(params, payload)
@@ -298,7 +308,7 @@ export const Dockview = (
 
 	return (
 		<div
-			{...props.el}
+			{...(props.el || {})}
 			class="pounce-dockview"
 			data-testid="dockview-theme-container"
 			use={initDockview}

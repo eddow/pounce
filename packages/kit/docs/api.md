@@ -31,6 +31,7 @@ interface ApiClientInstance<P extends string> {
   put<T>(body: unknown): Promise<T>
   del<T>(params?: ExtractPathParams<P>): Promise<T>
   patch<T>(body: unknown): Promise<T>
+  stream<T>(onMessage: (data: T) => void, onError?: (err: Error) => void): () => void
 }
 ```
 
@@ -55,8 +56,25 @@ const { result, context } = await withSSRContext(async () => {
 }, 'http://localhost:3000')
 
 const responses = getCollectedSSRResponses()
+const responses = getCollectedSSRResponses()
 const html = injectApiResponses(result, responses)
 ```
+
+## Streaming (SSE)
+
+The `api()` client provides a `.stream()` method to consume Server-Sent Events natively using the `fetch` API. It supports the same URL resolution and runs through the same interceptors as standard requests.
+
+```typescript
+const unsubscribe = api('/api/events').stream<string>(
+  (data) => console.log('Received:', data),
+  (err) => console.error('Stream error:', err)
+)
+
+// Later: close the stream
+// unsubscribe()
+```
+
+*Note: Streaming has no effect and is a no-op during SSR.*
 
 ## Interceptors
 
