@@ -2,6 +2,7 @@
 **/*.spec.*
 **/*.test.*
 tests/
+demo/
 
 # Build config
 *.config.ts

@@ -3,19 +3,30 @@ import { reactive, resource } from 'mutts'
 
 // Mock interceptor for E2E
 intercept('**', async (req: any, next: any) => {
-	if (req.url.endsWith('/e2e/user')) {
-		// Add delay to show loading state in tests
+	const url = new URL(req.url, 'http://localhost')
+	if (url.pathname === '/e2e/user') {
 		await new Promise(r => setTimeout(r, 100))
 		return new Response(JSON.stringify({ id: 1, name: 'E2E User' }), {
+			headers: { 'Content-Type': 'application/json' }
+		})
+	}
+	const postMatch = url.pathname.match(/^\/e2e\/post\/(\d+)$/)
+	if (postMatch) {
+		const id = Number(postMatch[1])
+		await new Promise(r => setTimeout(r, 100))
+		return new Response(JSON.stringify({ id, title: `Post ${id}` }), {
 			headers: { 'Content-Type': 'application/json' }
 		})
 	}
 	return next(req)
 })
 
+const postApi = api('/e2e/post/[id]')
+
 export default function ApiTests() {
 	const state = reactive({
-		trigger: 0
+		trigger: 0,
+		postId: 1,
 	})
 
 	const user = resource(() => {
@@ -23,19 +34,39 @@ export default function ApiTests() {
 		return api('/e2e/user').get<{ id: number; name: string }>()
 	})
 
+	const post = resource(({ signal }) =>
+		postApi.get<{ id: number; title: string }>({ id: state.postId }, { signal })
+	)
+
 	return (
 		<div data-testid="api-view">
 			<h1>API Tests</h1>
-			<button data-action="refetch" onClick={() => state.trigger++}>Refetch</button>
 
-			<div if={user.loading} data-testid="api-loading">Loading...</div>
-			<div else if={user.error} data-testid="api-error">Error: {user.error.message}</div>
-			<div else data-testid="api-result">
-				<p>User: <span data-testid="api-user-name">{user.value?.name}</span></p>
-				<p>ID: <span data-testid="api-user-id">{user.value?.id}</span></p>
-			</div>
+			<section>
+				<h2>User (trigger-based refetch)</h2>
+				<button data-action="refetch" onClick={() => state.trigger++}>Refetch</button>
+				<div if={user.loading} data-testid="api-loading">Loading...</div>
+				<div else if={user.error} data-testid="api-error">Error: {user.error.message}</div>
+				<div else data-testid="api-result">
+					<p>User: <span data-testid="api-user-name">{user.value?.name}</span></p>
+					<p>ID: <span data-testid="api-user-id">{user.value?.id}</span></p>
+				</div>
+				<p>Fetch Count: <span data-testid="api-fetch-count">{state.trigger + 1}</span></p>
+			</section>
 
-			<p>Fetch Count: <span data-testid="api-fetch-count">{state.trigger + 1}</span></p>
+			<section>
+				<h2>Post (ID-based resource)</h2>
+				<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+					<button data-action="prev-post" onClick={() => { if (state.postId > 1) state.postId-- }}>◄</button>
+					<span data-testid="api-post-id">{state.postId}</span>
+					<button data-action="next-post" onClick={() => state.postId++}>►</button>
+				</div>
+				<div if={post.loading} data-testid="api-post-loading">Loading...</div>
+				<div else if={post.error} data-testid="api-post-error">Error: {post.error.message}</div>
+				<div else data-testid="api-post-result">
+					<p>Title: <span data-testid="api-post-title">{post.value?.title}</span></p>
+				</div>
+			</section>
 		</div>
 	)
 }

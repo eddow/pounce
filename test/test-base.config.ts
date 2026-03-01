@@ -28,7 +28,7 @@ export const createBaseConfig = (packageDir: string) => {
 				'@pounce/core': resolve(workspaceRoot, isBrowser
 					? 'packages/core/src/dom/index.ts'
 					: 'packages/core/src/node/index.ts'),
-				'@pounce/kit': resolve(workspaceRoot, 'packages/kit/src'),
+				'@pounce/kit': resolve(workspaceRoot, 'test/ep.ts'),
 				'@pounce/ui': resolve(workspaceRoot, 'packages/ui/src'),
 				'@pounce/board': resolve(workspaceRoot, 'packages/board/src'),
 				'@pounce/core/plugin': resolve(workspaceRoot, 'packages/core/src/plugin/index.ts'),

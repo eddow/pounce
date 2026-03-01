@@ -13,6 +13,7 @@ export default defineConfig({
       'omni18n': path.resolve(__dirname, '../../../omni18n/src'),
       'pounce-board/client': path.resolve(__dirname, 'src/client'),
       'pounce-board/server': path.resolve(__dirname, 'src/server'),
+      '@pounce/board': path.resolve(__dirname, 'src'), // Local project reference
       'pounce-board': path.resolve(__dirname, 'src'), // Default to server in Node test env
     },
   },

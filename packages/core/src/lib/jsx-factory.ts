@@ -1,15 +1,4 @@
-import {
-	caught,
-	effect,
-	isReactive,
-	lift,
-	link,
-	memoize,
-	morph,
-	reactive,
-	unlink,
-	unreactive,
-} from 'mutts'
+import { caught, effect, isReactive, lift, link, memoize, morph, reactive, unreactive } from 'mutts'
 import { perf } from '../perf'
 import { document } from '../shared'
 import {
@@ -98,31 +87,29 @@ export const intrinsicComponentAliases = extend(null, {
 			const result = reactive({ error: undefined as any })
 
 			let partial: Node | readonly Node[] | undefined
+			let stopRender: (() => void) | undefined
+			function tryAgain() {
+				stopRender?.()
+				stopRender = effect.named('try:render')(() => {
+					result.error = undefined
+					caught((error) => {
+						result.error = unreactive(
+							pounceElement(CatchComponent(error, tryAgain), env).render(
+								Object.create(env, { catch: { value: undefined } })
+							)
+						)
+					})
+
+					partial = processChildren(props.children, env)
+				})
+			}
+			tryAgain()
 			const rv = lift(() => {
 				const src = result.error ?? partial
 				return Array.isArray(src) ? src : src ? [src] : []
 			}) as any
-			function tryAgain() {
-				unlink(rv)
-				link(
-					rv,
-					effect.named('try:render')(() => {
-						result.error = undefined
-						caught((error) => {
-							result.error = unreactive(
-								pounceElement(CatchComponent(error, tryAgain), env).render(
-									Object.create(env, { catch: { value: undefined } })
-								)
-							)
-						})
 
-						partial = processChildren(props.children, env)
-					})
-				)
-			}
-			tryAgain()
-
-			return rv
+			return link(rv, () => stopRender?.())
 		}, 'try')
 	},
 	dynamic(props: { children?: any; [key: string]: any }, env: Env) {

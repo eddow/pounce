@@ -1,5 +1,7 @@
 # Pounce Framework
 
+The source of truth is [api-routing](./api-routing.md)
+
 **Lightweight, type-safe, full-stack framework with SSR support and explicit middleware management.**
 
 ## Features

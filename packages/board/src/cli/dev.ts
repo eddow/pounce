@@ -102,7 +102,7 @@ export async function runDevServer(options: DevServerOptions = {}) {
 			template = await vite.transformIndexHtml(c.req.url, template)
 
 			const routeTree = await buildRouteTree(routesDir, (p) => vite.ssrLoadModule(p))
-			const match = matchRoute(url.pathname, routeTree, 'GET')
+			const match = matchRoute(url.pathname, routeTree)
 
 			if (match?.component) {
 				const { renderToStringAsync, withSSR } = await vite.ssrLoadModule('@pounce/core/server')
@@ -145,7 +145,7 @@ export async function runDevServer(options: DevServerOptions = {}) {
 
 	console.log(`\n  🚀 Pounce-Board dev server starting...`)
 	server.listen(port, () => {
-		console.log(`  http://localhost:\${port} (HMR: \${hmrPort})\n`)
+		console.log(`  http://localhost:${port} (HMR: ${hmrPort})\n`)
 	})
 
 	const shutdown = async () => {

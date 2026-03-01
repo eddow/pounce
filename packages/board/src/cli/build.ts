@@ -50,9 +50,6 @@ import {
     createPounceMiddleware, 
     buildRouteTree, 
     matchRoute,
-    withSSRContext, 
-    injectApiResponses, 
-    getCollectedSSRResponses,
     flushSSRPromises
 } from 'pounce-board/server'
 import { api } from 'pounce-board/client'
@@ -101,7 +98,7 @@ app.get('*', async (c, next) => {
 	// Build route tree (cached internally by adapter, but we need it here)
 	// We can pass the same globRoutes
 	const routeTree = await buildRouteTree('${routesDir}', undefined, routes)
-	const match = matchRoute(url.pathname, routeTree, 'GET')
+	const match = matchRoute(url.pathname, routeTree)
 
 	if (match && match.component) {
 		if (typeof match.component !== 'function') {

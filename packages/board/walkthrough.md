@@ -6,19 +6,22 @@
 
 ## Core Modules
 
-### [Core HTTP Client](file:///home/fmdm/dev/ownk/pounce/packages/board/src/lib/http/client.ts)
+### [Core HTTP Client](src/lib/http/client.ts)
 Universal API client for pounce-board. Supports SSR hydration.
 
-### [Context Management](file:///home/fmdm/dev/ownk/pounce/packages/board/src/lib/http/context.ts)
-Typed global context for SSR and request scoped data using AsyncLocalStorage.
+### [Context Management](src/lib/http/context.ts)
+Typed global context for SSR and request-scoped data using AsyncLocalStorage.
+
+### [Router & expose()](src/lib/router/)
+File-based router (`index.ts`), `expose()` runtime (`expose.ts`), and client-importable types (`expose-types.ts`).
 
 ## Dependency Documentation
 
 > [!IMPORTANT]
 > **Read these LLM.md files before implementing:**
-> - [pounce-ts/LLM.md](file:///home/fmdm/dev/ownk/pounce-ts/LLM.md) – UI framework, fine-grained reactivity, JSX transforms
-> - [mutts/LLM.md](file:///home/fmdm/dev/ownk/mutts/LLM.md) – Reactivity system (**used both FE and BE**)
-> - [bounce-ts/LLM.md](file:///home/fmdm/dev/ownk/bounce-ts/LLM.md) – Existing Pounce implementation (reference for patterns)
+> - [pounce-ts (core)](../core/LLM.md) – UI framework, fine-grained reactivity, JSX transforms
+> - [mutts](../../../../mutts/LLM.md) – Reactivity system (**used both FE and BE**)
+> - [pounce-board](./LLM.md) – This package's cheatsheet
 
 ---
 
@@ -26,17 +29,16 @@ Typed global context for SSR and request scoped data using AsyncLocalStorage.
 
 | Document | Purpose | Key Content |
 |----------|---------|-------------|
-| [README.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/README.md) | Quick start | Feature list, basic examples |
-| [CONCEPTS.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/CONCEPTS.md) | Core concepts | Routing, API calls, SSR flow, middleware |
-| [ARCHITECTURE.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/ARCHITECTURE.md) | Full architecture | Diagrams, security, scalability, CI/CD, plugins |
-| [API.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/API.md) | API reference | `api()`, `getSSRData()`, `Middleware` type, `defineProxy()` |
-| [SSR.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/SSR.md) | SSR guide | Injection, hydration, framework integrations |
-| [MIDDLEWARE.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/MIDDLEWARE.md) | Middleware patterns | Auth, rate-limiting, validation, caching, composition |
-| [EXTERNAL_APIS.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/EXTERNAL_APIS.md) | External proxies | `defineProxy()`, transforms, mocking, auth |
-| [IMPLEMENTATION.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/IMPLEMENTATION.md) | Core implementation | HTTP core, client, SSR utils, proxy system, testing |
-| [EXAMPLES.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/EXAMPLES.md) | Full examples | Blog, E-commerce, Admin dashboard |
-| [MIGRATION.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/MIGRATION.md) | Migration guides | From Express, Next.js, SvelteKit, NestJS |
-| [BEST_PRACTICES.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/BEST_PRACTICES.md) | Best practices | Structure, types, security, testing, deployment |
+| [README.md](analysis/README.md) | Quick start | Feature list, basic examples |
+| [ARCHITECTURE.md](analysis/ARCHITECTURE.md) | Full architecture | Diagrams, security, scalability, CI/CD, plugins |
+| [API.md](analysis/API.md) | API reference | `api()`, `getSSRData()`, `expose()`, `defineProxy()` |
+| [SSR.md](analysis/SSR.md) | SSR guide | Injection, hydration, framework integrations |
+| [EXTERNAL_APIS.md](analysis/EXTERNAL_APIS.md) | External proxies | `defineProxy()`, transforms, mocking, auth |
+| [IMPLEMENTATION.md](analysis/IMPLEMENTATION.md) | Core implementation | HTTP core, client, SSR utils, proxy system, testing |
+| [api-routing.md](analysis/api-routing.md) | API routing | `expose()`, `middle`, `provide`, `layout.tsx` convention |
+| [route-api-walkthrough.md](analysis/route-api-walkthrough.md) | Routing refactor | Phase tracking for `expose()` implementation |
+| [deck.md](analysis/deck.md) | Deck / presentation | Project overview |
+| [one-port-architecture.md](analysis/one-port-architecture.md) | One-port design | Single-port serving strategy |
 
 ---
 
@@ -76,7 +78,7 @@ Typed global context for SSR and request scoped data using AsyncLocalStorage.
 | **File-based routing** | `routes/users/[id]/index.ts` → `/users/:id` |
 | **Type-safe API calls** | Full TypeScript inference for API responses |
 | **SSR data injection** | API responses embedded as `<script type="application/json">` tags |
-| **Explicit middleware** | Per-route `common.ts` defines middleware stacks |
+| **Explicit middleware** | `middle` in `expose()` cascades cross-tree (replaces `common.ts`) |
 | **External API proxies** | `defineProxy()` for typed third-party API integration |
 | **mutts reactivity BE** | Use reactive patterns on server-side too |
 
@@ -86,32 +88,45 @@ Typed global context for SSR and request scoped data using AsyncLocalStorage.
 
 > [!IMPORTANT]
 > **No SvelteKit-style `+` prefixes!** File type determines role:
-> - `.tsx` = **Frontend** (components, layouts)
-> - `.ts` = **Backend** (handlers, middleware)
+> - `.tsx` = **Frontend** (components, `layout.tsx` for wrapping layouts)
+> - `.ts` = **Backend** (API routes via `expose()`, middleware via `middle`)
 
 ### Framework Source Structure
 
 ```
 pounce-board/
 ├── src/
-│   ├── lib/                       # Framework internals
-│   │   ├── tsconfig.json          # Shared lib tsconfig
+│   ├── index.ts                   # Public API re-exports
+│   ├── types.ts                   # Shared types
+│   ├── lib/
 │   │   ├── http/
 │   │   │   ├── core.ts            # Middleware runner, types
 │   │   │   ├── client.ts          # API client (universal FE+BE)
-│   │   │   └── proxy.ts           # External API proxy system
+│   │   │   ├── context.ts         # AsyncLocalStorage request context
+│   │   │   ├── proxy.ts           # External API proxy system
+│   │   │   ├── response.ts        # PounceResponse utilities
+│   │   │   └── stream.ts          # Streaming support
 │   │   ├── ssr/
 │   │   │   └── utils.ts           # SSR injection/hydration
-│   │   └── router/
-│   │       └── index.ts           # File-based router
+│   │   ├── router/
+│   │   │   ├── index.ts           # File-based router, buildRouteTree
+│   │   │   ├── expose.ts          # expose() runtime (server-only)
+│   │   │   ├── expose-types.ts    # Type utilities (client-importable)
+│   │   │   └── defs.ts            # Route definitions & matching
+│   │   └── types/
 │   ├── adapters/
-│   │   ├── hono.ts
-│   │   └── vercel.ts
+│   │   └── hono.ts                # Hono integration
+│   ├── client/                    # Client-only entry
+│   ├── server/                    # Server-only entry
 │   └── cli/
-│       └── index.ts               # Dev server, build commands
-├── tsconfig.json                  # Root tsconfig
-├── tsconfig.fe.json               # Frontend-specific config
-└── tsconfig.be.json               # Backend-specific config
+│       ├── index.ts               # CLI entry (pounce dev|build|preview)
+│       ├── dev.ts                 # Dev server (Vite HMR)
+│       ├── build.ts               # Production build
+│       └── preview.ts             # Preview production build
+├── tsconfig.json                  # Root tsconfig (bundler resolution)
+├── tsconfig.build.json            # Build-specific config
+├── tsconfig.node.json             # Node/server config
+└── tsconfig.test.json             # Test config
 ```
 
 ### Route File Conventions
@@ -119,49 +134,45 @@ pounce-board/
 | File | Role | Description |
 |------|------|-------------|
 | `index.tsx` | FE | Page component for folder path (e.g., `/users`) |
-| `index.ts` | BE | API handlers for folder path (`get`, `post`, etc.) |
-| `common.tsx` | FE | **Layout** component wrapping child routes |
-| `common.ts` | BE | **Middleware** stack for route and descendants |
+| `index.ts` | BE | API routes via `expose()` + `middle` for folder path |
+| `layout.tsx` | FE | **Layout** component wrapping child routes |
 | `dashboard.tsx` | FE | Page component for `/dashboard` |
-| `dashboard.ts` | BE | API handlers for `/dashboard` |
-| `*.d.ts` | Shared | Types following same pattern: `index.d.ts`, `common.d.ts`, `dashboard.d.ts` |
+| `dashboard.ts` | BE | API routes via `expose()` for `/dashboard` |
+| `*.d.ts` | Shared | Types following same pattern: `index.d.ts`, `dashboard.d.ts` |
 
 ### Route Examples
 
 ```
 routes/
-├── common.tsx                     # Root layout
-├── common.ts                      # Root middleware (auth, etc.)
+├── layout.tsx                     # Root layout
 ├── index.tsx                      # Home page (/)
-├── index.ts                       # Home API handlers
+├── index.ts                       # Home API routes via expose() + root middleware
 │
 ├── users/
-│   ├── common.tsx                 # Users layout
-│   ├── common.ts                  # Users middleware
+│   ├── layout.tsx                 # Users layout
 │   ├── index.tsx                  # Users list page (/users)
-│   ├── index.ts                   # Users list handlers
+│   ├── index.ts                   # Users list API + middleware (via expose({ middle }))
 │   ├── [id]/                      # Dynamic segment
 │   │   ├── index.tsx              # User detail page (/users/123)
-│   │   ├── index.ts               # User detail handlers
+│   │   ├── index.ts               # User detail API via expose()
 │   │   ├── edit.tsx               # Edit page (/users/123/edit)
-│   │   └── edit.ts                # Edit handlers
+│   │   └── edit.ts                # Edit API via expose()
 │   └── types.d.ts                 # Shared User types
 │
 ├── (auth)/                        # Route group (not in URL!)
-│   ├── common.tsx                 # Auth layout (login/register share)
-│   ├── common.ts                  # Auth middleware
+│   ├── layout.tsx                 # Auth layout (login/register share)
+│   ├── index.ts                   # Auth middleware via expose({ middle })
 │   ├── login.tsx                  # Login page (/login, NOT /auth/login)
-│   ├── login.ts                   # Login handlers
+│   ├── login.ts                   # Login API via expose()
 │   ├── register.tsx               # Register page (/register)
-│   └── register.ts                # Register handlers
+│   └── register.ts                # Register API via expose()
 │
 └── dashboard/
-    ├── common.tsx                 # Dashboard layout
-    ├── common.ts                  # Dashboard auth middleware
+    ├── layout.tsx                 # Dashboard layout
     ├── index.tsx                  # Dashboard home (/dashboard)
-    ├── index.ts                   # Dashboard handlers
+    ├── index.ts                   # Dashboard API + auth middleware (via expose({ middle }))
     ├── settings.tsx               # Settings page (/dashboard/settings)
-    └── settings.ts                # Settings handlers
+    └── settings.ts                # Settings API via expose()
 ```
 
 ### Route Groups `(folderName)`
@@ -176,64 +187,33 @@ Folders wrapped in parentheses are **not included in the URL** but allow shared 
 
 ### TypeScript Configuration
 
-**`tsconfig.json`** (root):
-```json
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "noEmit": true,
-    "paths": {
-      "~/lib/*": ["./src/lib/*"],
-      "~/routes/*": ["./routes/*"]
-    }
-  },
-  "references": [
-    { "path": "./tsconfig.fe.json" },
-    { "path": "./tsconfig.be.json" }
-  ]
-}
-```
+**`tsconfig.json`** (root — design-time, bundler resolution):
+- Targets ES2022, `moduleResolution: "bundler"`, `strict: true`, `noEmit: true`
+- Paths alias `~/lib/*`, `~/adapters/*`, `~/cli/*` for internal imports
+- Paths alias `@pounce/board`, `pounce-ts`, `pounce-ui`, `@pounce/kit`, `mutts` to source/dist
+- Includes `src/**/*` and `tests/**/*`
 
-**`tsconfig.fe.json`** (Frontend):
-```json
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "jsx": "react",
-    "jsxImportSource": "@pounce/core",
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "types": ["vite/client"]
-  },
-  "include": ["routes/**/*.tsx", "src/**/*.tsx"]
-}
-```
+**`tsconfig.build.json`** (production build):
+- Extends root concepts, adds `outDir: "./dist"`, JSX config (`react`, `h`, `Fragment`)
+- Includes both DOM and Node libs, types: `["node", "@pounce/core"]`
+- Excludes `tests/`
 
-**`tsconfig.be.json`** (Backend):
-```json
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "lib": ["ES2022"],
-    "types": ["node"]
-  },
-  "include": ["routes/**/*.ts", "src/**/*.ts"],
-  "exclude": ["**/*.tsx"]
-}
-```
+**`tsconfig.node.json`** (vitest config only):
+- Composite config for `vitest.config.ts` and shared test base
+
+**`tsconfig.test.json`** (test runs):
+- Extends root, includes `src/**/*` + `tests/**/*`
 
 ### File Resolution Summary
 
 | URL Path | FE Component | BE Handler | Layout Chain |
 |----------|--------------|------------|--------------|
-| `/` | `index.tsx` | `index.ts` | `common.tsx` |
-| `/users` | `users/index.tsx` | `users/index.ts` | `common.tsx` → `users/common.tsx` |
-| `/users/123` | `users/[id]/index.tsx` | `users/[id]/index.ts` | `common.tsx` → `users/common.tsx` |
-| `/users/123/edit` | `users/[id]/edit.tsx` | `users/[id]/edit.ts` | `common.tsx` → `users/common.tsx` |
-| `/login` | `(auth)/login.tsx` | `(auth)/login.ts` | `common.tsx` → `(auth)/common.tsx` |
-| `/dashboard` | `dashboard/index.tsx` | `dashboard/index.ts` | `common.tsx` → `dashboard/common.tsx` |
+| `/` | `index.tsx` | `index.ts` | `layout.tsx` |
+| `/users` | `users/index.tsx` | `users/index.ts` | `layout.tsx` → `users/layout.tsx` |
+| `/users/123` | `users/[id]/index.tsx` | `users/[id]/index.ts` | `layout.tsx` → `users/layout.tsx` |
+| `/users/123/edit` | `users/[id]/edit.tsx` | `users/[id]/edit.ts` | `layout.tsx` → `users/layout.tsx` |
+| `/login` | `(auth)/login.tsx` | `(auth)/login.ts` | `layout.tsx` → `(auth)/layout.tsx` |
+| `/dashboard` | `dashboard/index.tsx` | `dashboard/index.ts` | `layout.tsx` → `dashboard/layout.tsx` |
 
 
 ## Key Concepts Summary
@@ -250,20 +230,29 @@ const doubled = memoize(() => state.count * 2);
 ### Route Handlers
 ```ts
 // routes/users/[id]/index.ts
-export async function get({ params, context }) {
-  return { status: 200, data: { id: params.id } };
-}
+import { expose } from '@pounce/board'
+import type { PounceRequest } from '@pounce/board'
+
+export default expose({
+  get: async (req: PounceRequest<{ id: string }>) => {
+    return { id: req.params.id, name: `User ${req.params.id}` }
+  }
+})
 ```
 
 ### Middleware
 ```ts
-// routes/users/common.ts
-export const middleware: Middleware[] = [
-  async (ctx, next) => {
-    ctx.user = await getUser(ctx.request);
-    return next();
-  }
-];
+// routes/users/index.ts — middle cascades to sibling files + children
+import { expose } from '@pounce/board'
+
+export default expose({
+  middle: [
+    async (req, next) => {
+      (req as any).user = await getUser(req);
+      return next();
+    }
+  ],
+})
 ```
 
 ### API Client: Frontend vs Backend Behavior
@@ -490,7 +479,7 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 ### 4.3 Phase 3: Pounce-Board Integration
 - [x] Update Hono adapter to use `renderToStringAsync`
 - [x] Update CLI dev server to match routes and render components
-- [x] Integrate layouts (`common.tsx`) into the SSR render chain
+- [x] Integrate layouts (`layout.tsx`) into the SSR render chain
 - [x] Resolve framework instance isolation via `vite.ssrLoadModule`
 
 ### 4.4 Phase 4: Documentation and Testing
@@ -551,8 +540,8 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 ### 6.3 Handler Loading
 - [x] Load `index.ts` for backend handlers
 - [x] Load `index.tsx` for frontend components
-- [x] Load `common.ts` for middleware
-- [x] Load `common.tsx` a layout
+- [x] Load `middle` via `expose()` in `index.ts` for middleware
+- [x] Load `layout.tsx` for layouts
 - [ ] Load `types.d.ts` for shared types
 - [ ] Handle hot module replacement in dev
 
@@ -574,13 +563,8 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 
 
 
-### 7.5 Vercel Adapter (`adapters/vercel.ts`)
-- [ ] Implement serverless function handler
-- [ ] Handle edge function support
-- [ ] Support ISR (Incremental Static Regeneration)
-- [ ] Handle environment variables
-
-### 7.6 Additional Adapters (Future)
+### 7.5 Additional Adapters (Future)
+- [ ] Vercel adapter (serverless, edge, ISR)
 - [ ] Netlify adapter
 - [ ] Cloudflare Workers adapter
 - [ ] Deno adapter
@@ -694,15 +678,17 @@ pounce-board/
 │   └── consumers/                    # ← Test consumer apps
 │       ├── minimal-app/              # Minimal pounce-board app
 │       │   ├── routes/
-│       │   │   ├── index.ts
-│       │   │   ├── index.tsx
+│       │   │   ├── index.ts          # Root API via expose()
+│       │   │   ├── index.tsx         # Home page
+│       │   │   ├── layout.tsx        # Root layout
 │       │   │   └── users/
+│       │   │       ├── index.ts      # Users middleware via expose({ middle })
+│       │   │       ├── layout.tsx    # Users layout
+│       │   │       ├── list.tsx      # Users list page
 │       │   │       └── [id]/
-│       │   │           ├── index.ts
-│       │   │           ├── index.tsx
-│       │   │           └── common.ts
-
-│       │   ├── package.json          # Uses pounce-board as dep
+│       │   │           ├── index.ts  # User detail API via expose()
+│       │   │           └── index.tsx # User detail page
+│       │   ├── package.json          # Uses @pounce/board as dep
 │       │   └── vite.config.ts
 │       │
 │       ├── blog-app/                 # Blog example as test
@@ -799,7 +785,7 @@ include: ['src/**/*.spec.ts', 'tests/integration/**/*.spec.ts'],
 #### `tests/integration/middleware-chain.spec.ts`
 - [x] Test parent middleware runs before child middleware
 - [x] Test grandparent → parent → child order
-- [x] Test middleware from multiple `common.ts` files merge
+- [x] Test middleware from multiple `index.ts` `middle` arrays merge (cross-tree)
 - [x] Test auth middleware blocks unauthorized requests
 - [x] Test context additions available in handlers
 
@@ -807,7 +793,7 @@ include: ['src/**/*.spec.ts', 'tests/integration/**/*.spec.ts'],
 - [x] Test `index.ts` handlers are loaded
 - [x] Test `index.tsx` components are loaded (Backend router only tracks API handlers currently)
 - [x] Test `types.d.ts` types are available (Verified ignored by route scanner)
-- [x] Test `common.ts` middleware is attached
+- [x] Test `middle` in `expose()` is attached
 - [x] Test HMR reloads routes in development
 
 #### `tests/integration/ssr-flow.spec.ts` (and `client-hydration.spec.ts`)
@@ -901,14 +887,14 @@ Bare-minimum app to test basic functionality:
 - [x] Create SSR data loading example
 
 #### `tests/consumers/blog-app/`
-Full blog implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/EXAMPLES.md)):
+Full blog implementation:
 - [x] Posts CRUD routes
 - [x] Authentication middleware
 - [/] SSR with initial data
 - [/] External API proxy for comments
 
 #### `tests/consumers/e-commerce-app/`
-E-commerce implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/pounce-board/analysis/EXAMPLES.md)):
+E-commerce implementation:
 - [/] Product catalog routes
 - [/] Cart management
 - [/] External payment API proxy
@@ -1049,7 +1035,7 @@ E-commerce implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/pounce-
 | Components | `index.tsx` files | `h()`, JSX runtime | - |
 | Routing | File-based router | - | - |
 | HTTP Handlers | `index.ts` files | - | - |
-| Middleware | `common.ts` stacks | - | - |
+| Middleware | `middle` in `expose()` | - | - |
 | SSR | Injection/hydration | Rendering | - |
 | External APIs | `defineProxy()` | - | - |
 | Props/State | - | Reactive proxies | `reactive()`, `effect()` |
@@ -1062,18 +1048,18 @@ E-commerce implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/pounce-
 
 The current `api()` interceptor implementation is **global**: every interceptor runs on every request. This raises a design question:
 
-> **Can interceptors be scoped per-host or per-folder (like `common.ts` middleware)?**
+> **Can interceptors be scoped per-host or per-folder (like `middle` in `expose()`)?**
 
 #### Summary: Interceptors vs Middleware
 
-| Aspect | Request Interceptor | Response Interceptor | `common.ts` Middleware |
+| Aspect | Request Interceptor | Response Interceptor | `middle` (expose) |
 |--------|---------------------|----------------------|------------------------|
 | **Runs on** | Client + SSR dispatch | Client + SSR dispatch | Server only |
 | **Applies to** | Outgoing requests | Incoming responses | Incoming requests |
 | **Scope** | Global | Global | Per-route (inherited) |
 | **Typical use** | Auth tokens, logging | Error transforms, caching | Auth guards, context |
 
-**Key insight**: `common.ts` middleware is both scoped *and* inherited (parent middleware applies to children). Interceptors lack this – they're all-or-nothing.
+**Key insight**: `middle` in `expose()` is both scoped *and* inherited (parent middleware cascades to children cross-tree). Interceptors lack this – they're all-or-nothing.
 
 **Possible enhancements**:
 1. **Per-request options**: `api('/path', { interceptors: [...] })` – override/extend for a single call.

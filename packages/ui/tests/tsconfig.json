@@ -1,0 +1,27 @@
+// tsconfig for e2e tests (tests/e2e/**/*.test.ts and fixtures)
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"jsx": "react",
+		"jsxFactory": "h",
+		"jsxFragmentFactory": "Fragment",
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"types": ["node"],
+		"skipLibCheck": true,
+		"noEmit": true,
+		"baseUrl": "../..",
+		"paths": {
+			"@pounce/kit": ["test/ep.ts"],
+			"@pounce/core": ["packages/core/src/dom/index.ts"],
+			"@pounce/core/node": ["packages/core/src/node/index.ts"],
+			"@pounce/ui": ["packages/ui/src/index.ts"],
+			"mutts": ["mutts/src/entry-browser.dev.ts"],
+			"mutts/debug": ["mutts/debug/index.ts"]
+		}
+	},
+	"include": ["./**/*.test.ts", "./**/*.tsx", "./**/*.ts"],
+	"exclude": ["./vite.config.ts"]
+}

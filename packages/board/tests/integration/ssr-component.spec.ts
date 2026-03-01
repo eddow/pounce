@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest'
 import { h, r, type Child } from '@pounce/core'
 import { renderToString, renderToStringAsync, withSSR } from '@pounce/core/node'
@@ -8,7 +9,7 @@ describe('SSR Component Rendering', () => {
     it('should render a simple component to string', () => {
         const Simple = () => h('div', { class: 'test' }, 'Hello World')
         const html = renderToString(h(Simple, {}))
-        expect(html).toBe('<div class="test" data-pounce-component="Simple">Hello World</div>')
+        expect(html).toBe('<div class="test">Hello World</div>')
     })
 
     it('should handle reactive state in synchronous render', () => {
@@ -17,7 +18,7 @@ describe('SSR Component Rendering', () => {
             return h('div', {}, `Count: ${state.count}`)
         }
         const html = renderToString(h(Stateful, {}))
-        expect(html).toBe('<div data-pounce-component="Stateful">Count: 1</div>')
+        expect(html).toBe('<div>Count: 1</div>')
     })
 
     it('should render asynchronously with promised data', async () => {
@@ -43,7 +44,7 @@ describe('SSR Component Rendering', () => {
             })
         })
 
-        expect(html).toBe('<div data-pounce-component="AsyncComp">resolved</div>')
+        expect(html).toBe('<div>resolved</div>')
     })
     
     it('should handle nested components during async render', async () => {
@@ -70,7 +71,7 @@ describe('SSR Component Rendering', () => {
             })
         })
 
-        expect(html).toContain('<strong>Status: </strong><span data-pounce-component="ChildComp">done</span>')
+        expect(html).toContain('<strong>Status: </strong><span>done</span>')
     })
 
     it('should provide a safe SSR environment with withSSR', () => {

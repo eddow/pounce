@@ -30,19 +30,16 @@ export type Middleware = (
 	next: () => Promise<Response>
 ) => Promise<Response>
 
-export type RouteHandler = (context: RequestContext) => Promise<{
-	status: number
-	data?: unknown
-	error?: string
-	headers?: Record<string, string>
-}>
+export type RouteHandler = (context: RequestContext) => Promise<Response | any>
 
-export type RouteResponse = {
-	status: number
-	data?: unknown
-	error?: string
-	headers?: Record<string, string>
-}
+export type RouteResponse =
+	| Response
+	| {
+			status: number
+			data?: unknown
+			error?: string
+			headers?: Record<string, string>
+	  }
 
 /**
  * Runs middleware stack and executes handler
@@ -62,13 +59,32 @@ export async function runMiddlewares(
 		if (index >= middlewareStack.length) {
 			name = 'handler'
 			const result = await handler(context)
-			response = new Response(result.data ? JSON.stringify(result.data) : result.error, {
-				status: result.status,
-				headers: {
-					'Content-Type': 'application/json',
-					...result.headers,
-				},
-			})
+
+			if (result instanceof Response) {
+				response = result
+			} else {
+				// Legacy dictionary support or raw data
+				const isRawObj =
+					result &&
+					typeof result === 'object' &&
+					('status' in result || 'data' in result || 'error' in result)
+
+				if (isRawObj && ('status' in result || 'data' in result || 'error' in result)) {
+					const code = result.status ?? 200
+					response = new Response(result.data ? JSON.stringify(result.data) : result.error, {
+						status: code,
+						headers: {
+							'Content-Type': 'application/json',
+							...result.headers,
+						},
+					})
+				} else {
+					response = new Response(JSON.stringify(result), {
+						status: 200,
+						headers: { 'Content-Type': 'application/json' },
+					})
+				}
+			}
 		} else {
 			name = `mw${index}`
 			const middleware = middlewareStack[index]

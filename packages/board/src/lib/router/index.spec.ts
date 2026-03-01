@@ -1,13 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { RequestContext } from '../http/core.js'
-import {
-	buildRouteTree,
-	type Middleware,
-	matchRoute,
-	parseSegment,
-	type RouteHandler,
-	type RouteTreeNode,
-} from './index.js'
+import { buildRouteTree, matchRoute, parseSegment, type RouteTreeNode } from './index.js'
 
 describe('router', () => {
 	describe('parseSegment', () => {
@@ -42,32 +34,23 @@ describe('router', () => {
 	})
 
 	describe('matchRoute', () => {
-		// Helper to create mock handler
-		const createHandler = (name: string): RouteHandler => {
-			return async () => ({ status: 200, data: { handler: name } })
-		}
+		// Mock component for UI route matching
+		const MockComponent = () => 'mock'
 
-		// Helper to create mock middleware
-		const createMiddleware = (name: string): Middleware => {
-			return async (ctx: RequestContext, next: () => Promise<Response>) => {
-				ctx[name] = true
-				return next()
-			}
-		}
-
-		it('should match static root route', () => {
+		it('should match static root route with component', () => {
 			const tree: RouteTreeNode = {
 				segment: '',
 				isDynamic: false,
 				isCatchAll: false,
 				children: new Map(),
-				handlers: { GET: createHandler('root') },
+				component: MockComponent,
 			}
 
 			const match = matchRoute('/', tree)
 			expect(match).not.toBeNull()
 			expect(match?.path).toBe('/')
 			expect(match?.params).toEqual({})
+			expect(match?.component).toBe(MockComponent)
 		})
 
 		it('should match static nested route', () => {
@@ -76,7 +59,7 @@ describe('router', () => {
 				isDynamic: false,
 				isCatchAll: false,
 				children: new Map(),
-				handlers: { GET: createHandler('users') },
+				component: MockComponent,
 			}
 
 			const tree: RouteTreeNode = {
@@ -99,7 +82,7 @@ describe('router', () => {
 				isCatchAll: false,
 				paramName: 'id',
 				children: new Map(),
-				handlers: { GET: createHandler('user-detail') },
+				component: MockComponent,
 			}
 
 			const usersNode: RouteTreeNode = {
@@ -127,7 +110,7 @@ describe('router', () => {
 				isDynamic: false,
 				isCatchAll: false,
 				children: new Map(),
-				handlers: { GET: createHandler('new-user') },
+				component: MockComponent,
 			}
 
 			const idNode: RouteTreeNode = {
@@ -136,7 +119,7 @@ describe('router', () => {
 				isCatchAll: false,
 				paramName: 'id',
 				children: new Map(),
-				handlers: { GET: createHandler('user-detail') },
+				component: MockComponent,
 			}
 
 			const usersNode: RouteTreeNode = {
@@ -169,7 +152,7 @@ describe('router', () => {
 				isCatchAll: true,
 				paramName: 'slug',
 				children: new Map(),
-				handlers: { GET: createHandler('docs') },
+				component: MockComponent,
 			}
 
 			const docsNode: RouteTreeNode = {
@@ -191,109 +174,6 @@ describe('router', () => {
 			expect(match?.params).toEqual({ slug: 'api/users/create' })
 		})
 
-		it('should collect middleware from parent nodes', () => {
-			const mw1 = createMiddleware('mw1')
-			const mw2 = createMiddleware('mw2')
-
-			const idNode: RouteTreeNode = {
-				segment: '[id]',
-				isDynamic: true,
-				isCatchAll: false,
-				paramName: 'id',
-				children: new Map(),
-				handlers: { GET: createHandler('user-detail') },
-				middleware: [mw2],
-			}
-
-			const usersNode: RouteTreeNode = {
-				segment: 'users',
-				isDynamic: false,
-				isCatchAll: false,
-				children: new Map([['[id]', idNode]]),
-				middleware: [mw1],
-			}
-
-			const tree: RouteTreeNode = {
-				segment: '',
-				isDynamic: false,
-				isCatchAll: false,
-				children: new Map([['users', usersNode]]),
-			}
-
-			const match = matchRoute('/users/123', tree)
-			expect(match).not.toBeNull()
-			expect(match?.middlewareStack.length).toBe(2)
-			expect(match?.middlewareStack[0]).toBe(mw1)
-			expect(match?.middlewareStack[1]).toBe(mw2)
-		})
-
-		it('should match through route groups (transparent segments)', () => {
-			const loginNode: RouteTreeNode = {
-				segment: 'login',
-				isDynamic: false,
-				isCatchAll: false,
-				children: new Map(),
-				handlers: { GET: createHandler('login') },
-			}
-
-			const authGroupNode: RouteTreeNode = {
-				segment: '',
-				isDynamic: false,
-				isCatchAll: false,
-				children: new Map([['login', loginNode]]),
-				isRouteGroup: true,
-			}
-
-			const tree: RouteTreeNode = {
-				segment: '',
-				isDynamic: false,
-				isCatchAll: false,
-				children: new Map([['(auth)', authGroupNode]]),
-			}
-
-			// (auth) is transparent, so /login should match
-			const match = matchRoute('/login', tree)
-			expect(match).not.toBeNull()
-			expect(match?.path).toBe('/login')
-			expect(match?.handler).toBeDefined()
-		})
-
-		it('should collect middleware from route groups', () => {
-			const mwAuth = createMiddleware('auth')
-			const mwLogin = createMiddleware('login')
-
-			const loginNode: RouteTreeNode = {
-				segment: 'login',
-				isDynamic: false,
-				isCatchAll: false,
-				children: new Map(),
-				handlers: { GET: createHandler('login') },
-				middleware: [mwLogin],
-			}
-
-			const authGroupNode: RouteTreeNode = {
-				segment: '',
-				isDynamic: false,
-				isCatchAll: false,
-				children: new Map([['login', loginNode]]),
-				isRouteGroup: true,
-				middleware: [mwAuth],
-			}
-
-			const tree: RouteTreeNode = {
-				segment: '',
-				isDynamic: false,
-				isCatchAll: false,
-				children: new Map([['(auth)', authGroupNode]]),
-			}
-
-			const match = matchRoute('/login', tree)
-			expect(match).not.toBeNull()
-			expect(match?.middlewareStack.length).toBe(2)
-			expect(match?.middlewareStack[0]).toBe(mwAuth)
-			expect(match?.middlewareStack[1]).toBe(mwLogin)
-		})
-
 		it('should return null for non-existent routes', () => {
 			const tree: RouteTreeNode = {
 				segment: '',
@@ -308,28 +188,30 @@ describe('router', () => {
 	})
 
 	describe('buildRouteTree', () => {
-		it('should build tree from globRoutes', async () => {
+		it('should build tree from globRoutes with .tsx components', async () => {
+			const MockPage = () => 'page'
 			const globRoutes = {
-				'/routes/index.ts': async () => ({ get: () => {} }),
-				'/routes/users/[id]/index.ts': async () => ({ get: () => {} }),
-				'/routes/users/[id]/types.d.ts': async () => ({}), // Types file
+				'/routes/index.tsx': async () => ({ default: MockPage }),
+				'/routes/users/[id]/index.tsx': async () => ({ default: MockPage }),
+				'/routes/users/[id]/types.d.ts': async () => ({}),
 			}
 
 			const tree = await buildRouteTree('/routes', undefined, globRoutes)
 
-			expect(tree.handlers?.GET).toBeDefined()
+			expect(tree.component).toBe(MockPage)
 
 			const usersNode = tree.children.get('users')
 			const idNode = usersNode?.children.get('[id]')
 
 			expect(idNode).toBeDefined()
-			expect(idNode?.handlers?.GET).toBeDefined()
+			expect(idNode?.component).toBe(MockPage)
 			expect(idNode?.types).toBe('/routes/users/[id]/types.d.ts')
 		})
 
 		it('should handle named type files', async () => {
+			const MockPage = () => 'page'
 			const globRoutes = {
-				'/routes/users.ts': async () => ({ get: () => {} }),
+				'/routes/users.tsx': async () => ({ default: MockPage }),
 				'/routes/users.d.ts': async () => ({}),
 			}
 
@@ -337,7 +219,7 @@ describe('router', () => {
 
 			const usersNode = tree.children.get('users')
 			expect(usersNode).toBeDefined()
-			expect(usersNode?.handlers?.GET).toBeDefined()
+			expect(usersNode?.component).toBe(MockPage)
 			expect(usersNode?.types).toBe('/routes/users.d.ts')
 		})
 	})

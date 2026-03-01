@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Pounce Board Demo</title>
+		<style>
+			body {
+				margin: 0;
+				font-family: system-ui, sans-serif;
+				background: #0f172a;
+				color: #f8fafc;
+			}
+
+			.app-shell {
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+			}
+
+			nav {
+				background: #1e293b;
+				color: white;
+			}
+
+			nav a {
+				color: #38bdf8;
+				text-decoration: none;
+			}
+
+			nav a:hover {
+				text-decoration: underline;
+			}
+
+			main {
+				flex: 1;
+			}
+
+			code {
+				background: #334155;
+				padding: 0.2rem 0.4rem;
+				border-radius: 4px;
+			}
+
+			h1 {
+				color: #f1f5f9;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="root"></div>
+		<script type="module" src="./client.tsx"></script>
+	</body>
+
+</html>

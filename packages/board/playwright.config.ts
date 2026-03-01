@@ -23,22 +23,10 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: "npm run dev",
-      cwd: "./tests/consumers/minimal-app",
+      command: "npm run demo",
       url: "http://localhost:3000",
-      reuseExistingServer: false,
-    },
-    {
-      command: "npm run dev",
-      cwd: "./tests/consumers/blog-app",
-      url: "http://localhost:3001",
-      reuseExistingServer: false,
-    },
-    {
-      command: "npm run dev",
-      cwd: "./tests/consumers/e-commerce-app",
-      url: "http://localhost:3002",
-      reuseExistingServer: false,
+      reuseExistingServer: !process.env.CI,
+      timeout: 30_000,
     },
   ],
 });

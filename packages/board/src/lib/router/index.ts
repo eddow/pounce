@@ -4,7 +4,6 @@ import {
 	parsePathSegment,
 	type RouteParams,
 } from '@pounce/kit/router/logic'
-import type { Middleware, RouteHandler } from '../http/core.js'
 
 /**
  * Convert a file path to a file:// URL without encoding special characters like brackets.
@@ -17,19 +16,15 @@ function toFileUrl(filePath: string): string {
 }
 
 // Re-export for convenience
-export type { Middleware, RouteHandler, RouteParams, ParsedPathSegment }
+export type { RouteParams, ParsedPathSegment }
 
 /**
  * Result of a successful route match.
  */
 export type RouteMatch = {
-	/** Backend route handler functions (GET, POST, etc.) */
-	handler?: RouteHandler
 	/** Frontend page component (from index.tsx or named.tsx) */
 	component?: any
-	/** Collected middleware stack from root to leaf */
-	middlewareStack: Middleware[]
-	/** Collected layout components from root to leaf (common.tsx) */
+	/** Collected layout components from root to leaf (layout.tsx) */
 	layouts?: any[]
 	/** Extracted path parameters (e.g., { id: "123" }) */
 	params: RouteParams
@@ -51,13 +46,9 @@ export type RouteTreeNode = {
 	paramName?: string
 	/** Child nodes mapped by their segment name */
 	children: Map<string, RouteTreeNode>
-	/** Route handlers loaded from index.ts or named.ts */
-	handlers?: Record<string, RouteHandler>
 	/** Page component loaded from index.tsx or named.tsx */
 	component?: any
-	/** Middleware loaded from common.ts */
-	middleware?: Middleware[]
-	/** Layout component loaded from common.tsx */
+	/** Layout component loaded from layout.tsx */
 	layout?: any
 	/** True if this is a route group (folder in parentheses) */
 	isRouteGroup?: boolean
@@ -111,16 +102,12 @@ export function parseSegment(segment: string): SegmentInfo {
 }
 
 /**
- * Match a URL path against the route tree
- * Returns handler, middleware stack, and extracted params
+ * Match a URL path against the route tree for UI routing.
+ * Returns component, layouts, and extracted params.
  *
  * Priority: static routes > dynamic routes > catch-all routes > route groups
  */
-export function matchRoute(
-	urlPath: string,
-	routeTree: RouteTreeNode,
-	method = 'GET'
-): RouteMatch | null {
+export function matchRoute(urlPath: string, routeTree: RouteTreeNode): RouteMatch | null {
 	// Normalize path: remove trailing slash (except for root)
 	const normalizedPath = urlPath === '/' ? '/' : urlPath.replace(/\/$/, '')
 	const segments = normalizedPath.split('/').filter((s) => s !== '')
@@ -135,20 +122,18 @@ export function matchRoute(
 	): {
 		node: RouteTreeNode
 		params: RouteParams
-		middlewareStack: Middleware[]
 		layouts: any[]
 	} | null {
 		if (depth > 50) {
 			console.warn('[pounce-board] Route matching depth exceeded')
 			return null
 		}
-		// Base case: If we've consumed all segments, check for handler OR component at this node
+		// Base case: If we've consumed all segments, check for component at this node
 		if (segmentIndex >= segments.length) {
-			if (node.handlers?.[method] || node.component) {
+			if (node.component) {
 				return {
 					node,
 					params: {},
-					middlewareStack: node.middleware ? [...node.middleware] : [],
 					layouts: node.layout ? [node.layout] : [],
 				}
 			}
@@ -156,20 +141,16 @@ export function matchRoute(
 
 		const currentSegment = segments[segmentIndex]
 
-		// Helper to prepend this node's middleware and layout to result
+		// Helper to prepend this node's layout to result
 		const withStack = (
 			result: {
 				node: RouteTreeNode
 				params: RouteParams
-				middlewareStack: Middleware[]
 				layouts: any[]
 			} | null
 		) => {
 			if (!result) return null
 
-			if (node.middleware) {
-				result.middlewareStack.unshift(...node.middleware)
-			}
 			if (node.layout) {
 				result.layouts.unshift(node.layout)
 			}
@@ -213,11 +194,10 @@ export function matchRoute(
 			for (const [_, child] of node.children) {
 				if (child.isCatchAll && child.paramName) {
 					const remaining = segments.slice(segmentIndex).join('/')
-					if (child.handlers?.[method] || child.component) {
+					if (child.component) {
 						return withStack({
 							node: child,
 							params: { [child.paramName]: remaining },
-							middlewareStack: child.middleware ? [...child.middleware] : [],
 							layouts: child.layout ? [child.layout] : [],
 						})
 					}
@@ -232,9 +212,7 @@ export function matchRoute(
 	if (!result) return null
 
 	return {
-		handler: result.node.handlers?.[method],
 		component: result.node.component,
-		middlewareStack: result.middlewareStack,
 		layouts: result.layouts,
 		params: result.params,
 		path: normalizedPath,
@@ -242,16 +220,15 @@ export function matchRoute(
 }
 
 /**
- * Scan routes directory and build route tree.
+ * Scan routes directory and build UI route tree.
  *
- * Discovers:
- * - `index.ts` -> Backend handlers
+ * Discovers and loads:
  * - `index.tsx` -> Frontend page components
- * - `common.ts` -> Middleware (inherited by children)
- * - `common.tsx` -> Layouts (inherited, wraps children)
- * - `named.ts` -> Route handlers (e.g. `users.ts` -> `/users`)
+ * - `layout.tsx` -> Layouts (inherited, wraps children)
  * - `named.tsx` -> Page components (e.g. `list.tsx` -> `/list`)
+ * - `*.d.ts`   -> Shared type definitions
  *
+ * API routing (.ts files) will be handled by the `expose` system.
  * This uses node:fs and is intended for server-side usage.
  */
 export async function buildRouteTree(
@@ -268,7 +245,19 @@ export async function buildRouteTree(
 
 	// If globRoutes is provided, use it instead of fs scanning
 	if (globRoutes) {
-		for (const [filePath, loader] of Object.entries(globRoutes)) {
+		const sortedEntries = Object.entries(globRoutes).sort(([pathA], [pathB]) => {
+			const getScore = (p: string) => {
+				const parts = p.split('/')
+				const file = parts[parts.length - 1]
+				let score = parts.length * 1000 // shallowest first
+				if (file.startsWith('layout.')) score -= 10
+				else if (file.startsWith('index.')) score -= 5
+				return score
+			}
+			return getScore(pathA) - getScore(pathB)
+		})
+
+		for (const [filePath, loader] of sortedEntries) {
 			// Normalize path to be relative to routesDir (virtual or real)
 			// Glob keys are usually like "/src/routes/api/index.ts" or "./routes/api/index.ts"
 
@@ -337,36 +326,12 @@ export async function buildRouteTree(
 		node: RouteTreeNode,
 		fullPath?: string
 	) {
-		if (name === 'common.ts') {
-			try {
-				const mod = await loader()
-				if (mod.middleware) node.middleware = mod.middleware
-			} catch (e) {
-				console.error(`Failed to load middleware`, e)
-			}
-		} else if (name === 'common.tsx') {
+		if (name === 'layout.tsx') {
 			try {
 				const mod = await loader()
 				if (mod.default) node.layout = mod.default
 			} catch (e) {
 				console.error(`Failed to load layout`, e)
-			}
-		} else if (name === 'index.ts') {
-			try {
-				const mod = await loader()
-				const handlers: Record<string, RouteHandler> = {}
-				const methods = ['get', 'post', 'put', 'del', 'patch', 'delete']
-				for (const method of methods) {
-					const exportName = method
-					if (typeof mod[exportName] === 'function') {
-						const upperMethod =
-							method === 'del' || method === 'delete' ? 'DELETE' : method.toUpperCase()
-						handlers[upperMethod] = mod[exportName]
-					}
-				}
-				node.handlers = handlers
-			} catch (e) {
-				console.error(`Failed to load handlers`, e)
 			}
 		} else if (name === 'index.tsx') {
 			try {
@@ -398,43 +363,86 @@ export async function buildRouteTree(
 				}
 				childNode.types = fullPath
 			}
-		} else if ((name.endsWith('.ts') && !name.endsWith('.d.ts')) || name.endsWith('.tsx')) {
-			// Named route file
+		} else if (name.endsWith('.tsx')) {
+			// Named .tsx component file
 			const fileNameNoExt = path.parse(name).name
-			const segmentInfo = parseSegment(fileNameNoExt)
-			const segment = segmentInfo.normalizedSegment
+			let childNode = node
 
-			let childNode = node.children.get(segment)
-			if (!childNode) {
-				childNode = {
-					segment: segment,
-					isDynamic: segmentInfo.isDynamic,
-					isCatchAll: segmentInfo.isCatchAll,
-					paramName: segmentInfo.paramName,
-					children: new Map(),
+			if (fileNameNoExt !== 'index') {
+				const segmentInfo = parseSegment(fileNameNoExt)
+				const segmentSegment = segmentInfo.normalizedSegment
+
+				let nextNode = node.children.get(segmentSegment)
+				if (!nextNode) {
+					nextNode = {
+						segment: segmentSegment,
+						isDynamic: segmentInfo.isDynamic,
+						isCatchAll: segmentInfo.isCatchAll,
+						paramName: segmentInfo.paramName,
+						children: new Map(),
+					}
+					node.children.set(segmentSegment, nextNode)
 				}
-				node.children.set(segment, childNode)
+				childNode = nextNode
 			}
 
 			try {
 				const mod = await loader()
-				if (name.endsWith('.ts')) {
-					const handlers: Record<string, RouteHandler> = {}
-					const methods = ['get', 'post', 'put', 'del', 'patch', 'delete']
-					for (const method of methods) {
-						const exportName = method
-						if (typeof mod[exportName] === 'function') {
-							const upperMethod =
-								method === 'del' || method === 'delete' ? 'DELETE' : method.toUpperCase()
-							handlers[upperMethod] = mod[exportName]
-						}
-					}
-					childNode.handlers = handlers
-				} else if (name.endsWith('.tsx')) {
-					if (mod.default) childNode.component = mod.default
-				}
+				if (mod.default) childNode.component = mod.default
 			} catch (e) {
-				console.error(`Failed to load handlers/component`, e)
+				console.error(`Failed to load component`, e)
+			}
+		} else if (name.endsWith('.ts')) {
+			// API routes mapped via expose() tree flattening
+			const fileNameNoExt = path.parse(name).name
+
+			if (fileNameNoExt !== 'index') {
+				const segmentInfo = parseSegment(fileNameNoExt)
+				const segmentSegment = segmentInfo.normalizedSegment
+
+				let nextNode = node.children.get(segmentSegment)
+				if (!nextNode) {
+					nextNode = {
+						segment: segmentSegment,
+						isDynamic: segmentInfo.isDynamic,
+						isCatchAll: segmentInfo.isCatchAll,
+						paramName: segmentInfo.paramName,
+						children: new Map(),
+					}
+					node.children.set(segmentSegment, nextNode)
+				}
+			}
+
+			// The file execution context
+			if (fullPath) {
+				let relativePath = fullPath
+				if (fullPath.includes(routesDir.replace(/^\.\//, ''))) {
+					const parts = fullPath.split(routesDir.replace(/^\.\//, ''))
+					relativePath = parts[parts.length - 1]
+					if (relativePath.startsWith('/')) relativePath = relativePath.slice(1)
+				}
+
+				const urlPathDir = path.dirname(relativePath)
+				const fileStem = path.parse(relativePath).name
+
+				let baseUrl = ''
+				if (urlPathDir === '.') {
+					baseUrl = fileStem === 'index' ? '/' : `/${fileStem}`
+				} else {
+					baseUrl = fileStem === 'index' ? `/${urlPathDir}` : `/${urlPathDir}/${fileStem}`
+				}
+				// Temporary Global Injection
+				;(globalThis as any).__POUNCE_CURRENT_FILE__ = fullPath
+				;(globalThis as any).__POUNCE_CURRENT_BASE_URL__ = baseUrl.replace(/\\/g, '/')
+
+				try {
+					await loader()
+				} catch (e) {
+					console.error(`Failed to process API route ${fullPath}`, e)
+				} finally {
+					delete (globalThis as any).__POUNCE_CURRENT_FILE__
+					delete (globalThis as any).__POUNCE_CURRENT_BASE_URL__
+				}
 			}
 		}
 	}
@@ -453,28 +461,42 @@ export async function buildRouteTree(
 			return // Directory likely doesn't exist
 		}
 
+		const files = []
+		const dirs = []
 		for (const entry of entries) {
-			const entryPath = path.join(dir, entry.name)
+			if (entry.isFile()) files.push(entry)
+			else if (entry.isDirectory()) dirs.push(entry)
+		}
 
-			if (entry.isFile()) {
-				const loader = () => importFn(entryPath)
-				await processFile(entry.name, loader, node, entryPath)
-			} else if (entry.isDirectory()) {
-				const segmentInfo = parseSegment(entry.name)
-				const isGroup = entry.name.startsWith('(') && entry.name.endsWith(')')
+		files.sort((a, b) => {
+			const pA = a.name.startsWith('layout.') ? 1 : a.name.startsWith('index.') ? 2 : 3
+			const pB = b.name.startsWith('layout.') ? 1 : b.name.startsWith('index.') ? 2 : 3
+			if (pA !== pB) return pA - pB
+			return a.name.localeCompare(b.name)
+		})
 
-				const childNode: RouteTreeNode = {
-					segment: isGroup ? '' : segmentInfo.normalizedSegment,
-					isDynamic: segmentInfo.isDynamic,
-					isCatchAll: segmentInfo.isCatchAll,
-					paramName: segmentInfo.paramName,
-					children: new Map(),
-					isRouteGroup: isGroup,
-				}
+		for (const file of files) {
+			const entryPath = path.join(dir, file.name)
+			const loader = () => importFn(entryPath)
+			await processFile(file.name, loader, node, entryPath)
+		}
 
-				node.children.set(entry.name, childNode)
-				await scan(entryPath, childNode)
+		for (const directory of dirs) {
+			const entryPath = path.join(dir, directory.name)
+			const segmentInfo = parseSegment(directory.name)
+			const isGroup = directory.name.startsWith('(') && directory.name.endsWith(')')
+
+			const childNode: RouteTreeNode = {
+				segment: isGroup ? '' : segmentInfo.normalizedSegment,
+				isDynamic: segmentInfo.isDynamic,
+				isCatchAll: segmentInfo.isCatchAll,
+				paramName: segmentInfo.paramName,
+				children: new Map(),
+				isRouteGroup: isGroup,
 			}
+
+			node.children.set(directory.name, childNode)
+			await scan(entryPath, childNode)
 		}
 	}
 

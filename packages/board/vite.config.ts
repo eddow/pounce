@@ -12,11 +12,20 @@ export default defineConfig({
       projectRoot: boardDir,
     }),
     dts({
+      tsconfigPath: resolve(boardDir, 'tsconfig.build.json'),
       rollupTypes: false,
       insertTypesEntry: true,
       compilerOptions: {
         preserveSymlinks: false,
-      }
+      },
+      exclude: [
+        'tests/**/*',
+        'demo/**/*',
+        '**/*.spec.ts',
+        '**/*.spec.tsx',
+        '**/*.test.ts',
+        '**/*.test.tsx',
+      ],
     }),
   ],
   esbuild: false,

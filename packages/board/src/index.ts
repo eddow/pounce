@@ -27,3 +27,14 @@ export { defineProxy, type ProxyConfig, type ProxyEndpointConfig } from './lib/h
 export { PounceResponse } from './lib/http/response.js'
 export { defineStreamRoute, type StreamCleanup, type StreamHandler } from './lib/http/stream.js'
 export { defineRoute, type RouteDefinition } from './lib/router/defs.js'
+export { expose } from './lib/router/expose.js'
+export type {
+	HTTPVerb,
+	InferPath,
+	InferProvide,
+	InferVerb,
+	MiddleFunction,
+	MiddleNext,
+	PounceRequest,
+} from './lib/router/expose-types.js'
+export { buildRouteTree, matchRoute } from './lib/router/index.js'

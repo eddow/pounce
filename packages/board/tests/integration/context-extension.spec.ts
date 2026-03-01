@@ -3,11 +3,14 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import type { RequestContext, Middleware, RouteHandler } from '../../src/server/index.js'
+import type { RequestContext, Middleware } from '../../src/server/index.js'
 import { runMiddlewares } from '@pounce/kit/api/core'
 
+/** Test-local generic handler type since RouteHandler was widened in @pounce/kit */
+type TestHandler = (context: RequestContext) => Promise<{ status: number; data?: any; error?: string }>
+
 // Extend RequestContext for testing
-declare module '@pounce/kit/api/core' {
+declare module '../../src/server/index.js' {
 	interface RequestContext {
 		user?: {
 			id: string
@@ -34,7 +37,7 @@ describe('RequestContext Extension', () => {
 			return next()
 		}
 
-		const handler: RouteHandler = async (ctx) => {
+		const handler: TestHandler = async (ctx) => {
 			// TypeScript should know about ctx.user
 			expect(ctx.user).toBeDefined()
 			expect(ctx.user?.id).toBe('123')
@@ -82,7 +85,7 @@ describe('RequestContext Extension', () => {
 			return next()
 		}
 
-		const handler: RouteHandler = async (ctx) => {
+		const handler: TestHandler = async (ctx) => {
 			expect(ctx.user).toBeDefined()
 			expect(ctx.session).toBeDefined()
 			expect(ctx.testFlag).toBe(true)
@@ -115,7 +118,7 @@ describe('RequestContext Extension', () => {
 	})
 
 	it('should handle optional context properties gracefully', async () => {
-		const handler: RouteHandler = async (ctx) => {
+		const handler: TestHandler = async (ctx) => {
 			// Properties should be optional - no user set
 			expect(ctx.user).toBeUndefined()
 			expect(ctx.session).toBeUndefined()
@@ -154,7 +157,7 @@ describe('RequestContext Extension', () => {
 			return next()
 		}
 
-		const handler: RouteHandler = async (ctx) => {
+		const handler: TestHandler = async (ctx) => {
 			requireAuth(ctx)
 			// After type guard, ctx.user is guaranteed to be defined
 			const userId: string = ctx.user.id // No optional chaining needed
@@ -184,7 +187,7 @@ describe('RequestContext Extension', () => {
 			}
 		}
 
-		const handler: RouteHandler = async (ctx) => {
+		const handler: TestHandler = async (ctx) => {
 			expect(() => requireAuth(ctx)).toThrow('Unauthorized')
 
 			return {
@@ -203,7 +206,7 @@ describe('RequestContext Extension', () => {
 	})
 
 	it('should preserve base RequestContext properties', async () => {
-		const handler: RouteHandler = async (ctx) => {
+		const handler: TestHandler = async (ctx) => {
 			// Base properties should always be available
 			expect(ctx.request).toBeInstanceOf(Request)
 			expect(ctx.params).toBeDefined()

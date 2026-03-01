@@ -2,19 +2,18 @@ import * as path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildRouteTree, matchRoute } from '../../src/lib/router/index.js'
 
-const MINIMAL_APP_ROUTES = path.resolve(import.meta.dirname, '../consumers/minimal-app/routes')
+const DEMO_APP_ROUTES = path.resolve(import.meta.dirname, '../../demo/routes')
 
 describe('buildRouteTree', () => {
-	it('should scan minimal-app routes directory and build tree', async () => {
-		const tree = await buildRouteTree(MINIMAL_APP_ROUTES)
+	it('should scan demo-app routes directory and build tree', async () => {
+		const tree = await buildRouteTree(DEMO_APP_ROUTES)
 
 		// Root should exist
 		expect(tree).toBeDefined()
 		expect(tree.segment).toBe('')
 
-		// Should have root index handler
-		expect(tree.handlers).toBeDefined()
-		expect(tree.handlers!['GET']).toBeDefined()
+		// Should have root component from index.tsx
+		expect(tree.component).toBeDefined()
 
 		// Should have users child
 		expect(tree.children.has('users')).toBe(true)
@@ -26,66 +25,33 @@ describe('buildRouteTree', () => {
 		const idNode = usersNode.children.get('[id]')!
 		expect(idNode.isDynamic).toBe(true)
 		expect(idNode.paramName).toBe('id')
-		expect(idNode.handlers).toBeDefined()
-		expect(idNode.handlers!['GET']).toBeDefined()
+		// [id] has index.tsx -> component
+		expect(idNode.component).toBeDefined()
 	})
 
-	it('should match / route from scanned tree', async () => {
-		const tree = await buildRouteTree(MINIMAL_APP_ROUTES)
-		const match = matchRoute('/', tree, 'GET')
+	it('should match / route and return component', async () => {
+		const tree = await buildRouteTree(DEMO_APP_ROUTES)
+		const match = matchRoute('/', tree)
 
 		expect(match).not.toBeNull()
 		expect(match!.path).toBe('/')
-		expect(match!.handler).toBeDefined()
+		expect(match!.component).toBeDefined()
 	})
 
-	it('should match /users/123 from scanned tree', async () => {
-		const tree = await buildRouteTree(MINIMAL_APP_ROUTES)
-		const match = matchRoute('/users/123', tree, 'GET')
+	it('should match /users/123 with params and layouts', async () => {
+		const tree = await buildRouteTree(DEMO_APP_ROUTES)
+		const match = matchRoute('/users/123', tree)
 
 		expect(match).not.toBeNull()
 		expect(match!.params).toEqual({ id: '123' })
-		expect(match!.handler).toBeDefined()
-	})
-
-	it('should call handler and get response', async () => {
-		const tree = await buildRouteTree(MINIMAL_APP_ROUTES)
-		const match = matchRoute('/', tree, 'GET')
-
-		expect(match).not.toBeNull()
-
-		// Call the handler
-		const mockRequest = new Request('http://localhost/')
-		const handler = match!.handler
-		if (!handler) throw new Error('Handler not found')
-		const result = await handler({ request: mockRequest, params: {} })
-
-		expect(result.status).toBe(200)
-		expect(result.data).toBeDefined()
-		const data = result.data as { message: string }
-		expect(data.message).toBe('Hello from Pounce-Board!')
-	})
-
-	it('should call dynamic handler with params', async () => {
-		const tree = await buildRouteTree(MINIMAL_APP_ROUTES)
-		const match = matchRoute('/users/42', tree, 'GET')
-
-		expect(match).not.toBeNull()
-
-		const mockRequest = new Request('http://localhost/users/42')
-		const handler = match!.handler
-		if (!handler) throw new Error('Handler not found')
-		const result = await handler({ request: mockRequest, params: match!.params })
-
-		expect(result.status).toBe(200)
-		expect(result.data).toBeDefined()
-		const data = result.data as { id: string; name: string }
-		expect(data.id).toBe('42')
-		expect(data.name).toBe('User 42')
+		expect(match!.component).toBeDefined()
+		// Should inherit layouts from parent layout.tsx files
+		expect(match!.layouts).toBeDefined()
+		expect(match!.layouts!.length).toBeGreaterThanOrEqual(1)
 	})
 
 	it('should record .d.ts file paths', async () => {
-		const tree = await buildRouteTree(MINIMAL_APP_ROUTES)
+		const tree = await buildRouteTree(DEMO_APP_ROUTES)
 		const usersNode = tree.children.get('users')!
 		const idNode = usersNode.children.get('[id]')!
 

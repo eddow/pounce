@@ -1,0 +1,29 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"jsx": "react",
+		"jsxFactory": "h",
+		"jsxFragmentFactory": "Fragment",
+		"noEmit": true,
+		"baseUrl": ".",
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"paths": {
+			"@pounce/board": ["../src/index.ts"],
+			"@pounce/board/*": ["../src/*"],
+			"@pounce/core": ["../../core/src"],
+			"@pounce/core/*": ["../../core/src/*"],
+			"@pounce/kit": ["../../kit/src"],
+			"@pounce/kit/*": ["../../kit/src/*"],
+			"mutts": ["../../../../mutts/src"],
+			"mutts/*": ["../../../../mutts/src/*"]
+		}
+	},
+	"include": ["**/*.ts", "**/*.tsx"],
+	"exclude": ["node_modules", "dist"]
+}

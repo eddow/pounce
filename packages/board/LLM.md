@@ -2,7 +2,7 @@
 
 ## Core Philosophy
 - **Automated Integration**: Unlike bounce-ts which requires manual setup, pounce-board automatically wires routes, middleware, and Hono integration
-- **File-based Conventions**: Route structure determines behavior (`.ts` = backend, `.tsx` = frontend, `common.ts` = middleware)
+- **File-based Conventions**: Route structure determines behavior (`.ts` = backend via `expose()`, `.tsx` = frontend, `layout.tsx` = wrapping layout)
 - **Type Safety First**: Shared `.d.ts` files between client/server are mandatory
 - **Universal API Client**: Single `api()` function works with absolute, site-absolute, and site-relative URLs
 
@@ -25,7 +25,8 @@
 - **No `+page` prefix**: Use `index.tsx` for pages, `[name].tsx` for named pages
 - **Dynamic Segments**: `[id]` for single params, `[...slug]` for catch-all
 - **Route Groups**: `(auth)/login.tsx` → `/login` (parentheses not in URL)
-- **Middleware Inheritance**: `common.ts` middleware applies to all descendant routes automatically
+- **Middleware Inheritance**: `middle` in `expose()` cascades to sibling files and descendant routes (cross-tree)
+- **Layouts**: `layout.tsx` wraps child page components (replaces legacy `common.tsx`)
 
 ## Data Fetching & SSR
 - **Unified `api()` client**: Works on server and client
@@ -66,7 +67,7 @@
 1. **Automated vs Manual**: Pounce-board auto-discovers routes, bounce-ts requires explicit registration
 2. **Framework vs Library**: Pounce-board is opinionated meta-framework, bounce-ts is flexible library  
 3. **SSR Built-in**: First-class SSR support vs bolt-on
-4. **Middleware System**: Per-route middleware inheritance vs global middleware
+4. **Middleware System**: `middle` in `expose()` cascades cross-tree (replaces `common.ts`)
 
 ## Recent Fixes & Learnings (2026-02-10)
 - **Request Type Conflicts**: Removed `import { Request } from '@playwright/test'` which was overriding global Request type

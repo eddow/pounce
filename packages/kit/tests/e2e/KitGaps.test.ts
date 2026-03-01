@@ -58,4 +58,22 @@ test.describe('Kit Feature Gaps', () => {
 		await expect(page.locator('[data-testid="api-user-name"]')).toHaveText('E2E User')
 		await expect(page.locator('[data-testid="api-fetch-count"]')).toHaveText('2')
 	})
+
+	test('Resource stays connected after multiple ID changes', async ({ page }) => {
+		await page.goto('/api')
+		await page.waitForSelector('[data-testid="api-view"]')
+
+		// Wait for initial post load (id=1)
+		await expect(page.locator('[data-testid="api-post-title"]')).toHaveText('Post 1')
+
+		// First change: id 1 → 2
+		await page.click('[data-action="next-post"]')
+		await expect(page.locator('[data-testid="api-post-id"]')).toHaveText('2')
+		await expect(page.locator('[data-testid="api-post-title"]')).toHaveText('Post 2')
+
+		// Second change: id 2 → 3 — this is where the disconnect surfaces
+		await page.click('[data-action="next-post"]')
+		await expect(page.locator('[data-testid="api-post-id"]')).toHaveText('3')
+		await expect(page.locator('[data-testid="api-post-title"]')).toHaveText('Post 3')
+	})
 })
