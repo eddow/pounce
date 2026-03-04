@@ -1,5 +1,5 @@
 /**
- * ALS-backed context for Node/SSR — Node EP only.
+ * ALS-backed context for Node — Node EP only.
  * Hooks into the shared getContext via setGetContext().
  */
 import { AsyncLocalStorage } from 'node:async_hooks'

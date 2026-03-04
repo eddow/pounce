@@ -69,7 +69,7 @@ export function stored<T extends Record<string, any>>(initial: T): T {
 
 		let initialized = false
 		cleanups.push(
-			effect(() => {
+			effect.named(`stored.${key}`)(() => {
 				const value = rv[key]
 				if (initialized) {
 					try {

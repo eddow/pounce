@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('isMounted utility', () => {
+test.describe('node.isConnected', () => {
 	test.beforeEach(async ({ page }) => {
 		page.on('console', (msg) => {
 			console.log(`[BROWSER LOG]: ${msg.text()}`)
@@ -8,7 +8,7 @@ test.describe('isMounted utility', () => {
 		// Load the IsMounted fixture
 		await page.goto('/#IsMounted')
 		// Wait for the fixture to load
-		await expect(page.locator('#tests h2')).toContainText('isMounted Test')
+		await expect(page.locator('#tests h2')).toContainText('node.isConnected Test')
 
 	})
 
@@ -19,35 +19,36 @@ test.describe('isMounted utility', () => {
 		const toggleBtn = page.locator('#toggle-mount')
 		const container = page.locator('#mount-container')
 
-		// Initial state (unmounted)
-		// Note: effect runs once on start, so unmountedCount should be 1
-		await expect(status).toHaveText('No')
+		// Initial state: element not yet created (if=false), no ref captured
+		await expect(status).toHaveText('Non-existent')
 		await expect(mountedCount).toHaveText('0')
-		await expect(unmountedCount).toHaveText('1')
+		await expect(unmountedCount).toHaveText('0')
 		await expect(container.locator('#tracked-element')).toHaveCount(0)
 
-		// Mount it
+		// Mount it — this= fires (isConnected=false → unmountedCount++),
+		// then insertion makes isConnected=true → mountedCount++
 		await toggleBtn.click()
-		
-		// Wait for MutationObserver to pick it up and trigger effect
+
 		await expect(status).toHaveText('Yes')
 		await expect(mountedCount).toHaveText('1')
 		await expect(unmountedCount).toHaveText('1')
 		await expect(container.locator('#tracked-element')).toBeVisible()
 
-		// Unmount it
+		// Unmount it — isConnected=false → unmountedCount++, then
+		// this= cleanup sets el=undefined (no further count change)
 		await toggleBtn.click()
-		
+
 		await expect(status).toHaveText('No')
 		await expect(mountedCount).toHaveText('1')
 		await expect(unmountedCount).toHaveText('2')
 		await expect(container.locator('#tracked-element')).toHaveCount(0)
 
-		// Mount again
+		// Mount again — fresh element, this= fires (isConnected=false → unmountedCount++),
+		// then insertion → mountedCount++
 		await toggleBtn.click()
-		
+
 		await expect(status).toHaveText('Yes')
 		await expect(mountedCount).toHaveText('2')
-		await expect(unmountedCount).toHaveText('2')
+		await expect(unmountedCount).toHaveText('3')
 	})
 })

@@ -1,12 +1,6 @@
-import { ApiError, type HttpMethod, type Middleware, type RouteHandler } from './core.js'
+import { ApiError, type HttpMethod } from './core.js'
 import type { ExtractPathParams } from './inference.js'
 import { PounceResponse } from './response.js'
-import {
-	clearSSRData as clearSSRState,
-	getSSRData,
-	getSSRId,
-	injectSSRData,
-} from './ssr-hydration.js'
 
 export type InterceptorMiddleware = (
 	request: Request,
@@ -14,7 +8,14 @@ export type InterceptorMiddleware = (
 ) => Promise<PounceResponse>
 
 import type { AssertSchema, RouteDefinition } from '../router/defs.js'
-import { addContextInterceptor, getContext, trackSSRPromise } from './context.js'
+import {
+	addContextInterceptor,
+	callPromiseHook,
+	callRequestHook,
+	callResponseHook,
+	callStreamGuardHook,
+	getContext,
+} from './context.js'
 
 interface InterceptorEntry {
 	pattern: string | RegExp
@@ -65,34 +66,9 @@ function matchPattern(urlString: string, pattern: string | RegExp): boolean {
 	return pathname === pattern
 }
 
-// ApiClientInstance interface is defined at the end of the file
-
-export interface HydratedPromise<T> extends Promise<T> {
-	hydrated: T | undefined
-}
-
-function withHydration<T>(promise: Promise<T>, value: T | undefined): HydratedPromise<T> {
-	const p = promise as HydratedPromise<T>
-	p.hydrated = value
-	return p
-}
-
-export interface RouteRegistry {
-	match(
-		path: string,
-		method: HttpMethod
-	): {
-		handler: RouteHandler
-		middlewareStack: Middleware[]
-		params: Record<string, string>
-	} | null
-}
-
-const REGISTRY_SYMBOL = Symbol.for('__POUNCE_ROUTE_REGISTRY__')
 const CONFIG_SYMBOL = Symbol.for('__POUNCE_CONFIG__')
 
 type ApiGlobals = {
-	[REGISTRY_SYMBOL]?: RouteRegistry | null
 	[CONFIG_SYMBOL]?: typeof DEFAULT_CONFIG
 }
 
@@ -100,23 +76,8 @@ const globals = globalThis as unknown as ApiGlobals
 
 const DEFAULT_CONFIG = {
 	timeout: 10000,
-	ssr: false,
 	retries: 0,
 	retryDelay: 100,
-}
-
-export function setRouteRegistry(registry: RouteRegistry): void {
-	const ctx = getContext()
-	if (ctx) ctx.routeRegistry = registry
-	globals[REGISTRY_SYMBOL] = registry
-}
-
-export function getRouteRegistry(): RouteRegistry | null {
-	return globals[REGISTRY_SYMBOL] || null
-}
-
-export function clearRouteRegistry(): void {
-	globals[REGISTRY_SYMBOL] = null
 }
 
 function getGlobalConfig() {
@@ -125,25 +86,6 @@ function getGlobalConfig() {
 }
 
 export const config = getGlobalConfig()
-
-export function enableSSR(): void {
-	const ctx = getContext()
-	if (ctx) ctx.config.ssr = true
-	else config.ssr = true
-}
-
-export function disableSSR(): void {
-	const ctx = getContext()
-	if (ctx) {
-		ctx.config.ssr = false
-		clearSSRState()
-	} else {
-		config.ssr = false
-		clearSSRState()
-	}
-}
-
-export { getSSRId, getSSRData, injectSSRData, clearSSRState as clearSSRData }
 
 async function runInterceptors(
 	initialRequest: Request,
@@ -254,22 +196,10 @@ export function createApiClientFactory(executor: RequestExecutor) {
 					: undefined
 
 			const doRequest = async (): Promise<T> => {
-				const activeCtx = getContext()
-				const isSSR = activeCtx ? (activeCtx.config.ssr ?? config.ssr) : config.ssr
-
-				// SSR Hydration Check (Same for both envs effectively, but mostly useful for Client reading SSR data)
-				// Note: On Server, we might want to skip this if we are initiating the fetch?
-				// Actually, if we are on server (isSSR=true), we don't read "getSSRData" usually, we WRITE it.
-				// UNLESS we are rendering a component that calls an API that was ALREADY fetched higher up?
-				// But generally: Client READS, Server WRITES.
-
-				if (!isSSR && method === 'GET') {
-					// Client side looking for data injected by server
-					const currentSsrId = getSSRId(currentUrl)
-					const existingData = getSSRData(currentSsrId)
-					if (existingData !== undefined) {
-						return existingData as T
-					}
+				// Hook: check for cached/short-circuit data (e.g. SSR hydration)
+				if (method === 'GET') {
+					const cached = callRequestHook(method, currentUrl)
+					if (cached !== undefined) return cached as T
 				}
 
 				let lastError: any = null
@@ -284,7 +214,6 @@ export function createApiClientFactory(executor: RequestExecutor) {
 						})
 
 						const finalHandler = async (req: Request): Promise<PounceResponse> => {
-							// Use injected executor
 							const response = await executor(req, timeout)
 							return PounceResponse.from(response)
 						}
@@ -302,13 +231,10 @@ export function createApiClientFactory(executor: RequestExecutor) {
 						}
 
 						const data = (await response.json()) as T
-						const activeCtx = getContext()
-						const isSSR = activeCtx ? (activeCtx.config.ssr ?? config.ssr) : config.ssr
 
-						if (isSSR) {
-							const currentSsrId = getSSRId(currentUrl)
-							injectSSRData(currentSsrId, data)
-						}
+						// Hook: notify of successful response (e.g. SSR data collection)
+						callResponseHook(method, currentUrl, data)
+
 						return data
 					} catch (error: any) {
 						lastError = error
@@ -327,10 +253,8 @@ export function createApiClientFactory(executor: RequestExecutor) {
 			}
 
 			const promise = doRequest()
-			const activeCtx = getContext()
-			if (activeCtx && (activeCtx.config.ssr ?? config.ssr)) {
-				trackSSRPromise(promise)
-			}
+			// Hook: track promise (e.g. for SSR flushing)
+			callPromiseHook(promise)
 			return promise
 		}
 
@@ -338,7 +262,7 @@ export function createApiClientFactory(executor: RequestExecutor) {
 			get<T>(
 				params?: Record<string, string | number>,
 				options?: { signal?: AbortSignal }
-			): HydratedPromise<T> {
+			): Promise<T> {
 				let currentUrl: URL
 
 				if (template && params) {
@@ -366,21 +290,11 @@ export function createApiClientFactory(executor: RequestExecutor) {
 					}
 				}
 
-				const currentSsrId = getSSRId(currentUrl)
-				const activeCtx = getContext()
-				const isSSR = activeCtx ? (activeCtx.config.ssr ?? config.ssr) : config.ssr
-				let cachedData: T | undefined
+				// Hook: check for cached data before fetching
+				const cached = callRequestHook('GET', currentUrl)
+				if (cached !== undefined) return Promise.resolve(cached as T)
 
-				if (!isSSR) {
-					cachedData = getSSRData<T>(currentSsrId)
-				}
-
-				const promise = (async () => {
-					if (cachedData !== undefined) return cachedData
-					return requestWithRetry<T>('GET', currentUrl, undefined, options?.signal)
-				})()
-
-				return withHydration(promise, cachedData)
+				return requestWithRetry<T>('GET', currentUrl, undefined, options?.signal)
 			},
 			async post<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T> {
 				return requestWithRetry<T>('POST', url, body, options?.signal)
@@ -424,11 +338,8 @@ export function createApiClientFactory(executor: RequestExecutor) {
 				return requestWithRetry<T>('PATCH', url, body, options?.signal)
 			},
 			stream<T>(onMessage: (data: T) => void, onError?: (error: Error) => void): () => void {
-				const activeCtx = getContext()
-				const isSSR = activeCtx ? (activeCtx.config.ssr ?? config.ssr) : config.ssr
-
-				// Streaming has no effect on the server-side during SSR.
-				if (isSSR) {
+				// Hook: streaming disabled (e.g. during SSR)
+				if (callStreamGuardHook()) {
 					return () => {}
 				}
 
@@ -469,8 +380,6 @@ export function createApiClientFactory(executor: RequestExecutor) {
 						})
 
 						const finalHandler = async (req: Request): Promise<PounceResponse> => {
-							// Executor is usually designed for Promise<{body}>, we just use raw fetch for stream
-							// since executor has timeout logic we don't want to enforce on streams.
 							const res = await fetch(req)
 							return PounceResponse.from(res)
 						}
@@ -561,7 +470,7 @@ export interface ApiClientInstance<P extends string> {
 	get<T>(
 		params?: ExtractPathParams<P> | Record<string, string | number>,
 		options?: { signal?: AbortSignal }
-	): HydratedPromise<T>
+	): Promise<T>
 	post<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T>
 	put<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T>
 	del<T>(

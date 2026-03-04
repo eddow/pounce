@@ -35,7 +35,8 @@
     "./dist/node.js",
     "./dist/node.cjs",
     "./src/dom/index.ts",
-    "./src/node/index.ts"
+    "./src/node/index.ts",
+    "./src/lib/node.ts"
   ],
   "exports": {
     ".": {

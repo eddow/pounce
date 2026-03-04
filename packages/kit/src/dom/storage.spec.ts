@@ -67,7 +67,7 @@ interface MockGlobalThis {
 	}
 	localStorage?: Storage
 }
-
+// TODO: Is it possible to test the inter-tabs part?
 describe('stored()', () => {
 	let mockLocalStorage: LocalStorageMock
 	let storageEventListeners: Array<(event: StorageEvent) => void> = []

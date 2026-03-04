@@ -154,7 +154,7 @@ describe('sizeable directive', () => {
 		// Wait for effect to re-run
 		await Promise.resolve()
 
-		// sizeable should now trigger within the effect because isMounted(unmounted) changed
+		// sizeable should now trigger within the effect because unmounted.isConnected changed
 		expect(unmounted.classList.contains('sizeable')).toBe(true)
 		expect(unmounted.querySelector('.sizeable-handle')).toBeTruthy()
 

@@ -1,4 +1,4 @@
-import { reactive, unlink } from 'mutts'
+import { reactive } from 'mutts'
 import { document } from '../shared'
 import { latchOwners } from './reconciler'
 
@@ -37,10 +37,5 @@ export function* walk(root: Node) {
 }
 
 export function syncRegistry(root: Node, action: 'add' | 'delete', connecting: boolean) {
-	//shortcut
-	if (!connecting && action === 'add') return
-	for (const node of walk(root)) {
-		if (connecting) mountedNodes[action](node)
-		if (action === 'delete') unlink(node, { type: 'stopped', detail: 'node removal' })
-	}
+	if (connecting) for (const node of walk(root)) mountedNodes[action](node)
 }

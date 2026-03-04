@@ -1,4 +1,4 @@
-import { collapse, isMounted, type PerhapsReactive, ReactiveProp } from '@pounce/core'
+import { collapse, type PerhapsReactive, ReactiveProp } from '@pounce/core'
 import { resolveElement } from './shared'
 
 type Direction = 'horizontal' | 'vertical'
@@ -54,7 +54,7 @@ function getProperty(direction: Direction): string {
 // TODO: Not at all a perhapsReactive: should be a reactive object
 export function sizeable(target: Node | readonly Node[], value: PerhapsReactive<number>) {
 	const el = resolveElement(target as Node | Node[])
-	if (!el || !isMounted(el)) return
+	if (!el?.isConnected) return
 
 	const element: HTMLElement = el
 	const parent = element.parentElement

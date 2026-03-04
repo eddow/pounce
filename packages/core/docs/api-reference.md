@@ -83,15 +83,6 @@ Filters an array in-place.
 
 **Returns:** Boolean (false when done)
 
-### `isMounted(node)`
-
-Reactive utility that returns true if the node is currently mounted in the DOM.
-
-**Parameters:**
-- `node` - The DOM Node to check
-
-**Returns:** Boolean (reactive)
-
 
 ## Debug Utilities
 

@@ -1,6 +1,6 @@
 /**
  * Request Context for @pounce/kit
- * Shared types and fallback (non-ALS) context management.
+ * Shared types and context management with pluggable hooks.
  * ALS-backed implementation lives in node/context.ts (Node EP only).
  */
 import type { InterceptorMiddleware } from './base-client.js'
@@ -20,31 +20,26 @@ export interface InterceptorEntry {
 
 export interface ClientConfig {
 	timeout: number
-	ssr: boolean
 	retries: number
 	retryDelay: number
 }
 
 /**
- * Request-scoped state
+ * Request-scoped state — generic, no SSR awareness.
+ * Server frameworks extend via the `data` bag.
  */
 export interface RequestScope {
-	ssr: {
-		id: symbol
-		responses: Map<string, unknown>
-		counter: number
-		promises: Promise<unknown>[]
-	}
 	config: Partial<ClientConfig>
 	interceptors: InterceptorEntry[]
 	origin?: string
-	routeRegistry?: any
+	/** Open bag for framework extensions (SSR state, route registry, etc.) */
+	data: Record<symbol, unknown>
 }
 
 /**
  * Get the current request scope.
  * In browser: always returns null (no ALS).
- * In Node: overridden by node/context.ts via getContextImpl hook.
+ * In Node: overridden by node/context.ts via setGetContext hook.
  */
 export let getContext: () => RequestScope | null = () => globals[CONTEXT_KEY] || null
 
@@ -62,14 +57,9 @@ export function setGlobalCtx(ctx: RequestScope | null) {
  */
 export function createScope(config: Partial<ClientConfig> = {}): RequestScope {
 	return {
-		ssr: {
-			id: Symbol('ssr-context'),
-			responses: new Map(),
-			counter: 0,
-			promises: [],
-		},
 		config,
 		interceptors: [],
+		data: {},
 	}
 }
 
@@ -90,25 +80,62 @@ export function addContextInterceptor(pattern: string | RegExp, handler: Interce
 	}
 }
 
-/**
- * Track a promise in the current SSR context
- */
-export function trackSSRPromise(promise: Promise<unknown>) {
-	const ctx = getContext()
-	if (ctx) {
-		ctx.ssr.promises.push(promise)
-	}
-}
+// ── Extension hooks ──────────────────────────────────────────────────
 
 /**
- * Get and clear all pending SSR promises
+ * Hook called before a request is executed. Return a value to short-circuit
+ * the actual fetch (e.g. return cached SSR data). Return undefined to proceed.
  */
-export function flushSSRPromises(): Promise<unknown>[] {
-	const ctx = getContext()
-	if (ctx) {
-		const promises = ctx.ssr.promises
-		ctx.ssr.promises = []
-		return promises
-	}
-	return []
+export type RequestHook = (method: string, url: URL) => unknown | undefined
+
+/**
+ * Hook called after a successful response with the parsed data.
+ * Used by server frameworks to collect responses (e.g. for SSR injection).
+ */
+export type ResponseHook = (method: string, url: URL, data: unknown) => void
+
+/**
+ * Hook called when a request promise is created.
+ * Used by server frameworks to track pending promises for SSR flushing.
+ */
+export type PromiseHook = (promise: Promise<unknown>) => void
+
+/**
+ * Hook called to check if streaming should be disabled (e.g. during SSR).
+ */
+export type StreamGuardHook = () => boolean
+
+let requestHook: RequestHook | null = null
+let responseHook: ResponseHook | null = null
+let promiseHook: PromiseHook | null = null
+let streamGuardHook: StreamGuardHook | null = null
+
+export function setRequestHook(hook: RequestHook | null) {
+	requestHook = hook
+}
+export function setResponseHook(hook: ResponseHook | null) {
+	responseHook = hook
+}
+export function setPromiseHook(hook: PromiseHook | null) {
+	promiseHook = hook
+}
+export function setStreamGuardHook(hook: StreamGuardHook | null) {
+	streamGuardHook = hook
+}
+
+/** @internal */
+export function callRequestHook(method: string, url: URL): unknown | undefined {
+	return requestHook?.(method, url)
+}
+/** @internal */
+export function callResponseHook(method: string, url: URL, data: unknown) {
+	responseHook?.(method, url, data)
+}
+/** @internal */
+export function callPromiseHook(promise: Promise<unknown>) {
+	promiseHook?.(promise)
+}
+/** @internal */
+export function callStreamGuardHook(): boolean {
+	return streamGuardHook?.() ?? false
 }

@@ -1,6 +1,8 @@
 import {
-	atomic,
+	addBatchCleanup,
+	captured,
 	effect,
+	getActiveEffect,
 	isReactive,
 	lift,
 	link,
@@ -9,6 +11,7 @@ import {
 	reactiveOptions,
 	type ScopedCallback,
 	tag,
+	unlink,
 	untracked,
 	unwrap,
 } from 'mutts'
@@ -17,7 +20,7 @@ import { document } from '../shared'
 import { collapse, ReactiveProp } from './composite-attributes'
 import { perfCounters, testing } from './debug'
 import { h } from './jsx-factory'
-import { syncRegistry } from './node'
+import { syncRegistry, walk } from './node'
 import {
 	type Child,
 	type Children,
@@ -41,9 +44,33 @@ export function pounceElement(child: Children, env: Env): PounceElement {
 					? new PounceElement(() => child, undefined, undefined, false, true)
 					: PounceElement.text(() => String(child))
 }
-// TODO: keep a "removedNodes" set, add in there the ones to `unlink`,
-// When adding a node, check if it is in the set and remove it.
-// register a batch-cleanup that actually unlink after all reconciliations
+// Deferred unlink: nodes removed during reconciliation are unlinked at end-of-batch,
+// allowing rescue if the same node is re-added before the batch completes.
+const pendingUnlinks = new Set<Node>()
+const removedNodes = new WeakSet<Node>()
+
+function flushPendingUnlinks() {
+	for (const node of pendingUnlinks) unlink(node, { type: 'stopped', detail: 'node removal' })
+	pendingUnlinks.clear()
+}
+
+function scheduleUnlink(root: Node) {
+	for (const node of walk(root)) {
+		pendingUnlinks.add(node)
+		removedNodes.add(node)
+	}
+	addBatchCleanup(flushPendingUnlinks)
+}
+
+function rescueNode(root: Node) {
+	for (const node of walk(root)) {
+		if (!removedNodes.has(node)) continue
+		removedNodes.delete(node)
+		if (pendingUnlinks.has(node)) pendingUnlinks.delete(node)
+		else throw new Error('[pounce] Cannot re-add a node that has already been unlinked')
+	}
+}
+
 let reconcileCount = 0
 export function reconcile(parent: Node, newChildren: Node | readonly Node[]): ScopedCallback {
 	function reconciler() {
@@ -53,7 +80,11 @@ export function reconcile(parent: Node, newChildren: Node | readonly Node[]): Sc
 		const items = Array.isArray(newChildren) ? newChildren : newChildren ? [newChildren] : []
 		const connecting = untracked(() => parent.isConnected)
 		if (parent instanceof Element && (items.length === 0 || parent.childNodes.length === 0)) {
-			for (const node of parent.childNodes) syncRegistry(node, 'delete', connecting)
+			for (const node of parent.childNodes) {
+				syncRegistry(node, 'delete', connecting)
+				scheduleUnlink(node)
+			}
+			for (const item of items) rescueNode(item)
 			;(parent as Element).replaceChildren(...items)
 			for (const item of items) syncRegistry(item, 'add', connecting)
 			return
@@ -68,12 +99,13 @@ export function reconcile(parent: Node, newChildren: Node | readonly Node[]): Sc
 			while (i < parent.childNodes.length && !itemsSet.has(currentChild)) {
 				removed++
 				parent.removeChild(currentChild)
-				// TODO: unlink: la chaîne d'effect-stop ne remonte pas jusqu'au `use=...`
 				syncRegistry(currentChild, 'delete', connecting)
+				scheduleUnlink(currentChild)
 				currentChild = parent.childNodes[i]
 			}
 			if (currentChild !== newChild) {
 				// This handles BOTH moving an existing node and inserting a brand new one
+				rescueNode(newChild)
 				parent.insertBefore(newChild, currentChild || null)
 				syncRegistry(newChild, 'add', connecting)
 				added++
@@ -85,6 +117,7 @@ export function reconcile(parent: Node, newChildren: Node | readonly Node[]): Sc
 			const node = parent.lastChild!
 			parent.removeChild(node)
 			syncRegistry(node, 'delete', connecting)
+			scheduleUnlink(node)
 		}
 		testing.renderingEvent?.(`reconcile (+${added} -${removed})`, parent, newChildren)
 		perf?.mark(`reconcile:${rid}:end`)
@@ -151,7 +184,7 @@ export function latch(
 	}
 
 	if (document.readyState === 'loading')
-		document.addEventListener('DOMContentLoaded', atomic(actuallyLatch))
+		document.addEventListener('DOMContentLoaded', captured(getActiveEffect(), actuallyLatch))
 	else actuallyLatch()
 
 	return () => {

@@ -1,4 +1,4 @@
-import { atomic, biDi, effect, named, reactiveOptions, type ScopedCallback } from 'mutts'
+import { biDi, effect, named, reactiveOptions, root, type ScopedCallback } from 'mutts'
 import { CompositeAttributes, ReactiveProp } from './composite-attributes'
 import { pounceOptions, testing } from './debug'
 import { classNames } from './styles'
@@ -32,12 +32,13 @@ export function listen(
 	listener: EventListener,
 	options?: boolean | AddEventListenerOptions
 ) {
-	listener = atomic(listener)
-	testing.renderingEvent?.('add event listener', target, type, listener, options)
-	target.addEventListener(type, listener, options)
+	// events listener are run in the root zone, no effect can run them, only user's interaction can trigger them
+	const rooted = (evt: Event) => root(() => listener(evt))
+	testing.renderingEvent?.('add event listener', target, type, rooted, options)
+	target.addEventListener(type, rooted, options)
 	return () => {
-		testing.renderingEvent?.('remove event listener', target, type, listener, options)
-		target.removeEventListener(type, listener, options)
+		testing.renderingEvent?.('remove event listener', target, type, rooted, options)
+		target.removeEventListener(type, rooted, options)
 	}
 }
 
@@ -121,7 +122,7 @@ function attachAttributeValue(
 	if (/^on[A-Z]/.test(key)) {
 		const eventType = key.slice(2).toLowerCase()
 		if (typeof value !== 'function') throw new Error('Event listeners must be functions')
-		return listen(element, eventType, atomic(value))
+		return listen(element, eventType, value)
 	}
 
 	// 2. Class

@@ -34,14 +34,3 @@ export const setPlatformAPIs = (
 export let entryPoint = 'non-initialized'
 
 export const mountedNodes = reactive(new WeakSet<Node>())
-/**
- * Checks if a node is currently mounted in the DOM.
- * @param node The node to check.
- * @returns True if the node is mounted, false otherwise.
- * @remarks
- * This function is reactive and will trigger updates if the node's mounted state changes.
- */
-export function isMounted(node: Node) {
-	// TODO: proxy `node.isConnected` here, test `await when(()=> node.isConnected)` as it might lead to async abort + rerun of the effect - find a nice way to manage mounting
-	return mountedNodes.has(node)
-}

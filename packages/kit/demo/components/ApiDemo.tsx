@@ -3,77 +3,6 @@ import { ApiError } from '../../src/api/core'
 import { componentStyle } from '../../src/css'
 import { api, intercept } from '../../src/dom/api'
 
-componentStyle.css`
-	.ad-section { margin-bottom: 32px; }
-	.ad-section h2 { font-size: 16px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; margin: 0 0 12px; }
-	.ad-card {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 0;
-		background: #1a2035;
-		border-radius: 8px;
-		margin-bottom: 8px;
-		overflow: hidden;
-	}
-	.ad-card-full {
-		background: #1a2035;
-		border-radius: 8px;
-		padding: 16px 20px;
-		margin-bottom: 8px;
-	}
-	.ad-card-full h3 { font-size: 11px; font-weight: 600; color: #475569; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .04em; }
-	.ad-content { padding: 16px 20px; }
-	.ad-content h3 { font-size: 11px; font-weight: 600; color: #475569; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .04em; }
-	.ad-code {
-		padding: 16px 20px;
-		background: #0d1117;
-		border-left: 1px solid #1e2535;
-		font-family: monospace;
-		font-size: 11px;
-		color: #64748b;
-		white-space: pre-wrap;
-		word-break: break-all;
-		overflow-y: auto;
-	}
-	.ad-code.ok { color: #7dd3fc; }
-	.ad-code.error { color: #f87171; }
-	.ad-code.loading { color: #475569; }
-	.ad-btn {
-		padding: 5px 12px;
-		border-radius: 5px;
-		border: 1px solid #2d3748;
-		background: #0d1117;
-		color: #94a3b8;
-		cursor: pointer;
-		font-size: 13px;
-	}
-	.ad-btn:hover { border-color: #3b82f6; color: #7dd3fc; }
-	.ad-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-	.ad-log {
-		background: #0d1117;
-		border-radius: 6px;
-		padding: 10px 14px;
-		font-family: monospace;
-		font-size: 11px;
-		color: #a3e635;
-		min-height: 30px;
-		max-height: 120px;
-		overflow-y: auto;
-	}
-	.ad-ts-code {
-		color: #94a3b8;
-		font-family: monospace;
-		font-size: 11px;
-		padding: 8px 12px;
-		background: #0f172a;
-		border-radius: 4px;
-		margin-bottom: 12px;
-		border: 1px solid #1e293b;
-	}
-	.ad-ts-code b { color: #3b82f6; font-weight: normal; }
-	.ad-ts-code i { color: #60a5fa; font-style: normal; }
-`
-
 type Post = { id: number; title: string; body: string; userId: number }
 
 const interceptLog = reactive({ entries: [] as string[] })
@@ -106,11 +35,8 @@ export default function ApiDemo() {
 	// Query params demo using a base entry point with numbers
 	const userPosts = resource(({ signal }) => postsApi.get({ userId: state.userId }, { signal }))
 
-	// Error demo
-	const missingPost = resource(({ signal }) => postDetailApi.get({ id: 999999 }, { signal }))
-
 	function prevPost() {
-		if (state.postId > 1) state.postId--
+		if (state.postId > 0) state.postId--
 	}
 	function nextPost() {
 		if (state.postId < 100) state.postId++
@@ -218,27 +144,77 @@ export default function ApiDemo() {
 					<span if={userPosts.value}>{JSON.stringify(userPosts.value, null, 2)}</span>
 				</div>
 			</div>
-
-			<div class="ad-card">
-				<div class="ad-content">
-					<h3>ApiError / 404</h3>
-					<p style="font-size:12px;color:#64748b;margin:0 0-12px">
-						Using <code style="color:#7dd3fc">resource.reload()</code> to retry.
-					</p>
-					<button
-						class="ad-btn"
-						onClick={() => missingPost.reload()}
-						disabled={missingPost.loading}
-					>
-						Reload /posts/999999
-					</button>
-				</div>
-				<div class={`ad-code ${missingPost.loading ? 'loading' : 'error'}`}>
-					<span if={missingPost.loading}>Loading…</span>
-					<span if={missingPost.error}>{formatError(missingPost.error)}</span>
-					<span if={!missingPost.loading && !missingPost.error}>Unexpected success</span>
-				</div>
-			</div>
 		</section>
 	)
 }
+
+componentStyle.css`
+	.ad-section { margin-bottom: 32px; }
+	.ad-section h2 { font-size: 16px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; margin: 0 0 12px; }
+	.ad-card {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0;
+		background: #1a2035;
+		border-radius: 8px;
+		margin-bottom: 8px;
+		overflow: hidden;
+	}
+	.ad-card-full {
+		background: #1a2035;
+		border-radius: 8px;
+		padding: 16px 20px;
+		margin-bottom: 8px;
+	}
+	.ad-card-full h3 { font-size: 11px; font-weight: 600; color: #475569; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .04em; }
+	.ad-content { padding: 16px 20px; }
+	.ad-content h3 { font-size: 11px; font-weight: 600; color: #475569; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .04em; }
+	.ad-code {
+		padding: 16px 20px;
+		background: #0d1117;
+		border-left: 1px solid #1e2535;
+		font-family: monospace;
+		font-size: 11px;
+		color: #64748b;
+		white-space: pre-wrap;
+		word-break: break-all;
+		overflow-y: auto;
+	}
+	.ad-code.ok { color: #7dd3fc; }
+	.ad-code.error { color: #f87171; }
+	.ad-code.loading { color: #475569; }
+	.ad-btn {
+		padding: 5px 12px;
+		border-radius: 5px;
+		border: 1px solid #2d3748;
+		background: #0d1117;
+		color: #94a3b8;
+		cursor: pointer;
+		font-size: 13px;
+	}
+	.ad-btn:hover { border-color: #3b82f6; color: #7dd3fc; }
+	.ad-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+	.ad-log {
+		background: #0d1117;
+		border-radius: 6px;
+		padding: 10px 14px;
+		font-family: monospace;
+		font-size: 11px;
+		color: #a3e635;
+		min-height: 30px;
+		max-height: 120px;
+		overflow-y: auto;
+	}
+	.ad-ts-code {
+		color: #94a3b8;
+		font-family: monospace;
+		font-size: 11px;
+		padding: 8px 12px;
+		background: #0f172a;
+		border-radius: 4px;
+		margin-bottom: 12px;
+		border: 1px solid #1e293b;
+	}
+	.ad-ts-code b { color: #3b82f6; font-weight: normal; }
+	.ad-ts-code i { color: #60a5fa; font-style: normal; }
+`

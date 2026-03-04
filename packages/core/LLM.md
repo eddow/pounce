@@ -87,7 +87,7 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
 > For `class` and `style` attributes, Pounce **merges** values across layers (e.g., when using spread operators `{...attrs}`) instead of replacing them:
 > *   **Classes**: Cumulate into a single space-separated string. Supports strings, arrays, and objects.
 > *   **Styles**: Merge into a single style object. Later layers override earlier ones for the same property, but distinct properties accumulate.
-> *   **isMounted(node)**: A reactive utility from `mutts` (via `@pounce/core/shared`) that tracks if a node is currently in the DOM.
+> *   **node.isConnected**: Has been made reactive.
 > *   **Other attributes**: Standard `Object.assign` behavior (last one wins).
 
 
