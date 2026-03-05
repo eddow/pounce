@@ -15,7 +15,10 @@ export default function ThemeToggleDemo() {
 	})
 
 	return (
-		<div style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;">
+		<div
+			data-test="themetoggle-demo"
+			style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;"
+		>
 			<h2>ThemeToggle Primitive Demo</h2>
 
 			<div

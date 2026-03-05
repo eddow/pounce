@@ -45,7 +45,7 @@ componentStyle.css`
 function A(props: LinkProps) {
 	const model = linkModel(props)
 	return (
-		<a href={props.href} onClick={model.onClick} aria-current={model.ariaCurrent}>
+		<a {...props} onClick={model.onClick} aria-current={model.ariaCurrent}>
 			{props.children}
 		</a>
 	)
@@ -90,7 +90,7 @@ const App = () => (
 	<>
 		<p class="demo-title">@pounce/kit Demo</p>
 		<p class="demo-subtitle">Interactive showcase of all kit features</p>
-		<nav class="demo-nav">
+		<nav class="demo-nav" data-testid="global-nav">
 			<for each={routes.filter((r) => r.label !== null)}>
 				{(route) => (
 					<A href={route.path} matchPrefix={route.path === '/router'}>
@@ -99,7 +99,7 @@ const App = () => (
 				)}
 			</for>
 		</nav>
-		<main>
+		<main data-testid="router-outlet">
 			<Router routes={routes} notFound={() => <p style="color:#f87171">404 — not found</p>} />
 		</main>
 	</>

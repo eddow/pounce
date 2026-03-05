@@ -53,7 +53,7 @@ export default function ApiDemo() {
 		err instanceof ApiError ? `ApiError ${err.status}: ${err.message}` : String(err)
 
 	return (
-		<section class="ad-section">
+		<section class="ad-section" data-testid="api-view">
 			<h2>API Client</h2>
 			<p style="font-size:13px;color:#94a3b8;margin:0 0 16px">
 				Showcasing <code style="color:#7dd3fc">resource</code> for async state and{' '}
@@ -73,6 +73,7 @@ export default function ApiDemo() {
 			<div class="ad-card">
 				<div class="ad-content">
 					<h3>Path Params: /posts/[id]</h3>
+					<p>Post ID: <span data-testid="api-post-id">{state.postId}</span></p>
 					<div class="ad-ts-code">
 						<b>const</b> post = <i>resource</i>({'({ signal }) =>'}
 						<br />
@@ -86,7 +87,7 @@ export default function ApiDemo() {
 						<span style="font-family:monospace;color:#f59e0b;font-size:16px;font-weight:700">
 							{state.postId}
 						</span>
-						<button class="ad-btn" onClick={nextPost}>
+						<button class="ad-btn" data-action="next-post" onClick={nextPost}>
 							►
 						</button>
 					</div>
@@ -94,7 +95,7 @@ export default function ApiDemo() {
 						if={post.value}
 						style="margin-top:12px;padding:12px;background:#0f172a;border-radius:6px;border:1px solid #1e293b"
 					>
-						<div style="font-weight:600;color:#f8fafc;margin-bottom:4px">
+						<div style="font-weight:600;color:#f8fafc;margin-bottom:4px" data-testid="api-post-title">
 							{(post.value as Post).title}
 						</div>
 						<div style="font-size:12px;color:#94a3b8;line-height:1.4">

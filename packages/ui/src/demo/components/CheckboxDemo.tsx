@@ -22,23 +22,31 @@ export default function CheckboxDemo() {
 	})
 
 	return (
-		<div style="padding: 20px; background: #1e293b; border-radius: 8px;">
+		<div data-test="checkbox-demo" style="padding: 20px; background: #1e293b; border-radius: 8px;">
 			<h2>Checkbox Primitive Demo</h2>
-			<p>
+			<p data-test="checkbox-status">
 				Status: {state.checked ? 'Checked' : 'Unchecked'}
 				{state.indeterminate ? ' (Indeterminate)' : ''}
 			</p>
 
 			<div style="margin-bottom: 16px;">
-				<label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-					<input {...model.input} />
+				<label
+					data-test="checkbox-label"
+					style="display: flex; align-items: center; gap: 8px; cursor: pointer;"
+				>
+					<input data-test="checkbox-input" {...model.input} />
 					Toggle this checkbox
 				</label>
 			</div>
 
 			<div style="display: flex; gap: 8px;">
-				<button onClick={() => (state.disabled = !state.disabled)}>Toggle Disabled</button>
-				<button onClick={() => (state.indeterminate = !state.indeterminate)}>
+				<button data-test="toggle-disabled" onClick={() => (state.disabled = !state.disabled)}>
+					Toggle Disabled
+				</button>
+				<button
+					data-test="toggle-indeterminate"
+					onClick={() => (state.indeterminate = !state.indeterminate)}
+				>
 					Toggle Indeterminate
 				</button>
 			</div>

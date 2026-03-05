@@ -14,28 +14,35 @@ export default function ToastDemo() {
 	}
 
 	return (
-		<div style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;">
+		<div
+			data-test="toast-demo"
+			style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;"
+		>
 			<h2>Toast Primitive Demo</h2>
 			<div style="display: flex; gap: 8px; flex-wrap: wrap;">
 				<button
+					data-test="toast-info"
 					style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;"
 					onClick={() => notify('primary')}
 				>
 					Info
 				</button>
 				<button
+					data-test="toast-success"
 					style="background: #22c55e; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;"
 					onClick={() => notify('success')}
 				>
 					Success
 				</button>
 				<button
+					data-test="toast-warning"
 					style="background: #eab308; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;"
 					onClick={() => notify('warning')}
 				>
 					Warning
 				</button>
 				<button
+					data-test="toast-error"
 					style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;"
 					onClick={() => notify('danger')}
 				>

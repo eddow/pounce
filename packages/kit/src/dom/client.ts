@@ -1,4 +1,4 @@
-import { getActiveEffect, reactive } from 'mutts'
+import { reactive } from 'mutts'
 import { perf } from '../perf.js'
 import { setPlatform } from '../platform/shared.js'
 import type {
@@ -52,7 +52,6 @@ if (typeof window !== 'undefined') {
 client.navigate = (to: string | URL, options?: NavigateOptions): void => {
 	perf?.mark('route:start')
 	const href = resolveHref(to)
-	const active = getActiveEffect()
 	const stateData = options?.state ?? null
 	if (options?.replace) {
 		window.history.replaceState(stateData, '', href)

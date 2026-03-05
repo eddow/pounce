@@ -6,7 +6,10 @@ export default function MenuDemo() {
 	})
 
 	return (
-		<div style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;">
+		<div
+			data-test="menu-demo"
+			style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;"
+		>
 			<h2>Menu Primitive Demo</h2>
 			<details {...model.details} style="position: relative; display: inline-block;">
 				<summary

@@ -53,6 +53,8 @@ const prefs = stored({
 	visits: 0,
 	name: 'world',
 	counter: 0,
+	theme: 'light',
+	count: 0,
 })
 
 export default function StorageDemo() {
@@ -69,8 +71,15 @@ export default function StorageDemo() {
 		prefs.counter = 0
 	}
 
+	function toggleTheme() {
+		prefs.theme = prefs.theme === 'light' ? 'dark' : 'light'
+	}
+	function incCount() {
+		prefs.count++
+	}
+
 	return (
-		<section class="sd-section" use={onMount}>
+		<section class="sd-section" data-testid="storage-view" use={onMount}>
 			<h2>localStorage — stored()</h2>
 			<p style="font-size:13px;color:#94a3b8;margin:0 0 16px">
 				<code style="color:#7dd3fc">stored(&#123; key: default &#125;)</code> returns a reactive
@@ -126,6 +135,32 @@ export default function StorageDemo() {
 					</div>
 				</div>
 				<div class="sd-code">prefs.counter</div>
+			</div>
+
+			<div class="sd-card">
+				<div class="sd-content">
+					<div class="sd-label">theme</div>
+					<div class="sd-row">
+						<span class="sd-val" data-testid="storage-theme">{prefs.theme}</span>
+						<button class="sd-btn" data-action="toggle-theme" onClick={toggleTheme}>
+							Toggle
+						</button>
+					</div>
+				</div>
+				<div class="sd-code">prefs.theme</div>
+			</div>
+
+			<div class="sd-card">
+				<div class="sd-content">
+					<div class="sd-label">count</div>
+					<div class="sd-row">
+						<span class="sd-val" data-testid="storage-count">{prefs.count}</span>
+						<button class="sd-btn" data-action="inc-count" onClick={incCount}>
+							+
+						</button>
+					</div>
+				</div>
+				<div class="sd-code">prefs.count</div>
 			</div>
 
 			<p class="sd-hint">Reload to verify persistence · open two tabs to see inter-tab sync</p>

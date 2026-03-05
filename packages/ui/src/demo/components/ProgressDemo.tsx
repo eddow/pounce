@@ -24,13 +24,16 @@ export default function ProgressDemo() {
 	})
 
 	return (
-		<div style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;">
+		<div
+			data-test="progress-demo"
+			style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;"
+		>
 			<h2>Progress Primitive Demo</h2>
 
 			<div style="margin-bottom: 24px;">
 				<div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #94a3b8;">
 					<span>Downloading Assets...</span>
-					<span>{state.progress}%</span>
+					<span data-test="progress-value">{state.progress}%</span>
 				</div>
 				<div style="height: 8px; background: #334155; border-radius: 4px; overflow: hidden; position: relative;">
 					<div

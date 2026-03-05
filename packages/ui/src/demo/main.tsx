@@ -21,7 +21,7 @@ import StarsDemo from './components/StarsDemo'
 import ThemeToggleDemo from './components/ThemeToggleDemo'
 import ToastDemo from './components/ToastDemo'
 
-function A(props: LinkProps) {
+function AppLink(props: LinkProps) {
 	const model = linkModel(props)
 	return (
 		<a href={props.href} onClick={model.onClick} aria-current={model.ariaCurrent}>
@@ -51,25 +51,34 @@ const routes: DemoRoute[] = [
 
 function DemoApp() {
 	return (
-		<div style="padding: 24px; max-width: 800px; margin: 0 auto; font-family: sans-serif;">
+		<div
+			data-test="demo-app"
+			style="padding: 24px; max-width: 800px; margin: 0 auto; font-family: sans-serif;"
+		>
 			<h1 style="color: #f1f5f9; margin-bottom: 8px;">@pounce/ui Demo</h1>
 			<p style="color: #94a3b8; margin-bottom: 32px;">
 				Headless UI primitives for Pounce applications
 			</p>
 
-			<nav style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid #334155; padding-bottom: 16px;">
+			<nav
+				data-test="demo-nav"
+				style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid #334155; padding-bottom: 16px;"
+			>
 				<for each={routes}>
 					{(route) => (
-						<A href={route.path}>
+						<AppLink href={route.path}>
 							<button style="padding: 6px 12px; border: none; border-radius: 4px; background: transparent; color: #94a3b8; cursor: pointer; font-weight: 500;">
 								{route.label}
 							</button>
-						</A>
+						</AppLink>
 					)}
 				</for>
 			</nav>
 
-			<main style="background: #1e293b; padding: 24px; border-radius: 12px; border: 1px solid #334155;">
+			<main
+				data-test="demo-content"
+				style="background: #1e293b; padding: 24px; border-radius: 12px; border: 1px solid #334155;"
+			>
 				<Router routes={routes} notFound={() => <p style="color: #f87171;">404 - Not Found</p>} />
 			</main>
 		</div>

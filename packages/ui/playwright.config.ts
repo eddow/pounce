@@ -27,7 +27,7 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: `pnpm exec vite --config tests/e2e/vite.config.ts --host=127.0.0.1 --port=${port} --strictPort`,
+		command: `pnpm exec vite --host=127.0.0.1 --port=${port} --strictPort`,
 		cwd: projectRootDir,
 		port,
 		timeout: 120_000,

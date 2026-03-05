@@ -27,11 +27,18 @@ export default function DrawerDemo() {
 	}
 
 	return (
-		<div style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;">
+		<div
+			data-test="drawer-demo"
+			style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;"
+		>
 			<h2>Drawer Primitive Demo</h2>
 			<div style="display: flex; gap: 8px; flex-wrap: wrap;">
-				<button onClick={() => openDrawer('left')}>Left</button>
-				<button onClick={() => openDrawer('right')}>Right</button>
+				<button data-test="open-drawer-left" onClick={() => openDrawer('left')}>
+					Left
+				</button>
+				<button data-test="open-drawer-right" onClick={() => openDrawer('right')}>
+					Right
+				</button>
 			</div>
 
 			<for each={stack.stack}>

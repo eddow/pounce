@@ -33,9 +33,15 @@ export default function MultiSelectDemo() {
 	})
 
 	return (
-		<div style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;">
+		<div
+			data-test="multiselect-demo"
+			style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;"
+		>
 			<h2>MultiSelect Primitive Demo</h2>
-			<div style="margin-bottom: 8px; color: #94a3b8; font-size: 14px;">
+			<div
+				data-test="multiselect-selected"
+				style="margin-bottom: 8px; color: #94a3b8; font-size: 14px;"
+			>
 				Selected tags:{' '}
 				{Array.from(state.selected)
 					.map((i) => i.label)

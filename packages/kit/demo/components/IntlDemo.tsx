@@ -61,7 +61,7 @@ const LOCALES = ['en-US', 'fr-FR', 'ar-EG', 'ja-JP']
 
 const state = reactive({
 	locale: 'en-US',
-	count: 3,
+	count: 0,
 })
 
 const fixedDate = new globalThis.Date('2023-06-15T10:30:00Z')
@@ -95,7 +95,7 @@ export default function IntlDemo() {
 
 	return (
 		<DisplayProvider locale={state.locale}>
-			<section class="id-section">
+			<section class="id-section" data-testid="intl-view">
 				<h2>Intl Components</h2>
 				<p style="font-size:13px;color:#94a3b8;margin:0 0 16px">
 					All 6 Intl components — output updates reactively when locale changes.
@@ -112,6 +112,36 @@ export default function IntlDemo() {
 							</button>
 						)}
 					</for>
+				</div>
+
+				<div class="id-rows" style="margin-bottom:16px">
+					<div class="id-row">
+						<div class="id-content">
+							<span class="id-out" data-testid="intl-number">
+								<IntlNumber value={1234.56} style="currency" currency="USD" />
+							</span>
+						</div>
+						<div class="id-key">$1,234.56 (USD, en-US default)</div>
+					</div>
+					<div class="id-row">
+						<div class="id-content">
+							<span class="id-out" data-testid="intl-date">
+								<IntlDate value={new globalThis.Date('2024-02-25T12:00:00Z')} dateStyle="medium" />
+							</span>
+						</div>
+						<div class="id-key">Feb 25, 2024 (medium)</div>
+					</div>
+					<div class="id-row">
+						<div class="id-content">
+							<span class="id-out" data-testid="intl-plural">
+								<Plural value={state.count} one={`${state.count} item`} other={`${state.count} items`} />
+							</span>
+							<button class="id-locale-btn" style="margin-left:8px" data-action="inc-count" onClick={() => state.count++}>
+								+1
+							</button>
+						</div>
+						<div class="id-key">Plural (en-US): {state.count}</div>
+					</div>
 				</div>
 
 				<div class="id-slider-row">

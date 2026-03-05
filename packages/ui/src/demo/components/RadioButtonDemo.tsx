@@ -13,7 +13,10 @@ export default function RadioButtonDemo() {
 	]
 
 	return (
-		<div style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;">
+		<div
+			data-test="radiobutton-demo"
+			style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;"
+		>
 			<h2>RadioButton Primitive Demo</h2>
 			<div style="display: flex; gap: 4px; background: #334155; padding: 4px; border-radius: 8px; align-self: flex-start;">
 				<for each={themes}>
@@ -36,8 +39,11 @@ export default function RadioButtonDemo() {
 					}}
 				</for>
 			</div>
-			<p style="margin-top: 16px; color: #94a3b8;">
-				Active theme: <span style="color: white; font-weight: bold;">{state.theme}</span>
+			<p data-test="active-theme" style="margin-top: 16px; color: #94a3b8;">
+				Active theme:{' '}
+				<span data-test="theme-value" style="color: white; font-weight: bold;">
+					{state.theme}
+				</span>
 			</p>
 		</div>
 	)

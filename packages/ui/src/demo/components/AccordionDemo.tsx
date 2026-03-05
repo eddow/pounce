@@ -25,7 +25,10 @@ export default function AccordionDemo() {
 	]
 
 	return (
-		<div style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;">
+		<div
+			data-test="accordion-demo"
+			style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;"
+		>
 			<h2>Accordion Primitive Demo</h2>
 
 			<div style="display: flex; flex-direction: column; gap: 8px;">

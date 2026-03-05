@@ -22,13 +22,17 @@ export default function SelectDemo() {
 	})
 
 	return (
-		<div style="padding: 20px; background: #1e293b; border-radius: 8px;">
+		<div data-test="select-demo" style="padding: 20px; background: #1e293b; border-radius: 8px;">
 			<h2>Select Primitive Demo</h2>
-			<p>
-				Chosen color: <span style={`color: ${state.value}; font-weight: bold;`}>{state.value}</span>
+			<p data-test="select-display">
+				Chosen color:{' '}
+				<span data-test="select-value" style={`color: ${state.value}; font-weight: bold;`}>
+					{state.value}
+				</span>
 			</p>
 
 			<select
+				data-test="select-input"
 				style="padding: 8px; border-radius: 4px; background: #334155; color: white; border: 1px solid #475569;"
 				{...model.select}
 			>

@@ -48,7 +48,7 @@ componentStyle.css`
 function A(props: LinkProps) {
 	const model = linkModel(props)
 	return (
-		<a href={props.href} onClick={model.onClick} aria-current={model.ariaCurrent}>
+		<a {...props} onClick={model.onClick} aria-current={model.ariaCurrent}>
 			{props.children}
 		</a>
 	)
@@ -63,8 +63,8 @@ const subRoutes: SubRoute[] = [
 		path: '/router',
 		label: 'Home',
 		view: () => (
-			<div>
-				<strong>Router home</strong>
+			<div data-testid="home-view">
+				<h1>Home</h1>
 				<p style="color:#94a3b8;font-size:13px;margin:8px 0 0">
 					Navigate to a user to see typed params.
 				</p>
@@ -75,8 +75,8 @@ const subRoutes: SubRoute[] = [
 		path: '/router/about',
 		label: 'About',
 		view: () => (
-			<div>
-				<strong>About</strong>
+			<div data-testid="about-view">
+				<h1>About</h1>
 				<p style="color:#94a3b8;font-size:13px;margin:8px 0 0">Static route — no params.</p>
 			</div>
 		),
@@ -85,8 +85,10 @@ const subRoutes: SubRoute[] = [
 		path: '/router/users/[id]',
 		label: 'User',
 		view: (spec) => (
-			<div>
-				<strong>User Profile</strong>
+			<div data-testid="user-view">
+				<h1>User Profile</h1>
+				<p data-testid="user-id">ID: {spec.params.id}</p>
+				<p data-testid="user-name">Name: User {spec.params.id}</p>
 				<p style="margin:8px 0 4px;font-size:13px;color:#94a3b8">
 					Typed param via <code style="color:#f59e0b">defineRoute('/router/users/[id]')</code>:
 				</p>
@@ -97,6 +99,26 @@ const subRoutes: SubRoute[] = [
 					buildUrl({'{'} id: '{spec.params.id}' {'}'}) →{' '}
 					{userRoute.buildUrl({ id: spec.params.id })}
 				</p>
+				<nav data-testid="user-nav">
+					<A href="/router/users/1" data-testid="link-user-1">User 1</A>
+					{' | '}
+					<A href="/router/users/2" data-testid="link-user-2">User 2</A>
+					{' | '}
+					<A href="/router/users/42" data-testid="link-user-42">User 42</A>
+				</nav>
+			</div>
+		),
+	},
+	{
+		path: '/router/long',
+		label: 'Long',
+		view: () => (
+			<div data-testid="long-view" style="height: 2000px; padding: 20px;">
+				<h1>Long Page</h1>
+				<p>Scroll down to find the footer link.</p>
+				<div style="margin-top: 1800px;">
+					<A href="/router" data-testid="link-home-bottom">Back to Home</A>
+				</div>
 			</div>
 		),
 	},
@@ -116,10 +138,12 @@ export default function RouterDemo() {
 				<code style="color:#7dd3fc">aria-current</code>.
 			</p>
 			<nav class="rd-nav">
-				<A href="/router">Home</A>
-				<A href="/router/about">About</A>
-				<A href="/router/users/1">User 1</A>
+				<A href="/router" data-testid="nav-home">Home</A>
+				<A href="/router/about" data-testid="nav-about">About</A>
+				<A href="/router/users/1" data-testid="nav-user-1">User 1</A>
+				<A href="/router/users/2" data-testid="nav-user-2">User 2</A>
 				<A href="/router/users/abc">User abc</A>
+				<A href="/router/long" data-testid="nav-long">Long</A>
 				<A href="/router/nowhere">404</A>
 			</nav>
 			<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;font-size:13px">
@@ -135,7 +159,8 @@ export default function RouterDemo() {
 				<Router
 					routes={subRoutes}
 					notFound={(ctx) => (
-						<div style="color:#f87171">
+						<div data-testid="not-found-view" style="color:#f87171">
+							<h1>404</h1>
 							No route for <code>{ctx.url}</code>
 						</div>
 					)}
@@ -143,7 +168,7 @@ export default function RouterDemo() {
 			</div>
 			<div class="rd-code" style="margin-top:12px">
 				{'client.url.pathname = '}
-				<span class="rd-param">{client.url.pathname}</span>
+				<span class="rd-param" data-testid="current-path">{client.url.pathname}</span>
 			</div>
 		</section>
 	)

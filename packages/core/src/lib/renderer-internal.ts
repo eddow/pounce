@@ -220,8 +220,18 @@ export function attachAttributes(
 	if (attributes.isReactive) {
 		const stop = effect.named('attrs:update')(() => {
 			const newKeys = attributes.keys
-			for (const key of newKeys)
-				if (!(key in cleanups)) cleanups[key] = attachAttribute(element, key, attributes.get(key))
+			for (const key of newKeys) {
+				if (!(key in cleanups)) {
+					let value = attributes.get(key)
+					// If the attribute value dynamically comes from a reactive layer but is a plain scalar,
+					// wrap it in a ReactiveProp so `attachAttribute` tracks it.
+					if (!(value instanceof ReactiveProp) && typeof value !== 'function') {
+						const capturedKey = key
+						value = new ReactiveProp(() => attributes.get(capturedKey))
+					}
+					cleanups[key] = attachAttribute(element, key, value)
+				}
+			}
 			for (const key in cleanups) {
 				if (key === 'class' || key === 'style') continue
 				if (!newKeys.has(key)) {

@@ -26,11 +26,14 @@ export default function StarsDemo() {
 	})
 
 	return (
-		<div style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;">
+		<div
+			data-test="stars-demo"
+			style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;"
+		>
 			<h2>Stars Primitive Demo</h2>
 
 			<div style="margin-bottom: 32px;">
-				<p style="margin-bottom: 8px; font-size: 14px; color: #94a3b8;">
+				<p data-test="star-rating" style="margin-bottom: 8px; font-size: 14px; color: #94a3b8;">
 					Single Value: {state.rating}
 				</p>
 				<div
@@ -52,7 +55,7 @@ export default function StarsDemo() {
 			</div>
 
 			<div>
-				<p style="margin-bottom: 8px; font-size: 14px; color: #94a3b8;">
+				<p data-test="star-range" style="margin-bottom: 8px; font-size: 14px; color: #94a3b8;">
 					Range Selection: {state.range[0]} - {state.range[1]}
 				</p>
 				<div

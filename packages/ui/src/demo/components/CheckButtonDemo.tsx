@@ -28,10 +28,14 @@ export default function CheckButtonDemo() {
 	})
 
 	return (
-		<div style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;">
+		<div
+			data-test="checkbutton-demo"
+			style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;"
+		>
 			<h2>CheckButton Primitive Demo</h2>
 			<div style="display: flex; gap: 12px; flex-wrap: wrap;">
 				<button
+					data-test="wifi-toggle"
 					style={`padding: 12px 20px; border-radius: 8px; border: 2px solid ${state.wifi ? '#3b82f6' : '#475569'}; background: ${state.wifi ? '#1e40af' : '#334155'}; color: white; cursor: pointer; transition: all 0.2s;`}
 					{...wifiModel.button}
 				>
@@ -40,6 +44,7 @@ export default function CheckButtonDemo() {
 				</button>
 
 				<button
+					data-test="bluetooth-toggle"
 					style={`padding: 12px 20px; border-radius: 8px; border: 2px solid ${state.bluetooth ? '#3b82f6' : '#475569'}; background: ${state.bluetooth ? '#1e40af' : '#334155'}; color: white; cursor: pointer; transition: all 0.2s;`}
 					{...btModel.button}
 				>
