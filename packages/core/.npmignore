@@ -1,9 +1,9 @@
 # Test and demo files
 **/*.spec.*
 **/*.test.*
-src/demo/
+demo/
 src/entry.ts
-dist/src/demo/
+dist/demo/
 dist/src/entry.d.ts
 
 # Build config

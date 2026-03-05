@@ -1,5 +1,5 @@
 import { memoize } from 'mutts'
-import { defaults } from '../../lib'
+import { defaults } from '../../src/lib'
 import './Wrapper.scss'
 
 export default function WrapperComponent(props: {

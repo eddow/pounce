@@ -4,7 +4,7 @@
 
 import { memoize } from 'mutts'
 import './Todo.scss'
-import { defaults } from '../../lib/utils'
+import { defaults } from '../../src/lib/utils'
 
 export interface Todo {
 	id: number

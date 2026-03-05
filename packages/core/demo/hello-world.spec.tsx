@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { h, rootEnv } from '../lib'
+import { h, rootEnv } from '../src/lib'
 import { HelloWorld } from './hello-world'
 
 describe('HelloWorld Component', () => {

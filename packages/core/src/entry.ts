@@ -1,6 +1,6 @@
 import { initTests } from '../tests/e2e/fixtures/main'
-import './demo/main'
-import './demo/mini'
+import '../demo/main'
+import '../demo/mini'
 
 /**
  * Entry point that determines whether to load the main demos

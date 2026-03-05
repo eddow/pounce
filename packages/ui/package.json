@@ -34,7 +34,7 @@
 		"src",
 		"!src/**/*.spec.*",
 		"!src/**/*.test.*",
-		"!src/demo",
+		"!demo",
 		"!tests",
 		"README.md",
 		"LLM.md"

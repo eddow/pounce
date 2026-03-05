@@ -4,7 +4,7 @@
 
 import { effect, watch } from 'mutts'
 import './Counter.scss'
-import { defaults } from '../../lib'
+import { defaults } from '../../src/lib'
 
 export default function CounterWebComponent(props: {
 	count: number
