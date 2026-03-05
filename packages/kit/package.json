@@ -67,6 +67,7 @@
 		"demo": "vite",
 		"build": "vite build",
 		"test": "vitest run",
+		"run:e2e": "pnpm exec vite --config tests/e2e/vite.config.ts --host=127.0.0.1 --port=5277 --strictPort",
 		"test:e2e": "playwright test",
 		"prepack": "find dist -name '*.spec.d.ts' -delete 2>/dev/null; true",
 		"perf": "VITE_PERF=true VITE_PERF_LOG=true pnpm run test:e2e"

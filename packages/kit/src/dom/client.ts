@@ -53,7 +53,6 @@ client.navigate = (to: string | URL, options?: NavigateOptions): void => {
 	perf?.mark('route:start')
 	const href = resolveHref(to)
 	const active = getActiveEffect()
-	console.log(`[kit] client.navigate to: ${href} ActiveEffect=${(active as any)?.name ?? 'none'}`)
 	const stateData = options?.state ?? null
 	if (options?.replace) {
 		window.history.replaceState(stateData, '', href)
@@ -158,7 +157,6 @@ function initializeClientListeners(): void {
 function synchronizeUrl(): void {
 	perf?.mark('route:sync:start')
 	client.url = createUrlSnapshot(new URL(window.location.href))
-	console.log('synchronizeUrl: client.url.pathname is now:', client.url.pathname)
 	client.history = createHistorySnapshot()
 	perf?.mark('route:sync:end')
 	perf?.measure('route:sync', 'route:sync:start', 'route:sync:end')

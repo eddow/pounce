@@ -1,5 +1,5 @@
 import { defaults, PounceElement } from '@pounce/core'
-import { effect, lift } from 'mutts'
+import { effect, lift, link } from 'mutts'
 import { perf } from '../perf.js'
 import { client } from '../platform/shared.js'
 import {
@@ -121,7 +121,6 @@ export const Router = <
 	const matcher = routeMatcher(vm.routes)
 
 	effect.named('router:scroll')(() => {
-		console.log('router:scroll effect triggered, url:', vm.url)
 		if (vm.url && vm.scrollToTop && typeof window !== 'undefined') {
 			window.scrollTo(0, 0)
 		}
@@ -129,27 +128,31 @@ export const Router = <
 
 	function renderElements(jsx: JSX.Element | JSX.Element[]): Node[] {
 		const els = Array.isArray(jsx) ? jsx : [jsx]
-		return els.flatMap((el) => {
+		const outputs: Node[] = []
+		els.forEach((el) => {
 			if (!(el instanceof PounceElement)) throw new Error('Invalid JSX element for route')
 			const nodes = el.render(scope)
-			return Array.isArray(nodes) ? Array.from(nodes) : [nodes]
+			const nodeArray = Array.isArray(nodes) ? Array.from(nodes) : [nodes]
+			// Anchor the reactive proxy to the DOM node so it is not garbage collected
+			if (nodeArray.length > 0 && typeof nodes === 'object' && nodes !== null) {
+				link(nodeArray[0], nodes)
+			}
+			outputs.push(...nodeArray)
 		})
+		return outputs
 	}
 	// TODO: Why do we need `renderElements`? Can't we just return `lift` the PounceElement directly?
 	return lift(function routerCompute() {
-		console.log('routerCompute START, client.url.pathname:', client.url.pathname)
 		try {
 			perf?.mark('route:match:start')
 			const url = client.url.pathname
 			const match = matcher(url)
 			perf?.mark('route:match:end')
 			perf?.measure('route:match', 'route:match:start', 'route:match:end')
-			console.log('Router matching:', url, match ? match.definition.path : 'NOT FOUND')
 			if (match && (match.unusedPath === '' || match.unusedPath === '/')) {
 				try {
 					perf?.mark('route:render:start')
 					const output = renderElements(match.definition.view(match, scope))
-					console.log('Router rendering view for:', match.definition.path, 'params:', match.params)
 					perf?.mark('route:render:end')
 					perf?.measure('route:render', 'route:render:start', 'route:render:end')
 					return output

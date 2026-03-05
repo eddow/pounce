@@ -1,10 +1,13 @@
 import { api, intercept } from '../../../src/dom/api'
 import { reactive, resource } from 'mutts'
+import 'mutts/debug'
 
 // Mock interceptor for E2E
 intercept('**', async (req: any, next: any) => {
 	const url = new URL(req.url, 'http://localhost')
+	console.log(`[E2E] intercept called for ${req.url}, pathname: ${url.pathname}`)
 	if (url.pathname === '/e2e/user') {
+		console.log(`[E2E] matched USER route`)
 		await new Promise(r => setTimeout(r, 100))
 		return new Response(JSON.stringify({ id: 1, name: 'E2E User' }), {
 			headers: { 'Content-Type': 'application/json' }
@@ -13,11 +16,13 @@ intercept('**', async (req: any, next: any) => {
 	const postMatch = url.pathname.match(/^\/e2e\/post\/(\d+)$/)
 	if (postMatch) {
 		const id = Number(postMatch[1])
+		console.log(`[E2E] matched POST route: id=${id}`)
 		await new Promise(r => setTimeout(r, 100))
 		return new Response(JSON.stringify({ id, title: `Post ${id}` }), {
 			headers: { 'Content-Type': 'application/json' }
 		})
 	}
+	console.log(`[E2E] falling through to next(req) for ${url.pathname}`)
 	return next(req)
 })
 

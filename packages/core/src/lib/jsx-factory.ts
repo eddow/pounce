@@ -267,10 +267,12 @@ export function produceDOM(
 			}
 
 			testing.renderingEvent?.('create element', tagName, element)
+			const childNodes = processChildren(children, env)
 			link(
 				element,
+				childNodes, // Anchor the reactive array to the DOM element to prevent GC!
 				// Order is important for `select` - cannot se the value if no children
-				reconcile(element, processChildren(children, env)),
+				reconcile(element, childNodes),
 				attachAttributes(element, inAttrs)
 			)
 

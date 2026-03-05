@@ -175,6 +175,9 @@ export function latch(
 		const wrapped = h('fragment', {}, ...(Array.isArray(content) ? content : [content]))
 		const nodes = wrapped.render(env)
 
+		// Anchor the nodes array to the root element to prevent GC of the effect tree!
+		link(element, nodes)
+
 		testing.renderingEvent?.('latch', tag, element)
 		stop = reconcile(element, nodes)
 		perf?.mark('app:mount:end')

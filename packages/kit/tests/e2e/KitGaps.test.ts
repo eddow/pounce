@@ -1,5 +1,23 @@
 import { test, expect } from '@playwright/test'
 
+test.beforeEach(async ({ page }) => {
+	// Let all unhandled errors / warnings surface in the test console
+	page.on('console', (msg) => {
+		const type = msg.type()
+		if (type === 'error' || type === 'warning' || type === 'log') {
+			console.log(`BROWSER [${type}]:`, msg.text())
+		}
+	})
+	page.on('requestfailed', request =>
+		console.log(`BROWSER [req-failed]: ${request.url()} - ${request.failure()?.errorText}`)
+	)
+	page.on('response', response => {
+		if (!response.ok()) {
+			console.log(`BROWSER [res-not-ok]: ${response.url()} - ${response.status()}`)
+		}
+	})
+})
+
 test.describe('Kit Feature Gaps', () => {
 	test('Reactive storage (stored) persistence and reactivity', async ({ page }) => {
 		await page.goto('/storage')

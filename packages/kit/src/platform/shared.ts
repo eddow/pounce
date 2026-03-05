@@ -25,7 +25,7 @@ function ensure(operation: string): PlatformAdapter {
 export const client: Client = new Proxy({} as Client, {
 	get(_, prop) {
 		const c = ensure('client.get').client
-		return Reflect.get(c, prop, c)
+		return (c as any)[prop]
 	},
 	set(_, prop, value) {
 		return Reflect.set(ensure('client.set').client, prop, value)

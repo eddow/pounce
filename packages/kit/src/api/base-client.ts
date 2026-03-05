@@ -107,7 +107,7 @@ async function runInterceptors(
 		}
 		return finalHandler(req)
 	}
-	return dispatch(initialRequest)
+	return PounceResponse.from(await dispatch(initialRequest))
 }
 
 /**

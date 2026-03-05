@@ -20,8 +20,9 @@ export default defineConfig({
 	resolve: {
 		conditions: ['browser', 'default', 'import'],
 		alias: {
-			'@pounce/core': resolve(coreRoot, 'src/lib/index.ts'),
+			'@pounce/core': resolve(coreRoot, 'src/lib/index.ts'),/*
 			mutts: resolve(muttsRoot, 'src/entry-browser.ts'),
+			'mutts/debug': resolve(muttsRoot, 'debug/index.ts'),*/
 		},
 	},
 	server: {
