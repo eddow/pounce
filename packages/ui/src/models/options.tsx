@@ -49,8 +49,16 @@ export function selectModel(props: SelectProps): SelectModel {
 	const initValue = untracked(() => props.value)
 	const model: SelectModel = {
 		get select() {
-			const { options: _, fullWidth: __, variant: ___, ...rest } = props
-			return rest
+			const { options: _, fullWidth: __, variant: ___, onInput: userOnInput, ...rest } = props
+			return {
+				...rest,
+				get onInput() {
+					if (!userOnInput) return undefined
+					return (e: Event) => {
+						if (e.target instanceof HTMLSelectElement) userOnInput(e.target.value)
+					}
+				},
+			}
 		},
 		get options() {
 			return (

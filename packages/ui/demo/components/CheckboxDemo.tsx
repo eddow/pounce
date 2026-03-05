@@ -3,9 +3,8 @@ import { reactive } from 'mutts'
 
 export default function CheckboxDemo() {
 	const state = reactive({
-		checked: false,
+		checked: false as boolean | undefined,
 		disabled: false,
-		indeterminate: false,
 	})
 
 	const model = checkboxModel({
@@ -15,18 +14,14 @@ export default function CheckboxDemo() {
 		get disabled() {
 			return state.disabled
 		},
-		get indeterminate() {
-			return state.indeterminate
-		},
-		onChange: (v: any) => (state.checked = v),
+		onChange: (v: boolean) => (state.checked = v),
 	})
 
 	return (
 		<div data-test="checkbox-demo" style="padding: 20px; background: #1e293b; border-radius: 8px;">
 			<h2>Checkbox Primitive Demo</h2>
 			<p data-test="checkbox-status">
-				Status: {state.checked ? 'Checked' : 'Unchecked'}
-				{state.indeterminate ? ' (Indeterminate)' : ''}
+				Status: {state.checked ? 'Checked' : state.checked === false ? 'Unchecked' : 'Indeterminate'}
 			</p>
 
 			<div style="margin-bottom: 16px;">
@@ -45,9 +40,9 @@ export default function CheckboxDemo() {
 				</button>
 				<button
 					data-test="toggle-indeterminate"
-					onClick={() => (state.indeterminate = !state.indeterminate)}
+					onClick={() => (state.checked = undefined)}
 				>
-					Toggle Indeterminate
+					Set Indeterminate
 				</button>
 			</div>
 		</div>

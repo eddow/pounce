@@ -24,17 +24,3 @@ export function relativeSide(dc: DisplayContext, side: LogicalSide = 'start'): P
 	if (side === 'end') return direction === 'rtl' ? 'left' : 'right'
 	return direction === 'rtl' ? 'right' : 'left'
 }
-
-export function forwardProps<T extends object, P extends object, K extends keyof P & string>(
-	target: T,
-	props: P,
-	...names: K[]
-): T & Pick<P, K> {
-	const desc: Partial<Record<K, PropertyDescriptor>> = {}
-	for (const name of names) {
-		const descriptor = Object.getOwnPropertyDescriptor(props, name)
-		if (descriptor) desc[name] = descriptor
-	}
-
-	return Object.defineProperties(target, desc as PropertyDescriptorMap) as T & Pick<P, K>
-}

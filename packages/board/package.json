@@ -36,7 +36,7 @@
 		"./src/*": "./src/*"
 	},
 	"scripts": {
-		"demo": "tsx src/cli/index.ts dev --routes demo/routes --html demo/index.html",
+		"demo": "tsx src/cli/index.ts dev --port 5300 --routes demo/routes --html demo/index.html",
 		"build": "vite build",
 		"test:unit": "vitest --project unit",
 		"test:integration": "vitest --project integration",

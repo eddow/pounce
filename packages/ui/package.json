@@ -41,7 +41,7 @@
 	],
 	"scripts": {
 		"build": "vite build",
-		"demo": "tsc --project tsconfig.demo.json && vite",
+		"demo": "tsc --project tsconfig.demo.json && vite --port 5270",
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:e2e": "playwright test",

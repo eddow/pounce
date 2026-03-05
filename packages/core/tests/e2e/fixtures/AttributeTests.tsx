@@ -1,5 +1,4 @@
 import { reactive } from 'mutts'
-import { ReactiveProp } from '@pounce/core'
 
 export default function AttributeTests() {
 	const state = reactive({
@@ -18,7 +17,18 @@ export default function AttributeTests() {
 			</div>
 			<div class="test-fields">
 				<button data-testid="target-button" disabled={state.disabled}>Target Button</button>
-				<input type="checkbox" data-testid="target-checkbox" {...({ checked: new ReactiveProp(() => state.checked, v => state.checked = v), indeterminate: new ReactiveProp(() => state.indeterminate, v => state.indeterminate = v) } as any)} />
+				<input 
+					type="checkbox" 
+					data-testid="target-checkbox" 
+					checked={state.checked} 
+					indeterminate={state.indeterminate}
+					onChange={(e: Event) => {
+						if (e.target instanceof HTMLInputElement) {
+							state.checked = e.target.checked
+							state.indeterminate = false
+						}
+					}}
+				/>
 			</div>
 			<p>Disabled: <span data-testid="disabled-status">{String(state.disabled)}</span></p>
 			<p>Checked: <span data-testid="checked-status">{String(state.checked)}</span></p>

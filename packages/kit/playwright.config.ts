@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const projectRootDir = decodeURIComponent(new URL('.', import.meta.url).pathname)
-const port = 5277
+const port = 5280
 
 export default defineConfig({
 	testDir: './tests/e2e',
@@ -27,7 +27,7 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: `pnpm exec vite --host=127.0.0.1 --port=${port} --strictPort`,
+		command: 'pnpm demo',
 		cwd: projectRootDir,
 		port,
 		timeout: 120_000,

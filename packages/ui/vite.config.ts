@@ -24,4 +24,10 @@ export default defineConfig({
 			exclude: ['src/**/*.spec.ts', 'src/**/*.spec.tsx', 'src/**/*.test.ts', 'src/**/*.test.tsx'],
 		}),
 	],
+	// For demo/e2e development: resolve @pounce/ui to source instead of dist
+	resolve: {
+		alias: {
+			'@pounce/ui': resolve(__dirname, 'src/index.ts'),
+		},
+	},
 })

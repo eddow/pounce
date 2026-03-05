@@ -32,12 +32,17 @@ test.describe('Checkbox', () => {
 		const toggleIndeterminate = dt(page, 'toggle-indeterminate')
 
 		await expect(status).toContainText('Unchecked')
-		await input.check()
+		await input.click()
 		await expect(status).toContainText('Checked')
 
 		await toggleIndeterminate.click()
-		await expect(status).toContainText('(Indeterminate)')
+		await expect(status).toContainText('Indeterminate')
 		await expect(input).toHaveJSProperty('indeterminate', true)
+
+		// Click checkbox to exit indeterminate state
+		await input.click()
+		await expect(status).toContainText('Checked')
+		await expect(input).toHaveJSProperty('indeterminate', false)
 
 		await toggleDisabled.click()
 		await expect(input).toBeDisabled()

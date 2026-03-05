@@ -336,6 +336,7 @@ declare global {
 		interface InputBoolean extends InputBase {
 			type: 'checkbox' | 'radio' | (string & {})
 			checked?: boolean
+			indeterminate?: boolean
 			value?: string
 			'update:checked'?(checked?: boolean): void
 		}

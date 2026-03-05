@@ -18,7 +18,7 @@ export default function SelectDemo() {
 		get options() {
 			return state.options
 		},
-		onInput: (v: any) => (state.value = v),
+		onInput: (v) => (state.value = v),
 	})
 
 	return (

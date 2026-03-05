@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const port = 5273
+const port = 5290
 
 export default defineConfig({
 	testDir: './tests/e2e',
@@ -26,7 +26,7 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: `pnpm exec vite --host=127.0.0.1 --port=${port} --strictPort --mode test`,
+		command: 'pnpm demo',
 		cwd: '.',
 		port,
 		timeout: 120_000,

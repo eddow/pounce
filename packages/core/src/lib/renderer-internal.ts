@@ -120,6 +120,7 @@ function attachAttributeValue(
 ): ScopedCallback | undefined {
 	// 1. Event Listeners
 	if (/^on[A-Z]/.test(key)) {
+		if (value == null) return undefined
 		const eventType = key.slice(2).toLowerCase()
 		if (typeof value !== 'function') throw new Error('Event listeners must be functions')
 		return listen(element, eventType, value)
@@ -218,32 +219,27 @@ export function attachAttributes(
 		: attachAttributeValue(element, 'style', attributes.mergeStyles())
 
 	if (attributes.isReactive) {
-		const stop = effect.named('attrs:update')(() => {
-			const newKeys = attributes.keys
-			for (const key of newKeys) {
-				if (!(key in cleanups)) {
-					let value = attributes.get(key)
-					// If the attribute value dynamically comes from a reactive layer but is a plain scalar,
-					// wrap it in a ReactiveProp so `attachAttribute` tracks it.
-					if (!(value instanceof ReactiveProp) && typeof value !== 'function') {
-						const capturedKey = key
-						value = new ReactiveProp(() => attributes.get(capturedKey))
-					}
-					cleanups[key] = attachAttribute(element, key, value)
+		// Each attribute gets its own independent effect via root() so it is
+		// detached from the render effect's ownership chain. This prevents:
+		// 1. The rebuild fence from firing when spread-sourced reactive state changes
+		// 2. Child effects being destroyed when a parent effect re-runs
+		// The entire key enumeration + per-key setup runs inside root() because
+		// attributes.keys collapses function layers which may read reactive state.
+		root(() => {
+			const ensureKey = (key: string) => {
+				if (key in cleanups) return
+				let value = attributes.get(key)
+				// If the attribute value dynamically comes from a reactive layer but is a plain scalar,
+				// wrap it in a ReactiveProp so `attachAttribute` tracks it.
+				if (!(value instanceof ReactiveProp) && typeof value !== 'function') {
+					const capturedKey = key
+					value = new ReactiveProp(() => attributes.get(capturedKey))
 				}
+				cleanups[key] = attachAttribute(element, key, value)
 			}
-			for (const key in cleanups) {
-				if (key === 'class' || key === 'style') continue
-				if (!newKeys.has(key)) {
-					cleanups[key]?.()
-					delete cleanups[key]
-				}
-			}
+			for (const key of attributes.keys) if (!['class', 'style'].includes(key)) ensureKey(key)
 		})
-		return () => {
-			stop()
-			cleanAll()
-		}
+		return cleanAll
 	} else
 		for (const key of attributes.keys)
 			cleanups[key] = attachAttribute(element, key, attributes.get(key))

@@ -66,6 +66,36 @@ describe('Spread Reactivity', () => {
 		warnSpy.mockRestore()
 	})
 
+	it('spread with nested getters updates when source changes', async () => {
+		const state = reactive({ disabled: false })
+
+		const model = {
+			get button(): Record<string, unknown> {
+				return {
+					get disabled() {
+						return state.disabled || undefined
+					},
+					get onClick() {
+						return state.disabled ? undefined : () => {}
+					},
+				}
+			},
+		}
+
+		unmount = latch(container, <button {...model.button}>Click</button>)
+
+		const btn = container.querySelector('button')!
+		expect(btn.disabled).toBe(false)
+
+		state.disabled = true
+		await new Promise((r) => setTimeout(r, 0))
+		expect(btn.disabled).toBe(true)
+
+		state.disabled = false
+		await new Promise((r) => setTimeout(r, 0))
+		expect(btn.disabled).toBe(false)
+	})
+
 	it('manual simulation of c(() => obj)', async () => {
 		const state = reactive({
 			attrs: { id: 'manual' }

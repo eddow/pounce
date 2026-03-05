@@ -1,12 +1,11 @@
+import type { StyleInput } from '@pounce/core'
 import type {
 	CheckedProps,
 	DisableableProps,
 	ElementPassthroughProps,
 	VariantProps,
 } from '../shared/types'
-import { forwardProps } from '../shared/utils'
 
-// TODO: both for checkbox and radio: allow 3-state? (radio: impeach set checked=false)
 // ── Shared prop base ────────────────────────────────────────────────────────
 
 type ControlBaseProps = VariantProps &
@@ -21,11 +20,9 @@ type ControlBaseProps = VariantProps &
 	}
 
 // ── Per-control props ───────────────────────────────────────────────────────
-// TODO: checkbox props should have checked?: boolean | null
-// undefined = like before, null = indeterminate
+
 export type CheckboxProps = ControlBaseProps & {
 	checked?: boolean
-	indeterminate?: boolean
 }
 
 export type RadioProps<Value = unknown> = ControlBaseProps & {
@@ -63,10 +60,8 @@ type InputSwitch = Omit<
 > & {
 	type: 'checkbox'
 	role: 'switch'
-	checked?: boolean
-	value?: string
 	'aria-checked'?: boolean
-	onChange?: (e: Event) => void
+	style: StyleInput
 }
 
 export type CheckboxModel = {
@@ -77,6 +72,7 @@ export type CheckboxModel = {
 		readonly disabled?: boolean
 		readonly onChange?: (e: Event) => void
 		readonly style: { readonly order: -1 | 0 }
+		readonly this?: (el: Node | readonly Node[] | undefined) => void
 	}
 }
 
@@ -132,31 +128,24 @@ function inputOrder(props: ControlBaseProps): -1 | 0 {
 export function checkboxModel(props: CheckboxProps): CheckboxModel {
 	const model: CheckboxModel = {
 		get input() {
-			return forwardProps(
-				{
-					type: 'checkbox' as const,
-					get style() {
-						return { order: inputOrder(props) }
-					},
-					get disabled() {
-						return props.disabled
-					},
-					get onChange() {
-						return props.onChange
-							? (e: Event) => {
-									if (e.target instanceof HTMLInputElement) props.onChange!(e.target.checked)
-								}
-							: undefined
-					},
-					get ref() {
-						return (el: HTMLInputElement | null) => {
-							if (el) el.indeterminate = props.indeterminate ?? false
-						}
-					},
+			return {
+				type: 'checkbox' as const,
+				get checked() {
+					return props.checked
 				},
-				props,
-				'checked'
-			)
+				get disabled() {
+					return props.disabled
+				},
+				get style() {
+					return { order: inputOrder(props) }
+				},
+				get indeterminate() {
+					return props.checked === undefined
+				},
+				onChange(e: Event) {
+					if (e.target instanceof HTMLInputElement) props.onChange!(e.target.checked)
+				},
+			}
 		},
 	}
 	return model
@@ -232,30 +221,19 @@ export function radioModel(props: RadioProps): RadioModel {
 export function switchModel(props: SwitchProps): SwitchModel {
 	const model: SwitchModel = {
 		get input() {
-			return forwardProps(
-				{
-					type: 'checkbox' as const,
-					role: 'switch' as const,
-					get style() {
-						return { order: inputOrder(props) }
-					},
-					get disabled() {
-						return props.disabled
-					},
-					get 'aria-checked'() {
-						return props.checked
-					},
-					get onChange() {
-						return props.onChange
-							? (e: Event) => {
-									if (e.target instanceof HTMLInputElement) props.onChange!(e.target.checked)
-								}
-							: undefined
-					},
+			return {
+				type: 'checkbox' as const,
+				role: 'switch' as const,
+				get style() {
+					return { order: inputOrder(props) }
 				},
-				props,
-				'checked'
-			)
+				get 'aria-checked'() {
+					return props.checked
+				},
+				onChange(e: Event) {
+					if (e.target instanceof HTMLInputElement) props.onChange?.(e.target.checked)
+				},
+			}
 		},
 	}
 	return model
