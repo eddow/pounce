@@ -338,13 +338,13 @@ Creates a memoized reactive derivation.
 const doubled = memoize(() => state.count * 2)
 ```
 
-### `project(arrayOrGetter, fn)`
+### `morph(arrayOrGetter, fn)`
 
 Maps over a reactive array.
 
 **Example:**
 ```tsx
-{project(items, (item) => <div>{item.value.name}</div>)}
+{morph(items, (item) => <div>{item.value.name}</div>)}
 ```
 
 Use `memoize` to cache expensive derivations.

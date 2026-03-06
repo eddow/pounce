@@ -1,3 +1,4 @@
+import { reactive } from 'mutts'
 import type { VariantProps } from '../shared/types'
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -6,8 +7,12 @@ import type { VariantProps } from '../shared/types'
 export type MultiselectProps<T> = VariantProps & {
 	/** Available options. */
 	items: T[]
-	/** Selected items (mutated in place on toggle). */
+	/** Selected items. */
 	value: Set<T>
+	/** Equality predicate for matching items in value. Defaults to Object.is. */
+	equals?: (left: T, right: T) => boolean
+	/** Called when the selection changes. */
+	onChange?: (value: Set<T>) => void
 	/** Renders each item. Return `false` to hide an item. */
 	renderItem: (item: T, checked: boolean) => JSX.Element | false
 	/** Close dropdown after each selection. @default true */
@@ -19,8 +24,10 @@ export type MultiselectItemState<T> = {
 	readonly item: T
 	/** Whether the item is currently selected */
 	readonly checked: boolean
+	/** Spreadable attrs for the row element */
+	readonly el: JSX.IntrinsicElements['li']
 	/** Rendered content — false means the item should be hidden */
-	readonly rendered: JSX.Element | false
+	render: () => JSX.Element | false
 	/** Toggle handler — call on item click */
 	readonly toggle: (e: Event) => void
 }
@@ -36,6 +43,28 @@ export type MultiselectModel<T> = {
 	}
 	/** Mount callback — pass to `use:mount` or call manually with the details element */
 	readonly onMount: (el: HTMLDetailsElement) => void
+}
+
+function matchesItem<T>(props: MultiselectProps<T>, left: T, right: T): boolean {
+	return props.equals ? props.equals(left, right) : Object.is(left, right)
+}
+
+function isSelected<T>(props: MultiselectProps<T>, value: Set<T>, item: T): boolean {
+	return Array.from(value).some((selected) => matchesItem(props, selected, item))
+}
+
+function toggleSelected<T>(props: MultiselectProps<T>, value: Set<T>, item: T): Set<T> {
+	const next = new Set<T>()
+	let removed = false
+	for (const selected of value) {
+		if (!removed && matchesItem(props, selected, item)) {
+			removed = true
+			continue
+		}
+		next.add(selected)
+	}
+	if (!removed) next.add(item)
+	return next
 }
 
 // ── Hook ────────────────────────────────────────────────────────────────────
@@ -55,8 +84,8 @@ export type MultiselectModel<T> = {
  *       <summary {...model.summary}>{props.children}</summary>
  *       <ul>
  *         <for each={model.items}>
- *           {(item) => item.rendered !== false && (
- *             <li aria-selected={item.checked} onClick={item.toggle}>{item.rendered}</li>
+ *           {(item) => item.render() !== false && (
+ *             <li {...item.el}>{item.render()}</li>
  *           )}
  *         </for>
  *       </ul>
@@ -67,25 +96,50 @@ export type MultiselectModel<T> = {
  */
 export function multiselectModel<T>(props: MultiselectProps<T>): MultiselectModel<T> {
 	let detailsEl: HTMLDetailsElement | undefined
+	type MutableItemState = {
+		item: T
+		checked: boolean
+		rendered: JSX.Element | false
+		readonly el: JSX.IntrinsicElements['li']
+		render: () => JSX.Element | false
+		toggle: (e: Event) => void
+	}
+	const itemStates = new Map<T, MutableItemState>()
 
 	const model: MultiselectModel<T> = {
 		get items() {
 			return props.items.map((item) => {
-				const checked = props.value.has(item)
-				return {
+				const existing = itemStates.get(item)
+				const checked = isSelected(props, props.value, item)
+				if (existing) {
+					existing.checked = checked
+					existing.rendered = props.renderItem(item, checked)
+					return existing
+				}
+				let state!: MutableItemState
+				state = reactive<MutableItemState>({
 					item,
 					checked,
 					rendered: props.renderItem(item, checked),
+					get el(): JSX.IntrinsicElements['li'] {
+						return {
+							'aria-selected': state.checked,
+							onClick: state.toggle,
+						}
+					},
+					render: () => state.rendered,
 					toggle: (e: Event) => {
 						e.preventDefault()
 						e.stopPropagation()
-						if (props.value.has(item)) props.value.delete(item)
-						else props.value.add(item)
+						const next = toggleSelected(props, props.value, item)
+						props.onChange?.(next)
 						if ((props.closeOnSelect ?? true) && detailsEl) {
 							detailsEl.open = false
 						}
 					},
-				}
+				})
+				itemStates.set(item, state)
+				return state as MultiselectItemState<T>
 			})
 		},
 		get details() {

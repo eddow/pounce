@@ -1,5 +1,6 @@
 import { expose } from '@pounce/board'
 import type { PounceRequest, MiddleNext } from '@pounce/board'
+import { users } from '+shared/users'
 
 const requireAuth = async (req: PounceRequest, next: MiddleNext) => {
   const token = req.raw.headers.get('Authorization')
@@ -7,11 +8,6 @@ const requireAuth = async (req: PounceRequest, next: MiddleNext) => {
   ;(req as any).user = { id: 'admin', role: 'root' }
   return next()
 }
-
-export const users = [
-  { id: '1', name: 'Alice', role: 'admin' },
-  { id: '2', name: 'Bob', role: 'user' },
-]
 
 export default expose({
   middle: [requireAuth],

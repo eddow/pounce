@@ -19,7 +19,7 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Ang
 ### Control Flow and Lists
 - **Attributes for control flow**: `if={...}`, `if:path={...}`, `when:path={...}`, `else`, `else if={...}`, `else when={...}`. Paths support dash-separated keys (e.g., `if:user-role`). Angular uses `@if`/`*ngIf` and `@else` (or older structural directives), and `@for`/`*ngFor` with `trackBy`.
 
-- **Lists**: Use `<for each={array}>` or `project(array, fn)` (optionally with `memoize`). Angular prefers `*ngFor` with `trackBy` for stability.
+- **Lists**: Use `<for each={array}>` or `morph(array, fn)` (optionally with `memoize`). Angular prefers `*ngFor` with `trackBy` for stability.
 
 ### Context/Env vs DI and Injection
 - **Reactive env inheritance**: Components receive a prototype‑inherited reactive `env`. Components can set `env.foo = ...` and descendants see it. Angular uses DI/injector hierarchy and `@Input()`/providers; no prototype env.
@@ -37,7 +37,7 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Ang
 
 ### Quick mapping
 - **Derived state**: `memoize` vs Angular `computed` (signals).
-- **Lists**: `<for>`/`project` vs `*ngFor`/`@for`.
+- **Lists**: `<for>`/`morph` vs `*ngFor`/`@for`.
 - **Two‑way input**: auto get/set vs `[(ngModel)]` or event bindings.
 - **Context**: reactive `env` vs DI/injector tree.
 - **Rendering**: direct DOM vs compiled instructions + change detection.

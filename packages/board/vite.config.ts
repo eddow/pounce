@@ -5,6 +5,7 @@ import dts from 'vite-plugin-dts'
 
 const rootDir = resolve(__dirname, '..')
 const boardDir = __dirname
+const isWatch = process.argv.includes('--watch')
 
 export default defineConfig({
   plugins: [
@@ -77,7 +78,7 @@ export default defineConfig({
       },
     },
     target: 'esnext',
-    emptyOutDir: true,
+    emptyOutDir: !isWatch,
     sourcemap: 'inline',
   },
 })

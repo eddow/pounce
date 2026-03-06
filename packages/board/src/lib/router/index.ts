@@ -290,6 +290,10 @@ export async function buildRouteTree(
 			const segments = relativePath.split('/')
 			const fileName = segments.pop()!
 
+			if (fileName.startsWith('+') || segments.some((segmentName) => segmentName.startsWith('+'))) {
+				continue
+			}
+
 			// Traverse/Create nodes for directories
 			let currentNode = root
 			for (const segmentName of segments) {
@@ -476,12 +480,14 @@ export async function buildRouteTree(
 		})
 
 		for (const file of files) {
+			if (file.name.startsWith('+')) continue
 			const entryPath = path.join(dir, file.name)
 			const loader = () => importFn(entryPath)
 			await processFile(file.name, loader, node, entryPath)
 		}
 
 		for (const directory of dirs) {
+			if (directory.name.startsWith('+')) continue
 			const entryPath = path.join(dir, directory.name)
 			const segmentInfo = parseSegment(directory.name)
 			const isGroup = directory.name.startsWith('(') && directory.name.endsWith(')')

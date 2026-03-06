@@ -14,6 +14,7 @@
 		"baseUrl": ".",
 		"lib": ["ES2022", "DOM", "DOM.Iterable"],
 		"paths": {
+			"+*": ["routes/+*"],
 			"@pounce/board": ["../src/index.ts"],
 			"@pounce/board/*": ["../src/*"],
 			"@pounce/core": ["../../core/src"],

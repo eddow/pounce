@@ -65,6 +65,7 @@ A package may import from its own `src/` directory (e.g., `@pounce/core` importi
 2. **One-way** (`r(() => expr)`): complex expressions (calls, template literals, binary ops with non-safe operands).
 3. **No wrapping**: `const` variables, imports, function declarations, parameters, literals, arrow functions, safe objects/arrays — `isSafeExpression` returns `true`.
 4. The check uses Babel's `path.scope.getBinding(name).kind` to distinguish `let`/`var` from `const`/`module`/`param`/`hoisted`.
+5. **Reserved variable names**: The plugin injects `h`, `Fragment`, `c`, and `r` as top-level imports from `@pounce/core`. **Never use `c`, `r`, `h`, or `Fragment` as local variable/parameter names** in files containing JSX — they will shadow the plugin's imports and cause cryptic runtime errors (e.g., `c2 is not a function` when a `<for>` callback parameter named `c` shadows the CompositeAttributes function).
 
 ## Renderer Gotchas
 1. **Event handler props get bidi `ReactiveProp` from babel**: `props.onClick` is a member expression → babel wraps as `r(() => props.onClick, val => props.onClick = val)` with a setter. `attachAttribute` in `renderer-internal.ts` must guard `on[A-Z]` keys from the bidi path, otherwise the handler is silently swallowed by `setHtmlProperty`. Guard: `value.set && !/^on[A-Z]/.test(key)`.

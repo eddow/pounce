@@ -67,7 +67,7 @@
 				"./src/*"
 			],
 			"mutts": [
-				"../../../mutts/src/index.ts"
+				"../../../mutts/dist/index.d.ts"
 			]
 		}
 	},

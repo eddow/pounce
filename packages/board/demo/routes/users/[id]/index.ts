@@ -1,14 +1,15 @@
 import { expose } from '@pounce/board'
-import { users } from '../index.js'
+import type { PounceRequest } from '@pounce/board'
+import { findUser } from '+shared/users'
 
 export default expose<{ id: string }>({
-  provide: async (req) => {
-    const user = users.find(u => u.id === req.params.id)
+  provide: async (req: PounceRequest<{ id: string }>) => {
+    const user = findUser(req.params.id)
     return { user: user ?? null }
   },
 
-  get: async (req) => {
-    const user = users.find(u => u.id === req.params.id) || { id: req.params.id, name: `User ${req.params.id}`, role: 'guest' }
+  get: async (req: PounceRequest<{ id: string }>) => {
+    const user = findUser(req.params.id) || { id: req.params.id, name: `User ${req.params.id}`, role: 'guest' }
     return {
       ...user,
       contextUser: (req as any).user,

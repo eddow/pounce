@@ -3,6 +3,7 @@ import { builtinModules } from 'node:module'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build as viteBuild } from 'vite'
+import { plusImportResolverPlugin } from './plus-imports.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -24,6 +25,7 @@ export async function runBuild(options: BuildOptions = {}) {
 	console.log('\n📦 Building Client...')
 	await viteBuild({
 		root,
+		plugins: [plusImportResolverPlugin({ routesDir, projectRoot: root })],
 		build: {
 			outDir: path.join(outDir, 'client'),
 			emptyOutDir: true,
@@ -153,6 +155,7 @@ serve({
 	try {
 		await viteBuild({
 			root,
+			plugins: [plusImportResolverPlugin({ routesDir, projectRoot: root })],
 			build: {
 				ssr: tempEntry,
 				outDir: path.join(outDir, 'server'),

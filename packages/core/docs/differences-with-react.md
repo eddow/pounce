@@ -38,7 +38,7 @@ See [Component Reactivity Rules](./component-reactivity.md) for detailed example
   - `when:path={arg}` (calls `env[path](arg)` and checks truthiness)
 
   - `else`, `else if={...}` and `else when={...}` chaining inside a fragment
-- **Lists**: Prefer `<for each={array}>` with a render function. You can also use `project(array, fn)` for reactive mappings; combine with `memoize` for stable item rendering when needed. Keys are not required; stability is handled by the renderer/memoization and, if keys are needed, mutts offers a `register` class (extended array with key)
+- **Lists**: Prefer `<for each={array}>` with a render function. You can also use `morph(array, fn)` for reactive mappings; combine with `memoize` for stable item rendering when needed. Keys are not required; stability is handled by the renderer/memoization and, if keys are needed, mutts offers a `register` class (extended array with key)
 
 ### Env vs Context
 - **Env inheritance**: Instead of React Context Providers, Pounce‑TS uses a prototype‑inherited, reactive `env` object passed to components.
@@ -73,7 +73,7 @@ See [Component Reactivity Rules](./component-reactivity.md) for detailed example
 - **Control flow**: declarative attributes (`if`, `else`, `when`) vs. inline JS/ternaries.
 - **Context**: prototype‑inherited reactive `env` and `<env>` vs. Context API.
 - **Refs**: `this={refSink}` receiving `HTMLElement | Node | Node[]` vs. `ref` objects.
-- **Lists**: `<for>`/`project(+memoize)` vs. `array.map` with keys.
+- **Lists**: `<for>`/`morph(+memoize)` vs `array.map` with keys.
 - **Rendering**: direct DOM updates (no VDOM) vs. VDOM diffing.
 
 ### Further Reading

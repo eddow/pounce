@@ -206,7 +206,7 @@ Meta-components are custom JSX tags that don't produce DOM elements. They are fr
 | `<dynamic tag={tagOrComponent}>...</dynamic>` | Renders a variable tag or component | `<dynamic tag={props.as ?? 'div'} />` |
 | `<try catch={fn}>...</try>` | Error boundary catching render/effect errors | `<try catch={...}>...</try>` |
 
-**`<for>`** is the idiomatic way to render reactive lists. It uses `project.array` from mutts under the hood, so items are added/removed/reordered efficiently without re-rendering the entire list:
+**`<for>`** is the idiomatic way to render reactive lists. It uses `morph` from mutts under the hood, so items are added/removed/reordered efficiently without re-rendering the entire list:
 
 ```tsx
 <ul>
@@ -247,7 +247,7 @@ Meta-components are custom JSX tags that don't produce DOM elements. They are fr
 - **Meta-attributes** modify *any* existing element's behavior — they are orthogonal to what the element is.
 - **Meta-components** *are* the element — they define structural rendering patterns that have no DOM counterpart.
 
-A `<div if={cond}>` is still a `<div>` that conditionally exists. A `<for>` is not a DOM element at all — it's a reactive list projection.
+A `<div if={cond}>` is still a `<div>` that conditionally exists. A `<for>` is not a DOM element at all — it's a reactive list morph.
 
 ## Best Practices
 
@@ -323,7 +323,7 @@ If you're coming from React:
 | `useState` + re-render | Direct state mutation + effect |
 | `useEffect` for side effects | `effect(() => ...)` |
 | Conditional rendering with `&&` | JSX `if` directive |
-| `array.map()` for lists | `project()` from mutts |
+| `array.map()` for lists | `morph()` from mutts |
 
 ## Remember
 

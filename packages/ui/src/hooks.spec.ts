@@ -84,6 +84,50 @@ describe('useCheckbox', () => {
 	it('input.style.order is 0 when labelPosition start', () => {
 		expect(checkboxModel({ labelPosition: 'start' }).input.style.order).toBe(0)
 	})
+
+	it('derives checked from Set group membership and toggles set values', () => {
+		const state = reactive({ group: new Set(['a']) })
+		const model = checkboxModel({
+			value: 'a',
+			get group() {
+				return state.group
+			},
+		})
+
+		expect(model.input.checked).toBe(true)
+
+		const input = document.createElement('input')
+		input.addEventListener('change', model.input.onChange as EventListener)
+		input.checked = false
+		input.dispatchEvent(new Event('change'))
+		expect(state.group.has('a')).toBe(false)
+
+		input.checked = true
+		input.dispatchEvent(new Event('change'))
+		expect(state.group.has('a')).toBe(true)
+	})
+
+	it('derives checked from array group membership and toggles array values', () => {
+		const state = reactive({ group: ['a'] as string[] })
+		const model = checkboxModel({
+			value: 'a',
+			get group() {
+				return state.group
+			},
+		})
+
+		expect(model.input.checked).toBe(true)
+
+		const input = document.createElement('input')
+		input.addEventListener('change', model.input.onChange as EventListener)
+		input.checked = false
+		input.dispatchEvent(new Event('change'))
+		expect(state.group.includes('a')).toBe(false)
+
+		input.checked = true
+		input.dispatchEvent(new Event('change'))
+		expect(state.group.includes('a')).toBe(true)
+	})
 })
 
 describe('useRadio', () => {
@@ -181,6 +225,91 @@ describe('useAccordion', () => {
 		el.open = true
 		el.dispatchEvent(new Event('toggle'))
 		expect(cb).toHaveBeenCalledWith(true)
+	})
+
+	it('supports single-value group binding with value', () => {
+		const props = reactive({
+			summary: 'Title',
+			value: 'a',
+			group: null as string | null,
+		})
+		const model = accordionModel(props)
+		const el = document.createElement('details')
+		el.addEventListener('toggle', model.details.onToggle)
+
+		props.group = 'a'
+		expect(model.details.open).toBe(true)
+
+		el.open = false
+		el.dispatchEvent(new Event('toggle'))
+		expect(props.group).toBeNull()
+
+		el.open = true
+		el.dispatchEvent(new Event('toggle'))
+		expect(props.group).toBe('a')
+	})
+
+	it('supports multi-open array group binding with value', () => {
+		const props = reactive({
+			summary: 'Title',
+			value: 'b',
+			group: ['a'] as string[],
+		})
+		const model = accordionModel(props)
+		const el = document.createElement('details')
+		el.addEventListener('toggle', model.details.onToggle)
+
+		expect(model.details.open).toBe(false)
+
+		el.open = true
+		el.dispatchEvent(new Event('toggle'))
+		expect(props.group.includes('b')).toBe(true)
+
+		el.open = false
+		el.dispatchEvent(new Event('toggle'))
+		expect(props.group.includes('b')).toBe(false)
+	})
+
+	it('single-value group switch closes first and opens second', () => {
+		const state = reactive({ group: 'a' as string | null })
+
+		const first = accordionModel({
+			summary: 'First',
+			value: 'a',
+			get group() {
+				return state.group
+			},
+			set group(v) {
+				if (typeof v === 'string' || v === null) state.group = v
+			},
+		})
+		const second = accordionModel({
+			summary: 'Second',
+			value: 'b',
+			get group() {
+				return state.group
+			},
+			set group(v) {
+				if (typeof v === 'string' || v === null) state.group = v
+			},
+		})
+
+		const firstEl = document.createElement('details')
+		firstEl.open = true
+		firstEl.addEventListener('toggle', first.details.onToggle)
+
+		const secondEl = document.createElement('details')
+		secondEl.open = false
+		secondEl.addEventListener('toggle', second.details.onToggle)
+
+		firstEl.open = false
+		firstEl.dispatchEvent(new Event('toggle'))
+		secondEl.open = true
+		secondEl.dispatchEvent(new Event('toggle'))
+
+		expect(state.group).toBe('b')
+		expect(first.details.open).toBe(false)
+		expect(second.details.open).toBe(true)
 	})
 })
 
@@ -333,30 +462,53 @@ describe('useMultiselect', () => {
 		})
 		expect(state.items[0]!.checked).toBe(true)
 		expect(state.items[1]!.checked).toBe(false)
+		expect(state.items[0]!.render()).toBe('a:true')
+		expect(state.items[1]!.render()).toBe('b:false')
 	})
 
-	it('toggle adds item to Set', () => {
+	it('toggle reports next selection when adding an item', () => {
 		const value = new Set<string>()
+		let nextValue = value
 		const state = multiselectModel({
 			items: ['x'],
 			value,
-			renderItem: (item) => item as never,
-			closeOnSelect: false,
-		})
-		state.items[0]!.toggle(new MouseEvent('click'))
-		expect(value.has('x')).toBe(true)
-	})
-
-	it('toggle removes item already in Set', () => {
-		const value = new Set(['x'])
-		const state = multiselectModel({
-			items: ['x'],
-			value,
+			onChange: (next) => {
+				nextValue = next
+			},
 			renderItem: (item) => item as never,
 			closeOnSelect: false,
 		})
 		state.items[0]!.toggle(new MouseEvent('click'))
 		expect(value.has('x')).toBe(false)
+		expect(nextValue.has('x')).toBe(true)
+	})
+
+	it('toggle reports next selection when removing an item', () => {
+		const value = new Set(['x'])
+		let nextValue = value
+		const state = multiselectModel({
+			items: ['x'],
+			value,
+			onChange: (next) => {
+				nextValue = next
+			},
+			renderItem: (item) => item as never,
+			closeOnSelect: false,
+		})
+		state.items[0]!.toggle(new MouseEvent('click'))
+		expect(value.has('x')).toBe(true)
+		expect(nextValue.has('x')).toBe(false)
+	})
+
+	it('keeps stable item state identities across reads', () => {
+		const value = new Set(['a'])
+		const state = multiselectModel({
+			items: ['a', 'b'],
+			value,
+			renderItem: (item) => item as never,
+		})
+		expect(state.items[0]).toBe(state.items[0])
+		expect(state.items[1]).toBe(state.items[1])
 	})
 })
 

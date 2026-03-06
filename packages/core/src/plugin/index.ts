@@ -63,7 +63,6 @@ export function createPounceBabelPlugins(options: PounceBabelPluginsOptions): Pl
 				throwIfNamespace: false,
 			},
 		],
-		[pounceSpreadPlugin],
 		[
 			babelPluginTs,
 			{
@@ -111,12 +110,23 @@ export function pounceCorePlugin(options: PounceCorePluginOptions = {}) {
 			})
 
 			if (!result || !result.code) return null
-			if (id.includes('spread-reactivity.spec.tsx')) {
-				process.stderr.write(
-					`--- TRANSFORMATION RESULT FOR: ${id} ---\n${result.code}\n--- END ---\n`
-				)
-			}
-			return { code: result.code, map: result.map ?? undefined }
+
+			const spreadResult = transformSync(result.code, {
+				filename: id,
+				cwd: resolvedOptions.projectRoot,
+				babelrc: false,
+				configFile: false,
+				plugins: [[pounceSpreadPlugin]],
+				sourceFileName: id,
+				inputSourceMap:
+					result.map && typeof result.map === 'object' && 'mappings' in result.map
+						? result.map
+						: undefined,
+				sourceMaps: true,
+			})
+
+			if (!spreadResult || !spreadResult.code) return null
+			return { code: spreadResult.code, map: spreadResult.map ?? undefined }
 		},
 	}
 }

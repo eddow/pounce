@@ -1,5 +1,5 @@
 import type { Env } from '@pounce/core'
-import { reactive } from 'mutts'
+import { collapse } from '@pounce/core'
 import { DISPLAY_KEY, type DisplayContext, useDisplayContext } from '../display.js'
 
 export type { DisplayContext } from '../display.js'
@@ -28,29 +28,41 @@ export type DisplayProviderProps = {
  */
 export function DisplayProvider(props: DisplayProviderProps, env: Env) {
 	const parent = useDisplayContext(env)
-
-	const state = reactive({ themeSetting: props.theme ?? 'auto' })
+	const p = {
+		get theme() {
+			return collapse(props.theme)
+		},
+		get direction() {
+			return collapse(props.direction)
+		},
+		get locale() {
+			return collapse(props.locale)
+		},
+		get timeZone() {
+			return collapse(props.timeZone)
+		},
+	}
 
 	function resolveTheme(): string {
-		const setting = state.themeSetting
+		const setting = p.theme ?? 'auto'
 		if (setting !== 'auto') return setting
 		return parent.theme
 	}
 
 	function resolveDirection(): 'ltr' | 'rtl' {
-		const dir = props.direction ?? 'auto'
+		const dir = p.direction ?? 'auto'
 		if (dir !== 'auto') return dir
 		return parent.direction
 	}
 
 	function resolveLocale(): string {
-		const loc = props.locale ?? 'auto'
+		const loc = p.locale ?? 'auto'
 		if (loc !== 'auto') return loc
 		return parent.locale
 	}
 
 	function resolveTimeZone(): string {
-		const tz = props.timeZone ?? 'auto'
+		const tz = p.timeZone ?? 'auto'
 		if (tz !== 'auto') return tz
 		return parent.timeZone
 	}

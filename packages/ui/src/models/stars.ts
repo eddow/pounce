@@ -1,4 +1,5 @@
-import { reactive } from 'mutts'
+import { defaults } from '@pounce/core'
+import { componentStyle } from '@pounce/kit'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -35,8 +36,12 @@ export type StarItemState = {
 	readonly status: StarStatus
 	/** Icon name to render for this star */
 	readonly iconName: string
+	/** Spreadable attrs for the star element */
+	readonly el: JSX.IntrinsicElements['span']
 	/** mousedown handler */
 	readonly onMousedown: (e: MouseEvent) => void
+	/** mouseup handler */
+	readonly onMouseup: () => void
 	/** mousemove handler */
 	readonly onMousemove: (e: MouseEvent) => void
 	/** dblclick handler */
@@ -61,6 +66,8 @@ export type StarsModel = {
 		readonly onMouseup: () => void
 		readonly onMouseleave: () => void
 	}
+	/** Debug: current dragging end */
+	readonly draggingEnd: 'min' | 'max' | null
 }
 
 // ── Hook ────────────────────────────────────────────────────────────────────
@@ -85,10 +92,14 @@ export type StarsModel = {
  * ```
  */
 export function starsModel(props: StarsProps): StarsModel {
-	const state = reactive({
-		value: (props.value ?? 0) as StarsValue,
+	const state = defaults(props, {
+		value: 0 as StarsValue,
 		draggingEnd: null as 'min' | 'max' | null,
 	})
+
+	const dragEndHandler = () => {
+		state.draggingEnd = null
+	}
 
 	function isRange(v: StarsValue): v is readonly [number, number] {
 		return Array.isArray(v)
@@ -123,9 +134,12 @@ export function starsModel(props: StarsProps): StarsModel {
 
 	function handleInteraction(index: number, e: MouseEvent) {
 		if (props.readonly) return
-		const isDown = e.type === 'mousedown' && e.button === 0
-		const isDrag = e.type === 'mousemove' && (e.buttons & 1) === 1
+		const isPrimaryButton = e.button === 0 || e.button === undefined
+		const hasPrimaryButtons = (e.buttons & 1) === 1 || e.buttons === undefined
+		const isDown = e.type === 'mousedown' && isPrimaryButton
+		const isDrag = e.type === 'mousemove' && hasPrimaryButtons
 		if (!isDown && !isDrag) return
+		if (isDown || isDrag) e.preventDefault()
 
 		const pos = index + 1
 
@@ -170,14 +184,25 @@ export function starsModel(props: StarsProps): StarsModel {
 			get iconName() {
 				return iconFor(index, item.status)
 			},
-			get onMousedown() {
-				return (e: MouseEvent) => handleInteraction(index, e)
+			get el() {
+				return {
+					class: `stars-item stars-item-${item.status}`,
+					'data-star-status': item.status,
+					onMousedown: item.onMousedown,
+					onMouseup: item.onMouseup,
+					onMousemove: item.onMousemove,
+					onDblclick: item.onDblclick,
+				}
 			},
-			get onMousemove() {
-				return (e: MouseEvent) => handleInteraction(index, e)
+			onMousedown(e: MouseEvent) {
+				handleInteraction(index, e)
 			},
-			get onDblclick() {
-				return () => handleDblClick(index)
+			onMouseup: dragEndHandler,
+			onMousemove(e: MouseEvent) {
+				handleInteraction(index, e)
+			},
+			onDblclick() {
+				handleDblClick(index)
 			},
 		}
 		return item
@@ -186,9 +211,6 @@ export function starsModel(props: StarsProps): StarsModel {
 	const maximum = props.maximum ?? 5
 	const starItems = Array.from({ length: maximum }, (_, i) => makeItem(i))
 	const zeroItem = makeItem(-1)
-	const dragEndHandler = () => {
-		state.draggingEnd = null
-	}
 	const container: StarsModel['container'] = {
 		onMouseup: dragEndHandler,
 		onMouseleave: dragEndHandler,
@@ -207,9 +229,34 @@ export function starsModel(props: StarsProps): StarsModel {
 		get hasZeroElement() {
 			return !!props.zeroElement
 		},
+		get draggingEnd() {
+			return state.draggingEnd
+		},
 		zeroItem,
 		starItems,
 		container,
 	}
 	return model
 }
+
+componentStyle.css`
+	.stars-item {
+		cursor: pointer;
+		user-select: none;
+		transition: opacity 120ms ease;
+	}
+
+	.stars-item-before {
+		opacity: 1;
+	}
+
+	.stars-item-inside {
+		opacity: 0.55;
+	}
+
+	.stars-item-after,
+	.stars-item-zero {
+		opacity: 0.9;
+		color: #94a3b8;
+	}
+`

@@ -1,5 +1,10 @@
 import { defaults } from '@pounce/core'
-import { type AccordionEnv, type AccordionProps, accordionModel } from '@pounce/ui/models'
+import {
+	type AccordionEnv,
+	type AccordionGroupVar,
+	type AccordionProps,
+	accordionModel,
+} from '@pounce/ui/models'
 
 /**
  * PicoCSS Accordion component
@@ -21,7 +26,7 @@ import { type AccordionEnv, type AccordionProps, accordionModel } from '@pounce/
  */
 export type AccordionGroupProps = {
 	/** If true, multiple accordions can be open simultaneously. Default: false (single-open). */
-	opened?: Set<HTMLDetailsElement> | HTMLDetailsElement | null
+	opened?: AccordionGroupVar
 	children?: JSX.Children
 }
 

@@ -40,8 +40,8 @@ export type RouteHandler<Params> = (req: PounceRequest<Params>) => any
 // in routes/admin/ (e.g. users.ts, settings.ts) inherit it automatically.
 // Stacking order: ancestor-first. Computed once at boot, stored flat in the registry.
 export type MiddleNext = () => Promise<Response>
-export type MiddleFunction = (
-	req: PounceRequest<any>,
+export type MiddleFunction<Params = Record<string, string>> = (
+	req: PounceRequest<Params>,
 	next: MiddleNext
 ) => Response | void | Promise<Response | void>
 
@@ -51,20 +51,22 @@ export type MiddleFunction = (
 export type ReservedKey = HTTPVerb | 'provide' | 'middle'
 
 // 4. The Recursive Tree Validator
-// This type walks the user's object, calculates params, and enforces the rules.
-export type ValidatedTree<CurrentParams, T> = {
-	[K in keyof T]: K extends 'provide'
-		? RouteHandler<Prettify<CurrentParams>>
-		: K extends 'middle'
-			? MiddleFunction[]
-			: K extends HTTPVerb
-				? RouteHandler<Prettify<CurrentParams>>
-				: // STRICT ENFORCEMENT: Branches must start with '/'
-					K extends `/${string}`
-					? ValidatedTree<Prettify<CurrentParams & ExtractParams<K & string>>, T[K]>
-					: // Any unprefixed key that isn't reserved → type error.
-						never
+// RouteNode provides contextual typing for object literals passed to expose().
+// It supports HTTP verbs + provide/middle + nested '/...' branches.
+export type RouteNode<CurrentParams> = {
+	middle?: MiddleFunction<Prettify<CurrentParams>>[]
+	provide?: RouteHandler<Prettify<CurrentParams>>
+} & {
+	[K in HTTPVerb]?: RouteHandler<Prettify<CurrentParams>>
+} & {
+	[K in `/${string}`]?: RouteNode<Prettify<CurrentParams & ExtractParams<K>>>
 }
+
+// Backward-compatible alias kept for existing imports/usages.
+export type ValidatedTree<
+	CurrentParams,
+	T = RouteNode<Prettify<CurrentParams>>,
+> = T extends RouteNode<Prettify<CurrentParams>> ? T : never
 
 // ==========================================
 // CLIENT KIT UTILITIES (Type Extraction)

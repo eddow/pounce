@@ -13,6 +13,7 @@ import type {
 	PounceRequest,
 	ReservedKey,
 	RouteHandler,
+	RouteNode,
 	ValidatedTree,
 } from './expose-types.js'
 
@@ -25,6 +26,7 @@ export type {
 	MiddleFunction,
 	MiddleNext,
 	PounceRequest,
+	RouteNode,
 	ReservedKey,
 	RouteHandler,
 	ValidatedTree,
@@ -66,9 +68,10 @@ export function clearExposeRegistry(): void {
 //   1. Read globalThis.__POUNCE_CURRENT_FILE__ to determine baseUrl
 //   2. Flatten the config tree into the central routeRegistry
 //   3. This runs once per file at server start (+ on HMR cache clear)
-export function expose<FileParams = {}, T extends object = any>(
-	tree: T & ValidatedTree<FileParams, T>
-): T {
+export function expose<
+	FileParams extends Record<string, string> = Record<string, never>,
+	T extends RouteNode<FileParams> = RouteNode<FileParams>,
+>(tree: T): T {
 	const currentFile = (globalThis as any).__POUNCE_CURRENT_FILE__
 	const currentBaseUrl: string = (globalThis as any).__POUNCE_CURRENT_BASE_URL__ || ''
 

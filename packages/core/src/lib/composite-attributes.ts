@@ -167,7 +167,8 @@ const propsProxy: ProxyHandler<{
 }
 
 function collapseLayer(layer: any): any {
-	return typeof layer === 'function' ? layer() : layer
+	const collapsed = typeof layer === 'function' ? layer() : layer
+	return collapsed instanceof CompositeAttributes ? collapsed.asProps() : collapsed
 }
 
 @unreactive

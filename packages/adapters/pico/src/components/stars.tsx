@@ -5,6 +5,7 @@ function StarItem(props: { item: StarItemState; size: string }) {
 		<span
 			style={{ fontSize: props.size, cursor: 'pointer', userSelect: 'none' }}
 			onMousedown={props.item.onMousedown}
+			onClick={props.item.onClick}
 			onMousemove={props.item.onMousemove}
 			onDblclick={props.item.onDblclick}
 			data-star-status={props.item.status}

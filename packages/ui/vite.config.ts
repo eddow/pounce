@@ -1,7 +1,29 @@
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
-import { resolve } from 'node:path'
+import { mkdirSync, writeFileSync, existsSync } from 'node:fs'
+import { resolve, dirname } from 'node:path'
 import { pounceCorePlugin } from '@pounce/core/plugin'
+
+const isWatch = process.argv.includes('--watch')
+
+function ensureStableTypeEntrypoints() {
+	const distDir = resolve(__dirname, 'dist')
+	const entrypoints = [
+		['index.d.ts', "export * from '../src/index'\n"],
+		['models/index.d.ts', "export * from '../../src/models/index'\n"],
+	]
+	return {
+		name: 'ensure-stable-type-entrypoints',
+		buildStart() {
+			mkdirSync(distDir, { recursive: true })
+			for (const [file, content] of entrypoints) {
+				const target = resolve(distDir, file)
+				mkdirSync(dirname(target), { recursive: true })
+				if (!existsSync(target)) writeFileSync(target, content)
+			}
+		},
+	}
+}
 
 export default defineConfig({
 	build: {
@@ -13,11 +35,13 @@ export default defineConfig({
 			formats: ['es'],
 		},
 		sourcemap: true,
+		emptyOutDir: !isWatch,
 		rollupOptions: {
 			external: [/^@pounce\//, /^mutts/],
 		},
 	},
 	plugins: [
+		...(isWatch ? [ensureStableTypeEntrypoints()] : []),
 		pounceCorePlugin(),
 		dts({
 			include: ['src/**/*.ts', 'src/**/*.tsx'],

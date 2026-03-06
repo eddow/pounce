@@ -5,13 +5,14 @@ export default function CheckButtonDemo() {
 	const state = reactive({
 		wifi: true,
 		bluetooth: false,
-		notifications: true,
-		disabled: false,
 	})
 
 	const wifiModel = checkButtonModel({
 		get checked() {
 			return state.wifi
+		},
+		set checked(v) {
+			if (typeof v === 'boolean') state.wifi = v
 		},
 		onCheckedChange: (v: boolean) => (state.wifi = v),
 		icon: 'wifi',
@@ -21,6 +22,9 @@ export default function CheckButtonDemo() {
 	const btModel = checkButtonModel({
 		get checked() {
 			return state.bluetooth
+		},
+		set checked(v) {
+			if (typeof v === 'boolean') state.bluetooth = v
 		},
 		onCheckedChange: (v: boolean) => (state.bluetooth = v),
 		icon: 'bluetooth',
@@ -52,6 +56,11 @@ export default function CheckButtonDemo() {
 					Bluetooth: {state.bluetooth ? 'On' : 'Off'}
 				</button>
 			</div>
+			<p style="margin-top: 12px; color: #94a3b8;">
+				Wi-Fi: <strong data-test="wifi-state">{state.wifi ? 'on' : 'off'}</strong>
+				{' · '}
+				Bluetooth: <strong data-test="bluetooth-state">{state.bluetooth ? 'on' : 'off'}</strong>
+			</p>
 		</div>
 	)
 }

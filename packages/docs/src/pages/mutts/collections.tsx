@@ -1,11 +1,11 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const projectSnippet = `import { project } from 'mutts'
+const morphSnippet = `import { morph } from 'mutts'
 
 const source = reactive([1, 2, 3])
 
 // Each item gets a "dedicated worker" (effect)
-const doubled = project(source, ({ value }) => {
+const doubled = morph(source, ({ value }) => {
   console.log(\`Processing \${value}\`)
   return value * 2
 })
@@ -21,11 +21,11 @@ export default function MuttsCollectionsPage() {
 				description="Surgical collection transforms using the 'Dedicated Worker' pattern."
 			/>
 
-			<Section title="Project vs Map">
+			<Section title="Morph vs Map">
 				<p>
 					Traditional <code>Array.map</code> is like an assembly line: if one item changes, you
 					re-run the entire line.
-					<code>project()</code> is different—it assigns a <strong>Dedicated Worker</strong> (a
+					<code>morph()</code> is different—it assigns a <strong>Dedicated Worker</strong> (a
 					fine-grained effect) to each item.
 				</p>
 				<ul>
@@ -42,7 +42,7 @@ export default function MuttsCollectionsPage() {
 						logic.
 					</li>
 				</ul>
-				<Code code={projectSnippet} lang="tsx" />
+				<Code code={morphSnippet} lang="tsx" />
 			</Section>
 
 			<Section title="Scanning & Attendance">

@@ -1,3 +1,6 @@
+import * as fs from 'node:fs/promises'
+import * as os from 'node:os'
+import * as path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { buildRouteTree, matchRoute, parseSegment, type RouteTreeNode } from './index.js'
 
@@ -221,6 +224,63 @@ describe('router', () => {
 			expect(usersNode).toBeDefined()
 			expect(usersNode?.component).toBe(MockPage)
 			expect(usersNode?.types).toBe('/routes/users.d.ts')
+		})
+
+		it('should ignore +* files and directories when using globRoutes', async () => {
+			const RootPage = () => 'root'
+			const UsersPage = () => 'users'
+			const PrivatePage = () => 'private'
+			const globRoutes = {
+				'/routes/index.tsx': async () => ({ default: RootPage }),
+				'/routes/users/index.tsx': async () => ({ default: UsersPage }),
+				'/routes/+private.tsx': async () => ({ default: PrivatePage }),
+				'/routes/+components/button.tsx': async () => ({ default: PrivatePage }),
+				'/routes/users/+components/card.tsx': async () => ({ default: PrivatePage }),
+			}
+
+			const tree = await buildRouteTree('/routes', undefined, globRoutes)
+
+			expect(tree.component).toBe(RootPage)
+			expect(tree.children.has('+private')).toBe(false)
+			expect(tree.children.has('+components')).toBe(false)
+
+			const usersNode = tree.children.get('users')
+			expect(usersNode?.component).toBe(UsersPage)
+			expect(usersNode?.children.has('+components')).toBe(false)
+		})
+
+		it('should ignore +* files and directories when using filesystem scan', async () => {
+			const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'pounce-board-routes-'))
+
+			try {
+				await fs.writeFile(
+					path.join(tempRoot, 'index.tsx'),
+					'export default function Root() { return null }'
+				)
+				await fs.mkdir(path.join(tempRoot, 'users'), { recursive: true })
+				await fs.writeFile(
+					path.join(tempRoot, 'users', 'index.tsx'),
+					'export default function Users() { return null }'
+				)
+				await fs.writeFile(
+					path.join(tempRoot, '+private.tsx'),
+					'export default function Private() { return null }'
+				)
+				await fs.mkdir(path.join(tempRoot, '+components'), { recursive: true })
+				await fs.writeFile(
+					path.join(tempRoot, '+components', 'button.tsx'),
+					'export default function Button() { return null }'
+				)
+
+				const tree = await buildRouteTree(tempRoot)
+
+				expect(tree.component).toBeTypeOf('function')
+				expect(tree.children.has('+private')).toBe(false)
+				expect(tree.children.has('+components')).toBe(false)
+				expect(tree.children.get('users')?.component).toBeTypeOf('function')
+			} finally {
+				await fs.rm(tempRoot, { recursive: true, force: true })
+			}
 		})
 	})
 })

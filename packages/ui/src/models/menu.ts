@@ -54,6 +54,7 @@ function checkMenuStructure(detailsEl: HTMLDetailsElement): void {
 			reportA11yIssue('Menu list should have role="menu".')
 		}
 		for (const li of Array.from(list.children)) {
+			if (li.getAttribute('aria-hidden') === 'true') continue
 			if (li.getAttribute('role') !== 'none') {
 				reportA11yIssue('Menu items should be wrapped in <li role="none">.')
 			}
@@ -67,6 +68,22 @@ function checkMenuStructure(detailsEl: HTMLDetailsElement): void {
 	if (summary?.hasAttribute('aria-expanded')) {
 		summary.setAttribute('aria-expanded', String(detailsEl.open))
 	}
+}
+
+function getMenuItems(details: HTMLDetailsElement): HTMLElement[] {
+	return Array.from(details.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+}
+
+function focusMenuItem(details: HTMLDetailsElement, index: number): void {
+	const items = getMenuItems(details)
+	const item = items[index]
+	if (item) item.focus()
+}
+
+function focusMenuBoundary(details: HTMLDetailsElement, edge: 'first' | 'last'): void {
+	const items = getMenuItems(details)
+	const item = edge === 'first' ? items[0] : items[items.length - 1]
+	if (item) item.focus()
 }
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
@@ -96,6 +113,45 @@ export function menuModel(_props: MenuProps): MenuModel {
 	const model: MenuModel = {
 		get details() {
 			return {
+				get onKeydown() {
+					return (e: KeyboardEvent) => {
+						const details = e.currentTarget as HTMLDetailsElement
+						if (!details.open) return
+						const target = e.target as HTMLElement | null
+						const items = getMenuItems(details)
+						const currentIndex = target ? items.indexOf(target) : -1
+						if (e.key === 'Escape') {
+							details.open = false
+							details.querySelector<HTMLElement>('summary')?.focus()
+							e.preventDefault()
+							return
+						}
+						if (e.key === 'ArrowDown') {
+							focusMenuItem(details, currentIndex >= 0 ? (currentIndex + 1) % items.length : 0)
+							e.preventDefault()
+							return
+						}
+						if (e.key === 'ArrowUp') {
+							focusMenuItem(
+								details,
+								currentIndex >= 0
+									? (currentIndex - 1 + items.length) % items.length
+									: items.length - 1
+							)
+							e.preventDefault()
+							return
+						}
+						if (e.key === 'Home') {
+							focusMenuBoundary(details, 'first')
+							e.preventDefault()
+							return
+						}
+						if (e.key === 'End') {
+							focusMenuBoundary(details, 'last')
+							e.preventDefault()
+						}
+					}
+				},
 				get onClick() {
 					return (e: MouseEvent) => {
 						const target = e.target as HTMLElement
@@ -120,13 +176,36 @@ export function menuModel(_props: MenuProps): MenuModel {
 		get summary() {
 			return {
 				'aria-haspopup': 'menu' as const,
+				'aria-expanded': 'false',
 				get onClick() {
 					return (e: MouseEvent) => {
 						e.preventDefault()
 						const details = (e.currentTarget as HTMLElement).closest(
 							'details'
 						) as HTMLDetailsElement | null
-						if (details) details.open = !details.open
+						if (details) {
+							details.open = !details.open
+							if (details.open) requestAnimationFrame(() => focusMenuBoundary(details, 'first'))
+						}
+					}
+				},
+				get onKeydown() {
+					return (e: KeyboardEvent) => {
+						const details = (e.currentTarget as HTMLElement).closest(
+							'details'
+						) as HTMLDetailsElement | null
+						if (!details) return
+						if (e.key === 'Enter' || e.key === ' ') {
+							e.preventDefault()
+							details.open = !details.open
+							if (details.open) requestAnimationFrame(() => focusMenuBoundary(details, 'first'))
+							return
+						}
+						if (e.key === 'ArrowDown') {
+							e.preventDefault()
+							if (!details.open) details.open = true
+							requestAnimationFrame(() => focusMenuBoundary(details, 'first'))
+						}
 					}
 				},
 			}

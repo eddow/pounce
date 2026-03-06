@@ -1,18 +1,23 @@
 import type { Env } from '@pounce/core'
 import type { ElementPassthroughProps } from '../shared/types'
+import { type GroupBinding, hasGroupValue, setGroupValue } from './group'
 // TODO: we should have the accordionGroup component here - in components I mean, in `ui` - as it is a purely behavior-forwarding-children component
 // ── Types ───────────────────────────────────────────────────────────────────
 
 /**
  * Reactive group variable injected by `AccordionGroup` into the env.
  * - `HTMLDetailsElement | null` → single-open (exclusive): at most one open at a time.
- * - `Set<HTMLDetailsElement>` → multi-open: any subset can be open.
+ * - `Set<HTMLDetailsElement>` / `HTMLDetailsElement[]` → multi-open: any subset can be open.
  */
-export type AccordionGroupVar = { value: HTMLDetailsElement | null } | Set<HTMLDetailsElement>
+export type AccordionGroupVar = GroupBinding<HTMLDetailsElement>
 
-export type AccordionProps = ElementPassthroughProps<'details'> & {
+export type AccordionProps<Value = unknown> = ElementPassthroughProps<'details'> & {
 	/** Controlled open state */
 	open?: boolean
+	/** Stable identity of this accordion item inside `group` */
+	value?: Value
+	/** Shared group state: single value (exclusive) or set/array (multi-open) */
+	group?: GroupBinding<Value>
 	/** Called when the details element is toggled */
 	onToggle?: (open: boolean) => void
 	/** Summary/header content */
@@ -43,10 +48,10 @@ export type AccordionModel = {
  * Uses native `<details>`/`<summary>` semantics.
  * The adapter spreads `model.details` and calls `use:mount={model.onMount}`.
  *
- * For grouping, wrap accordions in `<AccordionGroup>` (adapter-provided).
- * The group is injected via `env.accordionGroup`:
- * - `{ value: HTMLDetailsElement | null }` → single-open (exclusive)
- * - `Set<HTMLDetailsElement>` → multi-open
+ * Grouping options:
+ * - Pass `group` + `value` for value-based grouping (single or multi-open).
+ * - Or wrap in `<AccordionGroup>` (adapter-provided), which injects `env.accordionGroup`
+ *   using the same group semantics but keyed by mounted `HTMLDetailsElement`.
  *
  * @example
  * ```tsx
@@ -64,21 +69,24 @@ export type AccordionModel = {
 export function accordionModel(props: AccordionProps, env?: AccordionEnv): AccordionModel {
 	let el: HTMLDetailsElement | undefined
 
-	function syncGroupOpen(details: HTMLDetailsElement) {
-		const group = env?.accordionGroup
-		if (!group) return
-		if (group instanceof Set) {
-			if (details.open) group.add(details)
-			else group.delete(details)
-		} else {
-			if (details.open) {
-				const prev = group.value
-				if (prev && prev !== details) prev.open = false
-				group.value = details
-			} else if (group.value === details) {
-				group.value = null
-			}
+	function syncExplicitGroup(details: HTMLDetailsElement) {
+		if (props.group === undefined || props.value === undefined) return
+		props.group = setGroupValue(props.group, props.value, details.open)
+	}
+
+	function syncEnvGroup(details: HTMLDetailsElement) {
+		if (env?.accordionGroup === undefined) return
+		env.accordionGroup = setGroupValue(env.accordionGroup, details, details.open)
+	}
+
+	function isOpenByGroup(): boolean {
+		if (props.group !== undefined && props.value !== undefined) {
+			return hasGroupValue(props.group, props.value)
 		}
+		if (env?.accordionGroup !== undefined && el) {
+			return hasGroupValue(env.accordionGroup, el)
+		}
+		return false
 	}
 
 	const model: AccordionModel = {
@@ -90,16 +98,20 @@ export function accordionModel(props: AccordionProps, env?: AccordionEnv): Accor
 		get details() {
 			return {
 				get open() {
-					const group = env?.accordionGroup
-					if (!group || !el) return props.open
-					if (group instanceof Set) return group.has(el) || props.open
-					return group.value === el || props.open
+					if (props.group !== undefined && props.value !== undefined) {
+						return isOpenByGroup() || props.open === true
+					}
+					if (env?.accordionGroup !== undefined && el) {
+						return isOpenByGroup() || props.open === true
+					}
+					return props.open
 				},
 				get onToggle() {
 					return (e: Event) => {
 						const details = e.currentTarget as HTMLDetailsElement
 						props.onToggle?.(details.open)
-						syncGroupOpen(details)
+						syncExplicitGroup(details)
+						syncEnvGroup(details)
 					}
 				},
 			}

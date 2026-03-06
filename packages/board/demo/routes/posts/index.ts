@@ -1,11 +1,6 @@
 import { expose } from '@pounce/board'
 import type { PounceRequest } from '@pounce/board'
-
-export const posts = [
-  { id: '1', title: 'First Post', content: 'Hello World' },
-  { id: '2', title: 'Pounce Board', content: 'Is awesome' },
-]
-let nextId = 3
+import { createPost, posts } from '+shared/posts'
 
 export default expose({
   middle: [
@@ -23,8 +18,6 @@ export default expose({
 
   post: async (req) => {
     const body = await req.raw.json()
-    const post = { id: String(nextId++), title: body.title, content: body.content }
-    posts.push(post)
-    return post
+    return createPost({ title: body.title, content: body.content })
   },
 })

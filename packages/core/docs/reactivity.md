@@ -52,10 +52,10 @@ const fullName = memoize(() => `${state.firstName} ${state.lastName}`)
 
 ### Reactive Array Mapping
 
-Map over arrays reactively with `project`:
+Map over arrays reactively with `morph`:
 
 ```tsx
-import { project } from 'mutts'
+import { morph } from 'mutts'
 
 const todos = reactive([
   { id: 1, text: 'Task 1', done: false },
@@ -63,7 +63,7 @@ const todos = reactive([
 ])
 
 <div>
-  {project(todos, (item) => (
+  {morph(todos, (item) => (
     <div>
       <input type="checkbox" checked={item.value.done} />
       <span>{item.value.text}</span>
@@ -77,12 +77,12 @@ const todos = reactive([
 Filter arrays reactively:
 
 ```tsx
-import { memoize, project } from 'mutts'
+import { memoize, morph } from 'mutts'
 
 const activeTodos = memoize(() => todos.filter(t => !t.done))
 
 <div>
-  {project(activeTodos, (item) => <div>{item.value.text}</div>)}
+  {morph(activeTodos, (item) => <div>{item.value.text}</div>)}
 </div>
 ```
 

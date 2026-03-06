@@ -18,7 +18,7 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Vue
 
 ### Control Flow and Lists
 - **Attributes for control flow**: `if={...}`, `if:name={...}`, `when:name={...}`, `else`, `else if={...}`, `else when={...}` inside fragments. Vue uses `v-if`, `v-else-if`, `v-else`.
-- **Lists**: Use `<for each={array}>` or `project(array, fn)` (optionally with `memoize`). Vue uses `v-for` with `:key`; Pounce does not require keys in typical cases.
+- **Lists**: Use `<for each={array}>` or `morph(array, fn)` (optionally with `memoize`). Vue uses `v-for` with `:key`; Pounce does not require keys in typical cases.
 
 ### Context/Env vs provide/inject
 - **Reactive env inheritance**: Components receive a prototype‑inherited reactive `env`. Components can set `env.foo = ...` and descendants see it. Vue uses `provide/inject` (explicit), not prototype inheritance.
@@ -37,7 +37,7 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Vue
 
 ### Quick mapping
 - **Derived state**: `memoize` vs `computed`.
-- **Lists**: `<for>`/`project` vs `v-for`.
+- **Lists**: `<for>`/`morph` vs `v-for`.
 - **Two‑way input**: auto get/set vs `v-model`.
 - **Context**: reactive `env` vs provide/inject.
 - **Rendering**: direct DOM vs VDOM.

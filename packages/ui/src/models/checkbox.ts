@@ -5,6 +5,7 @@ import type {
 	ElementPassthroughProps,
 	VariantProps,
 } from '../shared/types'
+import { type GroupCollection, hasGroupValue, toggleGroupCollectionValue } from './group'
 
 // ── Shared prop base ────────────────────────────────────────────────────────
 
@@ -21,8 +22,12 @@ type ControlBaseProps = VariantProps &
 
 // ── Per-control props ───────────────────────────────────────────────────────
 
-export type CheckboxProps = ControlBaseProps & {
+export type CheckboxProps<Value = unknown> = ControlBaseProps & {
 	checked?: boolean
+	/** Stable identity of this checkbox inside `group` */
+	value?: Value
+	/** Group binding (set/array): checked is derived from membership of `value` */
+	group?: GroupCollection<Value>
 }
 
 export type RadioProps<Value = unknown> = ControlBaseProps & {
@@ -42,9 +47,13 @@ export type SwitchProps = ControlBaseProps & {
 // ── State types ─────────────────────────────────────────────────────────────
 
 type InputBase = JSX.IntrinsicElements['input']
-type InputCheckbox = Omit<InputBase, 'type' | 'checked' | 'value' | 'onChange'> & {
+type InputCheckbox = Omit<
+	InputBase,
+	'type' | 'checked' | 'value' | 'onChange' | 'indeterminate'
+> & {
 	type: 'checkbox'
 	checked?: boolean
+	indeterminate?: boolean
 	value?: string
 	onChange?: (e: Event) => void
 }
@@ -128,9 +137,19 @@ function inputOrder(props: ControlBaseProps): -1 | 0 {
 export function checkboxModel(props: CheckboxProps): CheckboxModel {
 	const model: CheckboxModel = {
 		get input() {
-			return {
+			const setChecked = (next: boolean) => {
+				if (props.group && props.value !== undefined) {
+					toggleGroupCollectionValue(props.group, props.value, next)
+				}
+				props.onChange?.(next)
+			}
+
+			const input: CheckboxModel['input'] = {
 				type: 'checkbox' as const,
 				get checked() {
+					if (props.group && props.value !== undefined) {
+						return hasGroupValue(props.group, props.value)
+					}
 					return props.checked
 				},
 				get disabled() {
@@ -140,12 +159,14 @@ export function checkboxModel(props: CheckboxProps): CheckboxModel {
 					return { order: inputOrder(props) }
 				},
 				get indeterminate() {
-					return props.checked === undefined
+					return !props.group && props.checked === undefined
 				},
 				onChange(e: Event) {
-					if (e.target instanceof HTMLInputElement) props.onChange!(e.target.checked)
+					if (!(e.target instanceof HTMLInputElement)) return
+					setChecked(e.target.checked)
 				},
 			}
+			return input
 		},
 	}
 	return model

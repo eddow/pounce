@@ -2,7 +2,6 @@ import {
 	addBatchCleanup,
 	captured,
 	effect,
-	getActiveEffect,
 	isReactive,
 	lift,
 	link,
@@ -187,7 +186,7 @@ export function latch(
 	}
 
 	if (document.readyState === 'loading')
-		document.addEventListener('DOMContentLoaded', captured(getActiveEffect(), actuallyLatch))
+		document.addEventListener('DOMContentLoaded', captured(undefined, actuallyLatch))
 	else actuallyLatch()
 
 	return () => {

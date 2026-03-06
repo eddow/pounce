@@ -17,13 +17,9 @@ export function Multiselect<T>(props: MultiselectAdapterProps<T>) {
 			<ul style="list-style:none;padding:0.5rem;margin:0">
 				<for each={model.items}>
 					{(item: MultiselectItemState<T>) =>
-						item.rendered !== false && (
-							<li
-								aria-selected={item.checked}
-								onClick={item.toggle}
-								style="cursor:pointer;padding:0.25rem 0.5rem"
-							>
-								{item.rendered}
+						item.render() !== false && (
+							<li {...item.el} style="cursor:pointer;padding:0.25rem 0.5rem">
+								{item.render()}
 							</li>
 						)
 					}

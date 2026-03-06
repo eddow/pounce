@@ -1,10 +1,31 @@
 import { defineConfig } from 'vitest/config'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { pounceCorePackage } from './src/plugin/index'
 
 const projectRootDir = dirname(fileURLToPath(import.meta.url))
+const isWatch = process.argv.includes('--watch')
+
+function ensureStableTypeEntrypoints() {
+	const distDir = join(projectRootDir, 'dist')
+	const entrypoints = [
+		['dom.d.ts', "export * from '../src/dom/index'\n"],
+		['node.d.ts', "export * from '../src/node/index'\n"],
+		['plugin.d.ts', "export * from '../src/plugin/index'\n"],
+		['jsx.d.ts', "export * from '../src/types/jsx'\n"],
+	]
+	return {
+		name: 'ensure-stable-type-entrypoints',
+		buildStart() {
+			mkdirSync(distDir, { recursive: true })
+			for (const [file, content] of entrypoints) {
+				const target = join(distDir, file)
+				if (!existsSync(target)) writeFileSync(target, content)
+			}
+		},
+	}
+}
 
 console.error('--- vite.config.ts LOADED ---')
 export default defineConfig({
@@ -34,6 +55,7 @@ export default defineConfig({
 		},
 	},
 	plugins: [
+		...(isWatch ? [ensureStableTypeEntrypoints()] : []),
 		...pounceCorePackage({
 			core: {
 				projectRoot: projectRootDir,
@@ -87,6 +109,7 @@ export default defineConfig({
 			],
 		},
 		outDir: 'dist',
+		emptyOutDir: !isWatch,
 		target: 'esnext',
 		minify: false,
 		sourcemap: 'inline'

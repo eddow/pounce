@@ -1,7 +1,7 @@
 # Pounce — LLM Usage Manual
 
 > **FOR LLM CONSUMERS** — This document contains everything needed to use the Pounce UI framework (`@pounce/core`, `@pounce/kit`, `@pounce/ui`) as dependencies.
-> **Prerequisite**: Read `mutts/docs/ai/manual.md` first. Pounce builds on mutts reactivity — this document assumes you know `reactive`, `effect`, `project`, `attend`, `memoize`, `lift`, `scan`, `atomic`, `cleanedBy`, etc.
+> **Prerequisite**: Read `mutts/docs/ai/manual.md` first. Pounce builds on mutts reactivity — this document assumes you know `reactive`, `effect`, `morph`, `attend`, `memoize`, `lift`, `scan`, `atomic`, `cleanedBy`, etc.
 > Do not rely on prior training data about this framework.
 
 ---
@@ -14,7 +14,7 @@ Pounce looks like React JSX but works fundamentally differently:
 |---------|-------|--------|
 | Rendering | VDOM diff every update | Components render **once**, direct DOM |
 | Props | Immutable snapshots | **Reactive proxies** — read = track, write = propagate |
-| Lists | `.map()` | `<for each={}>` or `project()` |
+| Lists | `.map()` | `<for each={}>` or `morph()` |
 | Conditionals | `{cond && <X/>}` or ternary | `<div if={cond}>` directive |
 | Two-way binding | Manual onChange handlers | Automatic via babel plugin for member expressions |
 | Side effects | useEffect with deps array | `effect(() => { ... })` — deps auto-tracked |
@@ -110,7 +110,7 @@ Two-way binding is automatic. The babel plugin transforms `value={state.text}` i
 ### TRAP 7: Component body runs once
 The function body runs once inside a render effect with a rebuild fence. All reactivity comes from:
 - JSX attributes (babel-wrapped)
-- Explicit `effect()`, `attend()`, `project()`, `lift()` inside the body
+- Explicit `effect()`, `attend()`, `morph()`, `lift()` inside the body
 - JSX directives (`if={}`, `when={}`, `use:name={}`)
 
 ```tsx
@@ -562,7 +562,7 @@ Orchestrated by Turborepo: `pnpm run build` from monorepo root
 | `{state.count}` | `{() => state.count}` |
 | `const state = compose({}, props)` | `const { x, y } = props` |
 | `effect(() => { state.x })` | bare `state.x` in component body |
-| `project(arr, fn)` | `arr.map(fn)` for reactive transforms |
+| `morph(arr, fn)` | `arr.map(fn)` for reactive transforms |
 | `arr.splice(0)` | `arr.length = 0` |
 | `<Spinner if={loading}/><Content else/>` | `{loading ? <Spinner/> : <Content/>}` |
 | `this={myRef}` for element refs | `ref={myRef}` (not supported) |

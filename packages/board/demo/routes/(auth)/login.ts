@@ -1,7 +1,7 @@
 import { expose } from '@pounce/board'
 
 export default expose({
-  post: async (req) => {
+  async post(req) {
     const body = await req.raw.json()
     if (body.username === 'admin' && body.password === 'secret')
       return { token: 'fake-jwt' }

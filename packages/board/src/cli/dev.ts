@@ -9,6 +9,7 @@ import { clearRouteTreeCache, createPounceMiddleware } from '../adapters/hono.js
 import { api, enableSSR } from '../lib/http/client.js'
 import { buildRouteTree, matchRoute } from '../lib/router/index.js'
 import { injectSSRContent, withSSRContext } from '../lib/ssr/utils.js'
+import { plusImportResolverPlugin } from './plus-imports.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -33,6 +34,7 @@ export async function runDevServer(options: DevServerOptions = {}) {
 
 	// 1. Initialize Vite in middleware mode
 	const vite = await createViteServer({
+		plugins: [plusImportResolverPlugin({ routesDir })],
 		server: {
 			middlewareMode: true,
 			hmr: {

@@ -13,20 +13,114 @@ interface PounceBabelPluginState {
 			cwd?: string
 		}
 	}
+	__pounceHelperLocals?: Partial<Record<CoreHelperName, string>>
 }
 
 const EXTENDS_HELPERS = new Set(['_extends', '__assign'])
+const CORE_IMPORT_SOURCE = '@pounce/core'
+type CoreHelperName = 'h' | 'Fragment' | 'c' | 'r' | 'bind'
+
+function getProgramPath(path: NodePath): NodePath<t.Program> | null {
+	return path.findParent((p: NodePath) => p.isProgram()) as NodePath<t.Program> | null
+}
+
+function getCoreImportDeclaration(
+	programPath: NodePath<t.Program>
+): NodePath<t.ImportDeclaration> | null {
+	for (const nodePath of programPath.get('body')) {
+		if (nodePath.isImportDeclaration() && nodePath.node.source.value === CORE_IMPORT_SOURCE) {
+			return nodePath
+		}
+	}
+	return null
+}
+
+function findImportedLocalName(
+	t: typeof import('@babel/types'),
+	programPath: NodePath<t.Program>,
+	helperName: CoreHelperName
+): string | null {
+	const importDecl = getCoreImportDeclaration(programPath)
+	if (!importDecl) return null
+	for (const specifier of importDecl.node.specifiers) {
+		if (!t.isImportSpecifier(specifier)) continue
+		const imported = specifier.imported
+		if (t.isIdentifier(imported) && imported.name === helperName) {
+			return specifier.local.name
+		}
+	}
+	return null
+}
+
+function ensureCoreHelperIdentifier(
+	t: typeof import('@babel/types'),
+	path: NodePath,
+	state: PounceBabelPluginState,
+	helperName: CoreHelperName,
+	forceAlias = false
+): t.Identifier {
+	const programPath = getProgramPath(path)
+	if (!programPath) return t.identifier(helperName)
+
+	state.__pounceHelperLocals ??= {}
+	const cachedLocal = state.__pounceHelperLocals[helperName]
+	if (cachedLocal) return t.identifier(cachedLocal)
+
+	const existingLocal = findImportedLocalName(t, programPath, helperName)
+	if (existingLocal && (!forceAlias || existingLocal !== helperName)) {
+		state.__pounceHelperLocals[helperName] = existingLocal
+		return t.identifier(existingLocal)
+	}
+
+	const localId = forceAlias
+		? programPath.scope.generateUidIdentifier(`pounce_${helperName}`)
+		: t.identifier(helperName)
+
+	const importDecl = getCoreImportDeclaration(programPath)
+	const newSpecifier = t.importSpecifier(t.cloneNode(localId), t.identifier(helperName))
+
+	if (importDecl) {
+		importDecl.node.specifiers.push(newSpecifier)
+	} else {
+		programPath.unshiftContainer(
+			'body',
+			t.importDeclaration([newSpecifier], t.stringLiteral(CORE_IMPORT_SOURCE))
+		)
+	}
+
+	state.__pounceHelperLocals[helperName] = localId.name
+	return t.identifier(localId.name)
+}
+
+function isIdentifierFromCoreImport(
+	t: typeof import('@babel/types'),
+	path: NodePath,
+	identifier: t.Identifier,
+	importedName: CoreHelperName
+): boolean {
+	const binding = path.scope.getBinding(identifier.name)
+	if (!binding || !binding.path.isImportSpecifier()) return false
+	const importDecl = binding.path.parentPath
+	if (!importDecl?.isImportDeclaration()) return false
+	if (importDecl.node.source.value !== CORE_IMPORT_SOURCE) return false
+	const imported = binding.path.node.imported
+	return t.isIdentifier(imported) && imported.name === importedName
+}
 
 function buildCompositeCall(
 	t: typeof import('@babel/types'),
-	args: import('@babel/types').CallExpression['arguments']
+	args: import('@babel/types').CallExpression['arguments'],
+	compositeCalleeName: string
 ) {
 	const layers: import('@babel/types').Expression[] = []
 	for (const arg of args) {
 		if (t.isSpreadElement(arg)) {
 			layers.push(t.arrowFunctionExpression([], t.cloneNode(arg.argument)))
 		} else if (t.isObjectExpression(arg) && arg.properties.length === 0) {
-		} else if (t.isCallExpression(arg) && t.isIdentifier(arg.callee, { name: 'c' })) {
+		} else if (
+			t.isCallExpression(arg) &&
+			t.isIdentifier(arg.callee, { name: compositeCalleeName })
+		) {
 			// If it's already a c() call, merge its arguments
 			for (const cArg of arg.arguments) {
 				if (t.isArrowFunctionExpression(cArg)) {
@@ -39,7 +133,7 @@ function buildCompositeCall(
 			layers.push(t.cloneNode(arg))
 		}
 	}
-	return t.callExpression(t.identifier('c'), layers)
+	return t.callExpression(t.identifier(compositeCalleeName), layers)
 }
 
 export function pounceBabelPlugin({
@@ -122,19 +216,15 @@ export function pounceBabelPlugin({
 		return false
 	}
 
-	const IMPORT_SOURCE = '@pounce/core'
-
 	function ensureImports(path: NodePath, ...names: string[]) {
-		const programPath = path.findParent((p: NodePath) =>
-			p.isProgram()
-		) as NodePath<t.Program> | null
+		const programPath = getProgramPath(path)
 		if (!programPath) return
 
 		const ensureImport = (name: string) => {
 			const alreadyImported = programPath.node.body.some(
 				(node: t.Statement) =>
 					t.isImportDeclaration(node) &&
-					node.source.value === IMPORT_SOURCE &&
+					node.source.value === CORE_IMPORT_SOURCE &&
 					node.specifiers.some(
 						(
 							specifier: t.ImportSpecifier | t.ImportDefaultSpecifier | t.ImportNamespaceSpecifier
@@ -145,7 +235,7 @@ export function pounceBabelPlugin({
 
 			const importDeclaration = programPath.node.body.find(
 				(node: t.Statement): node is t.ImportDeclaration =>
-					t.isImportDeclaration(node) && node.source.value === IMPORT_SOURCE
+					t.isImportDeclaration(node) && node.source.value === CORE_IMPORT_SOURCE
 			)
 
 			if (importDeclaration) {
@@ -155,7 +245,7 @@ export function pounceBabelPlugin({
 					'body',
 					t.importDeclaration(
 						[t.importSpecifier(t.identifier(name), t.identifier(name))],
-						t.stringLiteral(IMPORT_SOURCE)
+						t.stringLiteral(CORE_IMPORT_SOURCE)
 					)
 				)
 			}
@@ -172,8 +262,10 @@ export function pounceBabelPlugin({
 	return {
 		name: 'pounce-babel',
 		visitor: {
-			LabeledStatement(path: NodePath<t.LabeledStatement>, _state: PounceBabelPluginState) {
+			LabeledStatement(path: NodePath<t.LabeledStatement>, state: PounceBabelPluginState) {
 				if (path.node.label.name !== 'bind') return
+				const bindHelper = ensureCoreHelperIdentifier(t, path, state, 'bind', true)
+				const reactiveHelper = ensureCoreHelperIdentifier(t, path, state, 'r', true)
 				const body = path.node.body
 				if (!t.isExpressionStatement(body)) return
 				const expr = body.expression
@@ -207,15 +299,16 @@ export function pounceBabelPlugin({
 						[t.identifier('_v')],
 						t.assignmentExpression('=', inner as t.LVal, t.identifier('_v'))
 					)
-					return t.callExpression(t.identifier('r'), [getter, setter])
+					return t.callExpression(t.cloneNode(reactiveHelper), [getter, setter])
 				}
-				ensureImports(path, 'bind', 'r')
 				const args: t.Expression[] = [makeRP(dstNode), makeRP(srcNode)]
 				if (dftNode) args.push(dftNode)
-				path.replaceWith(t.expressionStatement(t.callExpression(t.identifier('bind'), args)))
+				path.replaceWith(t.expressionStatement(t.callExpression(t.cloneNode(bindHelper), args)))
 			},
-			JSXElement(path: NodePath<JSXElement>, _state: PounceBabelPluginState) {
-				ensureImports(path, 'h', 'Fragment', 'c', 'r')
+			JSXElement(path: NodePath<JSXElement>, state: PounceBabelPluginState) {
+				ensureImports(path, 'h', 'Fragment')
+				const compositeHelper = ensureCoreHelperIdentifier(t, path, state, 'c', true)
+				const reactiveHelper = ensureCoreHelperIdentifier(t, path, state, 'r', true)
 				// Traverse all JSX children and attributes
 				for (let index = 0; index < path.node.children.length; index++) {
 					const child = path.node.children[index]
@@ -229,7 +322,7 @@ export function pounceBabelPlugin({
 								expression // Body is `this.counter`
 							)
 							path.node.children[index] = t.jsxExpressionContainer(
-								t.callExpression(t.identifier('r'), [arrowFunction])
+								t.callExpression(t.cloneNode(reactiveHelper), [arrowFunction])
 							)
 						}
 					}
@@ -278,7 +371,10 @@ export function pounceBabelPlugin({
 									}
 									if (getterExpr && setterExpr) {
 										const getter = t.arrowFunctionExpression([], getterExpr)
-										const bindingObject = t.callExpression(t.identifier('r'), [getter, setterExpr])
+										const bindingObject = t.callExpression(t.cloneNode(reactiveHelper), [
+											getter,
+											setterExpr,
+										])
 										baseAttr.value = t.jsxExpressionContainer(bindingObject)
 										// remove update:attr
 										attrs.splice(i, 1)
@@ -292,7 +388,7 @@ export function pounceBabelPlugin({
 					// Pass 2: spread + regular reactive attribute transforms
 					for (const attr of path.node.openingElement.attributes) {
 						if (t.isJSXSpreadAttribute(attr)) {
-							attr.argument = t.callExpression(t.identifier('c'), [
+							attr.argument = t.callExpression(t.cloneNode(compositeHelper), [
 								t.arrowFunctionExpression([], t.cloneNode(attr.argument)),
 							])
 						} else if (t.isJSXAttribute(attr)) {
@@ -301,7 +397,7 @@ export function pounceBabelPlugin({
 								if (!t.isJSXEmptyExpression(expression)) {
 									if (
 										t.isCallExpression(expression) &&
-										t.isIdentifier(expression.callee, { name: 'r' })
+										t.isIdentifier(expression.callee, { name: reactiveHelper.name })
 									) {
 										continue
 									}
@@ -341,12 +437,12 @@ export function pounceBabelPlugin({
 											t.assignmentExpression('=', innerExpression, t.identifier('val'))
 										)
 										attr.value = t.jsxExpressionContainer(
-											t.callExpression(t.identifier('r'), [getter, setter])
+											t.callExpression(t.cloneNode(reactiveHelper), [getter, setter])
 										)
 									} else {
 										if (!isSafeExpression(innerExpression as t.Expression)) {
 											attr.value = t.jsxExpressionContainer(
-												t.callExpression(t.identifier('r'), [
+												t.callExpression(t.cloneNode(reactiveHelper), [
 													t.arrowFunctionExpression([], expression),
 												])
 											)
@@ -365,45 +461,12 @@ export function pounceBabelPlugin({
 export function pounceSpreadPlugin({
 	types: t,
 }: PounceBabelPluginOptions): PluginObj<PounceBabelPluginState> {
-	const IMPORT_SOURCE = '@pounce/core'
-
-	function ensureImportC(path: NodePath) {
-		const programPath = path.findParent((p: NodePath) =>
-			p.isProgram()
-		) as NodePath<t.Program> | null
-		if (!programPath) return
-		const alreadyImported = programPath.node.body.some(
-			(node: t.Statement) =>
-				t.isImportDeclaration(node) &&
-				node.source.value === IMPORT_SOURCE &&
-				node.specifiers.some(
-					(s: t.ImportSpecifier | t.ImportDefaultSpecifier | t.ImportNamespaceSpecifier) =>
-						t.isImportSpecifier(s) && s.local.name === 'c'
-				)
-		)
-		if (alreadyImported) return
-		const importDecl = programPath.node.body.find(
-			(node: t.Statement): node is t.ImportDeclaration =>
-				t.isImportDeclaration(node) && node.source.value === IMPORT_SOURCE
-		)
-		if (importDecl) {
-			importDecl.specifiers.push(t.importSpecifier(t.identifier('c'), t.identifier('c')))
-		} else {
-			programPath.unshiftContainer(
-				'body',
-				t.importDeclaration(
-					[t.importSpecifier(t.identifier('c'), t.identifier('c'))],
-					t.stringLiteral(IMPORT_SOURCE)
-				)
-			)
-		}
-	}
-
 	function isAttributesMergeCall(path: NodePath<t.CallExpression>): boolean {
 		const parentPath = path.parentPath
 		if (!parentPath || !parentPath.isCallExpression()) return false
+		if (!t.isIdentifier(parentPath.node.callee)) return false
 		return (
-			t.isIdentifier(parentPath.node.callee, { name: 'h' }) &&
+			isIdentifierFromCoreImport(t, parentPath, parentPath.node.callee, 'h') &&
 			parentPath.node.arguments[1] === path.node
 		)
 	}
@@ -411,7 +474,7 @@ export function pounceSpreadPlugin({
 	return {
 		name: 'pounce-spread',
 		visitor: {
-			CallExpression(path: NodePath<t.CallExpression>, _state: PounceBabelPluginState) {
+			CallExpression(path: NodePath<t.CallExpression>, state: PounceBabelPluginState) {
 				const callee = path.node.callee
 				let shouldTransform = false
 				if (t.isIdentifier(callee) && EXTENDS_HELPERS.has(callee.name)) {
@@ -426,8 +489,8 @@ export function pounceSpreadPlugin({
 				if (!shouldTransform) return
 				if (!isAttributesMergeCall(path)) return
 				if (!path.node.arguments.length) return
-				ensureImportC(path)
-				path.replaceWith(buildCompositeCall(t, path.node.arguments))
+				const compositeHelper = ensureCoreHelperIdentifier(t, path, state, 'c', true)
+				path.replaceWith(buildCompositeCall(t, path.node.arguments, compositeHelper.name))
 			},
 		},
 	}
