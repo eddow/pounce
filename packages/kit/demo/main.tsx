@@ -45,7 +45,10 @@ componentStyle.css`
 function A(props: LinkProps) {
 	const model = linkModel(props)
 	return (
-		<a {...props} onClick={model.onClick} aria-current={model.ariaCurrent}>
+		<a
+			{...props}
+			{...model}
+		>
 			{props.children}
 		</a>
 	)

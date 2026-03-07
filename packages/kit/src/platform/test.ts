@@ -1,9 +1,9 @@
 import { reactive } from 'mutts'
+import { mountHeadContent } from '../head-mount.js'
 import type { Client, PlatformAdapter } from './types.js'
 
 /**
  * Test platform adapter — global reactive client, no ALS, no proxies.
- * Head injection: use `latch(document.head, ...)` from @pounce/core directly.
  */
 export function createTestAdapter(url?: string | URL): PlatformAdapter {
 	const parsedUrl = url ? new URL(url) : new URL('http://localhost/')
@@ -19,7 +19,7 @@ export function createTestAdapter(url?: string | URL): PlatformAdapter {
 			query: Object.fromEntries(parsedUrl.searchParams.entries()),
 		},
 		viewport: { width: 1920, height: 1080 },
-		history: { length: 1 },
+		history: { length: 1, navigation: 'load' as const },
 		focused: false,
 		visibilityState: 'hidden' as const,
 		devicePixelRatio: 1,
@@ -40,5 +40,10 @@ export function createTestAdapter(url?: string | URL): PlatformAdapter {
 		prefersDark: false,
 	}) as Client
 
-	return { client }
+	return {
+		client,
+		mountHead(content, env) {
+			return mountHeadContent(document.head, content, env)
+		},
+	}
 }

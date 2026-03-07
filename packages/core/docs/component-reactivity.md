@@ -1,39 +1,27 @@
 # Component Reactivity Rules
 
-## The Rebuild Fence: Warning-Only Protection
+## The Rebuild Fence
 
-Pounce component constructors run **exactly once**. This is enforced by a **rebuild fence** — a protective mechanism that warns when the component body attempts to re-execute due to reactive state changes. If the constructor accidentally reads reactive state directly, the fence catches it and emits a warning but allows execution to continue (configurable via `pounceOptions.maxRebuildsPerWindow`).
+Pounce component constructors run **exactly once**. This is enforced by a **rebuild fence** — if the component body accidentally captures a reactive dependency, Pounce refuses to re-run the body and instead reports the problem.
 
-This is a **design feature**, not a limitation. Here's why:
+Re-running the entire constructor would destroy and recreate all of this, losing DOM state, breaking effect lifecycles, and wasting performance. The rebuild fence exists to keep the render-once model explicit.
 
-### Why components must not re-render
+If the constructor body reads a reactive property as a bare statement (e.g. `state.count` or `props.value * 2` outside of JSX, a directive, or an effect), the render effect captures that dependency. When the property changes, Pounce does **not** rebuild the component body. Instead it surfaces a diagnostic controlled by `pounceOptions.checkRebuild`:
 
-Traditional frameworks like React re-render entire component subtrees when state changes. This is inherently expensive: every re-render recreates JSX, re-evaluates conditionals, re-allocates closures, and triggers reconciliation. Pounce avoids this entirely through **fine-grained reactivity**:
+1. **`checkRebuild = 'warn'`** logs a warning with the dependency chain
+2. **`checkRebuild = 'error'`** throws a `DynamicRenderingError`
+3. **`checkRebuild = false`** stays silent
 
-1. **Render once**: The constructor runs once, creates DOM structure and sets up reactive bindings
-2. **Reactive attributes**: The Babel plugin wraps JSX attribute values in `r(() => expr)`, so individual attributes update independently when their dependencies change
-3. **Meta-attributes & Meta-components**: `if={}`, `when={}` (meta-attributes on any element) and `<for>` (a meta-component) handle conditional rendering and lists reactively — no need for JS `if` statements or `.map()` in the constructor body
-4. **Effects for logic**: Any imperative reactive logic uses `effect(() => ...)` inside the constructor
+Typical warning shape:
 
-Re-running the entire constructor would destroy and recreate all of this, losing DOM state, breaking effect lifecycles, and wasting performance. The rebuild fence warns about such attempts to help maintain the render-once pattern.
+```
+[pounce] Rebuild fence: <ComponentName> has reactive dependencies that changed, but re-running the component body is forbidden (would destroy local state and risk infinite loops).
+Triggered by:
+...
+Move the reactive read into a child element, an effect, or a directive instead.
+```
 
-### What triggers the fence
-
-If the constructor body reads a reactive property as a bare statement (e.g. `state.count` or `props.value * 2` outside of a JSX attribute or an effect), the constructor creates a dependency on that property. When the property changes, the render effect tries to re-execute. The fence tracks these attempts and:
-
-1. **Warns** on each rebuild attempt with:
-   ```
-   Component rebuild detected.
-   It means the component definition refers a reactive value that has been modified,
-   though the component has not been rebuilt as it is considered forbidden to avoid
-   infinite events loops.
-   ```
-
-2. **Rate-limits** warnings using `pounceOptions.maxRebuildsPerWindow` and `pounceOptions.rebuildWindowMs`
-
-3. **Errors** only when exceeding the configured threshold (default: 1000 rebuilds per 100ms window)
-
-The fence can be disabled by setting `pounceOptions.maxRebuildsPerWindow = 0`.
+`maxRebuildsPerWindow` and `rebuildWindowMs` are a separate guard against pathological rebuild storms in lower-level rebuild-tracking code; they are not the main knob for the render-fence diagnostic.
 
 ### Common traps and fixes
 
@@ -41,8 +29,7 @@ The fence can be disabled by setting `pounceOptions.maxRebuildsPerWindow = 0`.
 
 ```tsx
 function BadComponent(props: { count: number }) {
-  // Reads props.count in the constructor body — triggers fence warnings on change
-  // Component will re-render (inefficiently) but warnings help identify the issue
+  // Reads props.count in the constructor body — triggers the rebuild fence on change
   const doubled = props.count * 2
   return <div>{doubled}</div>
 }
@@ -76,8 +63,7 @@ function GoodComponent(props: { count: number }) {
 
 ```tsx
 function BadComponent(props: { loggedIn: boolean }) {
-  // Bare reactive read — triggers fence warnings on state changes
-  // Component will re-render inefficiently instead of using reactive conditional
+  // Bare reactive read — triggers the rebuild fence on state changes
   if (props.loggedIn) return <Dashboard />
   return <Login />
 }
@@ -108,13 +94,12 @@ Meta-attributes are available on **any** element or component. They are not rend
 | `else` | Renders when the preceding `if` was falsy | `<Fallback else />` |
 | `if:path={value}` | Env-based condition — renders when `env[path] === value` | `<Admin if:user-role={'admin'} />` |
 | `when:path={arg}` | Env-based predicate — renders when `env[path](arg)` is truthy | `<Route when:router-match={'/home'} />` |
-| `use={fn}` | Mount hook — called once on creation, NOT in an effect | `<div use={(el) => el.focus()} />` |
+| `use={fn}` | Inline directive — reactive, cleanup-capable, accumulates across layers | `<div use={(el) => { el instanceof HTMLElement && el.focus() }} />` |
 | `use:path={value}` | Scoped mixin — calls `env[path](target, value, access)` (WITHIN effect) | `<div use:resize={callback} />` |
 
 | `update:path={fn}` | Two-way binding callback for env-based mixins | `<input update:value={(v) => state.val = v} />` |
 | `this={ref}` | Captures a reference to the rendered DOM node(s) | `<input this={refs.input} />` |
 | `pick:path={value}` | Oracle-based selection — renders when `env[path]` picks this value | `<Tab pick:active={'home'} />` |
-
 
 **Key point**: `if`, `else`, `when` are reactive — the Babel plugin wraps their values in `r()`, so the element appears/disappears automatically when dependencies change. No re-render of the parent component occurs.
 
@@ -327,9 +312,9 @@ If you're coming from React:
 
 ## Remember
 
-- **Components should render once** (warnings help identify violations)
-- **Effects handle reactivity**  
+- **Components should render once**
+- **Effects, reactive JSX, and directives handle updates**
 - **DOM updates are fine-grained**
-- **Rebuilds are allowed but warned** (configure via `pounceOptions`)
+- **The rebuild fence is a real boundary, not a soft re-render path**
 
-This approach ensures optimal performance while providing flexibility for edge cases. The rebuild fence serves as a development aid rather than a hard restriction.
+The right fix for a rebuild-fence error is to move the reactive read into JSX, a directive, or an effect — not to expect the component body to run again.

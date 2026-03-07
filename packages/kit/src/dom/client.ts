@@ -1,5 +1,7 @@
-import { reactive } from 'mutts'
-import { perf } from '../perf.js'
+import { document } from '@pounce/core'
+import { atom, reactive } from 'mutts'
+import { mountHeadContent } from '../head-mount.js'
+import { perf, recordPerf } from '../perf.js'
 import { setPlatform } from '../platform/shared.js'
 import type {
 	Client,
@@ -8,6 +10,7 @@ import type {
 	ClientViewport,
 	Direction,
 	NavigateOptions,
+	NavigationKind,
 	PlatformAdapter,
 } from '../platform/types.js'
 
@@ -16,7 +19,7 @@ import type {
 const client = reactive({
 	url: createUrlSnapshot(new URL('http://localhost/')),
 	viewport: { width: 0, height: 0 } as ClientViewport,
-	history: { length: 0 } as ClientHistoryState,
+	history: { length: 0, navigation: 'load' } as ClientHistoryState,
 	focused: false,
 	visibilityState: 'hidden' as const,
 	devicePixelRatio: 1,
@@ -32,12 +35,18 @@ const client = reactive({
 }) as Client
 
 const cleanupFns: (() => void)[] = []
+let pendingNavigation: NavigationKind = 'load'
+const scrollPositions = new Map<string, number>()
+const originalHistoryMethods: Partial<
+	Record<'pushState' | 'replaceState', (...args: Parameters<History['pushState']>) => void>
+> = {}
 
 if (typeof window !== 'undefined') {
 	initializeClientListeners()
-	synchronizeUrl()
+	synchronizeUrl('load')
+	rememberScrollPosition(window.location.href)
 	client.viewport = createViewportSnapshot()
-	client.history = createHistorySnapshot()
+	client.history = createHistorySnapshot('load')
 	client.focused = getInitialFocusState()
 	client.visibilityState = document.visibilityState === 'visible' ? 'visible' : 'hidden'
 	client.devicePixelRatio = getInitialDevicePixelRatio()
@@ -50,17 +59,21 @@ if (typeof window !== 'undefined') {
 // --- API Overrides ---
 
 client.navigate = (to: string | URL, options?: NavigateOptions): void => {
-	perf?.mark('route:start')
+	const startedAt = perf?.now()
 	const href = resolveHref(to)
 	const stateData = options?.state ?? null
+	const method = options?.replace ? 'replaceState' : 'pushState'
+	const navigation = options?.replace ? 'replace' : 'push'
+	const updateHistory =
+		originalHistoryMethods[method] ?? window.history[method].bind(window.history)
 	if (options?.replace) {
-		window.history.replaceState(stateData, '', href)
+		pendingNavigation = 'replace'
 	} else {
-		window.history.pushState(stateData, '', href)
+		pendingNavigation = 'push'
 	}
-	synchronizeUrl()
-	perf?.mark('route:end')
-	perf?.measure('route:navigate', 'route:start', 'route:end')
+	updateHistory(stateData, '', href)
+	if (startedAt != null) recordPerf('route:navigate', startedAt)
+	synchronizeUrl(navigation)
 }
 
 client.replace = (to: string | URL, options?: Omit<NavigateOptions, 'replace'>): void => {
@@ -94,6 +107,9 @@ try {
 
 const domAdapter: PlatformAdapter = {
 	client,
+	mountHead(content, env) {
+		return mountHeadContent(document.head, content, env)
+	},
 }
 
 setPlatform(domAdapter)
@@ -121,11 +137,15 @@ function initializeClientListeners(): void {
 		client.language = getInitialLanguage()
 		client.timezone = getInitialTimezone()
 	}
+	const syncScrollPosition = () => {
+		rememberScrollPosition(window.location.href)
+	}
 
-	addWindowListener('popstate', synchronizeUrl)
-	addWindowListener('hashchange', synchronizeUrl)
+	addWindowListener('popstate', () => synchronizeUrl('pop'))
+	addWindowListener('hashchange', () => synchronizeUrl('hash'))
 	interceptHistoryMethod('pushState')
 	interceptHistoryMethod('replaceState')
+	addWindowListener('scroll', syncScrollPosition)
 
 	addWindowListener('resize', () => {
 		syncViewport()
@@ -153,12 +173,17 @@ function initializeClientListeners(): void {
 	cleanupFns.push(() => dirObserver.disconnect())
 }
 
-function synchronizeUrl(): void {
-	perf?.mark('route:sync:start')
-	client.url = createUrlSnapshot(new URL(window.location.href))
-	client.history = createHistorySnapshot()
-	perf?.mark('route:sync:end')
-	perf?.measure('route:sync', 'route:sync:start', 'route:sync:end')
+function synchronizeUrl(navigation: NavigationKind = pendingNavigation): void {
+	const startedAt = perf?.now()
+	const nextUrl = createUrlSnapshot(new URL(window.location.href))
+	const nextHistory = createHistorySnapshot(navigation)
+	if (startedAt != null) recordPerf('route:sync', startedAt)
+	atom(() => {
+		client.url = nextUrl
+		client.history = nextHistory
+	})
+	if (navigation === 'pop') restoreScrollPosition(window.location.href)
+	pendingNavigation = 'load'
 }
 
 // --- Helpers ---
@@ -168,6 +193,16 @@ function resolveHref(input: string | URL): string {
 		return input
 	}
 	return input.toString()
+}
+
+function rememberScrollPosition(href: string): void {
+	scrollPositions.set(href, window.scrollY)
+}
+
+function restoreScrollPosition(href: string): void {
+	const y = scrollPositions.get(href)
+	if (y === undefined) return
+	requestAnimationFrame(() => window.scrollTo(0, y))
 }
 
 function createUrlSnapshot(url: URL): ClientUrl {
@@ -194,9 +229,10 @@ function createViewportSnapshot(): ClientViewport {
 	}
 }
 
-function createHistorySnapshot(): ClientHistoryState {
+function createHistorySnapshot(navigation: NavigationKind): ClientHistoryState {
 	return {
 		length: window.history.length,
+		navigation,
 	}
 }
 
@@ -251,9 +287,10 @@ function addWindowListener<K extends keyof WindowEventMap>(
 function interceptHistoryMethod(method: 'pushState' | 'replaceState'): void {
 	const history = window.history
 	const original = history[method] as (...args: Parameters<History['pushState']>) => void
+	originalHistoryMethods[method] = original.bind(history)
 	const wrapped = function (this: History, ...args: Parameters<History['pushState']>) {
 		original.apply(this, args)
-		synchronizeUrl()
+		synchronizeUrl(method === 'pushState' ? 'push' : 'replace')
 	}
 
 	history[method] = wrapped as History['pushState']

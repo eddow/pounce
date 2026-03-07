@@ -3,13 +3,17 @@ import {
 	containerModel,
 	type HeadingProps,
 	headingModel,
+	setupToolbarNav,
 	type TextProps,
+	type ToolbarNavOptions,
 	textModel,
 } from '@pounce/ui/models'
 
 export type { ContainerProps, HeadingProps, TextProps }
 
 export type ToolbarProps = {
+	orientation?: ToolbarNavOptions['orientation']
+	cycleSegments?: ToolbarNavOptions['cycleSegments']
 	el?: JSX.IntrinsicElements['div']
 	children?: JSX.Children
 }
@@ -83,17 +87,26 @@ export const Toolbar: ((props: ToolbarProps) => JSX.Element) & {
 } = Object.assign(
 	(props: ToolbarProps) => (
 		<div
+			{...props.el}
+			role="toolbar"
+			use={(element: HTMLElement) =>
+				setupToolbarNav(element, {
+					orientation: props.orientation,
+					cycleSegments: props.cycleSegments,
+				})
+			}
 			style={{
 				display: 'flex',
 				alignItems: 'center',
 				gap: '0.75rem',
 			}}
-			{...props.el}
 		>
 			{props.children}
 		</div>
 	),
 	{
-		Spacer: (props: ToolbarSpacerProps) => <span style={{ flex: 1 }} {...props.el} />,
+		Spacer: (props: ToolbarSpacerProps) => (
+			<span data-toolbar-spacer="" style={{ flex: 1 }} {...props.el} />
+		),
 	}
 )

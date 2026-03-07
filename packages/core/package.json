@@ -60,6 +60,11 @@
       "types": "./dist/plugin.d.ts",
       "import": "./dist/plugin.js",
       "default": "./dist/plugin.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.js",
+      "default": "./dist/testing.js"
     }
   },
   "devDependencies": {
@@ -84,7 +89,7 @@
     }
   },
   "dependencies": {
-    "mutts": "link:../../../mutts",
+    "mutts": "^1.0.12",
     "@babel/core": "^7.28.4",
     "@babel/plugin-proposal-decorators": "^7.28.6",
     "@babel/plugin-transform-react-jsx": "^7.25.9",
@@ -99,6 +104,7 @@
     "!src/lib/*.spec.ts",
     "src/dom",
     "src/node",
+    "src/testing",
     "src/types",
     "src/shared.ts",
     "src/index.ts",

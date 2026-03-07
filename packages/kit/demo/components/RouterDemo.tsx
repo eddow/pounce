@@ -1,9 +1,12 @@
 import { reactive } from 'mutts'
 import { componentStyle } from '../../src/css'
 import { client } from '../../src/platform/shared'
-import { type ClientRouteDefinition, Router, type RouterRender } from '../../src/router/components'
+import { type ClientRouteDefinition, Router, type RouterRender, type RouterRouteDefinition } from '../../src/router/components'
 import { defineRoute } from '../../src/router/defs'
 import { type LinkProps, linkModel } from '../../src/router/link-model'
+
+const perfEnv = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env ?? {}
+const isPerfMode = perfEnv.VITE_PERF === 'true'
 
 componentStyle.css`
 	.rd-section { margin-bottom: 32px; }
@@ -47,8 +50,12 @@ componentStyle.css`
 
 function A(props: LinkProps) {
 	const model = linkModel(props)
+	const { prefetch: _prefetch, ...anchorProps } = props
 	return (
-		<a {...props} onClick={model.onClick} aria-current={model.ariaCurrent}>
+		<a
+			{...anchorProps}
+			{...model}
+		>
 			{props.children}
 		</a>
 	)
@@ -56,9 +63,32 @@ function A(props: LinkProps) {
 
 const userRoute = defineRoute('/router/users/[id]')
 
-type SubRoute = ClientRouteDefinition & { label: string; view: RouterRender<SubRoute> }
+type SubRoute = ClientRouteDefinition & { label: string }
 
-const subRoutes: SubRoute[] = [
+function loadLazyRoute(): Promise<RouterRender<SubRoute>> {
+	return new Promise((resolve) => {
+		window.setTimeout(() => {
+			resolve(() => (
+				<div data-testid="lazy-view">
+					<h1>Lazy</h1>
+					<p style="color:#94a3b8;font-size:13px;margin:8px 0 0">
+						Loaded on demand, then cached in the router.
+					</p>
+				</div>
+			))
+		}, 180)
+	})
+}
+
+function loadLazyErrorRoute(): Promise<RouterRender<SubRoute>> {
+	return new Promise((_, reject) => {
+		window.setTimeout(() => {
+			reject(new Error('Demo lazy route failed to load'))
+		}, 120)
+	})
+}
+
+const subRoutes: RouterRouteDefinition<SubRoute>[] = [
 	{
 		path: '/router',
 		label: 'Home',
@@ -122,9 +152,41 @@ const subRoutes: SubRoute[] = [
 			</div>
 		),
 	},
+	{
+		path: '/router/lazy',
+		label: 'Lazy',
+		lazy: loadLazyRoute,
+	},
+	{
+		path: '/router/lazy-pending',
+		label: 'Lazy Pending',
+		lazy: loadLazyRoute,
+		loading: () => (
+			<div data-testid="route-loading-view" style="color:#fbbf24">
+				Custom route loading…
+			</div>
+		),
+	},
+	{
+		path: '/router/lazy-error',
+		label: 'Lazy Error',
+		lazy: loadLazyErrorRoute,
+		error: ({ error }) => (
+			<div data-testid="route-error-view" style="color:#f87171">
+				<h1>Lazy route error</h1>
+				<p>{error instanceof Error ? error.message : String(error)}</p>
+			</div>
+		),
+	},
 ]
 
 const state = reactive({ customId: '42' })
+
+const navState = reactive({ entries: [] as string[] })
+
+function recordNavigation(entry: string) {
+	navState.entries = [entry, ...navState.entries].slice(0, 8)
+}
 
 export default function RouterDemo() {
 	return (
@@ -144,6 +206,12 @@ export default function RouterDemo() {
 				<A href="/router/users/2" data-testid="nav-user-2">User 2</A>
 				<A href="/router/users/abc">User abc</A>
 				<A href="/router/long" data-testid="nav-long">Long</A>
+				<A href="/router/lazy" data-testid="nav-lazy">Lazy</A>
+				<A href="/router/lazy" prefetch="hover" data-testid="nav-lazy-prefetch">Lazy prefetch</A>
+				<A href="/router/lazy" prefetch="intent" data-testid="nav-lazy-intent">Lazy intent</A>
+				<A href="/router/lazy" prefetch="visible" data-testid="nav-lazy-visible">Lazy visible</A>
+				<A href="/router/lazy-pending" data-testid="nav-lazy-pending">Lazy pending</A>
+				<A href="/router/lazy-error" data-testid="nav-lazy-error">Lazy error</A>
 				<A href="/router/nowhere">404</A>
 			</nav>
 			<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;font-size:13px">
@@ -155,9 +223,38 @@ export default function RouterDemo() {
 				/>
 				<A href={`/router/users/${state.customId}`}>Go</A>
 			</div>
+			<div class="rd-code" data-testid="nav-event-log" style="margin:0 0 12px; color:#a3e635; min-height:44px">
+				<for each={navState.entries}>{(entry) => <div data-testid="nav-event">{entry}</div>}</for>
+				<div if={navState.entries.length === 0} style="color:#475569">No navigation events yet</div>
+			</div>
 			<div class="rd-outlet">
 				<Router
 					routes={subRoutes}
+					onRouteStart={
+						isPerfMode
+							? undefined
+							: ({ from, navigation, route, to }) =>
+								recordNavigation(`start ${navigation} ${from ?? '(none)'} -> ${to} ${route?.path ?? '(none)'}`)
+					}
+					onRouteEnd={
+						isPerfMode
+							? undefined
+							: ({ navigation, route, status, to }) =>
+								recordNavigation(`end ${status} ${navigation} ${to} ${route?.path ?? '(none)'}`)
+					}
+					onRouteError={
+						isPerfMode
+							? undefined
+							: ({ error, navigation, route, to }) =>
+								recordNavigation(
+									`error ${navigation} ${to} ${route?.path ?? '(none)'} ${error instanceof Error ? error.message : String(error)}`
+								)
+					}
+					loading={({ route }) => (
+						<div data-testid="router-loading-view" style="color:#93c5fd">
+							Router loading {route.path}…
+						</div>
+					)}
 					notFound={(ctx) => (
 						<div data-testid="not-found-view" style="color:#f87171">
 							<h1>404</h1>

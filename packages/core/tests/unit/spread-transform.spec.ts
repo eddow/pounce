@@ -27,8 +27,8 @@ describe('spread attribute babel transform', () => {
 
 	it('wraps spread with other attrs: mixed case via pounceSpreadPlugin', () => {
 		const out = transform(`<Comp id="x" {...state.attrs} />`)
-		expect(out).toContain('c({id:"x"},')
-		expect(out).toContain('()=>state.attrs')
+		expect(out).toContain('_extends({id:"x"},')
+		expect(out).toContain('_pounce_c(()=>state.attrs)')
 	})
 
 	it('wraps spread of a plain identifier', () => {
@@ -46,11 +46,25 @@ describe('spread attribute babel transform', () => {
 		expect(out).toMatch(/import\s*\{[^}]*\bc\b[^}]*\}.*from"@pounce\/core"/)
 	})
 
+	it('does not import c when no composite helper is emitted', () => {
+		const out = transform(`<div id="x" />`)
+		expect(out).not.toMatch(/import\s*\{[^}]*\bc\b[^}]*\}.*from"@pounce\/core"/)
+	})
+
+	it('does not import Fragment when the file has no fragments', () => {
+		const out = transform(`<div id="x" />`)
+		expect(out).not.toMatch(/import\s*\{[^}]*\bFragment\b[^}]*\}.*from"@pounce\/core"/)
+	})
+
+	it('imports Fragment when the file uses JSX fragments', () => {
+		const out = transform(`<>ok</>`)
+		expect(out).toMatch(/import\s*\{[^}]*\bFragment\b[^}]*\}.*from"@pounce\/core"/)
+	})
+
 	it('wraps multiple spreads in a single c() with multiple arguments', () => {
 		const out = transform(`<Comp value={state.count} {...counts[state.locale]} />`)
-		// Should be: c({ value: r(() => state.count, val => state.count = val) }, () => counts[state.locale])
-		expect(out).toMatch(/c\(\{[^}]*value[^}]*\},\(\)=>counts\[state\.locale\]\)/)
-		expect(out).toContain('r(')
+		expect(out).toContain('_extends({value:_pounce_r(()=>state.count,val=>state.count=val)},')
+		expect(out).toContain('_pounce_c(()=>counts[state.locale])')
 	})
 
 	it('does not transform regular object spreads outside JSX', () => {

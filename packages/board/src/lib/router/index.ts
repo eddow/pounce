@@ -1,4 +1,3 @@
-import * as path from 'node:path'
 import {
 	type ParsedPathSegment,
 	parsePathSegment,
@@ -11,8 +10,50 @@ import {
  */
 function toFileUrl(filePath: string): string {
 	// Ensure absolute path and forward slashes
-	const absolutePath = path.resolve(filePath).replace(/\\/g, '/')
+	const absolutePath = normalizePath(filePath)
 	return `file://${absolutePath}`
+}
+
+function normalizePath(value: string): string {
+	return value.replace(/\\/g, '/')
+}
+
+function pathStem(value: string): string {
+	const normalized = normalizePath(value)
+	const fileName = normalized.slice(normalized.lastIndexOf('/') + 1)
+	const dotIndex = fileName.lastIndexOf('.')
+	return dotIndex === -1 ? fileName : fileName.slice(0, dotIndex)
+}
+
+function pathDirname(value: string): string {
+	const normalized = normalizePath(value)
+	const lastSlash = normalized.lastIndexOf('/')
+	if (lastSlash === -1) return '.'
+	if (lastSlash === 0) return '/'
+	return normalized.slice(0, lastSlash)
+}
+
+function pathJoin(...parts: string[]): string {
+	if (parts.length === 0) return ''
+	const normalizedParts = parts.map((part) => normalizePath(part))
+	const first = normalizedParts[0]
+	const hasLeadingSlash = first.startsWith('/')
+	const trimmed = normalizedParts
+		.map((part, index) => {
+			if (index === 0) return part.replace(/\/+$/g, '')
+			return part.replace(/^\/+|\/+$/g, '')
+		})
+		.filter((part) => part.length > 0)
+	const joined = trimmed.join('/')
+	return hasLeadingSlash && !joined.startsWith('/') ? `/${joined}` : joined
+}
+
+function relativeDepth(base: string, target: string): number {
+	const normalizedBase = normalizePath(base).replace(/\/+$/g, '')
+	const normalizedTarget = normalizePath(target).replace(/\/+$/g, '')
+	if (normalizedTarget === normalizedBase) return 0
+	if (!normalizedTarget.startsWith(`${normalizedBase}/`)) return Number.POSITIVE_INFINITY
+	return normalizedTarget.slice(normalizedBase.length + 1).split('/').length
 }
 
 // Re-export for convenience
@@ -369,7 +410,7 @@ export async function buildRouteTree(
 			}
 		} else if (name.endsWith('.tsx')) {
 			// Named .tsx component file
-			const fileNameNoExt = path.parse(name).name
+			const fileNameNoExt = pathStem(name)
 			let childNode = node
 
 			if (fileNameNoExt !== 'index') {
@@ -398,7 +439,7 @@ export async function buildRouteTree(
 			}
 		} else if (name.endsWith('.ts')) {
 			// API routes mapped via expose() tree flattening
-			const fileNameNoExt = path.parse(name).name
+			const fileNameNoExt = pathStem(name)
 
 			if (fileNameNoExt !== 'index') {
 				const segmentInfo = parseSegment(fileNameNoExt)
@@ -426,8 +467,15 @@ export async function buildRouteTree(
 					if (relativePath.startsWith('/')) relativePath = relativePath.slice(1)
 				}
 
-				const urlPathDir = path.dirname(relativePath)
-				const fileStem = path.parse(relativePath).name
+				const relativeSegments = normalizePath(relativePath)
+					.split('/')
+					.filter((segment) => segment.length > 0)
+				const fileSegment = relativeSegments[relativeSegments.length - 1] ?? relativePath
+				const routeSegments = relativeSegments
+					.slice(0, -1)
+					.filter((segment) => !(segment.startsWith('(') && segment.endsWith(')')))
+				const urlPathDir = routeSegments.length > 0 ? routeSegments.join('/') : '.'
+				const fileStem = pathStem(fileSegment)
 
 				let baseUrl = ''
 				if (urlPathDir === '.') {
@@ -452,7 +500,7 @@ export async function buildRouteTree(
 	}
 
 	async function scan(dir: string, node: RouteTreeNode) {
-		if (path.relative(routesDir, dir).split(path.sep).length > 20) {
+		if (relativeDepth(routesDir, dir) > 20) {
 			console.warn(`[pounce-board] Route recursion depth exceeded at ${dir}`)
 			return
 		}
@@ -481,14 +529,14 @@ export async function buildRouteTree(
 
 		for (const file of files) {
 			if (file.name.startsWith('+')) continue
-			const entryPath = path.join(dir, file.name)
+			const entryPath = pathJoin(dir, file.name)
 			const loader = () => importFn(entryPath)
 			await processFile(file.name, loader, node, entryPath)
 		}
 
 		for (const directory of dirs) {
 			if (directory.name.startsWith('+')) continue
-			const entryPath = path.join(dir, directory.name)
+			const entryPath = pathJoin(dir, directory.name)
 			const segmentInfo = parseSegment(directory.name)
 			const isGroup = directory.name.startsWith('(') && directory.name.endsWith(')')
 

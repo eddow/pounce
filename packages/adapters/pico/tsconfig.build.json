@@ -1,0 +1,19 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"rootDir": ".",
+		"paths": {
+			"@pounce/core": ["../../core/dist/index"],
+			"@pounce/core/*": ["../../core/dist/*"],
+			"@pounce/kit": ["../../kit/dist/index"],
+			"@pounce/kit/*": ["../../kit/dist/*"],
+			"@pounce/ui": ["../../ui/dist/index"],
+			"@pounce/ui/*": ["../../ui/dist/*"],
+			"@pounce/ui/models": ["../../ui/dist/models/index"],
+			"mutts": ["../../../../mutts/dist/index"],
+			"mutts/*": ["../../../../mutts/dist/*"]
+		}
+	},
+	"include": ["src/**/*"],
+	"exclude": ["dist", "demo", "node_modules"]
+}

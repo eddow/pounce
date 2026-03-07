@@ -43,7 +43,7 @@ describe('SSR Flow Integration', () => {
 		expect(html).toContain('{"user":"tester","id":123}')
 
 		// Verify it's in the head (as per our current implementation in hono.ts)
-		expect(html).toContain('{"user":"tester","id":123}</script>\n</head>')
+		expect(html).toContain('{"user":"tester","id":123}</script>\n\n</head>')
 	})
 
 	it('should handle multiple SSR data points', async () => {

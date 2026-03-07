@@ -1,7 +1,7 @@
 import { reactive, resource } from 'mutts'
 import { ApiError } from '../../src/api/core'
+import { api, intercept } from '../../src/api'
 import { componentStyle } from '../../src/css'
-import { api, intercept } from '../../src/dom/api'
 
 type Post = { id: number; title: string; body: string; userId: number }
 

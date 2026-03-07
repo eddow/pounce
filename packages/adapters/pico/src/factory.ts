@@ -12,8 +12,23 @@ import { uiComponent } from '@pounce/ui'
  * - ghost: transparent background
  */
 const PICO_VARIANTS = ['primary', 'secondary', 'contrast', 'danger', 'success', 'ghost'] as const
-// TODO: What do we do with `outline`? Do we dedup all variants? (secondaryOutline, ...)  Or another system?
 export type PicoVariant = (typeof PICO_VARIANTS)[number]
+export type PicoOutlineProps = {
+	outline?: boolean
+}
+export type PicoVariantProps = {
+	variant?: PicoVariant
+}
+export type PicoButtonLikeProps<Props extends { variant?: string }> = Omit<Props, 'variant'> &
+	PicoVariantProps &
+	PicoOutlineProps
+
+export function picoButtonClass(variant?: PicoVariant, outline?: boolean): string {
+	const classes = ['btn']
+	if (outline) classes.push('outline')
+	if (variant) classes.push(`btn-${variant}`)
+	return classes.join(' ')
+}
 
 /**
  * Component factory for PicoCSS adapter
@@ -21,7 +36,7 @@ export type PicoVariant = (typeof PICO_VARIANTS)[number]
  * @example
  * ```tsx
  * export const Button = picoComponent(function Button(props) {
- *   return <button class={`btn btn-${props.variant ?? 'secondary'}`}>...</button>
+ *   return <button class={picoButtonClass(props.variant ?? 'secondary', props.outline)}>...</button>
  * })
  * ```
  */

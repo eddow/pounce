@@ -46,12 +46,12 @@ See [Component Reactivity Rules](./component-reactivity.md) for detailed example
   - Use `<env ...>` to inject values/functions into the `env` for descendants without a wrapper node.
   - Conditional attributes (`if:name`, `when:name`) and mixins (`use:name`) read from `env`.
 
-### Refs and Mount Hooks
-- **Refs via `this`**: Use the `this` attribute to receive the rendered target.
-  - Elements: `HTMLElement`
-  - Components: the rendered target (treat as `Node | Node[]` defensively)
-- **Mixins with `use:`**: Attach behaviors at mount time.
-  - `use={callback}` for a one‑shot mount hook.
+### Refs and Directives
+ - **Refs via `this`**: Use the `this` attribute to receive the rendered target.
+   - Elements: `HTMLElement`
+   - Components: the rendered target (treat as `Node | Node[]` defensively)
+- **Directives with `use:`**: Attach behaviors to rendered targets.
+  - `use={callback}` for an inline directive that runs in an effect and may return cleanup.
   - `use:name={value}` to call a env-based mixin that may react to `value` and return a cleanup.
 
 ### Forms and Two‑Way Binding

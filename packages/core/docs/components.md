@@ -268,29 +268,25 @@ function TodoList(props: { todos: Todo[] }) {
 4. **Handle events properly**: Use optional chaining for callbacks
 5. **Clean up effects**: Return cleanup functions from `effect()`
 
-
 ## `use:` mixins (element/component directives)
 
 The `use:` directive lets you attach behaviors ("mixins") implemented on the current `env` to either DOM elements or component results.
 
-- Define a mixin on the env: `env.myMixin(target, value, env)`
+- Define a mixin on the env: `env.myMixin(target, value, access)`
 - Use it in JSX: `use:myMixin={value}`
 
 Signature
 
-### `use={callback}` (mount hook)
+### `use={callback}` (inline directive)
 
-Attach an inline mount callback without defining a mixin on `env`.
+Attach an inline directive without defining a mixin on `env`.
 
-- Signature: `use={(target, env) => void}`
+- Signature: `use={(target, access) => void | (() => void)}`
 - `target`: `Node | Node[]` — the rendered target. Intrinsic elements receive a single `Node`. Components may yield a `Node` or `Node[]`.
-- `env`: the current reactive environment object.
-- **Synchronous**: Called once during creation, NOT within a reactive effect.
+- `access`: the current effect access handle.
+- **Effect-bound**: Called within an effect, may be cleaned up and re-run when the directive value changes.
 
-
-> **Important**: The Pounce-TS Babel plugin **automatically transforms** `use={handler}` into `use={() => handler}`.
-> You should **NOT** write `use={() => handler}` manually, as this would result in a double-wrapped function (`() => () => handler`) which will not work as expected.
-> Simply assign your handler function directly to the `use` attribute.
+> **Important**: pass the directive function directly to `use={...}`. Do not double-wrap it manually.
 
 Example:
 
@@ -319,7 +315,8 @@ function Demo(props: {}, env: Env) {
 
 Notes:
 - This is a convenience alternative to `use:name` when you don't need to reuse the behavior via `env`.
-- The callback is invoked once on mount and does not support reactive updates or cleanup return values. For reactive behavior or cleanup, prefer `use:name` implemented as an env mixin.
+- Like `use:name`, it may return a cleanup function.
+- Layered `use={...}` directives accumulate.
 - `target`: `Node | Node[]` — the rendered node(s). For components, handle either a single node or an array.
 - `value`: any | undefined — the value passed from `use:path={...}`; bare `use:path` yields `undefined`.
 - `access`: `EffectAccess` — provides control over the reactive effect.
@@ -369,21 +366,19 @@ Use the `this` attribute to capture a reference to either:
 - **The rendered output of a component** (treat as `Node | Node[]`).
 
 Behavior
-- The value passed to `this` must be an L‑value (a ref sink). In the default renderer, this is anything that provides a callable value with a `.set(...)` method; on render, the renderer will call that setter with the rendered value.
+- `this` expects a callback.
 - The value provided to your setter will be:
   - `HTMLElement` for regular DOM elements.
   - `Node | Node[]` for components, depending on their rendered output.
-- The setter may be called more than once due to re-renders.
-
-Examples
-
-Capture a DOM element:
+- On unlatch / cleanup, the callback is called again with `undefined`.
 
 ```tsx
 const refs: Record<string, any> = {}
 
 <input
-  this={refs.input}
+  this={(node) => {
+    refs.input = node
+  }}
   value={state.sharedCount}
 />
 ```
@@ -411,6 +406,4 @@ const refs: Record<string, any> = {}
 
 Notes
 - Handle component refs as `Node | Node[]`. If you need a single node, pick the first when you receive an array.
-- If your own ref abstraction differs, adapt your L‑value so that `this={...}` receives a setter that accepts `Node | Node[]`.
-
-
+- If your own ref abstraction differs, adapt it so the callback you pass to `this={...}` can accept `Node | Node[] | undefined`.

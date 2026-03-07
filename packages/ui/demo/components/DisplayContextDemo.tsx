@@ -1,5 +1,6 @@
 import type { Env } from '@pounce/core'
-import { Date as IntlDate, DisplayProvider, Number as IntlNumber, useDisplayContext } from '@pounce/kit'
+import { DisplayProvider, useDisplayContext } from '@pounce/kit'
+import { Date as IntlDate, Number as IntlNumber } from '@pounce/kit/intl'
 import { type ThemeValue, themeToggleModel } from '@pounce/ui'
 import { reactive } from 'mutts'
 

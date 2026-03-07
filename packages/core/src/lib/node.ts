@@ -1,39 +1,34 @@
-import { reactive } from 'mutts'
-import { document } from '../shared'
+import { document, mountedNodes } from '../shared'
 import { latchOwners } from './reconciler'
 
-export const mountedNodes = reactive(new WeakSet<Node>())
-const originalIsConnected = Object.getOwnPropertyDescriptor(Node.prototype, 'isConnected')
+const NodeConstructor = globalThis.Node
+const originalIsConnected = NodeConstructor
+	? Object.getOwnPropertyDescriptor(NodeConstructor.prototype, 'isConnected')
+	: undefined
 
-Object.defineProperty(Node.prototype, 'isConnected', {
-	...originalIsConnected,
-	get() {
-		// TODO latchOwners should be tracked with a MutationObserver and treated here normally
-		const nodeTruth = originalIsConnected?.get?.call(this)
-		if (latchOwners.has(this)) return nodeTruth
-		if (nodeTruth !== mountedNodes.has(this)) {
-			if (nodeTruth) mountedNodes.add(this)
-			else mountedNodes.delete(this)
-			// third-party modification recovered silently
-		}
-		return nodeTruth
-	},
-})
+if (NodeConstructor && originalIsConnected) {
+	Object.defineProperty(NodeConstructor.prototype, 'isConnected', {
+		...originalIsConnected,
+		get() {
+			const nodeTruth = originalIsConnected.get?.call(this)
+			if (latchOwners.has(this)) return nodeTruth
+			if (nodeTruth !== mountedNodes.has(this)) {
+				if (nodeTruth) mountedNodes.add(this)
+				else mountedNodes.delete(this)
+			}
+			return nodeTruth
+		},
+	})
+}
 
 export function* walk(root: Node) {
-	if (root instanceof Element) {
-		yield root
-		const doc = root.ownerDocument || document
-		// 2. Walk the descendants
-		const walker = doc.createTreeWalker(
-			root,
-			NodeFilter.SHOW_ELEMENT, // Skip text/comments entirely
-			null
-		)
+	yield root
+	if (!(typeof Element !== 'undefined' && root instanceof Element)) return
+	const doc = root.ownerDocument || document
+	const walker = doc.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null)
 
-		let currentNode: Node | null
-		while ((currentNode = walker.nextNode())) yield currentNode
-	}
+	let currentNode: Node | null
+	while ((currentNode = walker.nextNode())) yield currentNode
 }
 
 export function syncRegistry(root: Node, action: 'add' | 'delete', connecting: boolean) {

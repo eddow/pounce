@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { h, latch } from '../../src'
+import { latch } from '../../src'
 import { effect, reactive } from 'mutts'
 
 describe('<catch> meta attribute', () => {

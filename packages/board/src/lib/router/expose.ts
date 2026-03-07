@@ -48,12 +48,57 @@ export interface RouteRegistryEntry {
 	filePath?: string
 }
 
-export const routeRegistry = new Map<string, RouteRegistryEntry>()
-export const fileRegistry = new Map<string, any>()
+declare global {
+	var __POUNCE_EXPOSE_ROUTE_REGISTRY__: Map<string, RouteRegistryEntry> | undefined
+	var __POUNCE_EXPOSE_FILE_REGISTRY__: Map<string, any> | undefined
+}
+
+export const routeRegistry =
+	globalThis.__POUNCE_EXPOSE_ROUTE_REGISTRY__ ??
+	(globalThis.__POUNCE_EXPOSE_ROUTE_REGISTRY__ = new Map<string, RouteRegistryEntry>())
+
+export const fileRegistry =
+	globalThis.__POUNCE_EXPOSE_FILE_REGISTRY__ ??
+	(globalThis.__POUNCE_EXPOSE_FILE_REGISTRY__ = new Map<string, any>())
 
 export function clearExposeRegistry(): void {
 	routeRegistry.clear()
 	fileRegistry.clear()
+}
+
+function toStreamHandler(handler: RouteHandler<any>): RouteHandler<any> {
+	return async (req: PounceRequest) => {
+		const result = await handler(req)
+		if (result instanceof Response) return result
+
+		const asyncIterable =
+			result && typeof result === 'object' && Symbol.asyncIterator in result
+				? (result as AsyncIterable<unknown>)
+				: null
+
+		if (!asyncIterable) return result
+
+		const stream = new ReadableStream({
+			async start(controller) {
+				try {
+					for await (const chunk of asyncIterable) {
+						controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(chunk)}\n\n`))
+					}
+					controller.close()
+				} catch (error) {
+					controller.error(error)
+				}
+			},
+		})
+
+		return new Response(stream, {
+			headers: {
+				'Content-Type': 'text/event-stream',
+				'Cache-Control': 'no-cache',
+				Connection: 'keep-alive',
+			},
+		})
+	}
 }
 
 // ==========================================
@@ -147,7 +192,7 @@ export function expose<
 			} else {
 				// HTTP Verb leaf
 				entry.endpoints.set(key as HTTPVerb, {
-					handler: node[key],
+					handler: key === 'stream' ? toStreamHandler(node[key]) : node[key],
 					middle: combinedMiddle,
 				})
 			}

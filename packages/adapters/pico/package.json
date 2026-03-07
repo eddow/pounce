@@ -26,7 +26,6 @@
 		"build:js": "vite build",
 		"build:css": "sass src/pico.sass dist/pico.css --style=compressed --no-source-map",
 		"type-check": "tsc --noEmit",
-		"dev": "vite dev --config demo/vite.config.ts",
 		"demo": "vite dev --config demo/vite.config.ts",
 		"test": "vitest run",
 		"test:watch": "vitest"

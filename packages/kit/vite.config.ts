@@ -53,6 +53,7 @@ export default defineConfig({
         index: resolve(projectRootDir, 'src/index.ts'),
         dom: resolve(projectRootDir, 'src/dom/index.ts'),
         node: resolve(projectRootDir, 'src/node/index.ts'),
+        intl: resolve(projectRootDir, 'src/intl.tsx'),
         models: resolve(projectRootDir, 'src/models.ts'),
       },
       formats: ['es', 'cjs'],

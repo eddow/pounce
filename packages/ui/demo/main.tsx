@@ -8,18 +8,22 @@ import {
 } from '@pounce/kit'
 import AccordionDemo from './components/AccordionDemo'
 import CheckButtonDemo from './components/CheckButtonDemo'
+import DisplayContextDemo from './components/DisplayContextDemo'
+import DockviewDemo from './components/DockviewDemo'
 import FormDemo from './components/FormDemo'
 import MenuDemo from './components/MenuDemo'
 import MultiSelectDemo from './components/MultiSelectDemo'
 import OverlayDemo from './components/OverlayDemo'
 import ProgressDemo from './components/ProgressDemo'
 import StarsDemo from './components/StarsDemo'
-import DisplayContextDemo from './components/DisplayContextDemo'
 
 function AppLink(props: LinkProps) {
 	const model = linkModel(props)
 	return (
-		<a href={props.href} onClick={model.onClick} aria-current={model.ariaCurrent}>
+		<a
+			{...props}
+			{...model}
+		>
 			{props.children}
 		</a>
 	)
@@ -33,6 +37,7 @@ const routes: DemoRoute[] = [
 	{ path: '/drawer', label: null, view: () => <OverlayDemo /> },
 	{ path: '/accordion', label: 'Accordion', view: () => <AccordionDemo /> },
 	{ path: '/checkbutton', label: 'CheckButton', view: () => <CheckButtonDemo /> },
+	{ path: '/dockview', label: 'Dockview', view: () => <DockviewDemo /> },
 	{ path: '/menu', label: 'Menu', view: () => <MenuDemo /> },
 	{ path: '/multiselect', label: 'MultiSelect', view: () => <MultiSelectDemo /> },
 	{ path: '/progress', label: 'Progress', view: () => <ProgressDemo /> },

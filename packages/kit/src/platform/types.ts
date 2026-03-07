@@ -1,3 +1,6 @@
+import type { Children, Env } from '@pounce/core'
+import type { ScopedCallback } from 'mutts'
+
 /** Parsed representation of the current URL. */
 export interface ClientUrl {
 	readonly href: string
@@ -18,9 +21,13 @@ export interface ClientViewport {
 /** Universal fallback for `DocumentVisibilityState`. */
 export type VisibilityState = 'visible' | 'hidden'
 
+/** What caused the latest URL/history synchronization. */
+export type NavigationKind = 'load' | 'push' | 'replace' | 'pop' | 'hash'
+
 /** Snapshot of the browser history state. */
 export interface ClientHistoryState {
 	readonly length: number
+	readonly navigation: NavigationKind
 }
 
 /** Text direction, auto-detected from `<html dir>`. */
@@ -57,6 +64,8 @@ export interface Client extends ClientState {
 	dispose(): void
 }
 
+export type HeadMount = (content: Children, env?: Env) => ScopedCallback
+
 /**
  * Platform adapter — the contract between kit and its environment.
  *
@@ -66,9 +75,10 @@ export interface Client extends ClientState {
  * - **SSR adapter** (provided by board or any SSR engine): ALS-backed client,
  *   request-scoped isolation — that's the adapter's business.
  *
- * Head injection: use `latch(document.head, ...)` from @pounce/core directly.
+ * Head injection: provide `mountHead()` so shared kit head management can mount additively in DOM/test and serialize through SSR adapters.
  */
 export interface PlatformAdapter {
 	/** Reactive client state singleton */
 	readonly client: Client
+	readonly mountHead?: HeadMount
 }

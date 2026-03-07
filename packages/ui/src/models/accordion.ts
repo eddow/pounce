@@ -99,10 +99,12 @@ export function accordionModel(props: AccordionProps, env?: AccordionEnv): Accor
 			return {
 				get open() {
 					if (props.group !== undefined && props.value !== undefined) {
-						return isOpenByGroup() || props.open === true
+						const byGroup = isOpenByGroup() || props.open === true
+						return byGroup || undefined
 					}
 					if (env?.accordionGroup !== undefined && el) {
-						return isOpenByGroup() || props.open === true
+						const byGroup = isOpenByGroup() || props.open === true
+						return byGroup || undefined
 					}
 					return props.open
 				},

@@ -7,7 +7,8 @@ export type MenuProps = {
 }
 
 export type MenuItemProps = {
-	href: string
+	href?: string
+	onClick?: (e: MouseEvent) => void
 	children?: JSX.Children
 }
 

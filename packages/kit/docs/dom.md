@@ -2,6 +2,34 @@
 
 Browser-specific utilities exported from `@pounce/kit/dom` (or `@pounce/kit` in browser context).
 
+## Head Management
+
+Use kit's shared `<Head>` component or `useHead()` helper to mount document head content.
+
+```tsx
+import { Head, useHead } from '@pounce/kit'
+
+function Page() {
+  return <>
+    <Head>
+      <title>Dashboard</title>
+      <meta property="og:title" content="Dashboard" />
+    </Head>
+    <main>...</main>
+  </>
+}
+
+const stop = useHead(<link rel="canonical" href="https://example.com/dashboard" />)
+stop()
+```
+
+Notes:
+
+- head content is mounted additively into `document.head`
+- multiple `<Head>` instances compose without replacing one another
+- reactive bindings inside `<Head>` update in place like normal kit content
+- do not use `latch(document.head, ...)` for kit-managed head content; `latch()` owns and replaces the whole target element
+
 ## CSS Injection
 
 Kit provides template tag functions for inline CSS that are processed by the Vite plugin at build time.
@@ -73,7 +101,7 @@ For syntax highlighting in template literals, install the [es6-string-html](http
 Creates a reactive object synced to `localStorage` with inter-tab communication.
 
 ```typescript
-import { stored } from '@pounce/kit'
+import { stored } from '@pounce/kit/dom'
 
 const prefs = stored({
   theme: 'light',
@@ -100,7 +128,7 @@ prefs.theme = 'dark'
 ### Custom Serialization
 
 ```typescript
-import { json } from '@pounce/kit'
+import { json } from '@pounce/kit/dom'
 
 // Override the global JSON parser/serializer
 json.parse = (value) => myCustomParse(value)

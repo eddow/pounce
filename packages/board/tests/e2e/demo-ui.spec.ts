@@ -45,7 +45,7 @@ test.describe('Demo UI', () => {
 		await expect(page.locator('article h1')).toHaveText('First Post')
 		await expect(page.locator('article p')).toContainText('Hello World')
 		// Back link
-		await expect(page.locator('a[href="/posts"]')).toBeVisible()
+		await expect(page.locator('article a[href="/posts"]')).toBeVisible()
 	})
 
 	// ── Users section (nested layout) ────────────────────────────────

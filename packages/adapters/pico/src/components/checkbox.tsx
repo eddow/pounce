@@ -17,7 +17,7 @@ export const Checkbox = picoComponent(function Checkbox(props: CheckboxProps) {
 
 	return (
 		<label style="display:inline-flex;align-items:center">
-			<input {...model.input} />
+			<input {...props.el} {...model.input} />
 			{gather(props.children)}
 		</label>
 	)

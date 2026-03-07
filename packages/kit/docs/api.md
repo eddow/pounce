@@ -1,6 +1,6 @@
 # API Client
 
-Kit provides a universal HTTP client with **interceptors**, **SSR hydration**, **middleware**, and **automatic retry**. The same API surface works in both browser (fetch) and SSR (server dispatch).
+Kit provides a universal HTTP client with **interceptors**, **shared context hooks**, **middleware**, **streaming**, and **automatic retry**. The exported singleton starts with standard `fetch` forwarding behavior, and server/framework integrations patch behavior through the shared hooks.
 
 ## Quick Start
 
@@ -20,13 +20,17 @@ const user = await api('/api/users/[id]').get<User>({ id: '42' })
 import { defineRoute } from '@pounce/kit'
 const userRoute = defineRoute('/api/users/[id]')
 const user = await api(userRoute, { id: '42' }).get<User>()
+
+// Warm a GET before it is needed
+await api('/api/users/[id]').prefetch<User>({ id: '42' })
 ```
 
 ## `ApiClientInstance`
 
 ```typescript
 interface ApiClientInstance<P extends string> {
-  get<T>(params?: ExtractPathParams<P>): HydratedPromise<T>
+  get<T>(params?: ExtractPathParams<P>): Promise<T>
+  prefetch<T>(params?: ExtractPathParams<P>, options?: { ttl?: number; signal?: AbortSignal }): Promise<T>
   post<T>(body: unknown): Promise<T>
   put<T>(body: unknown): Promise<T>
   del<T>(params?: ExtractPathParams<P>): Promise<T>
@@ -37,27 +41,27 @@ interface ApiClientInstance<P extends string> {
 
 `ExtractPathParams` is a type-level utility that extracts `{ id: string }` from `"/users/[id]"`.
 
-## SSR Hydration
+`prefetch()` performs a GET early and stores the resolved value in a short-lived in-memory cache. A later `get()` for the same URL reuses the prefetched value while it is still fresh. The default TTL is 5 seconds and can be overridden per call.
 
-GET requests support **hydrated promises** — the server pre-fetches data and injects it as `<script>` tags. The client reads the injected data synchronously on first render, avoiding a waterfall.
+## Context Hooks
 
-```typescript
-const promise = api('/api/data').get<Data>()
-promise.hydrated // Data | undefined — available synchronously if SSR-injected
-```
-
-### Server Side
+The shared API context layer exposes hook slots for framework integrations:
 
 ```typescript
-import { withSSRContext, getCollectedSSRResponses, injectApiResponses } from '@pounce/kit/node'
+import {
+  setRequestHook,
+  setResponseHook,
+  setPromiseHook,
+  setStreamGuardHook,
+} from '@pounce/kit'
 
-const { result, context } = await withSSRContext(async () => {
-  return renderApp()
-}, 'http://localhost:3000')
+setRequestHook((method, url) => {
+  // short-circuit GETs from a cache, if desired
+})
 
-const responses = getCollectedSSRResponses()
-const responses = getCollectedSSRResponses()
-const html = injectApiResponses(result, responses)
+setResponseHook((method, url, data) => {
+  // collect successful responses
+})
 ```
 
 ## Streaming (SSE)
@@ -102,14 +106,11 @@ Interceptors are scoped: global ones persist, context-scoped ones (registered in
 ## Configuration
 
 ```typescript
-import { config, enableSSR, disableSSR } from '@pounce/kit'
+import { config } from '@pounce/kit'
 
 config.timeout = 10000  // Request timeout (ms)
 config.retries = 3      // Retry count for 5xx/408 errors
 config.retryDelay = 100 // Delay between retries (ms)
-
-enableSSR()   // Enable SSR data collection
-disableSSR()  // Disable and clear SSR data
 ```
 
 ## Server-Side Middleware

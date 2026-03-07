@@ -259,7 +259,7 @@ describe('useAccordion', () => {
 		const el = document.createElement('details')
 		el.addEventListener('toggle', model.details.onToggle)
 
-		expect(model.details.open).toBe(false)
+		expect(model.details.open).toBeUndefined()
 
 		el.open = true
 		el.dispatchEvent(new Event('toggle'))
@@ -308,7 +308,7 @@ describe('useAccordion', () => {
 		secondEl.dispatchEvent(new Event('toggle'))
 
 		expect(state.group).toBe('b')
-		expect(first.details.open).toBe(false)
+		expect(first.details.open).toBeUndefined()
 		expect(second.details.open).toBe(true)
 	})
 })

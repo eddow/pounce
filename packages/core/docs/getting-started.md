@@ -1,23 +1,22 @@
 # Getting Started with Pounce-TS
 
-Pounce-TS is a lightweight, reactive web framework built with TypeScript and JSX. It provides a simple, intuitive way to build web applications with automatic reactivity, two-way binding, and component-based architecture.
+Pounce-TS is a fine-grained reactive web framework built with TypeScript, JSX, and `mutts`. Components render once, then reactive bindings keep the DOM updated without component rebuilds.
 
 ## Features
 
 - 🚀 **Lightweight**: Minimal overhead, no virtual DOM
-- ⚡ **Reactive**: Automatic reactivity with `mutts` reactivity engine
+- ⚡ **Reactive**: Fine-grained reactivity with `mutts`
 - 🔄 **Two-Way Binding**: Automatic detection and setup of two-way data binding
 - 🎨 **JSX Support**: Write components using familiar JSX syntax
 - 💪 **Type-Safe**: Full TypeScript support with type safety
 - 🧩 **Component-Based**: Create reusable, composable components
-- 🎯 **No Build Step Required**: Works with Vite for development
+- 🎯 **Render-once components**: Reactivity lives in JSX, directives, and effects
 
 ## Installation
 
 ### Prerequisites
 
 - Node.js (v18 or higher)
-- npm or yarn
 
 ### Setup
 
@@ -73,8 +72,8 @@ function MyApp() {
   )
 }
 
-// Bind to DOM element (latch expects a selector first)
-latch('#app', () => <MyApp />)
+// Mount into the DOM
+latch('#app', <MyApp />)
 ```
 
 Create an HTML file with a container:

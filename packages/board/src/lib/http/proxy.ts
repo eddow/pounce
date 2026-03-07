@@ -95,11 +95,29 @@ export function defineProxy<Endpoints extends Record<string, ProxyEndpointConfig
 	const proxy = new Proxy(
 		{},
 		{
-			get(_, endpointName: string) {
+			get(_, endpointName: string | symbol) {
+				if (typeof endpointName !== 'string') return undefined
 				if (endpointName === '$cache') return proxyCache
 
 				const endpoint = config.endpoints[endpointName]
 				if (!endpoint) {
+					// Return undefined for framework/inspection keys ($$typeof, then, toJSON, etc.)
+					// so that object inspection, promise-like detection, and serialization don't throw.
+					const inspectionKeys = new Set([
+						'$$typeof',
+						'then',
+						'toJSON',
+						'inspect',
+						'constructor',
+						'__esModule',
+					])
+					if (
+						inspectionKeys.has(endpointName) ||
+						endpointName.startsWith('_') ||
+						endpointName.startsWith('$')
+					) {
+						return undefined
+					}
 					throw new Error(`Endpoint ${endpointName} not found in proxy`)
 				}
 

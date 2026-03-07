@@ -1,70 +1,117 @@
 # Select
 
-A headless select primitive with value binding and change handling.
+This page covers both exported selection helpers from `src/models/options.tsx`:
 
-## Props
+- `selectModel`
+- `comboboxModel`
+
+## Option type
+
+Both APIs use the same option shape:
 
 ```ts
-interface SelectProps<T = string> {
-  /** Current selected value */
-  value?: T
-  /** Array of options */
-  options?: Array<{ value: T; label: string }>
-  /** Change handler - receives the selected value */
-  onInput?: (value: T) => void
-  /** Whether the select is disabled */
-  disabled?: boolean
-  /** Form name */
-  name?: string
+type Option = string | { value: string; label?: string; disabled?: boolean }
+```
+
+## `selectModel`
+
+### Props
+
+```ts
+type SelectProps = VariantProps &
+	DisableableProps &
+	ValidationProps &
+	ElementPassthroughProps<'select'> &
+	JSX.IntrinsicElements['select'] & {
+		fullWidth?: boolean
+		options?: readonly Option[]
+		onInput?: (value: string) => void
+	}
+```
+
+`ValidationProps` currently includes:
+
+```ts
+type ValidationProps = {
+	valid?: boolean | 'warning'
+	validationMessage?: JSX.Children
 }
 ```
 
-## Usage
+### Return shape
+
+```ts
+type SelectModel = {
+	readonly select: JSX.IntrinsicElements['select']
+	readonly options: JSX.Element
+}
+```
+
+### Important behavior
+
+- `model.select` forwards almost all select attributes through to the target element
+- `model.select.onInput` wraps the DOM event and calls your callback with `e.target.value`
+- `model.options` renders the option list for you as JSX
+- initial selection is derived from the initial `props.value`
+
+### Usage
 
 ```tsx
 import { selectModel } from '@pounce/ui'
 
-function Select<T = string>(props: SelectProps<T>) {
-  const model = selectModel(props)
-  return (
-    <select {...model.select}>
-      {props.options?.map(opt => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
-  )
+function Select(props) {
+	const model = selectModel(props)
+	return <select {...model.select} {...props.el}>{model.options}</select>
 }
-
-// Example
-<Select
-  value={selectedColor}
-  options={[
-    { value: 'red', label: 'Red' },
-    { value: 'green', label: 'Green' },
-    { value: 'blue', label: 'Blue' }
-  ]}
-  onInput={(value) => setSelectedColor(value)}
-/>
 ```
 
-## Model API
+## `comboboxModel`
 
-The `selectModel` returns:
+### Props
 
 ```ts
-interface SelectModel {
-  /** Spreadable attrs for the `<select>` element */
-  select: {
-    value?: string
-    disabled?: boolean
-    name?: string
-    onInput?: (e: Event) => void  // Wraps to extract e.target.value
-  }
+type ComboboxProps = VariantProps &
+	DisableableProps &
+	ValidationProps & {
+		el?: InputTextAttrs
+	} & Omit<InputTextAttrs, 'list'> & {
+		options?: readonly Option[]
+	}
+```
+
+### Return shape
+
+```ts
+type ComboboxModel = {
+	readonly input: InputTextAttrs
+	readonly dataList: JSX.Element
+}
+```
+
+### Important behavior
+
+- the model generates a stable datalist id
+- `model.input` supplies the `list` attribute for the input
+- `model.dataList` renders the `<datalist>` with all options
+
+### Usage
+
+```tsx
+import { comboboxModel } from '@pounce/ui'
+
+function Combobox(props) {
+	const model = comboboxModel(props)
+	return (
+		<div>
+			<input {...props} {...model.input} />
+			{model.dataList}
+		</div>
+	)
 }
 ```
 
 ## Notes
 
-The `onInput` handler in the model automatically extracts the value from the DOM Event before calling your callback, so you receive the actual value type instead of the Event object.
+- `selectModel` owns the option JSX rendering
+- `comboboxModel` owns the datalist wiring only
+- both APIs are string-based today

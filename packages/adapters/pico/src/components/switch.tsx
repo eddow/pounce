@@ -16,7 +16,7 @@ export function Switch(props: SwitchProps) {
 
 	return (
 		<label style="display:inline-flex;align-items:center">
-			<input {...model.input} />
+			<input {...props.el} {...model.input} />
 			{gather(props.children)}
 		</label>
 	)

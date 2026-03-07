@@ -1,14 +1,12 @@
-import { type LinkProps, linkModel } from '@pounce/kit/models'
+import { type LinkProps, linkModel } from '@pounce/kit'
 
 export type { LinkProps }
 
 export function A(props: LinkProps) {
 	const model = linkModel(props)
-	// TODO: 1- shouldn't untrack, whut ??!? 2- therefore not updated
 	return (
-		//untracked(() => (
-		<a {...model} {...props}>
+		<a {...props} {...model}>
 			{props.children}
 		</a>
-	) //)
+	)
 }

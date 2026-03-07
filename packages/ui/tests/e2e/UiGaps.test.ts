@@ -1,4 +1,4 @@
-import { type Page, test, expect } from '@playwright/test'
+import { type Page, test, expect } from './test'
 
 const dt = (page: Page, id: string) => page.locator(`[data-test="${id}"]`)
 

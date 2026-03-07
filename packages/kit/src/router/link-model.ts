@@ -1,6 +1,8 @@
 import type { StyleInput } from '@pounce/core'
-import { perf } from '../perf'
+import { link } from 'mutts'
+import { perf, recordPerf } from '../perf'
 import { client } from '../platform/shared'
+import { prefetchRoute } from './lazy-cache'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -9,15 +11,29 @@ export type LinkProps = JSX.IntrinsicElements['a'] & {
 	underline?: boolean
 	/** Match any sub-route: aria-current="page" when pathname starts with href. @default false */
 	matchPrefix?: boolean
+	/** Prefetch strategy for lazy route modules. */
+	prefetch?: true | 'hover' | 'intent' | 'visible'
+	use?: (target: Node | Node[]) => void
+	onMousedown?: (event: MouseEvent) => void
+	onMouseenter?: (event: MouseEvent) => void
+	onFocus?: (event: FocusEvent) => void
 }
 
 export type LinkModel = {
 	/** Whether underline is shown */
 	readonly style: StyleInput
+	/** Mount hook for visibility-driven prefetch */
+	readonly use: (target: Node | Node[]) => void
 	/** Click handler — intercepts internal hrefs for SPA navigation */
 	readonly onClick: (event: MouseEvent) => void
+	/** Press-start handler for intent-prefetch strategies */
+	readonly onMousedown: (event: MouseEvent) => void
+	/** Hover/focus handler for prefetch strategies */
+	readonly onMouseenter: (event: MouseEvent) => void
+	/** Focus handler for prefetch strategies */
+	readonly onFocus: (event: FocusEvent) => void
 	/** aria-current value — 'page' when href matches current pathname */
-	readonly ariaCurrent: 'page' | undefined
+	readonly 'aria-current': 'page' | undefined
 }
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
@@ -47,9 +63,45 @@ export type LinkModel = {
  * ```
  */
 export function linkModel(props: LinkProps): LinkModel {
+	function shouldPrefetch(kind: 'hover' | 'intent' | 'visible'): boolean {
+		if (props.prefetch === true) return kind === 'hover' || kind === 'intent'
+		return props.prefetch === kind
+	}
+
+	function prefetch() {
+		const href = props.href
+		if (typeof href === 'string' && href.startsWith('/')) {
+			void prefetchRoute(href)
+		}
+	}
+
 	return {
 		get style() {
 			return props.underline !== false ? undefined : { textDecoration: 'none' }
+		},
+		use(target: Node | Node[]) {
+			props.use?.(target)
+			if (!shouldPrefetch('visible')) return
+
+			const host = Array.isArray(target) ? target[0] : target
+			if (!(host instanceof Element)) {
+				prefetch()
+				return
+			}
+
+			if (typeof IntersectionObserver === 'undefined') {
+				prefetch()
+				return
+			}
+
+			const observer = new IntersectionObserver((entries) => {
+				if (!entries.some((entry) => entry.isIntersecting)) return
+				observer.disconnect()
+				prefetch()
+			})
+
+			observer.observe(host)
+			link(host, () => observer.disconnect())
 		},
 		onClick(event: MouseEvent) {
 			props.onClick?.(event)
@@ -58,14 +110,25 @@ export function linkModel(props: LinkProps): LinkModel {
 			if (typeof href === 'string' && href.startsWith('/')) {
 				event.preventDefault()
 				if (client.url.pathname !== href) {
-					perf?.mark('route:click:start')
+					const startedAt = perf?.now()
+					if (startedAt != null) recordPerf('route:click', startedAt)
 					client.navigate(href)
-					perf?.mark('route:click:end')
-					perf?.measure('route:click', 'route:click:start', 'route:click:end')
 				}
 			}
 		},
-		get ariaCurrent() {
+		onMousedown(event: MouseEvent) {
+			props.onMousedown?.(event)
+			if (shouldPrefetch('intent')) prefetch()
+		},
+		onMouseenter(event: MouseEvent) {
+			props.onMouseenter?.(event as never)
+			if (shouldPrefetch('hover')) prefetch()
+		},
+		onFocus(event: FocusEvent) {
+			props.onFocus?.(event as never)
+			if (shouldPrefetch('hover') || shouldPrefetch('intent')) prefetch()
+		},
+		get 'aria-current'() {
 			const href = props.href
 			if (typeof href !== 'string') return undefined
 			const pathname = client.url.pathname

@@ -21,6 +21,9 @@
 			"@pounce/core": [
 				"./core/src"
 			],
+			"@pounce/core/testing": [
+				"./core/src/testing/index.ts"
+			],
 			"@pounce/core/*": [
 				"./core/src/*"
 			],

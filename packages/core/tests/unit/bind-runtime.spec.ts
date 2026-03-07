@@ -4,18 +4,22 @@ import { ReactiveProp, bind } from '@pounce/core'
 
 afterEach(() => reset())
 
-describe('bind: notation — runtime', () => {
+function rp<T>(get: () => T, set: (value: T) => void) {
+	return new ReactiveProp(get, set)
+}
+
+describe('bind() runtime', () => {
 	it('syncs dst from src on mount', () => {
 		const a = reactive({ x: 1 })
 		const bv = reactive({ x: 0 })
-		bind: bv.x = a.x
+		bind(rp(() => bv.x, (v) => { bv.x = v }), rp(() => a.x, (v) => { a.x = v }))
 		expect(bv.x).toBe(1)
 	})
 
 	it('propagates src → dst on change', () => {
 		const a = reactive({ x: 1 })
 		const bv = reactive({ x: 0 })
-		bind: bv.x = a.x
+		bind(rp(() => bv.x, (v) => { bv.x = v }), rp(() => a.x, (v) => { a.x = v }))
 		a.x = 42
 		expect(bv.x).toBe(42)
 	})
@@ -23,7 +27,7 @@ describe('bind: notation — runtime', () => {
 	it('propagates dst → src on change', () => {
 		const a = reactive({ x: 1 })
 		const bv = reactive({ x: 0 })
-		bind: bv.x = a.x
+		bind(rp(() => bv.x, (v) => { bv.x = v }), rp(() => a.x, (v) => { a.x = v }))
 		bv.x = 99
 		expect(a.x).toBe(99)
 	})
@@ -32,7 +36,7 @@ describe('bind: notation — runtime', () => {
 		const a = reactive({ x: 0 })
 		const bv = reactive({ x: 0 })
 		let count = 0
-		bind: bv.x = a.x
+		bind(rp(() => bv.x, (v) => { bv.x = v }), rp(() => a.x, (v) => { a.x = v }))
 		effect(() => { void a.x; void bv.x; count++ })
 		const before = count
 		a.x = 1
@@ -41,16 +45,16 @@ describe('bind: notation — runtime', () => {
 
 	it('applies default to src when src is undefined', () => {
 		const a = reactive<{ x: number | undefined }>({ x: undefined })
-		const bv = reactive({ x: 0 })
-		bind: bv.x = a.x ??= 7
+		const bv = reactive<{ x: number | undefined }>({ x: 0 })
+		bind(rp(() => bv.x, (v) => { bv.x = v }), rp(() => a.x, (v) => { a.x = v }), 7)
 		expect(a.x).toBe(7)
 		expect(bv.x).toBe(7)
 	})
 
 	it('does not override src when src already has a value', () => {
-		const a = reactive({ x: 5 })
-		const bv = reactive({ x: 0 })
-		bind: bv.x = a.x ??= 99
+		const a = reactive<{ x: number | undefined }>({ x: 5 })
+		const bv = reactive<{ x: number | undefined }>({ x: 0 })
+		bind(rp(() => bv.x, (v) => { bv.x = v }), rp(() => a.x, (v) => { a.x = v }), 99)
 		expect(a.x).toBe(5)
 		expect(bv.x).toBe(5)
 	})
@@ -58,7 +62,7 @@ describe('bind: notation — runtime', () => {
 	it('stop() tears down both effects', () => {
 		const a = reactive({ x: 1 })
 		const bv = reactive({ x: 0 })
-		const stop = bind(new ReactiveProp(() => bv.x, v => { bv.x = v }), new ReactiveProp(() => a.x, v => { a.x = v }))
+		const stop = bind(rp(() => bv.x, (v) => { bv.x = v }), rp(() => a.x, (v) => { a.x = v }))
 		stop()
 		a.x = 42
 		expect(bv.x).toBe(1)

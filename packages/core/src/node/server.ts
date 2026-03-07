@@ -1,6 +1,13 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { JSDOM } from 'jsdom'
 import { type Env, reconcile, rootEnv } from '../lib'
+import {
+	entryPoint,
+	setPlatformAPIs,
+	crypto as sharedCrypto,
+	document as sharedDocument,
+	window as sharedWindow,
+} from '../shared'
 
 /**
  * Global storage for the JSDOM instance associated with the current execution context (e.g., an SSR request).
@@ -21,13 +28,65 @@ export function withSSR<T>(fn: (dom: { document: Document; window: Window }) => 
 
 	const { window } = jsdom
 	const { document } = window
+	const previousPlatform = {
+		window: sharedWindow,
+		document: sharedDocument,
+		crypto: sharedCrypto,
+		entryPoint,
+	}
+	const globalKeys = [
+		'window',
+		'document',
+		'Node',
+		'Element',
+		'HTMLElement',
+		'Text',
+		'Comment',
+		'DocumentFragment',
+		'NodeFilter',
+	] as const
+	const previous = new Map<string, { existed: boolean; value: unknown }>()
 
-	return als.run(jsdom, () =>
-		fn({
-			document: document as Document,
-			window: window as unknown as Window,
+	for (const key of globalKeys) {
+		previous.set(key, {
+			existed: key in globalThis,
+			value: (globalThis as Record<string, unknown>)[key],
 		})
-	)
+		;(globalThis as Record<string, unknown>)[key] = (window as unknown as Record<string, unknown>)[
+			key
+		]
+	}
+
+	setPlatformAPIs('Node/SSR/Request', {
+		window: window as unknown as Window,
+		document: document as Document,
+		crypto: window.crypto,
+	})
+
+	try {
+		return als.run(jsdom, () =>
+			fn({
+				document: document as Document,
+				window: window as unknown as Window,
+			})
+		)
+	} finally {
+		setPlatformAPIs(previousPlatform.entryPoint, {
+			window: previousPlatform.window,
+			document: previousPlatform.document,
+			crypto: previousPlatform.crypto,
+		})
+
+		for (const key of globalKeys) {
+			const saved = previous.get(key)
+			if (!saved) continue
+			if (saved.existed) {
+				;(globalThis as Record<string, unknown>)[key] = saved.value
+			} else {
+				delete (globalThis as Record<string, unknown>)[key]
+			}
+		}
+	}
 }
 
 /**

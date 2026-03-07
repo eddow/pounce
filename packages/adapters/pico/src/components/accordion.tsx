@@ -47,7 +47,7 @@ export function Accordion(props: AccordionProps, env: AccordionEnv) {
 	const model = accordionModel(props, env)
 
 	return (
-		<details use:mount={model.onMount} {...model.details} {...props.el}>
+		<details {...props.el} use:mount={model.onMount} {...model.details}>
 			<summary>{props.summary}</summary>
 			{props.children}
 		</details>

@@ -5,12 +5,12 @@
  * NOTE: This file is server-side only due to AsyncLocalStorage usage.
  * The client-side context.ts in @pounce/core handles browser environments.
  */
-import { AsyncLocalStorage } from 'node:async_hooks'
-
+import type { AsyncLocalStorage as NodeAsyncLocalStorage } from 'node:async_hooks'
 // Define the Interceptor type here to avoid circular imports if possible,
 // or import strictly as type.
 // We'll import InterceptorMiddleware from client.ts, but only as type.
-import type { InterceptorMiddleware } from './client.js'
+import type { InterceptorMiddleware } from '@pounce/kit'
+import { setGetContext } from '@pounce/kit'
 
 export interface InterceptorEntry {
 	pattern: string | RegExp
@@ -37,33 +37,36 @@ export interface RequestScope {
 	config: Partial<ClientConfig>
 	interceptors: InterceptorEntry[]
 	origin?: string
+	data: Record<symbol, unknown>
 	routeRegistry?: RouteRegistry
 }
 
 declare global {
-	var __POUNCE_STORAGE__: AsyncLocalStorage<RequestScope> | undefined
+	var __POUNCE_STORAGE__: NodeAsyncLocalStorage<RequestScope> | undefined
 	var __POUNCE_CONTEXT__: RequestScope | null | undefined
 }
 
 import type { RouteRegistry } from './client.js'
 
-// Storage for strict thread-safety in Node.js (AsyncLocalStorage)
-const _STORAGE_KEY = Symbol.for('__POUNCE_STORAGE__')
-
 /** @internal */
-export function getStorage(): AsyncLocalStorage<RequestScope> | null {
+export function getStorage(): NodeAsyncLocalStorage<RequestScope> | null {
 	return globalThis.__POUNCE_STORAGE__ || null
 }
 
-export function setStorage(storage: AsyncLocalStorage<RequestScope>) {
+export function setStorage(storage: NodeAsyncLocalStorage<RequestScope>) {
 	globalThis.__POUNCE_STORAGE__ = storage
 }
 
-async function ensureStorage(): Promise<AsyncLocalStorage<RequestScope>> {
+async function ensureStorage(): Promise<NodeAsyncLocalStorage<RequestScope> | null> {
+	if (typeof window !== 'undefined') {
+		return null
+	}
+
 	if (globalThis.__POUNCE_STORAGE__) {
 		return globalThis.__POUNCE_STORAGE__
 	}
 
+	const { AsyncLocalStorage } = await import('node:async_hooks')
 	const s = new AsyncLocalStorage<RequestScope>()
 	globalThis.__POUNCE_STORAGE__ = s
 	return s
@@ -82,6 +85,8 @@ export function getContext(): RequestScope | null {
 	return globalThis.__POUNCE_CONTEXT__ || null
 }
 
+setGetContext(() => getContext())
+
 function setGlobalCtx(ctx: RequestScope | null) {
 	globalThis.__POUNCE_CONTEXT__ = ctx
 }
@@ -99,6 +104,7 @@ export function createScope(config: Partial<ClientConfig> = {}): RequestScope {
 		},
 		config,
 		interceptors: [],
+		data: {},
 	}
 }
 

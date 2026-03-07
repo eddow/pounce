@@ -90,7 +90,7 @@ searchRoute.buildUrl({ q: 'hello', page: 1 }) // → '/search?q=hello&page=1'
 
 ### `<Router>`
 
-Reactive router component. Matches `client.url.pathname` against route definitions and renders the matching view.
+Reactive router component. Matches the current reactive URL (`pathname + search + hash`) against route definitions and renders the matching view.
 
 ```tsx
 import { Router } from '@pounce/kit'
@@ -109,13 +109,117 @@ const routes = [
 
 Each route's `view` receives a `RouteSpecification` with `definition`, `params`, and `unusedPath`.
 
-### `<A>`
-
-Client-side navigation link. Intercepts clicks on internal hrefs (starting with `/`) and uses `client.navigate()` instead of full page reload. Automatically sets `aria-current="page"` when the href matches the current pathname.
+`<Router>` also supports navigation analytics callbacks:
 
 ```tsx
-import { A } from '@pounce/kit'
-
-<A href="/dashboard">Dashboard</A>
-<A href="https://external.com">External</A>  // Normal navigation
+<Router
+	routes={routes}
+	notFound={({ url }) => <h1>404: {url} not found</h1>}
+	onRouteStart={({ from, to, navigation, route }) => {
+		console.log('route:start', { from, to, navigation, path: route?.path })
+	}}
+	onRouteEnd={({ status, to, navigation, route }) => {
+		console.log('route:end', { status, to, navigation, path: route?.path })
+	}}
+	onRouteError={({ error, to, navigation, route }) => {
+		console.error('route:error', { error, to, navigation, path: route?.path })
+	}}
+/>
 ```
+
+Navigation hook notes:
+
+- `onRouteStart` fires when the router begins processing a new `client.url`
+- `onRouteEnd` reports `status: 'match' | 'not-found'`
+- `onRouteError` reports render failures and lazy route load failures
+- lazy routes report `onRouteEnd` when the route transition itself is committed; a later lazy-loader failure is surfaced separately through `onRouteError`
+
+Routes may also be lazy:
+
+```tsx
+import { Router } from '@pounce/kit'
+
+const routes = [
+  { path: '/', view: () => <Home /> },
+  {
+    path: '/reports',
+    lazy: () => import('./routes/reports').then((mod) => mod.default),
+  },
+]
+
+<Router
+  routes={routes}
+  loading={({ route }) => <p>Loading {route.path}…</p>}
+  notFound={({ url }) => <h1>404: {url} not found</h1>}
+/>
+```
+
+Lazy routes may provide route-specific pending and error renderers:
+
+```tsx
+const routes = [
+  {
+    path: '/reports',
+    lazy: () => import('./routes/reports').then((mod) => mod.default),
+    loading: ({ route }) => <p>Preparing {route.path}…</p>,
+    error: ({ error }) => <p>Failed to load reports: {String(error)}</p>,
+  },
+]
+```
+
+Lazy route loaders may resolve to:
+
+- a render function directly
+- a module with `default`
+- a module with `view`
+
+Router lazy-loading notes:
+
+- the router caches resolved lazy route modules in memory by route path
+- revisiting a resolved lazy route reuses the cached view instead of showing the loading UI again
+- a lazy route's own `loading` renderer wins over the router-level `loading` fallback
+- a lazy route's own `error` renderer wins over the router's built-in error panel
+- if `loading` is omitted, the router renders a built-in loading state with `data-testid="router-loading-view"`
+- lazy route load failures render the router's built-in error panel
+
+### `linkModel()`
+
+Kit does not currently export a concrete `<A>` component. The headless navigation helper is `linkModel()` from `@pounce/kit/models`.
+
+```tsx
+import { linkModel } from '@pounce/kit/models'
+
+const model = linkModel({ href: '/dashboard' })
+
+<a href="/dashboard" onClick={model.onClick} aria-current={model.ariaCurrent}>
+	Dashboard
+</a>
+```
+
+`linkModel()`:
+- intercepts clicks on internal hrefs starting with `/`
+- calls `client.navigate()` for SPA navigation
+- computes `aria-current="page"`
+- supports `matchPrefix` and underline styling control
+
+It also supports lazy route module prefetch:
+
+```tsx
+const model = linkModel({ href: '/reports', prefetch: 'hover' })
+
+<a
+	href="/reports"
+	{...model}
+>
+	Reports
+</a>
+```
+
+Prefetch notes:
+
+- `prefetch: 'hover'` warms lazy route modules on mouse hover or focus
+- `prefetch: 'intent'` warms lazy route modules on focus or press-start (`mousedown`)
+- `prefetch: 'visible'` warms lazy route modules when the link enters the viewport
+- `prefetch: true` currently behaves like eager hover/focus warming
+- spread `...model` onto the rendered anchor so the mount and event handlers are preserved
+- this only prefetches the lazy route module, not route data loaded inside the route view

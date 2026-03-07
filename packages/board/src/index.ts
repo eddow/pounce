@@ -37,4 +37,3 @@ export type {
 	MiddleNext,
 	PounceRequest,
 } from './lib/router/expose-types.js'
-export { buildRouteTree, matchRoute } from './lib/router/index.js'

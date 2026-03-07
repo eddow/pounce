@@ -1,9 +1,32 @@
+import type { Children, Env } from '@pounce/core'
+import { mountHeadContent, setHeadMount } from '@pounce/kit/node'
 import { createScope, getContext, type RequestScope, runWithContext } from '../http/context.js'
 
 export type SSRDataMap = Record<string, { id: string; data: unknown }>
 
 let _globalClientCounter = 0
 const clientHydrationCache = new Map<string, unknown>()
+const SSR_HEAD_HTML = Symbol.for('pounce-board:ssr-head-html')
+
+function serializeHead(head: HTMLHeadElement): string {
+	return Array.from(head.childNodes)
+		.map((node) => {
+			if (node.nodeType === Node.COMMENT_NODE) return ''
+			if (node instanceof Element) return node.outerHTML
+			return node.textContent ?? ''
+		})
+		.join('')
+}
+
+setHeadMount((content: Children, env?: Env) => {
+	const ctx = getContext()
+	if (!ctx || !ctx.config.ssr) {
+		return mountHeadContent(document.head, content, env)
+	}
+	return mountHeadContent(document.head, content, env, () => {
+		ctx.data[SSR_HEAD_HTML] = serializeHead(document.head)
+	})
+})
 
 /**
  * Run a function within an SSR context (Legacy wrapper)
@@ -107,6 +130,12 @@ registerInjector((ctx) => {
 	return scripts.join('\n')
 })
 
+registerInjector((ctx) => {
+	if (!ctx.config.ssr) return ''
+	const headHtml = ctx.data[SSR_HEAD_HTML]
+	return typeof headHtml === 'string' ? headHtml : ''
+})
+
 /**
  * Inject all registered content into HTML
  * Runs all injectors and appends content to head or body
@@ -168,9 +197,9 @@ export function injectApiResponses(html: string, responses: SSRDataMap): string 
 export function getSSRData<T>(id: string): T | undefined {
 	const ctx = getContext()
 
-	// 1. If we have a context, we are in a managed SSR/Request environment
-	if (ctx) {
-		return ctx.ssr.responses.get(id) as T | undefined
+	// 1. If we have a context and it has a matching response, use it
+	if (ctx && ctx.ssr.responses.has(id)) {
+		return ctx.ssr.responses.get(id) as T
 	}
 
 	// 2. Client-side or Test check (DOM + Cache)

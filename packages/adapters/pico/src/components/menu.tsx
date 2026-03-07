@@ -4,10 +4,17 @@ import { A } from './link'
 export type { MenuProps, MenuItemProps, MenuBarProps }
 
 export function MenuItem(props: MenuItemProps) {
+	if (props.href) {
+		return (
+			<A href={props.href} role="menuitem">
+				{props.children}
+			</A>
+		)
+	}
 	return (
-		<A href={props.href} role="menuitem">
+		<button type="button" role="menuitem" onClick={props.onClick} class="pounce-menu-item">
 			{props.children}
-		</A>
+		</button>
 	)
 }
 

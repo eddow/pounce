@@ -1,14 +1,15 @@
-import { type ElementPassthroughProps, Icon, type IconProps, type VariantProps } from '@pounce/ui'
+import { type ElementPassthroughProps, Icon, type IconProps } from '@pounce/ui'
 import { type ChipProps, chipModel } from '@pounce/ui/models'
+import type { PicoVariantProps } from '../factory'
 
-export type BadgeProps = VariantProps &
+export type BadgeProps = PicoVariantProps &
 	IconProps &
 	ElementPassthroughProps<'span'> & {
 		tag?: string
 		children?: JSX.Children
 	}
 
-export type PillProps = VariantProps &
+export type PillProps = PicoVariantProps &
 	IconProps &
 	ElementPassthroughProps<'span'> & {
 		tag?: string
@@ -21,9 +22,10 @@ export type { ChipProps }
 export function Badge(props: BadgeProps) {
 	return (
 		<dynamic
-			tag={props.tag ?? 'span'}
-			class={`badge${props.variant ? ` badge-${props.variant}` : ''}`}
+			tag={props.tag ?? 'mark'}
 			{...props.el}
+			class={props.el?.class ? ['pounce-badge', props.el.class] : 'pounce-badge'}
+			data-variant={props.variant}
 		>
 			{props.icon &&
 				(typeof props.icon === 'string' ? <Icon name={props.icon} size="0.875em" /> : props.icon)}
@@ -35,9 +37,10 @@ export function Badge(props: BadgeProps) {
 export function Pill(props: PillProps) {
 	return (
 		<dynamic
-			tag={props.tag ?? 'span'}
-			class={`pill${props.variant ? ` pill-${props.variant}` : ''}`}
+			tag={props.tag ?? 'mark'}
 			{...props.el}
+			class={props.el?.class ? ['pounce-pill', props.el.class] : 'pounce-pill'}
+			data-variant={props.variant}
 		>
 			{props.icon &&
 				(typeof props.icon === 'string' ? <Icon name={props.icon} size="0.875em" /> : props.icon)}
@@ -55,7 +58,12 @@ export function Pill(props: PillProps) {
 export function Chip(props: ChipProps) {
 	const model = chipModel(props)
 	return (
-		<dynamic if={model.isVisible} tag={model.tag} class="chip" {...props.el}>
+		<dynamic
+			if={model.isVisible}
+			tag={model.tag}
+			{...props.el}
+			class={props.el?.class ? ['chip', props.el.class] : 'chip'}
+		>
 			{props.children}
 			<button
 				if={model.dismissible}

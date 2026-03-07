@@ -20,10 +20,10 @@ const systemDisplayContext: DisplayContext = {
 		return client.prefersDark ? 'dark' : 'light'
 	},
 	get direction() {
-		return client.direction ?? 'ltr'
+		return client.direction
 	},
 	get locale() {
-		return client.language ?? 'en-US'
+		return client.language
 	},
 	get timeZone() {
 		return Intl.DateTimeFormat().resolvedOptions().timeZone

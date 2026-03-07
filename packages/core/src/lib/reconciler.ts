@@ -70,6 +70,13 @@ function rescueNode(root: Node) {
 	}
 }
 
+function destroyNow(root: Node, detail: string) {
+	for (const node of walk(root)) {
+		removedNodes.add(node)
+		unlink(node, { type: 'stopped', detail })
+	}
+}
+
 let reconcileCount = 0
 export function reconcile(parent: Node, newChildren: Node | readonly Node[]): ScopedCallback {
 	function reconciler() {
@@ -192,8 +199,15 @@ export function latch(
 	return () => {
 		stop?.()
 		if (element) {
-			latchOwners.delete(element)
-			while (element.firstChild) element.removeChild(element.firstChild)
+			const mountedRoot = element
+			const connecting = untracked(() => mountedRoot.isConnected)
+			latchOwners.delete(mountedRoot)
+			while (mountedRoot.firstChild) {
+				const node = mountedRoot.firstChild
+				syncRegistry(node, 'delete', connecting)
+				mountedRoot.removeChild(node)
+				destroyNow(node, 'latch cleanup')
+			}
 		}
 	}
 }

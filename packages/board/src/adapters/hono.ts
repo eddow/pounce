@@ -69,7 +69,9 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
 						const match = matcher(path)
 						if (match && (!match.unusedPath || match.unusedPath === '/')) {
 							const verb = method.toLowerCase() as HTTPVerb
-							const endpoint = match.definition.entry.endpoints.get(verb)
+							const endpoint =
+								match.definition.entry.endpoints.get(verb) ||
+								(verb === 'get' ? match.definition.entry.endpoints.get('stream') : undefined)
 							if (endpoint) {
 								return {
 									handler: endpoint.handler,
@@ -105,39 +107,42 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
 						if (match.definition.entry.provide) {
 							finalHandler = match.definition.entry.provide
 						} else {
-							return c.json({}) // Safely return empty if no provide loader exists
+							c.res = c.json({})
+							return
 						}
 					} else {
 						const reqVerb = c.req.method.toLowerCase() as HTTPVerb
-						const endpoint = match.definition.entry.endpoints.get(reqVerb)
+						const endpoint =
+							match.definition.entry.endpoints.get(reqVerb) ||
+							(reqVerb === 'get' ? match.definition.entry.endpoints.get('stream') : undefined)
 						if (!endpoint) {
-							// 405 Method Not Allowed fallback if URL matched but verb didn't
-							c.res = new Response(`Method ${c.req.method} Not Allowed`, { status: 405 })
-							return
-						}
-						finalHandler = endpoint.handler
-					}
-
-					// Execute pipeline with middleware
-					let mwIndex = -1
-					const executeChain = async (i: number): Promise<Response> => {
-						if (i <= mwIndex) throw new Error('next() called multiple times')
-						mwIndex = i
-
-						if (i < match.definition.entry.middle.length) {
-							const layer = match.definition.entry.middle[i]
-							const result = await layer(pounceReq, () => executeChain(i + 1))
-							if (result === undefined) return executeChain(i + 1)
-							return result
+							apiHandled = false
 						} else {
-							const result = await finalHandler!(pounceReq)
-							// If handler returned a raw Response (like stream), return it directly
-							if (result instanceof Response) return result
-							return c.json(result)
+							finalHandler = endpoint.handler
 						}
 					}
 
-					c.res = await executeChain(0)
+					if (finalHandler) {
+						// Execute pipeline with middleware
+						let mwIndex = -1
+						const executeChain = async (i: number): Promise<Response> => {
+							if (i <= mwIndex) throw new Error('next() called multiple times')
+							mwIndex = i
+
+							if (!isSpaProvideFetch && i < match.definition.entry.middle.length) {
+								const layer = match.definition.entry.middle[i]
+								const result = await layer(pounceReq, () => executeChain(i + 1))
+								if (result === undefined) return executeChain(i + 1)
+								return result
+							} else {
+								const result = await finalHandler(pounceReq)
+								if (result instanceof Response) return result
+								return c.json(result)
+							}
+						}
+
+						c.res = await executeChain(0)
+					}
 				}
 			}
 

@@ -1,7 +1,9 @@
-import { defaults, PounceElement } from '@pounce/core'
-import { effect, lift, link } from 'mutts'
-import { perf } from '../perf.js'
+import { defaults, latch, PounceElement } from '@pounce/core'
+import { effect, lift, link, reactive, untracked } from 'mutts'
+import { perf, recordPerf } from '../perf.js'
 import { client } from '../platform/shared.js'
+import type { NavigationKind } from '../platform/types.js'
+import { getLoadedRouteView, loadRouteView, registerPrefetchRoutes } from './lazy-cache.js'
 import {
 	matchRoute as coreMatchRoute,
 	routeMatcher as coreRouteMatcher,
@@ -44,16 +46,100 @@ export type RouterRender<Definition extends ClientRouteDefinition> = (
 	scope: Record<PropertyKey, unknown>
 ) => JSX.Element | JSX.Element[]
 
+export interface LazyRouteModule<Definition extends ClientRouteDefinition> {
+	readonly default?: RouterRender<Definition>
+	readonly view?: RouterRender<Definition>
+}
+
+export type RouterLazyLoader<Definition extends ClientRouteDefinition> = () => Promise<
+	RouterRender<Definition> | LazyRouteModule<Definition>
+>
+
+export type EagerRouteDefinition<Definition extends ClientRouteDefinition> = Definition & {
+	readonly view: RouterRender<Definition>
+	readonly lazy?: never
+	readonly loading?: never
+	readonly error?: never
+}
+
+export type LazyRouteDefinition<Definition extends ClientRouteDefinition> = Definition & {
+	readonly lazy: RouterLazyLoader<Definition>
+	readonly view?: never
+	readonly loading?: RouterLoading<RouterRouteDefinition<Definition>>
+	readonly error?: RouterError<RouterRouteDefinition<Definition>>
+}
+
+export type RouterRouteDefinition<Definition extends ClientRouteDefinition> =
+	| EagerRouteDefinition<Definition>
+	| LazyRouteDefinition<Definition>
+
 /** Fallback renderer when no route matches. */
 export type RouterNotFound<Definition extends ClientRouteDefinition> = (
 	context: { url: string; routes: readonly Definition[] },
 	scope: Record<PropertyKey, unknown>
 ) => JSX.Element | JSX.Element[]
 
+export type RouterLoadingContext<Definition extends ClientRouteDefinition> = {
+	readonly route: RouterRouteDefinition<Definition>
+	readonly url: string
+}
+
+export type RouterLoading<Definition extends ClientRouteDefinition> = (
+	context: RouterLoadingContext<Definition>,
+	scope: Record<PropertyKey, unknown>
+) => JSX.Element | JSX.Element[]
+
+export type RouterErrorContext<Definition extends ClientRouteDefinition> = {
+	readonly route: RouterRouteDefinition<Definition>
+	readonly url: string
+	readonly error: unknown
+}
+
+export type RouterError<Definition extends ClientRouteDefinition> = (
+	context: RouterErrorContext<Definition>,
+	scope: Record<PropertyKey, unknown>
+) => JSX.Element | JSX.Element[]
+
+export type RouterNavigationStatus = 'match' | 'not-found'
+
+export type RouterNavigationContext<Definition extends ClientRouteDefinition> = {
+	readonly from: string | undefined
+	readonly to: string
+	readonly navigation: NavigationKind
+	readonly route: RouterRouteDefinition<Definition> | null
+	readonly match: RouteSpecification<RouterRouteDefinition<Definition>> | null
+}
+
+export type RouterNavigationEndContext<Definition extends ClientRouteDefinition> =
+	RouterNavigationContext<Definition> & {
+		readonly status: RouterNavigationStatus
+	}
+
+export type RouterNavigationErrorContext<Definition extends ClientRouteDefinition> =
+	RouterNavigationContext<Definition> & {
+		readonly error: unknown
+	}
+
+export type RouterOnRouteStart<Definition extends ClientRouteDefinition> = (
+	context: RouterNavigationContext<Definition>
+) => void
+
+export type RouterOnRouteEnd<Definition extends ClientRouteDefinition> = (
+	context: RouterNavigationEndContext<Definition>
+) => void
+
+export type RouterOnRouteError<Definition extends ClientRouteDefinition> = (
+	context: RouterNavigationErrorContext<Definition>
+) => void
+
 /** Props for the `<Router>` component. */
 export interface RouterProps<Definition extends ClientRouteDefinition> {
 	readonly routes: readonly Definition[]
 	readonly notFound: RouterNotFound<Definition>
+	readonly loading?: RouterLoading<Definition>
+	readonly onRouteStart?: RouterOnRouteStart<Definition>
+	readonly onRouteEnd?: RouterOnRouteEnd<Definition>
+	readonly onRouteError?: RouterOnRouteError<Definition>
 	/**
 	 * Whether to scroll to the top of the window on route changes.
 	 * @default true
@@ -98,6 +184,21 @@ export function routeMatcher<Definition extends ClientRouteDefinition>(
 	}
 }
 
+function hasRouteView<Definition extends ClientRouteDefinition>(
+	route: RouterRouteDefinition<Definition>
+): route is EagerRouteDefinition<Definition> {
+	return 'view' in route && typeof route.view === 'function'
+}
+
+function normalizeLazyView<Definition extends ClientRouteDefinition>(
+	loaded: RouterRender<Definition> | LazyRouteModule<Definition>
+): RouterRender<Definition> {
+	if (typeof loaded === 'function') return loaded
+	if (typeof loaded.view === 'function') return loaded.view
+	if (typeof loaded.default === 'function') return loaded.default
+	throw new Error('Lazy route loader must resolve to a view function or a module with default/view')
+}
+
 // === COMPONENTS ===
 
 /**
@@ -105,26 +206,114 @@ export function routeMatcher<Definition extends ClientRouteDefinition>(
  * Matches `client.url.pathname` against route definitions and renders the matching view.
  * Re-renders automatically when the URL changes.
  */
-export const Router = <
-	Definition extends ClientRouteDefinition & { readonly view: RouterRender<Definition> },
->(
-	props: RouterProps<Definition>,
+export function Router<Definition extends ClientRouteDefinition>(
+	props: RouterProps<RouterRouteDefinition<Definition>>,
 	scope: Record<PropertyKey, unknown>
-) => {
-	// TODO: Lazy loading road + "loading" or youtube-like progress
+) {
 	const vm = defaults(props, {
 		get url() {
-			return client.url.pathname
+			return `${client.url.pathname}${client.url.search}${client.url.hash}`
 		},
 		scrollToTop: true,
 	})
+	registerPrefetchRoutes(vm.routes)
 	const matcher = routeMatcher(vm.routes)
-
-	effect.named('router:scroll')(() => {
-		if (vm.url && vm.scrollToTop && typeof window !== 'undefined') {
-			window.scrollTo(0, 0)
+	let hasRenderedRoute = false
+	let lastStartedSignature: string | undefined
+	let lastCompletedSignature: string | undefined
+	let lastErroredSignature: string | undefined
+	let lastNavigationUrl: string | undefined
+	let activeNavigationFrom: string | undefined
+	const lazyStates = new Map<
+		RouteWildcard,
+		{
+			status: 'loading' | 'ready' | 'error'
+			view: RouterRender<Definition> | undefined
+			error: unknown
 		}
-	})
+	>()
+
+	function getNavigationSignature() {
+		return `${client.history.navigation}:${vm.url}`
+	}
+
+	function createNavigationContext(
+		match: RouteSpecification<RouterRouteDefinition<Definition>> | null
+	): RouterNavigationContext<Definition> {
+		return {
+			from: activeNavigationFrom,
+			match,
+			navigation: client.history.navigation,
+			route: match?.definition ?? null,
+			to: vm.url,
+		}
+	}
+
+	function emitRouteStart(match: RouteSpecification<RouterRouteDefinition<Definition>> | null) {
+		const signature = getNavigationSignature()
+		if (lastStartedSignature === signature) return signature
+		activeNavigationFrom = lastNavigationUrl
+		lastNavigationUrl = vm.url
+		lastStartedSignature = signature
+		lastErroredSignature = undefined
+		vm.onRouteStart?.(createNavigationContext(match))
+		return signature
+	}
+
+	function emitRouteEnd(
+		match: RouteSpecification<RouterRouteDefinition<Definition>> | null,
+		status: RouterNavigationStatus
+	) {
+		const signature = getNavigationSignature()
+		if (lastCompletedSignature === signature) return
+		lastCompletedSignature = signature
+		vm.onRouteEnd?.({ ...createNavigationContext(match), status })
+	}
+
+	function emitRouteError(
+		match: RouteSpecification<RouterRouteDefinition<Definition>> | null,
+		error: unknown
+	) {
+		const signature = getNavigationSignature()
+		if (lastErroredSignature === signature) return
+		lastErroredSignature = signature
+		vm.onRouteError?.({ ...createNavigationContext(match), error })
+	}
+
+	function getLazyState(route: LazyRouteDefinition<Definition>) {
+		const cached = lazyStates.get(route.path)
+		if (cached) return cached
+		const existing = getLoadedRouteView(route.path) as RouterRender<Definition> | undefined
+
+		const created = untracked(() =>
+			reactive({
+				status: (existing ? 'ready' : 'loading') as 'loading' | 'ready' | 'error',
+				view: existing,
+				error: undefined as unknown,
+			})
+		)
+		lazyStates.set(route.path, created)
+
+		if (existing) return created
+
+		void loadRouteView(route)
+			.then((view) => {
+				created.view = view
+				created.error = undefined
+				created.status = 'ready'
+			})
+			.catch((error: unknown) => {
+				const current = matcher(vm.url)
+				if (current && current.definition.path === route.path) {
+					emitRouteError(current, error)
+				}
+				created.view = undefined
+				created.error = error
+				created.status = 'error'
+			})
+
+		return created
+	}
 
 	function renderElements(jsx: JSX.Element | JSX.Element[]): Node[] {
 		const els = Array.isArray(jsx) ? jsx : [jsx]
@@ -132,7 +321,11 @@ export const Router = <
 		els.forEach((el) => {
 			if (!(el instanceof PounceElement)) throw new Error('Invalid JSX element for route')
 			const nodes = el.render(scope)
-			const nodeArray = Array.isArray(nodes) ? Array.from(nodes) : [nodes]
+			const nodeArray = Array.isArray(nodes)
+				? Array.from(nodes)
+				: nodes && typeof nodes === 'object' && Symbol.iterator in nodes
+					? Array.from(nodes as Iterable<Node>)
+					: [nodes]
 			// Anchor the reactive proxy to the DOM node so it is not garbage collected
 			if (nodeArray.length > 0 && typeof nodes === 'object' && nodes !== null) {
 				link(nodeArray[0], nodes)
@@ -141,43 +334,167 @@ export const Router = <
 		})
 		return outputs
 	}
-	// TODO: Why do we need `renderElements`? Can't we just return `lift` the PounceElement directly?
+
+	const LazyRouteOutlet = (
+		lazyProps: {
+			route: LazyRouteDefinition<Definition>
+			match: RouteSpecification<RouterRouteDefinition<Definition>>
+			url: string
+			loading?: RouterLoading<RouterRouteDefinition<Definition>>
+		},
+		lazyScope: Record<PropertyKey, unknown>
+	) => {
+		const lazyState = getLazyState(lazyProps.route)
+
+		function renderLazyError(_current: RouteSpecification<RouterRouteDefinition<Definition>>) {
+			if (lazyProps.route.error) {
+				return lazyProps.route.error(
+					{ error: lazyState.error, route: lazyProps.route, url: vm.url },
+					lazyScope
+				)
+			}
+
+			return (
+				<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
+					<h2 style="margin-top: 0">Something went wrong</h2>
+					<p>Error loading route module.</p>
+					<details>
+						<summary>Error details</summary>
+						<pre style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px; margin-top: 10px;">
+							{lazyState.error instanceof Error ? lazyState.error.stack : String(lazyState.error)}
+						</pre>
+					</details>
+				</div>
+			)
+		}
+
+		function renderLazyLoading(_current: RouteSpecification<RouterRouteDefinition<Definition>>) {
+			if (lazyProps.route.loading) {
+				return lazyProps.route.loading({ route: lazyProps.route, url: vm.url }, lazyScope)
+			}
+
+			if (lazyProps.loading) {
+				return lazyProps.loading({ route: lazyProps.route, url: vm.url }, lazyScope)
+			}
+
+			return (
+				<div
+					data-testid="router-loading-view"
+					aria-live="polite"
+					style="padding: 20px; color: #cbd5e1;"
+				>
+					<div style="height: 3px; border-radius: 999px; background: linear-gradient(90deg, #2563eb, #7dd3fc); margin-bottom: 12px;" />
+					Loading route…
+				</div>
+			)
+		}
+
+		return (
+			<div
+				style="display: contents"
+				use={(target: Node | Node[]) => {
+					const host = Array.isArray(target) ? target[0] : target
+					if (!(host instanceof Element)) return
+
+					let stopLatched: (() => void) | undefined
+					const stopEffect = effect.named('router:lazy-outlet')(() => {
+						const current = matcher(vm.url)
+						if (!current || current.definition.path !== lazyProps.route.path) return
+
+						const content =
+							lazyState.status === 'error'
+								? renderLazyError(current)
+								: lazyState.status === 'ready' && lazyState.view
+									? lazyState.view(current, lazyScope)
+									: renderLazyLoading(current)
+
+						stopLatched?.()
+						stopLatched = latch(host, content, lazyScope)
+					})
+
+					link(host, stopEffect, () => stopLatched?.())
+				}}
+			/>
+		)
+	}
+
 	return lift(function routerCompute() {
 		try {
-			perf?.mark('route:match:start')
-			const url = client.url.pathname
-			const match = matcher(url)
-			perf?.mark('route:match:end')
-			perf?.measure('route:match', 'route:match:start', 'route:match:end')
+			const matchStartedAt = perf?.now()
+			const match = matcher(vm.url)
+			emitRouteStart(match)
+			if (matchStartedAt != null) recordPerf('route:match', matchStartedAt)
+
 			if (match && (match.unusedPath === '' || match.unusedPath === '/')) {
-				try {
-					perf?.mark('route:render:start')
-					const output = renderElements(match.definition.view(match, scope))
-					perf?.mark('route:render:end')
-					perf?.measure('route:render', 'route:render:start', 'route:render:end')
-					return output
-				} catch (err) {
-					console.error('Router view error:', err)
-					return renderElements(
-						<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
-							<h2 style="margin-top: 0">Something went wrong</h2>
-							<p>Error loading route.</p>
-							<details>
-								<summary>Error details</summary>
-								<pre style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px; margin-top: 10px;">
-									{err instanceof Error ? err.stack : String(err)}
-								</pre>
-							</details>
-						</div>
-					)
+				if (hasRouteView(match.definition)) {
+					try {
+						const renderStartedAt = perf?.now()
+						const output = renderElements(match.definition.view(match, scope))
+						if (renderStartedAt != null) recordPerf('route:render', renderStartedAt)
+						emitRouteEnd(match, 'match')
+						return output
+					} catch (err) {
+						emitRouteError(match, err)
+						console.error('Router view error:', err)
+						return renderElements(
+							<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
+								<h2 style="margin-top: 0">Something went wrong</h2>
+								<p>Error loading route.</p>
+								<details>
+									<summary>Error details</summary>
+									<pre style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px; margin-top: 10px;">
+										{err instanceof Error ? err.stack : String(err)}
+									</pre>
+								</details>
+							</div>
+						)
+					}
 				}
+
+				const cachedView = getLoadedRouteView(match.definition.path) as
+					| RouterRender<Definition>
+					| undefined
+				if (cachedView) {
+					try {
+						const renderStartedAt = perf?.now()
+						const output = renderElements(cachedView(match, scope))
+						if (renderStartedAt != null) recordPerf('route:render', renderStartedAt)
+						emitRouteEnd(match, 'match')
+						return output
+					} catch (err) {
+						emitRouteError(match, err)
+						console.error('Router view error:', err)
+						return renderElements(
+							<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
+								<h2 style="margin-top: 0">Something went wrong</h2>
+								<p>Error loading route.</p>
+								<details>
+									<summary>Error details</summary>
+									<pre style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px; margin-top: 10px;">
+										{err instanceof Error ? err.stack : String(err)}
+									</pre>
+								</details>
+							</div>
+						)
+					}
+				}
+				emitRouteEnd(match, 'match')
+				return renderElements(
+					<LazyRouteOutlet
+						route={match.definition}
+						match={match}
+						url={vm.url}
+						loading={vm.loading}
+					/>
+				)
 			}
-			perf?.mark('route:not-found:start')
+			const notFoundStartedAt = perf?.now()
 			const output = renderElements(vm.notFound({ routes: vm.routes, url: vm.url }, scope))
-			perf?.mark('route:not-found:end')
-			perf?.measure('route:not-found', 'route:not-found:start', 'route:not-found:end')
+			if (notFoundStartedAt != null) recordPerf('route:not-found', notFoundStartedAt)
+			emitRouteEnd(null, 'not-found')
 			return output
 		} catch (err) {
+			emitRouteError(null, err)
 			console.error('Router matching error:', err)
 			return renderElements(
 				<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">

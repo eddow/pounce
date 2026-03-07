@@ -199,41 +199,36 @@ Capture a reference to the rendered target.
 - For intrinsic DOM elements, the value is an `HTMLElement`.
 - For components, the value may be a `Node` or `Node[]` (component render output).
 
-The value passed to `this` must be an L‑value (a ref sink) that the renderer can set during render.
+`this` expects a callback. On cleanup / unlatch, it is called again with `undefined`.
 
 ```tsx
-const refs: Record<string, any> = {}
+let inputRef: Node | undefined
+let counterRef: Node | readonly Node[] | undefined
 
-// DOM element ref
-<input this={refs.input} value={state.sharedCount} />
-
-// Component ref (may receive Node or Node[])
-<CounterComponent this={refs.counter} count={state.sharedCount} />
+<input this={(node) => { inputRef = node }} value={state.sharedCount} />
+<CounterComponent this={(node) => { counterRef = node }} count={state.sharedCount} />
 ```
 
-### `use={callback}` (mount hook)
+### `use={callback}` (inline directive)
 
-Attach an inline mount callback directly on an element or component.
+Attach an inline directive directly on an element or component.
 
-**Signature:** `use={(target: Node | Node[], env) => void}`
+**Signature:** `use={(target: Node | Node[], access) => void | (() => void)}`
 
 **Behavior:**
-- Called once after the target is rendered (during creation).
-- `target` is the rendered node for intrinsic elements, or `Node | Node[]` for components.
-- **Synchronous**: Called directly, NOT within a reactive effect.
-- No cleanup or reactive re-run.
-
+- Called within an effect.
+- May return a cleanup function.
+- Re-runs when the directive value changes.
+- Layered `use={...}` directives accumulate.
 
 **Example:**
 ```tsx
-<div use={(el) => { if (el instanceof HTMLElement) el.focus() }} />
-
-<Counter
-  use={(nodes) => {
-    const first = Array.isArray(nodes) ? nodes[0] : nodes
-    if (first instanceof HTMLElement) first.classList.add('mounted')
-  }}
-/>
+<div use={(el) => {
+  if (el instanceof HTMLElement) el.focus()
+  return () => {
+    if (el instanceof HTMLElement) el.blur()
+  }
+}} />
 ```
 
 ### `use:name` (env mixins)
@@ -244,9 +239,7 @@ Attach a env-provided mixin to the rendered target.
 - Use in JSX: `use:path={value}` (value optional, `path` supports dash-separation)
 - **Effect-bound**: Called WITHIN a reactive effect; re-runs when `value` or other dependencies change.
 - May return a cleanup function (`EffectCloser`).
-
-
-Example:
+- If the env path is missing or falsy, the directive is skipped.
 
 ```tsx
 // In component body

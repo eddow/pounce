@@ -18,7 +18,7 @@ interface PounceBabelPluginState {
 
 const EXTENDS_HELPERS = new Set(['_extends', '__assign'])
 const CORE_IMPORT_SOURCE = '@pounce/core'
-type CoreHelperName = 'h' | 'Fragment' | 'c' | 'r' | 'bind'
+type CoreHelperName = 'h' | 'Fragment' | 'c' | 'r'
 
 function getProgramPath(path: NodePath): NodePath<t.Program> | null {
 	return path.findParent((p: NodePath) => p.isProgram()) as NodePath<t.Program> | null
@@ -262,53 +262,17 @@ export function pounceBabelPlugin({
 	return {
 		name: 'pounce-babel',
 		visitor: {
-			LabeledStatement(path: NodePath<t.LabeledStatement>, state: PounceBabelPluginState) {
+			LabeledStatement(path: NodePath<t.LabeledStatement>) {
 				if (path.node.label.name !== 'bind') return
-				const bindHelper = ensureCoreHelperIdentifier(t, path, state, 'bind', true)
-				const reactiveHelper = ensureCoreHelperIdentifier(t, path, state, 'r', true)
-				const body = path.node.body
-				if (!t.isExpressionStatement(body)) return
-				const expr = body.expression
-				if (!t.isAssignmentExpression(expr) || expr.operator !== '=') return
-				// dst is the left side
-				const dstNode = expr.left
-				// right side: either `src` or `src ??= dft`
-				let srcNode: t.Expression
-				let dftNode: t.Expression | null = null
-				const right = expr.right
-				if (t.isAssignmentExpression(right) && right.operator === '??=') {
-					srcNode = right.left as t.Expression
-					dftNode = right.right
-				} else {
-					srcNode = right
-				}
-				// Build r(getter, setter) for an assignable expression
-				const makeRP = (node: t.Expression | t.LVal): t.Expression => {
-					let inner = node as t.Expression
-					if (t.isTSAsExpression(inner)) inner = inner.expression
-					if (
-						!t.isMemberExpression(inner) &&
-						!(t.isIdentifier(inner) && isMutableBinding(path, inner.name))
-					) {
-						throw path.buildCodeFrameError(
-							`[bind] operands must be assignable (member expression or mutable identifier), got ${inner.type}`
-						)
-					}
-					const getter = t.arrowFunctionExpression([], node as t.Expression)
-					const setter = t.arrowFunctionExpression(
-						[t.identifier('_v')],
-						t.assignmentExpression('=', inner as t.LVal, t.identifier('_v'))
-					)
-					return t.callExpression(t.cloneNode(reactiveHelper), [getter, setter])
-				}
-				const args: t.Expression[] = [makeRP(dstNode), makeRP(srcNode)]
-				if (dftNode) args.push(dftNode)
-				path.replaceWith(t.expressionStatement(t.callExpression(t.cloneNode(bindHelper), args)))
+				throw path.buildCodeFrameError(
+					'[bind] `bind:` label syntax was removed from @pounce/core; use bind(...) directly'
+				)
+			},
+			JSXFragment(path: NodePath<t.JSXFragment>) {
+				ensureImports(path, 'h', 'Fragment')
 			},
 			JSXElement(path: NodePath<JSXElement>, state: PounceBabelPluginState) {
-				ensureImports(path, 'h', 'Fragment')
-				const compositeHelper = ensureCoreHelperIdentifier(t, path, state, 'c', true)
-				const reactiveHelper = ensureCoreHelperIdentifier(t, path, state, 'r', true)
+				ensureImports(path, 'h')
 				// Traverse all JSX children and attributes
 				for (let index = 0; index < path.node.children.length; index++) {
 					const child = path.node.children[index]
@@ -316,6 +280,7 @@ export function pounceBabelPlugin({
 						const expression = child.expression
 						// Check if the expression is a reactive reference (e.g., `this.counter`)
 						if (!t.isJSXEmptyExpression(expression)) {
+							const reactiveHelper = ensureCoreHelperIdentifier(t, path, state, 'r', true)
 							// Rewrite `this.counter` into `() => this.counter`
 							const arrowFunction = t.arrowFunctionExpression(
 								[], // No args
@@ -370,12 +335,14 @@ export function pounceBabelPlugin({
 										}
 									}
 									if (getterExpr && setterExpr) {
+										const reactiveHelper = ensureCoreHelperIdentifier(t, path, state, 'r', true)
 										const getter = t.arrowFunctionExpression([], getterExpr)
 										const bindingObject = t.callExpression(t.cloneNode(reactiveHelper), [
 											getter,
 											setterExpr,
 										])
 										baseAttr.value = t.jsxExpressionContainer(bindingObject)
+										ensureImports(path, 'r')
 										// remove update:attr
 										attrs.splice(i, 1)
 										i--
@@ -388,6 +355,7 @@ export function pounceBabelPlugin({
 					// Pass 2: spread + regular reactive attribute transforms
 					for (const attr of path.node.openingElement.attributes) {
 						if (t.isJSXSpreadAttribute(attr)) {
+							const compositeHelper = ensureCoreHelperIdentifier(t, path, state, 'c', true)
 							attr.argument = t.callExpression(t.cloneNode(compositeHelper), [
 								t.arrowFunctionExpression([], t.cloneNode(attr.argument)),
 							])
@@ -395,12 +363,6 @@ export function pounceBabelPlugin({
 							if (t.isJSXExpressionContainer(attr.value)) {
 								const expression = attr.value.expression
 								if (!t.isJSXEmptyExpression(expression)) {
-									if (
-										t.isCallExpression(expression) &&
-										t.isIdentifier(expression.callee, { name: reactiveHelper.name })
-									) {
-										continue
-									}
 									let innerExpression = expression
 									if (t.isTSAsExpression(expression)) {
 										innerExpression = expression.expression
@@ -431,6 +393,13 @@ export function pounceBabelPlugin({
 										(t.isIdentifier(innerExpression) &&
 											isMutableBinding(path, innerExpression.name))
 									) {
+										const reactiveHelper = ensureCoreHelperIdentifier(t, path, state, 'r', true)
+										if (
+											t.isCallExpression(expression) &&
+											t.isIdentifier(expression.callee, { name: reactiveHelper.name })
+										) {
+											continue
+										}
 										const getter = t.arrowFunctionExpression([], expression)
 										const setter = t.arrowFunctionExpression(
 											[t.identifier('val')],
@@ -441,6 +410,13 @@ export function pounceBabelPlugin({
 										)
 									} else {
 										if (!isSafeExpression(innerExpression as t.Expression)) {
+											const reactiveHelper = ensureCoreHelperIdentifier(t, path, state, 'r', true)
+											if (
+												t.isCallExpression(expression) &&
+												t.isIdentifier(expression.callee, { name: reactiveHelper.name })
+											) {
+												continue
+											}
 											attr.value = t.jsxExpressionContainer(
 												t.callExpression(t.cloneNode(reactiveHelper), [
 													t.arrowFunctionExpression([], expression),

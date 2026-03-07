@@ -74,6 +74,13 @@ type ApiGlobals = {
 
 const globals = globalThis as unknown as ApiGlobals
 
+const DEFAULT_PREFETCH_TTL = 5000
+
+type PrefetchEntry = {
+	value: unknown
+	expiresAt: number
+}
+
 const DEFAULT_CONFIG = {
 	timeout: 10000,
 	retries: 0,
@@ -120,6 +127,20 @@ export type RequestExecutor = (req: Request, timeout: number) => Promise<Respons
  * Creates a configured API Client factory.
  */
 export function createApiClientFactory(executor: RequestExecutor) {
+	const prefetchedGets = new Map<string, PrefetchEntry>()
+	const pendingPrefetches = new Map<string, Promise<unknown>>()
+
+	function getPrefetchedValue<T>(currentUrl: URL): { hit: boolean; value?: T } {
+		const key = currentUrl.toString()
+		const entry = prefetchedGets.get(key)
+		if (!entry) return { hit: false }
+		if (entry.expiresAt <= Date.now()) {
+			prefetchedGets.delete(key)
+			return { hit: false }
+		}
+		return { hit: true, value: entry.value as T }
+	}
+
 	function apiClient(
 		input: any,
 		paramsOrOptions: any = {},
@@ -178,6 +199,63 @@ export function createApiClientFactory(executor: RequestExecutor) {
 		const timeout = options.timeout ?? currentConfig.timeout
 		const maxRetries = options.retries ?? currentConfig.retries
 		const retryDelay = options.retryDelay ?? currentConfig.retryDelay
+
+		function resolveCurrentUrl(params?: Record<string, string | number>): URL {
+			if (template && params) {
+				let builtPath = template
+				const usedKeys = new Set<string>()
+				for (const [key, value] of Object.entries(params)) {
+					const placeholder = `[${key}]`
+					if (builtPath.includes(placeholder)) {
+						builtPath = builtPath.replace(placeholder, String(value))
+						usedKeys.add(key)
+					}
+				}
+				const currentUrl = buildUrlObj(builtPath)
+				for (const [key, value] of Object.entries(params)) {
+					if (!usedKeys.has(key)) {
+						currentUrl.searchParams.set(key, String(value))
+					}
+				}
+				return currentUrl
+			}
+
+			const currentUrl = new URL(url)
+			if (params) {
+				for (const [key, value] of Object.entries(params)) {
+					currentUrl.searchParams.set(key, String(value))
+				}
+			}
+			return currentUrl
+		}
+
+		function prefetchGet<T>(
+			currentUrl: URL,
+			options?: { signal?: AbortSignal; ttl?: number }
+		): Promise<T> {
+			const hooked = callRequestHook('GET', currentUrl)
+			if (hooked !== undefined) return Promise.resolve(hooked as T)
+
+			const prefetched = getPrefetchedValue<T>(currentUrl)
+			if (prefetched.hit) return Promise.resolve(prefetched.value as T)
+
+			const key = currentUrl.toString()
+			const pending = pendingPrefetches.get(key)
+			if (pending) return pending as Promise<T>
+
+			const ttl = options?.ttl ?? DEFAULT_PREFETCH_TTL
+			const started = requestWithRetry<T>('GET', currentUrl, undefined, options?.signal)
+				.then((value) => {
+					prefetchedGets.set(key, { expiresAt: Date.now() + ttl, value })
+					return value
+				})
+				.finally(() => {
+					pendingPrefetches.delete(key)
+				})
+
+			pendingPrefetches.set(key, started)
+			return started
+		}
 
 		async function requestWithRetry<T>(
 			method: HttpMethod,
@@ -263,38 +341,25 @@ export function createApiClientFactory(executor: RequestExecutor) {
 				params?: Record<string, string | number>,
 				options?: { signal?: AbortSignal }
 			): Promise<T> {
-				let currentUrl: URL
-
-				if (template && params) {
-					let builtPath = template
-					const usedKeys = new Set<string>()
-					for (const [key, value] of Object.entries(params)) {
-						const placeholder = `[${key}]`
-						if (builtPath.includes(placeholder)) {
-							builtPath = builtPath.replace(placeholder, String(value))
-							usedKeys.add(key)
-						}
-					}
-					currentUrl = buildUrlObj(builtPath)
-					for (const [key, value] of Object.entries(params)) {
-						if (!usedKeys.has(key)) {
-							currentUrl.searchParams.set(key, String(value))
-						}
-					}
-				} else {
-					currentUrl = new URL(url)
-					if (params) {
-						for (const [key, value] of Object.entries(params)) {
-							currentUrl.searchParams.set(key, String(value))
-						}
-					}
-				}
+				const currentUrl = resolveCurrentUrl(params)
 
 				// Hook: check for cached data before fetching
 				const cached = callRequestHook('GET', currentUrl)
 				if (cached !== undefined) return Promise.resolve(cached as T)
 
+				const prefetched = getPrefetchedValue<T>(currentUrl)
+				if (prefetched.hit) return Promise.resolve(prefetched.value as T)
+
+				const pending = pendingPrefetches.get(currentUrl.toString())
+				if (pending) return pending as Promise<T>
+
 				return requestWithRetry<T>('GET', currentUrl, undefined, options?.signal)
+			},
+			prefetch<T>(
+				params?: Record<string, string | number>,
+				options?: { signal?: AbortSignal; ttl?: number }
+			): Promise<T> {
+				return prefetchGet<T>(resolveCurrentUrl(params), options)
 			},
 			async post<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T> {
 				return requestWithRetry<T>('POST', url, body, options?.signal)
@@ -306,32 +371,7 @@ export function createApiClientFactory(executor: RequestExecutor) {
 				params?: Record<string, string | number>,
 				options?: { signal?: AbortSignal }
 			): Promise<T> {
-				let currentUrl: URL
-
-				if (template && params) {
-					let builtPath = template
-					const usedKeys = new Set<string>()
-					for (const [key, value] of Object.entries(params)) {
-						const placeholder = `[${key}]`
-						if (builtPath.includes(placeholder)) {
-							builtPath = builtPath.replace(placeholder, String(value))
-							usedKeys.add(key)
-						}
-					}
-					currentUrl = buildUrlObj(builtPath)
-					for (const [key, value] of Object.entries(params)) {
-						if (!usedKeys.has(key)) {
-							currentUrl.searchParams.set(key, String(value))
-						}
-					}
-				} else {
-					currentUrl = new URL(url)
-					if (params) {
-						for (const [key, value] of Object.entries(params)) {
-							currentUrl.searchParams.set(key, String(value))
-						}
-					}
-				}
+				const currentUrl = resolveCurrentUrl(params)
 				return requestWithRetry<T>('DELETE', currentUrl, undefined, options?.signal)
 			},
 			async patch<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T> {
@@ -343,31 +383,7 @@ export function createApiClientFactory(executor: RequestExecutor) {
 					return () => {}
 				}
 
-				let currentUrl: URL
-				if (template && paramsOrOptions) {
-					let builtPath = template
-					const usedKeys = new Set<string>()
-					for (const [key, value] of Object.entries(paramsOrOptions)) {
-						const placeholder = `[${key}]`
-						if (builtPath.includes(placeholder)) {
-							builtPath = builtPath.replace(placeholder, String(value))
-							usedKeys.add(key)
-						}
-					}
-					currentUrl = buildUrlObj(builtPath)
-					for (const [key, value] of Object.entries(paramsOrOptions)) {
-						if (!usedKeys.has(key)) {
-							currentUrl.searchParams.set(key, String(value))
-						}
-					}
-				} else {
-					currentUrl = new URL(url)
-					if (paramsOrOptions) {
-						for (const [key, value] of Object.entries(paramsOrOptions)) {
-							currentUrl.searchParams.set(key, String(value))
-						}
-					}
-				}
+				const currentUrl = resolveCurrentUrl(paramsOrOptions)
 
 				const controller = new AbortController()
 
@@ -440,7 +456,7 @@ export function createApiClientFactory(executor: RequestExecutor) {
 	const api = new Proxy(apiClient, {
 		get(target, prop, receiver) {
 			if (prop in target) return Reflect.get(target, prop, receiver)
-			const methods = ['get', 'post', 'put', 'del', 'patch']
+			const methods = ['get', 'prefetch', 'post', 'put', 'del', 'patch']
 			if (typeof prop === 'string' && methods.includes(prop)) {
 				const currentPath = typeof window !== 'undefined' ? window.location.href : '.'
 				const instance = target(currentPath)
@@ -470,6 +486,10 @@ export interface ApiClientInstance<P extends string> {
 	get<T>(
 		params?: ExtractPathParams<P> | Record<string, string | number>,
 		options?: { signal?: AbortSignal }
+	): Promise<T>
+	prefetch<T>(
+		params?: ExtractPathParams<P> | Record<string, string | number>,
+		options?: { signal?: AbortSignal; ttl?: number }
 	): Promise<T>
 	post<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T>
 	put<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T>

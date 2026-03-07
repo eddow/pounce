@@ -1,6 +1,6 @@
 # Testing Pounce Applications
 
-Pounce is designed to make testing straightforward. thanks to its isomorphic nature and request isolation, you can write tests using your regular imports without worrying about the underlying environment (DOM vs. Node.js).
+Pounce is designed to make testing straightforward. Thanks to its DOM/test bootstrap and separate node entrypoint, you can write component tests and SSR tests without hand-rolling platform setup.
 
 ---
 
@@ -23,9 +23,9 @@ Most tests will be component tests. These verify that your UI looks and behaves 
 
 ### Environment Setup (Optional)
 
-While you *can* configure Vitest to use the `jsdom` environment in `vitest.config.ts`, it is **purely optional**. 
+While you *can* configure Vitest to use the `jsdom` environment in `vitest.config.ts`, it is **optional**. 
 
-If Pounce detects it's running in a test environment (`process.env.NODE_ENV === 'test'`) but no global `window` is provided, it automatically initializes its own JSDOM instance.
+If Pounce detects it's running in a test environment but no global `window` is provided, the node entrypoint initializes its own JSDOM instance.
 
 ```typescript
 // vitest.config.ts (Optional)
@@ -79,21 +79,26 @@ console.log(entryPoint)
 // Potential values:
 // - 'Vitest/DOM': Running in Vitest with a pre-provided JSDOM (native Vitest setup)
 // - 'Vitest/Node': Running in Vitest, but Pounce had to spin up its own JSDOM (e.g. VSCode)
-// - 'Node/SSR': Running in a pure Node environment with ALS request isolation
 ```
 
 ---
 
-## 4. SSR Testing (`withSSR`)
+## 4. SSR Testing (`@pounce/core/node`)
 
-When testing server-side rendering or logic that specifically requires request isolation, use the `withSSR` helper from the server entry point.
+When testing server-side rendering or logic that specifically requires request isolation, import from the node entrypoint.
 
 ```typescript
-import { renderToString } from '@pounce/core/server'
+import { renderToString, withSSR } from '@pounce/core/node'
 
 it('renders as a string', () => {
   const html = renderToString(<MyComponent />)
-  expect(html).toContain('<div id="root">')
+  expect(html).toContain('My Component')
+})
+
+it('runs request-local DOM code', () => {
+  withSSR(({ document }) => {
+    expect(document.getElementById('root')).toBeTruthy()
+  })
 })
 ```
 

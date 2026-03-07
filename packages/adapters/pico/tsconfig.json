@@ -1,6 +1,8 @@
 {
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
+		"baseUrl": ".",
+		"rootDir": ".",
 		"outDir": "./dist",
 		"declaration": true,
 		"declarationMap": true,
@@ -8,7 +10,18 @@
 		"jsx": "react",
 		"jsxFactory": "h",
 		"jsxFragmentFactory": "Fragment",
-		"lib": ["ESNext", "DOM", "DOM.Iterable"]
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"paths": {
+			"@pounce/core": ["../../core/src/index.ts"],
+			"@pounce/core/*": ["../../core/src/*"],
+			"@pounce/kit": ["../../kit/src/index.ts"],
+			"@pounce/kit/*": ["../../kit/src/*"],
+			"@pounce/ui": ["../../ui/src/index.ts"],
+			"@pounce/ui/*": ["../../ui/src/*"],
+			"@pounce/ui/models": ["../../ui/src/models/index.ts"],
+			"mutts": ["../../../../mutts/src/index.ts"],
+			"mutts/*": ["../../../../mutts/src/*"]
+		}
 	},
 	"include": ["src/**/*"],
 	"exclude": ["dist", "demo", "node_modules"]

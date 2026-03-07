@@ -2,22 +2,9 @@
  * Core HTTP types and middleware runner for pounce-board
  */
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+export { ApiError } from '@pounce/kit'
 
-/**
- * Structured API Error for pounce-board
- */
-export class ApiError extends Error {
-	constructor(
-		public status: number,
-		public statusText: string,
-		public data: unknown,
-		public url: string
-	) {
-		super(`HTTP ${status}: ${statusText}`)
-		this.name = 'ApiError'
-	}
-}
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
 export interface RequestContext {
 	request: Request

@@ -8,10 +8,12 @@ export default defineConfig({
 	plugins: [
 		pounceCorePlugin(),
 		dts({
+			tsconfigPath: resolve(__dirname, 'tsconfig.build.json'),
 			include: ['src'],
 			exclude: ['demo', '**/*.spec.ts', '**/*.spec.tsx', '**/*.test.ts', '**/*.test.tsx'],
 			outDir: 'dist',
-			rollupTypes: true,
+			rollupTypes: false,
+			insertTypesEntry: true,
 		}),
 	],
 	build: {

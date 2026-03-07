@@ -1,8 +1,8 @@
 import type { Env } from '@pounce/core'
 import { useDisplayContext } from '@pounce/kit'
-import { type ThemeValue, themeToggleModel } from '@pounce/ui'
+import { type ThemeValue, themeToggleModel } from '@pounce/ui/models'
 
-export type { ThemeValue } from '@pounce/ui'
+export type { ThemeValue } from '@pounce/ui/models'
 
 export type ThemeToggleProps = {
 	/** Reactive object with a `theme` property — mutated on click */
@@ -19,11 +19,16 @@ const ICONS: Record<ThemeValue, string> = { auto: '🌓', light: '☀️', dark:
  */
 export const ThemeToggle = (props: ThemeToggleProps, env: Env) => {
 	const dc = useDisplayContext(env)
-	const m = themeToggleModel({ settings: props.settings, resolvedTheme: dc.theme })
+	const m = themeToggleModel({
+		settings: props.settings,
+		get resolvedTheme() {
+			return dc.theme
+		},
+	})
 
 	return (
 		<div class="pounce-theme-toggle" use={m.clickOutside}>
-			<button {...m.button} {...props.el}>
+			<button {...props.el} {...m.button}>
 				{props.simple ? ICONS[m.themeSetting] : `${ICONS[m.themeSetting]} ${m.currentLabel}`}
 			</button>
 			<div if={m.menuOpen} role="menu" class="pounce-theme-menu">

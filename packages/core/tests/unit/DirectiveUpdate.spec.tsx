@@ -60,13 +60,13 @@ describe('Directive Re-rendering', () => {
 		const child = document.getElementById('child')
 		expect(child?.getAttribute('data-calls')).toBe('1')
 
-		const original = pounceOptions.checkReactivity
-		pounceOptions.checkReactivity = 'warn'
+		const original = pounceOptions.checkRebuild
+		pounceOptions.checkRebuild = 'warn'
 		try {
 			state.parentTrigger++
 			expect(callCount).toBe(1)
 		} finally {
-			pounceOptions.checkReactivity = original
+			pounceOptions.checkRebuild = original
 		}
 		expect(document.getElementById('child')?.getAttribute('data-calls')).toBe('1')
 	})
@@ -93,16 +93,14 @@ describe('Directive Re-rendering', () => {
 		expect(callCount).toBe(1)
 
 		// Rebuild fence prevents re-rendering: directive is NOT re-called
-		// When checkReactivity is 'error', this would throw.
-		// We can either catch it or temporarily downgrade to 'warn'.
-		// Let's test that it DOES NOT throw if we are in 'warn' mode (normal dev behavior)
-		const original = pounceOptions.checkReactivity
-		pounceOptions.checkReactivity = 'warn'
+		// checkRebuild='warn' means it logs but does not throw on rebuild-fence violations
+		const original = pounceOptions.checkRebuild
+		pounceOptions.checkRebuild = 'warn'
 		try {
 			state.trigger++
 			expect(callCount).toBe(1)
 		} finally {
-			pounceOptions.checkReactivity = original
+			pounceOptions.checkRebuild = original
 		}
 	})
 
@@ -124,8 +122,10 @@ describe('Directive Re-rendering', () => {
 			return h('div', attrs)
 		}
 
-		const original = pounceOptions.checkReactivity
+		const originalReactivity = pounceOptions.checkReactivity
+		const originalRebuild = pounceOptions.checkRebuild
 		pounceOptions.checkReactivity = 'error'
+		pounceOptions.checkRebuild = 'error'
 		try {
 			latch(container, <App />, env)
 			expect(renderCount).toBe(1)
@@ -140,7 +140,8 @@ describe('Directive Re-rendering', () => {
 			expect(callCount).toBe(2)
 			expect(container.querySelector('div')?.getAttribute('data-arg')).toBe('2')
 		} finally {
-			pounceOptions.checkReactivity = original
+			pounceOptions.checkReactivity = originalReactivity
+			pounceOptions.checkRebuild = originalRebuild
 		}
 	})
 })

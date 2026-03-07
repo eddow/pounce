@@ -150,6 +150,16 @@ export const pounceOptions = {
 	checkReactivity: 'warn' as false | 'warn' | 'error',
 
 	/**
+	 * Controls what happens when a component's reactive dependencies change after initial render
+	 * (the "rebuild fence"). Pounce forbids re-running the component body to avoid infinite loops
+	 * and state destruction, but the detection can be surfaced in three ways:
+	 * - false: silent (production)
+	 * - 'warn': console.warn with the triggering dependency chain (default in dev)
+	 * - 'error': throw DynamicRenderingError — use in tests to assert no accidental dependencies
+	 */
+	checkRebuild: 'warn' as false | 'warn' | 'error',
+
+	/**
 	 * When true, latch() wraps content in a fragment with a default dev error boundary.
 	 * Renders a visible error panel in the DOM instead of a blank screen on unhandled throws.
 	 * Defaults to true in dev mode (not production, not test).
@@ -157,24 +167,27 @@ export const pounceOptions = {
 	devCatch: isDevMode,
 }
 
-/** Preset for production: no reactivity checks, no rebuild detection overhead */
+/** Preset for production: no checks, no rebuild detection overhead */
 export const prodPreset: Partial<typeof pounceOptions> = {
 	maxRebuildsPerWindow: 0,
 	checkReactivity: false,
+	checkRebuild: false,
 	devCatch: false,
 }
 
-/** Preset for development (default): reactivity checks warn, rebuild detection on */
+/** Preset for development (default): both checks warn */
 export const devPreset: Partial<typeof pounceOptions> = {
 	maxRebuildsPerWindow: 1000,
 	checkReactivity: 'warn',
+	checkRebuild: 'warn',
 	devCatch: true,
 }
 
-/** Preset for debug: reactivity violations throw, stricter write-to-read-only handling */
+/** Preset for debug: all violations throw — use in tests to assert clean boundaries */
 export const debugPreset: Partial<typeof pounceOptions> = {
 	maxRebuildsPerWindow: 1000,
 	checkReactivity: 'error',
+	checkRebuild: 'error',
 	devCatch: true,
 }
 

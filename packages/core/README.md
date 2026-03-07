@@ -2,19 +2,17 @@
 
 > A lightweight, reactive web framework built with TypeScript and JSX
 
-Pounce-TS is a minimal, performant framework for building reactive web applications. It combines the simplicity of direct DOM manipulation with the power of automatic reactivity, two-way binding, and component-based architecture.
-
-Redoing one was done to have something simple, who is simply reactive without hacks (`reactive(...)` is enough) and still keep a simple and intuitive way of describing relations with no need to have two names per state for example.
+Pounce-TS is a fine-grained reactive UI framework built on direct DOM updates and `mutts`. Components render once, then reactive attributes, directives, and effects keep the DOM in sync without component re-renders.
 
 ## 🌟 Features
 
 - **🚀 Lightweight**: No virtual DOM, minimal overhead
-- **⚡ Reactive**: Automatic reactivity powered by `mutts` reactivity engine
+- **⚡ Reactive**: Fine-grained reactivity powered by `mutts`
 - **🔄 Two-Way Binding**: Automatic detection and setup of two-way data binding
 - **🎨 JSX Support**: Write components using familiar JSX syntax
 - **💪 Type-Safe**: Full TypeScript support with type safety
 - **🧩 Component-Based**: Create reusable, composable components
-- **📦 No Runtime**: Works directly with the DOM
+- **🧭 Render-once model**: Reactive reads belong in JSX, directives, and effects rather than component rebuilds
 
 ## 📖 Documentation
 
@@ -33,29 +31,30 @@ Complete documentation is available in the [docs folder](docs):
 ### Installation
 
 ```bash
-npm install @pounce/core
+npm install @pounce/core mutts
 ```
 
-### Build Configuration
+### TypeScript Configuration
 
-Pounce includes its own Vite plugin for JSX transformation. Configure your `vite.config.ts`:
+Pounce uses the **classic JSX transform**. In your `tsconfig.json`:
 
-```typescript
-import { defineConfig } from 'vite'
-import { pounceCorePackage } from '@pounce/core/plugin'
-
-export default defineConfig({
-  plugins: [
-    ...pounceCorePackage({
-      core: {
-        jsxRuntime: { runtime: 'automatic', importSource: '@pounce/core' }
-      }
-    })
-  ]
-})
+```json
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "jsxFactory": "h",
+    "jsxFragmentFactory": "Fragment"
+  }
+}
 ```
 
-**Note**: JSX globals (`h`, `Fragment`) are automatically available when you import from `@pounce/core`. No manual imports needed!
+Do **not** use `jsx: "react-jsx"` or `jsxImportSource` with `@pounce/core`.
+
+### Vite / Babel Configuration
+
+Pounce ships a plugin at `@pounce/core/plugin`. Use it to apply the JSX/Babel transform that injects `h`, `Fragment`, `c`, and `r` where needed.
+
+See the consuming app/package configs in this workspace for concrete setup examples. The key rule is: **classic JSX in TypeScript, Pounce plugin in the build step**.
 
 ### Development
 
@@ -79,7 +78,7 @@ import { latch } from '@pounce/core'
 
 function Counter() {
   const state = reactive({ count: 0 })
-  
+
   return (
     <>
       <h1>Counter: {state.count}</h1>
@@ -89,20 +88,14 @@ function Counter() {
   )
 }
 
-latch('#app', () => <Counter />)
+latch('#app', <Counter />)
 ```
 
 ## 🎯 Key Concepts
 
 ### Components
 
-Components are TypeScript functions that return JSX:
-
-```tsx
-function Greeting(props: { name: string }) {
-  return <h1>Hello, {props.name}!</h1>
-}
-```
+Components are TypeScript functions that return JSX. They are expected to **render once**; subsequent updates happen through fine-grained reactive bindings.
 
 ### Reactive State
 
@@ -117,10 +110,10 @@ const state = reactive({
 
 ### Two-Way Binding
 
-Bind form inputs and component properties automatically:
+Bindable expressions such as `state.name` or a mutable `let` variable become two-way automatically:
 
 ```tsx
-<input value={props.name} />
+<input value={state.name} />
 ```
 
 ### Event Handlers
@@ -131,19 +124,20 @@ Use camelCase event handlers:
 <button onClick={() => state.count++}>Click me</button>
 ```
 
-Components use optional callbacks.
+### Directives
 
-### Illustration
+Pounce extends JSX with framework directives:
 
 ```tsx
-function Counter(props: { value: number, onReset?(): void }) {
-  return <>
-    <p>{props.value}</p>
-    <button onClick={()=> props.value++}>Increment</button>
-    <button onClick={onReset}>Reset</button>
-  </>
-}
+<div if={state.visible} />
+<input this={setInput} />
+<div use={(node) => console.log(node)} />
+<div use:resize={state.size} />
 ```
+
+- `if`, `when`, `else`, `pick` control rendering
+- `this` tracks mounted nodes and receives `undefined` on unlatch
+- `use` and `use:name` support cleanup functions
 
 ## 📚 Learn More
 

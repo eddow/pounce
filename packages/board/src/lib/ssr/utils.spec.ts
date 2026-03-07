@@ -1,3 +1,6 @@
+import { h } from '@pounce/core'
+import { renderToStringAsync } from '@pounce/core/node'
+import { Head } from '@pounce/kit/node'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
 	escapeJson,
@@ -40,6 +43,30 @@ describe('ssr utils', () => {
 	})
 
 	describe('injectSSRContent', () => {
+		it('should inject head content collected during SSR rendering', async () => {
+			const { withSSRContext } = await import('./utils.js')
+			const App = () =>
+				h(
+					'fragment',
+					{},
+					h(Head, {}, h('link', { rel: 'canonical', href: 'https://example.com/ssr' })),
+					h('div', {}, 'page')
+				)
+
+			await withSSRContext(async () => {
+				const rendered = await renderToStringAsync(h(App, {}))
+
+				expect(rendered).toContain('page')
+				const html = '<html><head></head><body><div id="root"></div></body></html>'
+				const result = await injectSSRContent(html)
+
+				expect(result).toContain('<link rel="canonical" href="https://example.com/ssr">')
+				expect(
+					result.indexOf('<link rel="canonical" href="https://example.com/ssr">')
+				).toBeLessThan(result.indexOf('</head>'))
+			})
+		})
+
 		it('should run custom injectors', async () => {
 			const { withSSRContext } = await import('./utils.js')
 

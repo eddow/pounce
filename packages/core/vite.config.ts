@@ -13,6 +13,7 @@ function ensureStableTypeEntrypoints() {
 		['dom.d.ts', "export * from '../src/dom/index'\n"],
 		['node.d.ts', "export * from '../src/node/index'\n"],
 		['plugin.d.ts', "export * from '../src/plugin/index'\n"],
+		['testing.d.ts', "export * from '../src/testing/index'\n"],
 		['jsx.d.ts', "export * from '../src/types/jsx'\n"],
 	]
 	return {
@@ -67,9 +68,26 @@ export default defineConfig({
 					// Copy JSX types to dist, rewriting relative imports to point to rolled-up dom.d.ts
 					const jsxSource = readFileSync(join(projectRootDir, 'src/types/jsx.d.ts'), 'utf8')
 					const jsxDist = jsxSource
+						.replace(
+							/import type \{ Children as SourceChildren, PounceElement, Env \} from '\.\.\/lib\/pounce-element'/g,
+							"import type { Children as SourceChildren, PounceElement, Env } from './dom'"
+						)
 						.replace(/from\s+['"]\.\.\/lib(?:\/\w+)?['"]/g, "from '.'")
+						.replace(/from\s+['"]\.['"](?=\n|\r|;)/g, "from './dom'")
 						.replace(/from\s+['"]\.\.\/lib['"]/g, "from '.'")
 					writeFileSync(join(projectRootDir, 'dist/jsx.d.ts'), jsxDist)
+					// Rewrite rolled-up declaration imports so published d.ts files depend on package names,
+					// not workspace-relative filesystem paths.
+					for (const entry of ['dom.d.ts', 'node.d.ts']) {
+						const file = join(projectRootDir, 'dist', entry)
+						if (!existsSync(file)) continue
+						const content = readFileSync(file, 'utf8')
+						const normalized = content.replace(
+							/from\s+['"](?:\.\.\/)+mutts\/dist['"]/g,
+							"from 'mutts'"
+						)
+						writeFileSync(file, normalized)
+					}
 					// Add /// <reference> to dom.d.ts and node.d.ts so consumers get JSX namespace
 					for (const entry of ['dom.d.ts', 'node.d.ts']) {
 						const file = join(projectRootDir, 'dist', entry)
@@ -93,6 +111,7 @@ export default defineConfig({
 				dom: resolvePath(projectRootDir, 'src/dom/index.ts'),
 				node: resolvePath(projectRootDir, 'src/node/index.ts'),
 				plugin: resolvePath(projectRootDir, 'src/plugin/index.ts'),
+				testing: resolvePath(projectRootDir, 'src/testing/index.ts'),
 			},
 			formats: ['es', 'cjs'],
 			fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'js' : 'cjs'}`,

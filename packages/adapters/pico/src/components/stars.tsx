@@ -1,16 +1,24 @@
 import { type StarItemState, type StarsProps, starsModel } from '@pounce/ui/models'
 
+const STAR_GLYPHS: Record<string, string> = {
+	'star-filled': '★',
+	'star-outline': '☆',
+}
+
+function starGlyph(iconName: string): string {
+	return STAR_GLYPHS[iconName] ?? iconName
+}
+
 function StarItem(props: { item: StarItemState; size: string }) {
 	return (
 		<span
 			style={{ fontSize: props.size, cursor: 'pointer', userSelect: 'none' }}
 			onMousedown={props.item.onMousedown}
-			onClick={props.item.onClick}
 			onMousemove={props.item.onMousemove}
 			onDblclick={props.item.onDblclick}
 			data-star-status={props.item.status}
 		>
-			{props.item.iconName}
+			{starGlyph(props.item.iconName)}
 		</span>
 	)
 }

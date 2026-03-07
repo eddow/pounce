@@ -1,6 +1,10 @@
-import type { Client, PlatformAdapter } from './types.js'
+import type { Children, Env } from '@pounce/core'
+import type { ScopedCallback } from 'mutts'
+import { mountHeadContent } from '../head-mount.js'
+import type { Client, HeadMount, PlatformAdapter } from './types.js'
 
 let _platform: PlatformAdapter | null = null
+let _headMount: HeadMount | null = null
 
 /**
  * Set the active platform adapter.
@@ -11,6 +15,10 @@ let _platform: PlatformAdapter | null = null
  */
 export const setPlatform = (impl: PlatformAdapter) => {
 	_platform = impl
+}
+
+export const setHeadMount = (impl: HeadMount | null) => {
+	_headMount = impl
 }
 
 function ensure(operation: string): PlatformAdapter {
@@ -31,3 +39,13 @@ export const client: Client = new Proxy({} as Client, {
 		return Reflect.set(ensure('client.set').client, prop, value)
 	},
 })
+
+export function mountHead(content: Children, env?: Env): ScopedCallback {
+	if (_headMount) return _headMount(content, env)
+	const platformMount = _platform?.mountHead
+	if (platformMount) return platformMount(content, env)
+	if (typeof document !== 'undefined') return mountHeadContent(document.head, content, env)
+	throw new Error(
+		'[@pounce/kit] No head mount configured. Import @pounce/kit/dom, provide a platform adapter with mountHead(), or call setHeadMount().'
+	)
+}

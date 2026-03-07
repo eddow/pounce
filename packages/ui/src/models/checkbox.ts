@@ -1,18 +1,24 @@
 import type { StyleInput } from '@pounce/core'
-import type {
-	CheckedProps,
-	DisableableProps,
-	ElementPassthroughProps,
-	VariantProps,
-} from '../shared/types'
+import type { CheckedProps, DisableableProps, VariantProps } from '../shared/types'
 import { type GroupCollection, hasGroupValue, toggleGroupCollectionValue } from './group'
 
 // ── Shared prop base ────────────────────────────────────────────────────────
 
+type BooleanInputElementProps = Omit<
+	JSX.BaseHTMLAttributes<HTMLInputElement> & Omit<JSX.InputBoolean, 'type'>,
+	'this' | 'value' | 'aria-checked'
+> & {
+	type?: 'checkbox' | 'radio'
+	this?: (el: Node | readonly Node[] | undefined) => void
+	value?: string
+	'aria-checked'?: boolean
+}
+
 type ControlBaseProps = VariantProps &
 	DisableableProps &
-	CheckedProps &
-	ElementPassthroughProps<'input'> & {
+	CheckedProps & {
+		el?: BooleanInputElementProps
+	} & {
 		/** Label position relative to the control — 'start' or 'end' (default 'end'). Uses CSS `order` on the input. */
 		labelPosition?: 'start' | 'end'
 		description?: JSX.Element | string

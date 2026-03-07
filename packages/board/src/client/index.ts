@@ -20,5 +20,13 @@ export {
 export { ApiError } from '../lib/http/core.js'
 export { PounceResponse } from '../lib/http/response.js'
 export { defineRoute, type RouteDefinition } from '../lib/router/defs.js'
+export {
+	buildRouteTree,
+	matchRoute,
+	parseSegment,
+	type RouteMatch,
+	type RouteParams,
+	type RouteTreeNode,
+} from '../lib/router/index.js'
 // SSR hydration (client-side consumption)
 export { getSSRData, getSSRId } from '../lib/ssr/utils.js'

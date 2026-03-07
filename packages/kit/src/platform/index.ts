@@ -1,4 +1,4 @@
-export { client, setPlatform } from './shared.js'
+export { client, mountHead, setHeadMount, setPlatform } from './shared.js'
 export type {
 	Client,
 	ClientHistoryState,
@@ -6,7 +6,9 @@ export type {
 	ClientUrl,
 	ClientViewport,
 	Direction,
+	HeadMount,
 	NavigateOptions,
+	NavigationKind,
 	PlatformAdapter,
 	VisibilityState,
 } from './types.js'

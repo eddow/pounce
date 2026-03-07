@@ -1,19 +1,50 @@
 # Button
 
-A headless button primitive with disabled state and click handling.
+A headless button model with disabled-state handling, icon support, icon-only accessibility fallback, and dynamic tag support.
 
-## Props
+## Source API
+
+The real exported type is `ButtonProps` from `src/models/button.tsx`.
 
 ```ts
-interface ButtonProps {
-  /** Whether the button is disabled */
-  disabled?: boolean
-  /** Click handler */
-  onClick?: (e: MouseEvent) => void
-  /** Accessibility label */
-  'aria-label'?: string
-  /** Additional element attributes */
-  [key: string]: any
+type ButtonProps = VariantProps &
+	IconProps &
+	DisableableProps &
+	AriaLabelProps &
+	ElementPassthroughProps<'button'> & {
+		tag?: 'button' | 'a' | 'div' | 'span'
+		onClick?: (e: MouseEvent) => void
+		children?: JSX.Children
+	}
+```
+
+Important fields:
+
+- `disabled`
+- `onClick`
+- `children`
+- `icon`
+- `iconPosition`
+- `ariaLabel`
+- `tag`
+- `el`
+- `variant`
+
+## What `buttonModel()` returns
+
+```ts
+type ButtonModel = {
+	readonly isIconOnly: boolean
+	readonly hasLabel: boolean
+	readonly tag: 'button' | 'a' | 'div' | 'span'
+	readonly icon:
+		| {
+				readonly position: 'start' | 'end'
+				readonly span: JSX.IntrinsicElements['span']
+				readonly element?: JSX.Element
+		  }
+		| undefined
+	readonly button: JSX.IntrinsicElements['button']
 }
 ```
 
@@ -22,34 +53,47 @@ interface ButtonProps {
 ```tsx
 import { buttonModel } from '@pounce/ui'
 
-function Button(props: ButtonProps) {
-  const model = buttonModel(props)
-  return <button {...model.button}>{props.children}</button>
-}
-
-// Examples
-<Button onClick={() => console.log('clicked')}>Click me</Button>
-<Button disabled>Disabled button</Button>
-```
-
-## Model API
-
-The `buttonModel` returns:
-
-```ts
-interface ButtonModel {
-  /** Spreadable attrs for the `<button>` element */
-  button: {
-    disabled?: boolean
-    onClick?: (e: MouseEvent) => void
-    'aria-label'?: string
-    'aria-disabled'?: boolean
-  }
+function Button(props) {
+	const model = buttonModel(props)
+	return (
+		<dynamic tag={model.tag} {...model.button} {...props.el}>
+			{model.icon && <span {...model.icon.span}>{model.icon.element}</span>}
+			{props.children}
+		</dynamic>
+	)
 }
 ```
+
+## Behavior
+
+- `model.button.onClick` is suppressed when `disabled` is true
+- `model.button.disabled` mirrors `props.disabled`
+- `model.button['aria-disabled']` mirrors `props.disabled`
+- `model.tag` defaults to `'button'`
+- `model.icon` is `undefined` when no icon is provided
+- string icons are resolved through `<Icon name={props.icon} />`
+- JSX icons are passed through unchanged
+
+## Icon positioning
+
+`iconPosition` is treated logically, not physically.
+
+- `'start'` places the icon before the label
+- `'end'` places the icon after the label
+- legacy `'left'` and `'right'` are normalized internally
+
+The model encodes icon placement in `model.icon.span.style` using:
+
+- `order`
+- `marginInlineStart`
+- `marginInlineEnd`
 
 ## Accessibility
 
-- Uses native `<button>` element
-- Proper disabled state handling
-- `aria-disabled` when disabled prop is true
+For icon-only buttons, the model supplies a fallback accessible name:
+
+```ts
+props.ariaLabel ?? props.el?.['aria-label'] ?? 'Action'
+```
+
+For labeled buttons, the fallback `'Action'` is not used.

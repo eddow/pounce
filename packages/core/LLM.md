@@ -97,14 +97,14 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
     *   **Writing**: Assigning `props.value = x` calls the underlying setter (updates the source state). props are NOT read-only!
     *   **Implication**: When passing props to custom components, the binding object is passed through. If the custom component uses `compose` and spreads state to an underlying native element (e.g., `<input {...state} />`), the binding is propagated, enabling implicit two-way binding without manual event handlers.
 *   **Destructuring Hazard**: `const { value } = props` will read the property immediately. If done outside a tracking context (like an effect), it breaks reactivity for that variable. *Always access props usage-side or keep them in the props object.*
-*   **Body Access Hazard**: Reading `props.foo` directly in the component function body (outside an effect/memo) creates a dependency on that prop for the *entire component*. If `props.foo` changes, the component function re-runs (re-renders), which is often unnecessary for fine-grained reactivity.
-    *   **Bad**: `const x = props.foo; return <div>{x}</div>` (Component re-runs when `foo` changes).
-    *   **Good**: `const computed = { get x() { return props.foo; } }; return <div>{computed.x}</div>` (Only the binding updates).
+*   **Body Access Hazard**: Reading `props.foo` directly in the component function body (outside an effect/memo) creates a dependency on that prop for the *entire component render effect*. If `props.foo` changes, the rebuild fence triggers and the component body does **not** re-run.
+*   **Bad**: `const x = props.foo; return <div>{x}</div>` (Triggers the rebuild fence when `foo` changes).
+*   **Good**: `const computed = { get x() { return props.foo; } }; return <div>{computed.x}</div>` (Only the binding updates).
 
 ### 4. Directives (`use`)
-*   **`use={handler}`**: The `handler` is called during the **render phase** (untracked) with the mounted element/component instance. It is called exactly once on creation, NOT within an effect.
-*   **`use:path={value}`**: Calls `env[path](instance, value, access)`. This is called **WITHIN an effect**, so it re-runs when `value` (or other dependencies) changes, and can return a cleanup function (`EffectCloser`).
-
+*   **`use={handler}`**: Inline directive. Called **within an effect** with `(target, access)`. It may return a cleanup function, re-runs when its value changes, and accumulates across layers.
+*   **`use:path={value}`**: Calls `env[path](instance, value, access)`. This is called **WITHIN an effect**, so it re-runs when `value` (or other dependencies) changes, can return a cleanup function, and is skipped when the resolved env entry is missing or falsy.
+*   **`this={callback}`**: Callback-based ref directive. Receives the rendered target on mount and `undefined` on cleanup/unlatch. Multiple `this` directives accumulate.
 
 ### 5. Best Practices & Anti-Patterns
 > [!IMPORTANT]
@@ -148,6 +148,8 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
 ### 6. Element Lifecycle & Cleanup
 `h()` uses `cleanedBy(element, attend(...))` to tie the reactive bindings to the element's lifecycle. When the element is removed, all inner effects (`attend`, `biDi`, `effect`) are disposed automatically. **No DOM cleanup is needed** — there is no point resetting attributes, styles, or removing event listeners on an element that is being removed. DOM listeners die with the element.
 
+Cleanup walkers must include the root node even when it is not an `Element` (for example comment/text anchors). Some side-effect components anchor cleanup on non-element nodes; if the walker only traverses elements, their cleanup never fires on unlatch.
+
 See `mutts/LLM.md` § "Cleanup Semantics" for the general principle.
 
 ## 🚫 PROHIBITED: `Array.map()` for Rendering Lists
@@ -186,7 +188,7 @@ See `mutts/LLM.md` for a deeper conceptual explanation of the "Assembly Line vs.
 
 ### 7. Component Constructor: Static, Run-Once
 
-Component constructors run **once** inside `PounceElement.render`'s effect. A **rebuild fence** prevents re-execution: if the constructor accidentally reads reactive state directly, it warns and does NOT re-render. All reactivity comes from:
+Component constructors run **once** inside `PounceElement.render`'s effect. A **rebuild fence** prevents re-execution: if the constructor accidentally reads reactive state directly, it reports through `pounceOptions.checkRebuild` and does NOT re-run the body. All reactivity comes from:
 - JSX attributes wrapped by the babel plugin (`r()`)
 - Explicit `effect()`, `attend()`, `lift()`, `project()` inside the body
 - JSX directives (`if={}`, `when={}`, `if:path={}`, `when:path={}`, `use:path={}`, `pick:path={}`)
@@ -298,42 +300,22 @@ At `buildStart`, the plugin writes an ambient `declare module` `.d.ts` file to d
 
 Used by `@pounce/docs` and `mARC` (and any app that wants a single import namespace).
 
-### 13. `bind:` — Bidirectional Binding Statement
+### 13. `bind(...)` — Explicit Bidirectional Binding API
 
-**Syntax**: `bind: dst = src` or `bind: dst = src ??= defaultValue`
-
-A **labeled statement** (not JSX) that the Babel plugin transforms into a `bind(r(dst), r(src)[, default])` call. It lives in component bodies or plain `.ts` files — anywhere, not in the element tree.
+`bind(dst, src, defaultValue?)` is the supported two-way binding API.
 
 ```ts
 const a = reactive({ x: 1 })
 const b = reactive({ x: 0 })
 
-// Simple bidirectional sync
-bind: b.x = a.x
-
-// With default: sets a.x = 7 if a.x is null/undefined, then syncs
-bind: b.x = a.x ??= 7
-```
-
-**What the plugin emits:**
-```ts
-// bind: b.x = a.x
 bind(r(() => b.x, _v => b.x = _v), r(() => a.x, _v => a.x = _v))
-
-// bind: b.x = a.x ??= 7
 bind(r(() => b.x, _v => b.x = _v), r(() => a.x, _v => a.x = _v), 7)
 ```
 
 **Runtime (`bind` in `composite-attributes.ts`):**
-- `bind(dst, src, defaultValue?)` — `dst` is first arg, `src` is second (mirrors the `dst = src` read order)
+- `bind(dst, src, defaultValue?)` — `dst` is first arg, `src` is second
 - Applies `defaultValue` **imperatively** before effects run (if `src.get() == null`)
 - Two effects, each tracking only one side, with a shared `writing` sentinel for loop suppression
 - Returns a cleanup function `() => void` that stops both effects
 
-**Constraints:**
-- Both operands must be **assignable** (member expression or mutable `let`/`var` identifier) — the plugin throws at build time otherwise
-- `bind` and `r` are **auto-imported** from `@pounce/core` by the plugin — do not import manually in files that use the label syntax (the plugin injects them)
-
-**Biome config:** `noUnusedLabels` is set to `"off"` in `biome.json` — do not re-enable it, it would strip `bind:` labels.
-
-**TS language server note:** Having `bind:` labels in a file can confuse the LSP into resolving the `bind` identifier to `assert.bind`. The fix is ensuring `tests/unit/tsconfig.json` has `"@pounce/core": ["../src/lib/index.ts"]` in `paths` (already done).
+The old `bind:` label syntax is obsolete and should not be documented or reintroduced.

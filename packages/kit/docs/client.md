@@ -8,7 +8,7 @@ The `client` singleton is a **reactive object** (via `mutts`) that mirrors brows
 interface ClientState {
   url: ClientUrl           // Current URL (href, pathname, search, hash, segments, query)
   viewport: ClientViewport // { width, height } — window inner dimensions
-  history: ClientHistoryState // { length }
+  history: ClientHistoryState // { length, navigation }
   focused: boolean         // document.hasFocus()
   visibilityState: 'visible' | 'hidden'
   devicePixelRatio: number
@@ -16,6 +16,7 @@ interface ClientState {
   language: string         // navigator.language (canonical locale source)
   timezone: string         // Intl.DateTimeFormat().resolvedOptions().timeZone
   direction: 'ltr' | 'rtl' // <html dir> attribute, auto-detected
+  prefersDark: boolean
 }
 
 interface Client extends ClientState {
@@ -23,7 +24,6 @@ interface Client extends ClientState {
   replace(to: string | URL, options?: Omit<NavigateOptions, 'replace'>): void
   reload(): void
   dispose(): void
-  prefersDark(): boolean
 }
 ```
 
@@ -51,25 +51,27 @@ client.replace('/login')
 ### Browser (`dom/client.ts`)
 
 On import, the DOM entry point:
-1. Binds the reactive `client` singleton via `setClient()`
+1. Installs the DOM platform via `setPlatform()`
 2. Synchronizes all properties from the real browser state
 3. Registers event listeners: `popstate`, `hashchange`, `resize`, `focus`, `blur`, `visibilitychange`, `online`, `offline`, `languagechange`
-4. Intercepts `history.pushState` and `history.replaceState` to keep `client.url` in sync
+4. Intercepts `history.pushState` and `history.replaceState` to keep `client.url` in sync and label the navigation kind
 5. Observes `<html dir>` via `MutationObserver` for `client.direction`
 
 All listeners are tracked for cleanup via `client.dispose()`.
 
-### SSR (`node/client.ts`)
+### Node / SSR
 
-The Node entry point creates an `AsyncLocalStorage`-backed proxy. Each SSR request gets an isolated `createClientInstance()` with sensible defaults (1920×1080 viewport, `'en-US'` language, `'ltr'` direction). Navigation methods throw in SSR context.
+The shared `client` proxy still exists in node/SSR contexts, but request-scoped installation is the responsibility of the consuming server framework. Kit itself exports the ALS request-context helper in `@pounce/kit/node` via `runWithContext()`.
 
 ```typescript
-import { runWithClient } from '@pounce/kit/node'
+import { createScope, runWithContext } from '@pounce/kit/node'
 
-runWithClient((client) => {
-  // client is isolated to this execution context
-  console.log(client.url.pathname)
-}, { url: 'http://example.com/page' })
+const scope = createScope({ timeout: 5000 })
+scope.origin = 'http://example.com'
+
+await runWithContext(scope, async () => {
+  // request-scoped API config/interceptors live here
+})
 ```
 
 ## `ClientUrl`

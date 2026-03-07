@@ -16,6 +16,8 @@
 		"paths": {
 			"@pounce/kit": ["test/ep.ts"],
 			"@pounce/core": ["packages/core/src/dom/index.ts"],
+			"@pounce/core/testing": ["packages/core/src/testing/index.ts"],
+			"@pounce/core/*": ["packages/core/src/*"],
 			"@pounce/core/node": ["packages/core/src/node/index.ts"],
 			"@pounce/ui": ["packages/ui/src/index.ts"],
 			"mutts": ["mutts/src/entry-browser.dev.ts"],

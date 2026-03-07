@@ -226,16 +226,17 @@ export class CompositeAttributes {
 			if (nonReactive && (typeof rawLayer === 'function' || isReactive(rawLayer))) continue
 			const layer = collapseLayer(rawLayer)
 
-			for (const key of Object.keys(layer)) {
-				if (key.startsWith(prefix)) {
-					const name = key.slice(prefix.length)
-					if (name && !this.masked.has(name) && !(result && Object.hasOwn(result, name))) {
-						if (nonReactive) this.mask(category)
-						result ??= {}
-						result[name] = layer[key]
+			if (layer)
+				for (const key of Object.keys(layer)) {
+					if (key.startsWith(prefix)) {
+						const name = key.slice(prefix.length)
+						if (name && !this.masked.has(name) && !(result && Object.hasOwn(result, name))) {
+							if (nonReactive) this.mask(category)
+							result ??= {}
+							result[name] = layer[key]
+						}
 					}
 				}
-			}
 		}
 		return result
 	}

@@ -24,6 +24,10 @@ export const createBaseConfig = (packageDir: string) => {
 					? '../mutts/src/entry-browser.dev.ts'
 					: '../mutts/src/entry-node.dev.ts'),
 				'pure-glyf': resolve(workspaceRoot, 'packages/pure-glyf/src/index.ts'),
+				'@pounce/core/testing': resolve(
+					workspaceRoot,
+					'packages/core/src/testing/index.ts'
+				),
 				'@pounce/core/node': resolve(workspaceRoot, 'packages/core/src/node/index.ts'),
 				'@pounce/core': resolve(workspaceRoot, isBrowser
 					? 'packages/core/src/dom/index.ts'

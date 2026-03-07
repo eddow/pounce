@@ -1,4 +1,5 @@
-import { mountedNodes, ReactiveProp } from '@pounce/core'
+import { ReactiveProp } from '@pounce/core'
+import { markMounted, markUnmounted } from '@pounce/core/testing'
 import { effect } from 'mutts'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { sizeable } from './sizeable'
@@ -31,19 +32,13 @@ describe('sizeable directive', () => {
 		container.appendChild(parent)
 		document.body.appendChild(container)
 
-		mountedNodes.add(container)
-		mountedNodes.add(parent)
-		mountedNodes.add(element)
-		mountedNodes.add(flexSibling)
+		markMounted(container)
 
 		flexSibling.style.flex = '1'
 	})
 
 	afterEach(() => {
-		mountedNodes.delete(container)
-		mountedNodes.delete(parent)
-		mountedNodes.delete(element)
-		mountedNodes.delete(flexSibling)
+		markUnmounted(container)
 		document.body.removeChild(container)
 	})
 
@@ -143,24 +138,21 @@ describe('sizeable directive', () => {
 		// Clear parent from beforeEach setup
 		parent.innerHTML = ''
 
-		// Now mount it
+		// Append to DOM and register mount state (simulating syncRegistry)
 		parent.appendChild(unmounted)
 		parent.appendChild(flex)
-
-		// Manually trigger mounted state (simulating observer)
-		mountedNodes.add(unmounted)
-		mountedNodes.add(flex)
+		markMounted(unmounted)
+		markMounted(flex)
 
 		// Wait for effect to re-run
 		await Promise.resolve()
 
-		// sizeable should now trigger within the effect because unmounted.isConnected changed
 		expect(unmounted.classList.contains('sizeable')).toBe(true)
 		expect(unmounted.querySelector('.sizeable-handle')).toBeTruthy()
 
 		stop()
 		cleanup?.()
-		mountedNodes.delete(unmounted)
-		mountedNodes.delete(flex)
+		markUnmounted(unmounted)
+		markUnmounted(flex)
 	})
 })

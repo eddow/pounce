@@ -131,6 +131,9 @@ export function multiselectModel<T>(props: MultiselectProps<T>): MultiselectMode
 					toggle: (e: Event) => {
 						e.preventDefault()
 						e.stopPropagation()
+						const nextChecked = !state.checked
+						state.checked = nextChecked
+						state.rendered = props.renderItem(item, nextChecked)
 						const next = toggleSelected(props, props.value, item)
 						props.onChange?.(next)
 						if ((props.closeOnSelect ?? true) && detailsEl) {

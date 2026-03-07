@@ -7,17 +7,17 @@
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"bin": {
-		"pounce": "./dist/cli/index.js"
+		"pounce": "./dist/cli.js"
 	},
 	"exports": {
 		".": {
 			"browser": {
-				"import": "./dist/client/index.js",
-				"types": "./dist/client/index.d.ts"
+				"import": "./dist/client.js",
+				"types": "./dist/client.d.ts"
 			},
 			"node": {
-				"import": "./dist/server/index.js",
-				"types": "./dist/server/index.d.ts"
+				"import": "./dist/server.js",
+				"types": "./dist/server.d.ts"
 			},
 			"default": {
 				"import": "./dist/index.js",
@@ -25,12 +25,12 @@
 			}
 		},
 		"./client": {
-			"import": "./dist/client/index.js",
-			"types": "./dist/client/index.d.ts"
+			"import": "./dist/client.js",
+			"types": "./dist/client.d.ts"
 		},
 		"./server": {
-			"import": "./dist/server/index.js",
-			"types": "./dist/server/index.d.ts"
+			"import": "./dist/server.js",
+			"types": "./dist/server.d.ts"
 		},
 		"./src": "./src/index.ts",
 		"./src/*": "./src/*"
@@ -38,8 +38,9 @@
 	"scripts": {
 		"demo": "tsx src/cli/index.ts dev --port 5300 --routes demo/routes --html demo/index.html",
 		"build": "vite build",
-		"test:unit": "vitest --project unit",
-		"test:integration": "vitest --project integration",
+		"prepublishOnly": "npm run build",
+		"test:unit": "vitest run src",
+		"test:integration": "vitest run tests/integration",
 		"test:e2e": "playwright test",
 		"test:e2e:ui": "playwright test --ui",
 		"test:coverage": "vitest --coverage",
@@ -84,8 +85,8 @@
 	},
 	"files": [
 		"dist",
-		"README.md",
-		"LICENSE"
+		"docs",
+		"README.md"
 	],
 	"packageManager": "pnpm@10.30.0"
 }

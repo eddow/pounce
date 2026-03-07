@@ -1,116 +1,168 @@
 # Overlay
 
-A headless overlay system for dialogs, toasts, and other floating content.
+The overlay module provides:
 
-## Core Concepts
+- a reactive overlay stack
+- focus and transition helpers
+- dialog / toast / drawer spec builders
+- convenience binders for exposing overlay helpers from an adapter
 
-Overlays in Pounce use a stack-based system where each overlay is an entry that can be pushed and removed. The overlay system handles:
+## Core types
 
-- Stack management (multiple overlays can be open)
-- Transition effects
-- Focus trapping
-- Auto-dismissal
+### `OverlaySpec<T>`
 
-## Basic Usage
+```ts
+interface OverlaySpec<T = unknown> {
+	id?: string
+	mode: string
+	render?: (close: (value: T) => void) => JSX.Children
+	props?: any
+	dismissible?: boolean
+	autoFocus?: boolean | string
+	aria?: {
+		label?: string
+		labelledby?: string
+		describedby?: string
+	}
+}
+```
+
+### `OverlayEntry`
+
+```ts
+interface OverlayEntry extends OverlaySpec {
+	id: string
+	resolve: (value: unknown) => void
+	closing?: boolean
+}
+```
+
+## `createOverlayStack()`
+
+This is the core state container.
+
+```ts
+interface OverlayStackState {
+	readonly stack: OverlayEntry[]
+	readonly hasBackdrop: boolean
+	readonly push: <T>(spec: OverlaySpec<T>) => Promise<T | null>
+	readonly registerElement: (id: string, el: HTMLElement) => void
+	isClosing(id: string): boolean
+	readonly onKeydown: (e: KeyboardEvent) => void
+	readonly onBackdropClick: (e: MouseEvent) => void
+}
+```
+
+Important differences from older docs:
+
+- `push()` returns a `Promise<T | null>`
+- there is no `remove()` or `clear()` API on the state object
+- exit transitions are coordinated through `registerElement()` and `isClosing()`
+
+## Basic usage
 
 ```tsx
 import { createOverlayStack, dialogSpec } from '@pounce/ui'
 
-function MyComponent() {
-  const stack = createOverlayStack()
-  
-  const openDialog = () => {
-    stack.push(dialogSpec({
-      title: 'Confirm',
-      content: 'Are you sure?',
-      actions: [
-        { label: 'Cancel', action: 'close' },
-        { label: 'Confirm', action: 'confirm' }
-      ]
-    }))
-  }
-  
-  return (
-    <div>
-      <button onClick={openDialog}>Open Dialog</button>
-      
-      {/* Render active overlays */}
-      {stack.stack.map(entry => (
-        <div key={entry.id} className="overlay-backdrop">
-          {entry.render?.(entry.resolve)}
-        </div>
-      ))}
-    </div>
-  )
+function WithOverlays(props) {
+	const state = createOverlayStack()
+
+	return (
+		<fragment>
+			{props.children}
+			<div onKeydown={state.onKeydown}>
+				<div if={state.hasBackdrop} onClick={state.onBackdropClick}></div>
+				<for each={state.stack}>
+					{(entry) => entry.render?.(entry.resolve)}
+				</for>
+			</div>
+		</fragment>
+	)
 }
 ```
 
-## API
+## Spec builders
 
-### createOverlayStack()
+### `dialogSpec()`
 
-Creates a new overlay stack instance:
+Builds a modal dialog spec.
 
 ```ts
-interface OverlayStack {
-  /** Current stack entries */
-  stack: readonly OverlayEntry[]
-  
-  /** Push a new overlay */
-  push(spec: OverlaySpec): OverlayEntry
-  
-  /** Remove an overlay */
-  remove(entry: OverlayEntry): void
-  
-  /** Clear all overlays */
-  clear(): void
+type DialogOptions = {
+	title?: JSX.Children
+	message?: JSX.Children
+	size?: 'sm' | 'md' | 'lg'
+	buttons?: Record<string, string | DialogButton>
+	dismissible?: boolean
+	variant?: string
+	render?: (close: (value: unknown) => void) => JSX.Children
 }
 ```
 
-### dialogSpec()
+Returns an `OverlaySpec` with:
 
-Creates a dialog overlay specification:
+- `mode: 'modal'`
+- `autoFocus: true`
+- generated `aria.labelledby` / `aria.describedby` ids when title/message are present
 
-```ts
-function dialogSpec(options: {
-  title?: string
-  content: JSX.Element | string
-  actions?: Array<{
-    label: string
-    action: string | ((entry: OverlayEntry) => void)
-    variant?: 'primary' | 'secondary'
-  }>
-  closeOnBackdrop?: boolean
-}): OverlaySpec
-```
+### `toastSpec()`
 
-### OverlayEntry
-
-Represents an active overlay in the stack:
+Builds a toast overlay spec.
 
 ```ts
-interface OverlayEntry extends OverlaySpec {
-  /** Unique identifier */
-  id: string
-  
-  /** Render the overlay content */
-  render?: (resolve: (result?: any) => void) => JSX.Element
-  
-  /** Resolve/close the overlay */
-  resolve: (result?: any) => void
+type ToastOptions = {
+	message: JSX.Children
+	variant?: 'success' | 'danger' | 'warning' | 'primary' | 'secondary'
+	duration?: number
+	render?: (close: (value: unknown) => void) => JSX.Children
 }
 ```
 
-## Rendering Overlays
+Returns an `OverlaySpec` with:
 
-When rendering overlays, iterate over `stack.stack` and call `entry.render()`:
+- `mode: 'toast'`
+- `dismissible: false`
+- `autoFocus: false`
+- optional timed auto-close inside `render`
 
-```tsx
-{stack.stack.map(entry => (
-  <div key={entry.id} className="overlay-backdrop">
-    {entry.render?.(entry.resolve)}
-  </div>
-))}
+### `drawerSpec()`
+
+Builds a left or right drawer spec.
+
+```ts
+type DrawerOptions = {
+	title?: JSX.Children
+	children: JSX.Children
+	footer?: JSX.Children
+	side?: 'left' | 'right'
+	dismissible?: boolean
+	render?: (close: (value: unknown) => void) => JSX.Children
+}
 ```
 
-**Important**: Use `entry.render?.(entry.resolve)` - don't try to access `entry.element` as it doesn't exist.
+Returns an `OverlaySpec` with mode `drawer-left` or `drawer-right`.
+
+## Helper binders
+
+The module also exports:
+
+- `bindDialog(push)`
+- `bindToast(push)`
+- `bindDrawer(push)`
+
+These wrap a `push` function and give adapters convenient helper APIs such as:
+
+- `dialog(...)`
+- `dialog.confirm(...)`
+- `toast.success(...)`
+- `toast.error(...)`
+
+## DOM helpers
+
+The same module exports lower-level helpers for adapters:
+
+- `applyTransition(element, type, config, onComplete)`
+- `applyAutoFocus(container, strategy)`
+- `trapFocus(container)`
+
+These are useful when an adapter is responsible for rendering and animating the overlay shell.

@@ -1,0 +1,46 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"rootDir": "../../../../../",
+		"paths": {
+			"@pounce/core": [
+				"../../../core/src/index.ts"
+			],
+			"@pounce/core/*": [
+				"../../../core/src/*"
+			],
+			"@pounce/kit": [
+				"../../../kit/src/index.ts"
+			],
+			"@pounce/kit/*": [
+				"../../../kit/src/*"
+			],
+			"@pounce/ui": [
+				"../../../ui/src/index.ts"
+			],
+			"@pounce/ui/*": [
+				"../../../ui/src/*"
+			],
+			"@pounce/ui/models": [
+				"../../../ui/src/models/index.ts"
+			],
+			"mutts": [
+				"../../../../../mutts/src/index.ts"
+			],
+			"mutts/*": [
+				"../../../../../mutts/src/*"
+			],
+			"@pounce/adapter-pico": [
+				"../src/index.ts"
+			],
+			"@pounce/adapter-pico/css": [
+				"../src/pico.sass"
+			]
+		}
+	},
+	"include": [
+		"./**/*",
+		"../src/**/*"
+	]
+}

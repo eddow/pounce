@@ -1,7 +1,7 @@
 /**
  * Request Context for @pounce/kit
  * Shared types and context management with pluggable hooks.
- * ALS-backed implementation lives in node/context.ts (Node EP only).
+ * ALS-backed implementation is provided by the consuming framework (e.g. @pounce/board).
  */
 import type { InterceptorMiddleware } from './base-client.js'
 
@@ -38,12 +38,12 @@ export interface RequestScope {
 
 /**
  * Get the current request scope.
- * In browser: always returns null (no ALS).
- * In Node: overridden by node/context.ts via setGetContext hook.
+ * In browser: always returns null.
+ * In Node: overridden by the consuming framework via setGetContext hook.
  */
 export let getContext: () => RequestScope | null = () => globals[CONTEXT_KEY] || null
 
-/** @internal — set by node/context.ts to inject ALS-aware implementation */
+/** @internal — set by consuming framework (e.g. @pounce/board) to inject ALS-aware implementation */
 export function setGetContext(impl: () => RequestScope | null) {
 	getContext = impl
 }

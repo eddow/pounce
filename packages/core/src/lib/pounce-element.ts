@@ -5,6 +5,7 @@ import {
 	formatCleanupReason,
 	link,
 	reactiveOptions,
+	root,
 	unreactive,
 } from 'mutts'
 import { perf } from '../perf'
@@ -38,7 +39,6 @@ function arrayed<T>(v: T | readonly T[]): readonly T[] {
 	return Array.isArray(v) ? v : [v as T]
 }
 export type Env<T = any> = Record<PropertyKey, T>
-let maxRenderDependencyLog = 100
 /**
  * PounceElement class - encapsulates JSX element creation and rendering
  */
@@ -117,39 +117,46 @@ named will be managed à la morph too
 Note: "à la morph" means it can be attended - if it uses array-diff
 */
 	applyDirectives(target: Node | readonly Node[], env: Env) {
-		// TODO: To be done by your human : applyDirectives is over-reactive!
 		if (!this.meta) return
-		link(
-			target,
-			effect.named(`directives:${this.tag}`)(() => {
-				const directives = this.meta!.directives()
-				effect.named('attr:this')(() => {
-					const these = directives.this
-					for (const usage of these) {
-						if (typeof usage !== 'function')
-							throw new DynamicRenderingError('this directive must resolve to a callback')
-						usage(target)
-					}
-					return () => {
-						for (const usage of these) usage(undefined)
-					}
-				})
-				attend(directives.use, (usage, access) => {
-					const cb = collapse(usage)
+		const stopThis = root(() =>
+			effect.named('attr:this')(() => {
+				const these = this.meta!.directives().this
+				for (const usage of these) {
+					if (typeof usage !== 'function')
+						throw new DynamicRenderingError('this directive must resolve to a callback')
+					usage(target)
+				}
+				return () => {
+					for (const usage of these) usage(undefined)
+				}
+			})
+		)
+		const stopUse = root(() =>
+			attend(
+				() => this.meta!.directives().use,
+				(usage, access) => {
+					const cb: unknown = collapse(usage)
+					if (!cb) return
 					if (typeof cb !== 'function')
 						throw new DynamicRenderingError('use directive must resolve to a function')
 					return cb(target, access)
-				})
-				if (directives.named)
-					attend(directives.named!, (key, access) => {
-						const arg = collapse(directives.named![key])
-						const cb = getEnvPath<Function>(env, key)
-						if (typeof cb !== 'function')
-							throw new DynamicRenderingError(`use directive ${key} must resolve to a function`)
-						return cb(target, arg, access)
-					})
-			})
+				}
+			)
 		)
+		const stopNamed = root(() =>
+			attend(
+				() => Object.keys(this.meta!.directives().named || {}),
+				(key, access) => {
+					const cb = getEnvPath<Function>(env, key)
+					if (!cb) return
+					const arg = collapse(this.meta!.directives().named![key])
+					if (typeof cb !== 'function')
+						throw new DynamicRenderingError(`use directive ${key} must resolve to a function`)
+					return cb(target, arg, access)
+				}
+			)
+		)
+		link(target, stopThis, stopUse, stopNamed)
 	}
 
 	/**
@@ -171,33 +178,28 @@ Note: "à la morph" means it can be attended - if it uses array-diff
 		}
 
 		let partial: Node | readonly Node[] | undefined
-		const stopRender = effect.named(`render:${tagName}`)(
-			({ reaction }) => {
-				if (reaction) {
-					const msg = [
-						`Component <${tagName}> rebuild detected.`,
-						...(reaction === true ? ['No reasons given'] : formatCleanupReason(reaction)),
-						'\nIt means the component definition refers a reactive value that has been modified, though the component has not been rebuilt as it is considered forbidden to avoid infinite events loops.',
-					].join(' ')
-					if (pounceOptions.checkReactivity === 'error') throw new DynamicRenderingError(msg)
-					reactiveOptions.warn(msg)
-				} else {
-					partial = this.produce(env)
-					if (!partial) throw new DynamicRenderingError('Renderer returned no content')
-					this.applyDirectives(partial, env)
-				}
-				return () => {
-					// TODO: mark the node as destroyed and throw when trying to re-use it
-				}
-			},
-			{
-				dependencyHook(obj: any, prop: any) {
-					// TODO: `pounceOptions.checkReactivity` is an option about ReactiveProp read/write check and is unrelated - see why Agents insist to use it here
-					if (pounceOptions.checkReactivity === 'warn' && maxRenderDependencyLog-- > 0)
-						console.warn('render effect dependency:', prop, 'on', obj)
-				},
+		const stopRender = effect.named(`render:${tagName}`)(({ reaction }) => {
+			if (reaction) {
+				if (!pounceOptions.checkRebuild) return
+				const reasons =
+					reaction === true ? ['(no dependency chain available)'] : formatCleanupReason(reaction)
+				const msg = [
+					`[pounce] Rebuild fence: <${tagName}> has reactive dependencies that changed, but re-running the component body is forbidden (would destroy local state and risk infinite loops).`,
+					'Triggered by:',
+					...reasons,
+					'\nMove the reactive read into a child element, an effect, or a directive instead.',
+				].join('\n')
+				if (pounceOptions.checkRebuild === 'error') throw new DynamicRenderingError(msg)
+				reactiveOptions.warn(msg)
+			} else {
+				partial = this.produce(env)
+				if (!partial) throw new DynamicRenderingError('Renderer returned no content')
+				this.applyDirectives(partial, env)
 			}
-		)
+			return () => {
+				// TODO: mark the node as destroyed and throw when trying to re-use it
+			}
+		})
 		perf?.mark(`render:${tagName}:end`)
 		perf?.measure(`render:${tagName}`, `render:${tagName}:start`, `render:${tagName}:end`)
 

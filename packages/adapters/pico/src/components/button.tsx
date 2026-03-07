@@ -1,6 +1,8 @@
 import { gather } from '@pounce/ui'
-import { type ButtonProps, buttonModel } from '@pounce/ui/models'
-import { picoComponent } from '../factory'
+import { type ButtonProps as BaseButtonProps, buttonModel } from '@pounce/ui/models'
+import { type PicoButtonLikeProps, picoButtonClass, picoComponent } from '../factory'
+
+export type ButtonProps = PicoButtonLikeProps<BaseButtonProps>
 
 /**
  * PicoCSS Button component
@@ -15,7 +17,11 @@ export const Button = picoComponent(function Button(props: ButtonProps) {
 	const model = buttonModel(props)
 
 	return (
-		<button class={`btn btn-${props.variant ?? 'secondary'}`} {...model.button} {...props.el}>
+		<button
+			{...props.el}
+			class={picoButtonClass(props.variant ?? 'secondary', props.outline)}
+			{...model.button}
+		>
 			{model.icon && <span {...model.icon.span}>{model.icon.element}</span>}
 			{model.hasLabel && gather(props.children)}
 		</button>

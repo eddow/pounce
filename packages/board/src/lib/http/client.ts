@@ -4,6 +4,18 @@
  * Handles SSR data injection and hydration
  */
 
+import {
+	clearInterceptors as clearKitInterceptors,
+	createApiClientFactory,
+	type InterceptorMiddleware,
+	type ApiClientInstance as KitApiClientInstance,
+	config as kitConfig,
+	intercept as kitIntercept,
+	setPromiseHook,
+	setRequestHook,
+	setResponseHook,
+	setStreamGuardHook,
+} from '@pounce/kit'
 import type { z } from 'zod'
 import { clearSSRData as clearSSRState, getSSRData, getSSRId, injectSSRData } from '../ssr/utils.js'
 import type { ExtractPathParams } from '../types/inference.js'
@@ -18,92 +30,10 @@ import {
 
 declare global {
 	var __POUNCE_ROUTE_REGISTRY__: RouteRegistry | null | undefined
-	var __POUNCE_CONFIG__: typeof DEFAULT_CONFIG | undefined
 }
 
-import { PounceResponse } from './response.js'
-
-export type InterceptorMiddleware = (
-	request: Request,
-	next: (req: Request) => Promise<PounceResponse>
-) => Promise<PounceResponse>
-
-import { addContextInterceptor, getContext, trackSSRPromise } from '../http/context.js'
+import { addContextInterceptor, getContext } from '../http/context.js'
 import type { RouteDefinition } from '../router/defs.js'
-
-interface InterceptorEntry {
-	pattern: string | RegExp
-	handler: InterceptorMiddleware
-}
-
-const interceptorRegistry: InterceptorEntry[] = []
-
-/**
- * Register a global interceptor
- * @param pattern URL pattern to match (glob string or RegExp)
- * @param handler Middleware function
- * @returns Unregister function
- */
-export function intercept(pattern: string | RegExp, handler: InterceptorMiddleware): () => void {
-	const ctx = getContext()
-	if (ctx) {
-		// If inside a request context, register locally
-		return addContextInterceptor(pattern, handler)
-	}
-
-	// Otherwise register globally
-	const entry = { pattern, handler }
-	interceptorRegistry.push(entry)
-	return () => {
-		const index = interceptorRegistry.indexOf(entry)
-		if (index !== -1) {
-			interceptorRegistry.splice(index, 1)
-		}
-	}
-}
-
-/**
- * Clear all interceptors (for testing)
- */
-export function clearInterceptors(): void {
-	interceptorRegistry.length = 0
-}
-
-/**
- * Match a URL against a pattern
- */
-function matchPattern(urlString: string, pattern: string | RegExp): boolean {
-	if (pattern instanceof RegExp) return pattern.test(urlString)
-	if (pattern === '**') return true
-
-	// Extract pathname for matching
-	let pathname = urlString
-	try {
-		if (urlString.startsWith('http://') || urlString.startsWith('https://')) {
-			const u = new URL(urlString)
-			pathname = u.pathname
-		}
-	} catch {
-		// keep original string if parsing fails
-	}
-
-	if (pattern === '*') return !pathname.slice(1).includes('/')
-
-	// Simple glob: ends with /**
-	if (typeof pattern === 'string' && pattern.endsWith('/**')) {
-		const base = pattern.slice(0, -3)
-		if (base.startsWith('http')) {
-			return urlString.startsWith(base)
-		}
-		return pathname.startsWith(base)
-	}
-
-	// Exact match
-	if (typeof pattern === 'string' && pattern.startsWith('http')) {
-		return urlString === pattern
-	}
-	return pathname === pattern
-}
 
 export interface ApiClientInstance<P extends string = string> {
 	get: <T>(
@@ -154,9 +84,6 @@ export interface RouteRegistry {
 		params: Record<string, string>
 	} | null
 }
-
-// Use globalThis to ensure singleton across multiple module loads in SSR
-const _REGISTRY_SYMBOL = Symbol.for('__POUNCE_ROUTE_REGISTRY__')
 
 /**
  * Set the route registry for server-side dispatch
@@ -216,26 +143,12 @@ async function dispatchToHandler(request: Request): Promise<Response> {
 	return response
 }
 
-const _CONFIG_SYMBOL = Symbol.for('__POUNCE_CONFIG__')
-
-const DEFAULT_CONFIG = {
-	timeout: 10000,
-	ssr: false,
-	retries: 0,
-	retryDelay: 100,
-}
-
-function getGlobalConfig() {
-	if (!globalThis.__POUNCE_CONFIG__) {
-		globalThis.__POUNCE_CONFIG__ = { ...DEFAULT_CONFIG }
-	}
-	return globalThis.__POUNCE_CONFIG__
-}
+const configWithSSR = Object.assign(kitConfig, { ssr: false })
 
 /**
  * Global configuration for pounce-board
  */
-export const config = getGlobalConfig()
+export const config: typeof kitConfig & { ssr: boolean } = configWithSSR
 
 /**
  * Enable SSR mode for server-side rendering
@@ -274,347 +187,271 @@ export function clearSSRData(): void {
 	clearSSRState()
 }
 
-/**
- * Run interceptors for a request
- */
-async function runInterceptors(
-	initialRequest: Request,
-	finalHandler: (req: Request) => Promise<PounceResponse>
-): Promise<PounceResponse> {
-	const url = initialRequest.url
-
-	// Filter matching interceptors
-
-	const ctx = getContext()
-	const contextInterceptors = ctx ? ctx.interceptors : []
-	const allInterceptors = [...interceptorRegistry, ...contextInterceptors]
-
-	const chain = allInterceptors
-		.filter((entry) => matchPattern(url, entry.pattern))
-		.map((entry) => entry.handler)
-
-	// Compose middleware chain
-	let index = 0
-	const dispatch = async (req: Request): Promise<PounceResponse> => {
-		if (index < chain.length) {
-			const handler = chain[index++]
-			return handler(req, dispatch)
-		}
-		return finalHandler(req)
+async function materializeRequestBody(request: Request): Promise<BodyInit | undefined> {
+	if (request.method === 'GET' || request.method === 'HEAD') {
+		return undefined
 	}
 
-	return dispatch(initialRequest)
+	const contentType = request.headers.get('Content-Type') ?? ''
+	if (contentType.includes('application/json')) {
+		return await request.text()
+	}
+	if (contentType.includes('application/x-www-form-urlencoded')) {
+		return await request.text()
+	}
+	if (contentType.includes('multipart/form-data')) {
+		return await request.formData()
+	}
+	return request.body ?? undefined
 }
 
-/**
- * Universal API client
- * Handles absolute URLs (https://...), site-absolute (/...), and site-relative (./...)
- * Also supports passing a proxy object directly
- *
- * Support syntaxes:
- * - api("/path", { timeout: 5000, retries: 3 }).get()
- * - api.get() // Targets current route (pendant)
- *
- * @note During SSR, calls to local routes are dispatched directly to handlers
- * without network overhead. External API calls are tracked and their results
- * injected for client-side hydration.
- */
+async function fetchWithTimeout(request: Request, timeout: number): Promise<Response> {
+	const controller = new AbortController()
+	const id = setTimeout(() => controller.abort(), timeout)
+	const method = request.method
+	try {
+		const body = await materializeRequestBody(request)
+		return await fetch(new URL(request.url), {
+			method,
+			headers: request.headers,
+			body,
+			signal: controller.signal as RequestInit['signal'],
+		})
+	} catch (error: unknown) {
+		if (error instanceof Error && error.name === 'AbortError') {
+			throw new ApiError(408, 'Request Timeout', null, request.url)
+		}
+		throw error
+	} finally {
+		clearTimeout(id)
+	}
+}
+
+async function dispatchWithTimeout(request: Request, timeout: number): Promise<Response> {
+	const controller = new AbortController()
+	const id = setTimeout(() => controller.abort(), timeout)
+	try {
+		return await Promise.race([
+			dispatchToHandler(request),
+			new Promise<Response>((_, reject) => {
+				controller.signal.addEventListener('abort', () => {
+					reject(new ApiError(408, 'Request Timeout', null, request.url))
+				})
+			}),
+		])
+	} finally {
+		clearTimeout(id)
+	}
+}
+
+function resolveInputUrl<P extends string>(
+	input: P | URL | RouteDefinition<P, any> | ApiClientInstance<P> | object,
+	paramsOrOptions: unknown = {},
+	maybeOptions: unknown = {}
+): URL | null {
+	const ctx = getContext()
+	const origin =
+		typeof window !== 'undefined' && window.location
+			? window.location.origin
+			: ctx?.origin || 'http://localhost'
+	const base =
+		typeof window !== 'undefined' && window.location
+			? window.location.href
+			: ctx?.origin || 'http://localhost'
+
+	const buildUrlObj = (inputStr: string): URL => {
+		if (inputStr.startsWith('http://') || inputStr.startsWith('https://')) {
+			return new URL(inputStr)
+		}
+		if (inputStr.startsWith('/')) {
+			return new URL(inputStr, origin)
+		}
+		if (inputStr.startsWith('.')) {
+			return new URL(inputStr, base)
+		}
+		return new URL(`/${inputStr}`, origin)
+	}
+
+	if (typeof input === 'object' && input !== null && 'buildUrl' in input) {
+		const routeDef = input as RouteDefinition<P, any>
+		return buildUrlObj(routeDef.buildUrl(paramsOrOptions))
+	}
+
+	if (typeof input === 'object' && input !== null && !(input instanceof URL)) {
+		return null
+	}
+
+	if (typeof input === 'string') {
+		return buildUrlObj(input)
+	}
+
+	if (input instanceof URL) {
+		return new URL(input)
+	}
+
+	void maybeOptions
+	return null
+}
+
+function withQuery<P extends string>(
+	baseUrl: URL,
+	template: P | URL | RouteDefinition<P, any> | ApiClientInstance<P> | object,
+	params?: Record<string, string>
+): URL {
+	const currentUrl = new URL(baseUrl)
+	if (typeof template === 'string' && template.includes('[') && template.includes(']') && params) {
+		let builtPath: string = template
+		const usedKeys = new Set<string>()
+		for (const [key, value] of Object.entries(params)) {
+			const placeholder = `[${key}]`
+			if (builtPath.includes(placeholder)) {
+				builtPath = builtPath.replace(placeholder, value)
+				usedKeys.add(key)
+			}
+		}
+		const builtUrl = resolveInputUrl(builtPath)
+		if (builtUrl) {
+			for (const [key, value] of Object.entries(params)) {
+				if (!usedKeys.has(key)) {
+					builtUrl.searchParams.set(key, value)
+				}
+			}
+			return builtUrl
+		}
+	}
+	if (params) {
+		for (const [key, value] of Object.entries(params)) {
+			currentUrl.searchParams.set(key, value)
+		}
+	}
+	return currentUrl
+}
+
+const boardExecutor = async (request: Request, timeout: number): Promise<Response> => {
+	const ctx = getContext()
+	const isSSR = ctx ? (ctx.config.ssr ?? config.ssr) : config.ssr
+	const origin =
+		ctx?.origin ||
+		(typeof window !== 'undefined' && window.location ? window.location.origin : 'http://localhost')
+	const isLocalRequest = isSSR && new URL(request.url).origin === origin
+
+	if (isLocalRequest) {
+		return dispatchWithTimeout(request, timeout)
+	}
+	return fetchWithTimeout(request, timeout)
+}
+
+setRequestHook((method, url) => {
+	if (method !== 'GET') return undefined
+	return getSSRData(getSSRId(url))
+})
+
+setResponseHook((_method, url, data) => {
+	const ctx = getContext()
+	const isSSR = ctx ? (ctx.config.ssr ?? config.ssr) : config.ssr
+	if (isSSR) {
+		injectSSRData(getSSRId(url), data)
+	}
+})
+
+setPromiseHook((promise) => {
+	const ctx = getContext()
+	const isSSR = ctx ? (ctx.config.ssr ?? config.ssr) : config.ssr
+	if (ctx && isSSR) {
+		ctx.ssr.promises.push(promise)
+	}
+})
+
+setStreamGuardHook(() => {
+	const ctx = getContext()
+	return ctx ? (ctx.config.ssr ?? config.ssr) : config.ssr
+})
+
+const boardKitApi = createApiClientFactory(boardExecutor)
+
+type ClientOptions = {
+	timeout?: number
+	retries?: number
+	retryDelay?: number
+	signal?: AbortSignal
+}
+
+function createWrappedInstance<P extends string>(
+	input: P | URL | RouteDefinition<P, any> | ApiClientInstance<P>,
+	paramsOrOptions: unknown,
+	maybeOptions: unknown
+): ApiClientInstance<P> {
+	// Plain objects that are neither RouteDefinition nor URL are passed through as-is (e.g. proxy objects)
+	if (
+		typeof input === 'object' &&
+		input !== null &&
+		!(input instanceof URL) &&
+		!('buildUrl' in input)
+	) {
+		return input as unknown as ApiClientInstance<P>
+	}
+	const baseUrl = resolveInputUrl(input, paramsOrOptions, maybeOptions)
+	const instance: KitApiClientInstance<P> =
+		typeof input === 'object' && input !== null && 'buildUrl' in input
+			? (boardKitApi(
+					input as RouteDefinition<P, any>,
+					paramsOrOptions,
+					maybeOptions as ClientOptions | undefined
+				) as KitApiClientInstance<P>)
+			: (boardKitApi(
+					input as P | URL | object,
+					paramsOrOptions as ClientOptions | undefined
+				) as KitApiClientInstance<P>)
+	return wrapInstance(input, instance as KitApiClientInstance<P>, baseUrl)
+}
+
+function wrapInstance<P extends string>(
+	input: P | URL | RouteDefinition<P, any> | ApiClientInstance<P> | object,
+	instance: KitApiClientInstance<P>,
+	baseUrl: URL | null
+): ApiClientInstance<P> {
+	return {
+		get<T>(
+			...args: keyof ExtractPathParams<P> extends never
+				? [params?: Record<string, string>]
+				: [params: ExtractPathParams<P>]
+		): HydratedPromise<T> {
+			const params = args[0] as Record<string, string> | undefined
+			const currentUrl = baseUrl ? withQuery(baseUrl, input, params) : null
+			const ssrId = currentUrl ? getSSRId(currentUrl) : null
+			const cachedData = ssrId ? getSSRData<T>(ssrId) : undefined
+			const promise =
+				cachedData !== undefined ? Promise.resolve(cachedData) : instance.get<T>(params)
+			return withHydration(promise, cachedData)
+		},
+		post<T>(body: unknown): Promise<T> {
+			return instance.post<T>(body)
+		},
+		put<T>(body: unknown): Promise<T> {
+			return instance.put<T>(body)
+		},
+		del<T>(
+			...args: keyof ExtractPathParams<P> extends never
+				? [params?: Record<string, string>]
+				: [params: ExtractPathParams<P>]
+		): Promise<T> {
+			const params = args[0] as Record<string, string> | undefined
+			return instance.del<T>(params)
+		},
+		patch<T>(body: unknown): Promise<T> {
+			return instance.patch<T>(body)
+		},
+	}
+}
+
 function apiClient<P extends string>(
 	input: P | URL | RouteDefinition<P, any> | ApiClientInstance<P>,
 	paramsOrOptions: any = {},
 	maybeOptions: any = {}
 ): ApiClientInstance<P> {
-	let url: URL | undefined
-	let options = paramsOrOptions
-
-	const ctx = getContext()
-
-	// Handle RouteDefinition overload
-	if (typeof input === 'object' && input !== null && 'buildUrl' in input) {
-		const routeDef = input as RouteDefinition<P, any>
-		const params = paramsOrOptions
-		options = maybeOptions
-		const builtUrl = routeDef.buildUrl(params)
-
-		// Normalize to URL object
-		const origin =
-			typeof window !== 'undefined' && window.location && window.location.origin
-				? window.location.origin
-				: ctx?.origin || 'http://localhost'
-
-		if (builtUrl.startsWith('http')) {
-			url = new URL(builtUrl)
-		} else {
-			url = new URL(builtUrl, origin)
-		}
-	} else {
-		// Existing logic for string/URL/Proxy
-		if (typeof input === 'object' && input !== null && !(input instanceof URL)) {
-			return input as ApiClientInstance
-		}
-	}
-
-	const currentConfig = ctx ? { ...config, ...ctx.config } : config
-
-	const timeout = options.timeout ?? currentConfig.timeout
-	const maxRetries = options.retries ?? currentConfig.retries
-	const retryDelay = options.retryDelay ?? currentConfig.retryDelay
-
-	if (!url) {
-		// If not set by RouteDefinition logic
-		if (typeof input === 'string') {
-			if (input.startsWith('http')) {
-				url = new URL(input)
-			} else if (input.startsWith('/')) {
-				// Site-absolute
-				const origin =
-					typeof window !== 'undefined' && window.location && window.location.origin
-						? window.location.origin
-						: ctx?.origin || 'http://localhost'
-				url = new URL(input, origin)
-			} else if (input.startsWith('.')) {
-				// Site-relative
-				const base =
-					typeof window !== 'undefined' && window.location && window.location.href
-						? window.location.href
-						: ctx?.origin || 'http://localhost'
-				url = new URL(input, base)
-			} else {
-				// Assume site-absolute if no scheme
-				const origin =
-					typeof window !== 'undefined' && window.location && window.location.origin
-						? window.location.origin
-						: ctx?.origin || 'http://localhost'
-				url = new URL(`/${input}`, origin)
-			}
-		} else if (input instanceof URL) {
-			url = input
-		}
-	}
-
-	if (!url) {
-		throw new Error(
-			`[pounce-board] apiClient: Invalid input. Could not determine URL from ${typeof input}`
-		)
-	}
-
-	const _ssrId = getSSRId(url)
-
-	/**
-	 * Helper for fetch with timeout
-	 */
-	async function fetchWithTimeout(fetchUrl: URL, init: RequestInit): Promise<Response> {
-		const controller = new AbortController()
-		const id = setTimeout(() => controller.abort(), timeout)
-		try {
-			const response = await fetch(fetchUrl, {
-				...init,
-				signal: controller.signal,
-			})
-			return response
-		} catch (error: unknown) {
-			if (error instanceof Error && error.name === 'AbortError') {
-				throw new ApiError(408, 'Request Timeout', null, fetchUrl.toString())
-			}
-			throw error
-		} finally {
-			clearTimeout(id)
-		}
-	}
-
-	/**
-	 * Helper for local dispatch with timeout (parity with fetch)
-	 * Returns Response instead of data to allow interceptors
-	 */
-	async function dispatchWithTimeout(request: Request): Promise<Response> {
-		const controller = new AbortController()
-		const id = setTimeout(() => controller.abort(), timeout)
-
-		try {
-			return await Promise.race([
-				dispatchToHandler(request),
-				new Promise<Response>((_, reject) => {
-					controller.signal.addEventListener('abort', () => {
-						reject(new ApiError(408, 'Request Timeout', null, request.url))
-					})
-				}),
-			])
-		} finally {
-			clearTimeout(id)
-		}
-	}
-
-	/**
-	 * Internal requester with retry logic
-	 */
-	async function requestWithRetry<T>(
-		method: HttpMethod,
-		currentUrl: URL,
-		body?: unknown
-	): Promise<T> {
-		const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
-		const requestHeaders: Record<string, string> = isFormData
-			? {}
-			: { 'Content-Type': 'application/json' }
-		const requestBody = isFormData
-			? (body as FormData)
-			: body !== undefined
-				? JSON.stringify(body)
-				: undefined
-
-		const doRequest = async (): Promise<T> => {
-			const isSSR = ctx ? (ctx.config.ssr ?? config.ssr) : config.ssr
-
-			if (isSSR && method === 'GET') {
-				const currentSsrId = getSSRId(currentUrl)
-				const existingData = getSSRData(currentSsrId)
-				if (existingData !== undefined) {
-					return existingData as T
-				}
-			}
-
-			let lastError: unknown = null
-
-			for (let attempt = 0; attempt <= maxRetries; attempt++) {
-				try {
-					const request = new Request(currentUrl.toString(), {
-						method,
-						headers: requestHeaders,
-						body: requestBody as any, // RequestInit body type is strict
-					})
-
-					const finalHandler = async (req: Request): Promise<PounceResponse> => {
-						let response: Response
-
-						const isSSR = ctx ? (ctx.config.ssr ?? config.ssr) : config.ssr
-
-						// Only dispatch locally if we are in SSR AND the request targets our own origin
-						const origin =
-							ctx?.origin ||
-							(typeof window !== 'undefined' && window.location
-								? window.location.origin
-								: 'http://localhost')
-						const isLocalRequest = isSSR && new URL(req.url).origin === origin
-
-						if (isLocalRequest) {
-							response = await dispatchWithTimeout(req)
-						} else {
-							response = await fetchWithTimeout(new URL(req.url), {
-								method,
-								headers: req.headers,
-								body: requestBody,
-							})
-						}
-						return PounceResponse.from(response)
-					}
-
-					const response = await runInterceptors(request, finalHandler)
-
-					if (!response.ok) {
-						let errorData = null
-						try {
-							if (response.headers.get('Content-Type')?.includes('application/json')) {
-								errorData = await response.json()
-							}
-						} catch {
-							/* ignore */
-						}
-						throw new ApiError(response.status, response.statusText, errorData, request.url)
-					}
-
-					const data = (await response.json()) as T
-					const isSSR = ctx ? (ctx.config.ssr ?? config.ssr) : config.ssr
-
-					if (isSSR) {
-						const currentSsrId = getSSRId(currentUrl)
-						injectSSRData(currentSsrId, data)
-					}
-					return data
-				} catch (error: unknown) {
-					lastError = error
-					const shouldRetry =
-						attempt < maxRetries &&
-						(error instanceof ApiError ? error.status >= 500 || error.status === 408 : true)
-
-					if (shouldRetry) {
-						if (retryDelay > 0) {
-							await new Promise((resolve) => setTimeout(resolve, retryDelay))
-						}
-						continue
-					}
-					throw error
-				}
-			}
-			throw lastError
-		}
-
-		const promise = doRequest()
-		if (ctx && (ctx.config.ssr ?? config.ssr)) {
-			trackSSRPromise(promise)
-		}
-		return promise
-	}
-
-	return {
-		get<T>(...args: [params?: any]): HydratedPromise<T> {
-			const params = args[0] as Record<string, string> | undefined
-			const currentUrl = new URL(url)
-			if (params) {
-				for (const [key, value] of Object.entries(params)) {
-					currentUrl.searchParams.set(key, value)
-				}
-			}
-
-			const currentSsrId = getSSRId(currentUrl)
-
-			const activeCtx = getContext()
-			const isSSR = activeCtx ? (activeCtx.config.ssr ?? config.ssr) : config.ssr
-			let cachedData: T | undefined
-
-			// 1. Check for hydration data first (client only)
-			if (!isSSR) {
-				cachedData = getSSRData<T>(currentSsrId)
-			}
-
-			const promise = (async () => {
-				if (cachedData !== undefined) return cachedData
-				return requestWithRetry<T>('GET', currentUrl)
-			})()
-
-			return withHydration(promise, cachedData)
-		},
-
-		async post<T>(body: unknown): Promise<T> {
-			return requestWithRetry<T>('POST', url, body)
-		},
-
-		async put<T>(body: unknown): Promise<T> {
-			return requestWithRetry<T>('PUT', url, body)
-		},
-
-		async del<T>(...args: [params?: any]): Promise<T> {
-			const params = args[0] as Record<string, string> | undefined
-			const currentUrl = new URL(url)
-			if (params) {
-				for (const [key, value] of Object.entries(params)) {
-					currentUrl.searchParams.set(key, value)
-				}
-			}
-			return requestWithRetry<T>('DELETE', currentUrl)
-		},
-
-		async patch<T>(body: unknown): Promise<T> {
-			return requestWithRetry<T>('PATCH', url, body)
-		},
-	}
+	return createWrappedInstance(input, paramsOrOptions, maybeOptions)
 }
 
-/**
- * Universal API client as a functional proxy
- *
- * api.get() -> api(window.location.href).get() [Client] targeting current resource ("pendant")
- * api.post(body) -> api(window.location.href).post(body)
- */
 /**
  * Universal API client as a functional proxy
  *
@@ -622,21 +459,29 @@ function apiClient<P extends string>(
  * api.post(body) -> api(window.location.href).post(body)
  */
 export const api = new Proxy(apiClient, {
-	get(target, prop: string) {
-		if (prop in target) {
-			return (target as any)[prop]
-		}
-
-		// Support api.get(params), api.post(body), etc. targeting current route
+	get(target, prop, receiver) {
+		if (prop in target) return Reflect.get(target, prop, receiver)
 		const methods = ['get', 'post', 'put', 'del', 'patch']
-		if (methods.includes(prop)) {
+		if (typeof prop === 'string' && methods.includes(prop)) {
 			const currentPath = typeof window !== 'undefined' ? window.location.href : '.'
-			return (target(currentPath) as any)[prop]
+			return Reflect.get(target(currentPath), prop)
 		}
-
-		return (target as any)[prop]
+		return Reflect.get(target, prop, receiver)
 	},
 }) as unknown as ApiClient & ApiClientInstance
+
+export function intercept(pattern: string | RegExp, handler: InterceptorMiddleware): () => void {
+	if (getContext()) {
+		return addContextInterceptor(pattern, handler)
+	}
+	return kitIntercept(pattern, handler)
+}
+
+export function clearInterceptors(): void {
+	clearKitInterceptors()
+}
+
+export type { InterceptorMiddleware }
 
 export interface ApiClient {
 	<P extends string>(

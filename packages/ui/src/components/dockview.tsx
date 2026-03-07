@@ -9,7 +9,7 @@ import {
 	type SerializedDockview,
 } from 'dockview-core'
 import 'dockview-core/dist/styles/dockview.css'
-import { extend, latch } from '@pounce/core'
+import { extend, fromAttribute, latch, ReactiveProp } from '@pounce/core'
 import { componentStyle } from '@pounce/kit'
 import { biDi, effect, reactive, type ScopedCallback, unreactive } from 'mutts'
 import { Icon } from '../icon'
@@ -99,6 +99,7 @@ function contentRenderer(
 		init: ({ api: panelApi, params, title }: GroupPanelPartInitParameters) => {
 			params = reactive(params)
 			const internalState = reactive({ title })
+			const context = props.context ?? reactive({})
 			Object.defineProperties(props, {
 				title: {
 					get: () => internalState.title,
@@ -113,7 +114,7 @@ function contentRenderer(
 			Object.assign(props, {
 				params,
 				size,
-				context: {},
+				context,
 			})
 			cleanups.push(
 				panelApi.onDidTitleChange(
@@ -125,8 +126,16 @@ function contentRenderer(
 				}).dispose,
 				latch(
 					element,
-					<Widget {...(props as DockviewWidgetProps)} />,
-					extend(scope, { panelApi: unreactive(panelApi) })
+					<Widget
+						title={(props as DockviewWidgetProps).title}
+						params={(props as DockviewWidgetProps).params}
+						size={(props as DockviewWidgetProps).size}
+						context={(props as DockviewWidgetProps).context}
+					/>,
+					extend(scope, {
+						dockviewApi: scope.dockviewApi ?? scope.api,
+						panelApi: unreactive(panelApi),
+					})
 				)
 			)
 		},
@@ -154,8 +163,16 @@ function tabRenderer(
 		init: ({ api: panelApi }: GroupPanelPartInitParameters) => {
 			cleanup = latch(
 				element,
-				<Widget {...(props as DockviewWidgetProps)} />,
-				extend(scope, { panelApi: unreactive(panelApi) })
+				<Widget
+					title={(props as DockviewWidgetProps).title}
+					params={(props as DockviewWidgetProps).params}
+					size={(props as DockviewWidgetProps).size}
+					context={(props as DockviewWidgetProps).context}
+				/>,
+				extend(scope, {
+					dockviewApi: scope.dockviewApi ?? scope.api,
+					panelApi: unreactive(panelApi),
+				})
 			)
 		},
 		dispose() {
@@ -175,7 +192,11 @@ function headerActionRenderer(
 	return {
 		element,
 		init() {
-			cleanup = latch(element, <Widget group={group} />, scope)
+			cleanup = latch(
+				element,
+				<Widget group={group} />,
+				extend(scope, { dockviewApi: scope.dockviewApi ?? scope.api })
+			)
 		},
 		dispose() {
 			cleanup?.()
@@ -253,6 +274,7 @@ export const Dockview = (
 			)
 			try {
 				if (scope && typeof scope === 'object' && !Object.isFrozen(scope)) {
+					scope.dockviewApi = activeApi
 					scope.api = activeApi
 				}
 			} catch (_e) {
@@ -263,29 +285,53 @@ export const Dockview = (
 			console.error('[Dockview] createDockview CRASHED (sync):', e)
 			return
 		}
-		const provideLayout = biDi(
-			(v) => {
-				if (v) instanceApi!.fromJSON(v)
-				else instanceApi!.closeAllGroups()
-			},
-			{
-				get: () => props.layout,
-				set: (v) => (props.layout = v),
+		if (!instanceApi) return
+		const api: DockviewApi = instanceApi
+		const attributes = (props as any)[fromAttribute]
+		const layoutBinding = attributes?.getSingle('layout')
+		const readLayout =
+			layoutBinding instanceof ReactiveProp ? () => layoutBinding.get() : () => props.layout
+		const writeLayout =
+			layoutBinding instanceof ReactiveProp && layoutBinding.set
+				? (value: SerializedDockview | undefined) => layoutBinding.set?.(value)
+				: (value: SerializedDockview | undefined) => {
+						props.layout = value
+					}
+		let applyingExternalLayout = false
+		const receiveLayout = (layout: SerializedDockview | undefined) => {
+			applyingExternalLayout = true
+			try {
+				if (layout) api.fromJSON(layout)
+				else api.closeAllGroups()
+			} finally {
+				applyingExternalLayout = false
 			}
-		)
-		instanceApi.onDidLayoutChange(() => {
-			provideLayout(instanceApi!.toJSON())
-		})
+		}
+		if (layoutBinding instanceof ReactiveProp && layoutBinding.set) {
+			const provideLayout = biDi(receiveLayout, {
+				get: () => layoutBinding.get(),
+				set: (value: SerializedDockview | undefined) => layoutBinding.set?.(value),
+			})
+			api.onDidLayoutChange(() => {
+				if (!applyingExternalLayout) provideLayout(api.toJSON())
+			})
+		} else {
+			effect(() => {
+				const layout = readLayout()
+				if (!applyingExternalLayout) receiveLayout(layout)
+			})
+			api.onDidLayoutChange(() => {
+				if (!applyingExternalLayout) writeLayout(api.toJSON())
+			})
+		}
 		const emptyOptions: Record<string, any> = {}
 		effect(() => {
-			instanceApi!.updateOptions(
-				props.options ? { ...emptyOptions, ...props.options } : emptyOptions
-			)
+			api.updateOptions(props.options ? { ...emptyOptions, ...props.options } : emptyOptions)
 			if (props.options) for (const k of Object.keys(props.options)) emptyOptions[k] = undefined
 		})
 		effect(function maintainHeaderActions() {
 			const { headerLeft, headerRight, headerPrefix } = props
-			instanceApi!.updateOptions({
+			api.updateOptions({
 				createLeftHeaderActionComponent:
 					headerLeft &&
 					((group: DockviewGroupPanel) => {
@@ -303,7 +349,7 @@ export const Dockview = (
 					}),
 			})
 		})
-		effect(() => () => instanceApi?.dispose())
+		effect(() => () => api.dispose())
 	}
 
 	return (
@@ -314,4 +360,10 @@ export const Dockview = (
 			use={initDockview}
 		></div>
 	)
+}
+
+export const dockviewInternals = {
+	contentRenderer,
+	tabRenderer,
+	headerActionRenderer,
 }
