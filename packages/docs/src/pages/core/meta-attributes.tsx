@@ -51,7 +51,7 @@ function Nav(_p: {}, env: any) {
 }`
 
 const useMeta = `// 'use' applies a directive function to the DOM element
-import { tooltip } from '@pounce/ui'
+import { tooltip } from '@pounce'
 
 function App() {
   return (

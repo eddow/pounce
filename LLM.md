@@ -61,11 +61,32 @@ A package may import from its own `src/` directory (e.g., `@pounce/core` importi
 2. **Adapter architecture**: `@pounce/ui` is headless (models + types only). Import components from the adapter: `import { Button } from '@pounce/adapter-pico'`. No `setAdapter`, no `FrameworkAdapter`, no registry. `DisplayProvider` is DOM-only — import from `@pounce/kit/dom`.
 
 ## Babel Plugin Binding Rules
-1. **Two-way** (`r(getter, setter)`): member expressions (`state.name`, `props.count`) and mutable bare identifiers (`let`/`var`).
+1. **Two-way** (`r(getter, setter)`): member expressions (`state.name`, `props.count`, `arr[index]`) and mutable bare identifiers (`let`/`var`).
 2. **One-way** (`r(() => expr)`): complex expressions (calls, template literals, binary ops with non-safe operands).
 3. **No wrapping**: `const` variables, imports, function declarations, parameters, literals, arrow functions, safe objects/arrays — `isSafeExpression` returns `true`.
 4. The check uses Babel's `path.scope.getBinding(name).kind` to distinguish `let`/`var` from `const`/`module`/`param`/`hoisted`.
-5. **Reserved variable names**: The plugin injects `h`, `Fragment`, `c`, and `r` as top-level imports from `@pounce/core`. **Never use `c`, `r`, `h`, or `Fragment` as local variable/parameter names** in files containing JSX — they will shadow the plugin's imports and cause cryptic runtime errors (e.g., `c2 is not a function` when a `<for>` callback parameter named `c` shadows the CompositeAttributes function).
+5. **`this` attribute**: generates a plain setter callback `(mounted) => ref = mounted`, **not** an `r()` call. Accepts any LVal or a function expression directly. Runtime type is `ThisDirective = (mounted: Node | readonly Node[] | undefined) => unknown`.
+6. **Reserved variable names**: The plugin injects `h`, `Fragment`, `c`, and `r` as top-level imports from `@pounce/core`. **Never use `c`, `r`, `h`, or `Fragment` as local variable/parameter names** in files containing JSX — they will shadow the plugin's imports and cause cryptic runtime errors (e.g., `c2 is not a function` when a `<for>` callback parameter named `c` shadows the CompositeAttributes function).
+
+## Directive Gotchas
+1. **`use` callbacks run inside an effect**: The function passed to `use={}` is called inside `attend`'s inner effect. Any reactive read inside it becomes a dependency — when it changes, the callback is torn down (cleanup called) and re-invoked.
+2. **`node.isConnected` is reactive**: Pounce patches `isConnected` on DOM nodes to be reactive. A `use` directive that reads `el.isConnected` and bails early when `false` will automatically re-run when the node mounts. This is the **standard mount-gating pattern** for directives:
+   ```ts
+   function myDirective(target: Node | readonly Node[], access: EffectAccess) {
+       const el = resolveElement(target)
+       if (!el?.isConnected) return  // reactive read — effect re-fires on mount
+       // ... setup ...
+       return () => { /* cleanup */ }
+   }
+   ```
+3. **Named directives (`use:name={val}`) receive collapsed scalars**: The `attend` callback calls `collapse()` on the value, unwrapping `ReactiveProp` to its current value. Named directives cannot write back. For bidi directives, use the **factory pattern**: call `sizeable(prop)` in the component body (receives the `ReactiveProp`), returns a `use` directive closure. Pass the closure via `use={}`.
+
+## DockviewRouter Reactive Pitfalls
+1. **`use={}` + reactive reads = hidden subscriptions**: The function passed to `use={}` runs inside `attend`'s inner effect. **Any** reactive read during that function (including reads through `defaults()` proxy, `props.xxx`, `state.xxx`) subscribes the attend effect. When the dependency changes, the entire directive is torn down and re-invoked. This also applies to async continuations (RAF, microtask, Promise) due to mutts zone tracking. **Fix**: wrap imperative one-time init code in `untracked(() => { ... })`. Child `effect()` calls inside `untracked` still create their own independent subscriptions. Never use `setTimeout`/`queueMicrotask` as a workaround — it masks the real problem.
+2. **Inline object literals in JSX destroy component children**: `el={{ style: '...' }}` or `options={{ key: 'value' }}` creates a new object identity on every parent render evaluation. The reconciler's `morph` pipeline sees different prop objects → destroys the old component instance → recreates it. **Fix**: hoist constant prop objects to module scope (`const dockviewEl = { style: '...' }`).
+3. **`initDockview` wrapped in `untracked`**: The `Dockview` component's `initDockview` function reads many `props.xxx` values during setup (debug, layout, widgets, options, etc.). Since it runs inside `attend`'s inner effect via `use={initDockview}`, every read would subscribe that effect. `untracked(() => { ... })` prevents the subscriptions while still allowing child `effect()` calls inside to independently track their own deps. `onReady` is called synchronously inside `untracked`, which is safe because the attend effect won't re-fire from cascading side effects.
+4. **Demo mount isolation**: If a demo page component (e.g., `DockviewRouterDemo`) is rendered by an outer `<Router>`, route changes inside the demo destroy and recreate the component. **Fix**: mount the demo on a separate DOM root via `latch('#separate-root', <Demo />)` and toggle visibility with `display: none` based on the URL, keeping the outer router's route view as `<></>`.
+5. **Effect self-dependency via synchronous callbacks**: The URL→Dockview sync effect reads `client.url`. Inside the effect, `api.addPanel()` fires synchronous `onDidAddPanel` → `syncFromPanels` → `syncActiveRouteToUrl` → `client.replace()` → writes `client.url`. The effect reads and writes the same dependency in one synchronous frame, poisoning itself. **Fix**: a `syncing` guard flag prevents `syncFromPanels` from calling `syncActiveRouteToUrl` while the effect is executing. Also, `routerModel.open()` wraps its body in `untracked()` since it's a mutation that reads `state.opened`/`state.active` for internal dedup — those reads must not leak subscriptions to the calling effect.
 
 ## Renderer Gotchas
 1. **Event handler props get bidi `ReactiveProp` from babel**: `props.onClick` is a member expression → babel wraps as `r(() => props.onClick, val => props.onClick = val)` with a setter. `attachAttribute` in `renderer-internal.ts` must guard `on[A-Z]` keys from the bidi path, otherwise the handler is silently swallowed by `setHtmlProperty`. Guard: `value.set && !/^on[A-Z]/.test(key)`.

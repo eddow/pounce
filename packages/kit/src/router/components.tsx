@@ -14,6 +14,7 @@ import {
 	type RouteParams,
 	type RouteWildcard,
 } from './logic.js'
+import { routerModel } from './router-model.js'
 // TODO: Router should scroll=0 on reload - r is it something else than router ? (more general)
 // Re-export core types
 export type {
@@ -190,15 +191,6 @@ function hasRouteView<Definition extends ClientRouteDefinition>(
 	return 'view' in route && typeof route.view === 'function'
 }
 
-function normalizeLazyView<Definition extends ClientRouteDefinition>(
-	loaded: RouterRender<Definition> | LazyRouteModule<Definition>
-): RouterRender<Definition> {
-	if (typeof loaded === 'function') return loaded
-	if (typeof loaded.view === 'function') return loaded.view
-	if (typeof loaded.default === 'function') return loaded.default
-	throw new Error('Lazy route loader must resolve to a view function or a module with default/view')
-}
-
 // === COMPONENTS ===
 
 /**
@@ -212,13 +204,13 @@ export function Router<Definition extends ClientRouteDefinition>(
 ) {
 	const vm = defaults(props, {
 		get url() {
-			return `${client.url.pathname}${client.url.search}${client.url.hash}`
+			return `${client.url.pathname}${client.url.search}`
 		},
 		scrollToTop: true,
 	})
 	registerPrefetchRoutes(vm.routes)
-	const matcher = routeMatcher(vm.routes)
-	let hasRenderedRoute = false
+	const model = routerModel<Definition>({ routes: vm.routes })
+	const matcher = model.matcher
 	let lastStartedSignature: string | undefined
 	let lastCompletedSignature: string | undefined
 	let lastErroredSignature: string | undefined
@@ -426,15 +418,18 @@ export function Router<Definition extends ClientRouteDefinition>(
 			if (matchStartedAt != null) recordPerf('route:match', matchStartedAt)
 
 			if (match && (match.unusedPath === '' || match.unusedPath === '/')) {
-				if (hasRouteView(match.definition)) {
+				model.clear()
+				const opened = model.open(vm.url)
+				const current = opened?.match ?? match
+				if (hasRouteView(current.definition)) {
 					try {
 						const renderStartedAt = perf?.now()
-						const output = renderElements(match.definition.view(match, scope))
+						const output = renderElements(current.definition.view(current, scope))
 						if (renderStartedAt != null) recordPerf('route:render', renderStartedAt)
-						emitRouteEnd(match, 'match')
+						emitRouteEnd(current, 'match')
 						return output
 					} catch (err) {
-						emitRouteError(match, err)
+						emitRouteError(current, err)
 						console.error('Router view error:', err)
 						return renderElements(
 							<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
@@ -451,18 +446,18 @@ export function Router<Definition extends ClientRouteDefinition>(
 					}
 				}
 
-				const cachedView = getLoadedRouteView(match.definition.path) as
+				const cachedView = getLoadedRouteView(current.definition.path) as
 					| RouterRender<Definition>
 					| undefined
 				if (cachedView) {
 					try {
 						const renderStartedAt = perf?.now()
-						const output = renderElements(cachedView(match, scope))
+						const output = renderElements(cachedView(current, scope))
 						if (renderStartedAt != null) recordPerf('route:render', renderStartedAt)
-						emitRouteEnd(match, 'match')
+						emitRouteEnd(current, 'match')
 						return output
 					} catch (err) {
-						emitRouteError(match, err)
+						emitRouteError(current, err)
 						console.error('Router view error:', err)
 						return renderElements(
 							<div style="padding: 20px; border: 1px solid #ff6b6b; background-color: #ffe0e0; color: #d63031; margin: 20px;">
@@ -478,16 +473,17 @@ export function Router<Definition extends ClientRouteDefinition>(
 						)
 					}
 				}
-				emitRouteEnd(match, 'match')
+				emitRouteEnd(current, 'match')
 				return renderElements(
 					<LazyRouteOutlet
-						route={match.definition}
-						match={match}
+						route={current.definition}
+						match={current}
 						url={vm.url}
 						loading={vm.loading}
 					/>
 				)
 			}
+			model.clear()
 			const notFoundStartedAt = perf?.now()
 			const output = renderElements(vm.notFound({ routes: vm.routes, url: vm.url }, scope))
 			if (notFoundStartedAt != null) recordPerf('route:not-found', notFoundStartedAt)

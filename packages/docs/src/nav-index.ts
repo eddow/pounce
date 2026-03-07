@@ -25,7 +25,7 @@ export const navigation: NavSection[] = [
 			{ title: 'Meta-attributes', href: '/core/meta-attributes' },
 			{ title: 'Meta-components', href: '/core/meta-components' },
 			{ title: 'Bidirectional Binding', href: '/core/bind' },
-			{ title: 'Scope', href: '/core/scope' },
+			{ title: 'Scope', href: '/core/env' },
 			{ title: 'SSR', href: '/core/ssr' },
 		],
 	},
@@ -78,22 +78,6 @@ export const navigation: NavSection[] = [
 			{ title: 'Routing', href: '/board/routing' },
 			{ title: 'SSR Flow', href: '/board/ssr' },
 			{ title: 'Middleware', href: '/board/middleware' },
-		],
-	},
-	{
-		title: 'Mutts',
-		links: [
-			{ title: 'Overview', href: '/mutts' },
-			{ title: 'Signals', href: '/mutts/signals' },
-			{ title: 'Collections', href: '/mutts/collections' },
-			{ title: 'Zones', href: '/mutts/zones' },
-		],
-	},
-	{
-		title: 'Pure-glyf',
-		links: [
-			{ title: 'Overview', href: '/pure-glyf' },
-			{ title: 'Usage', href: '/pure-glyf/usage' },
 		],
 	},
 ]

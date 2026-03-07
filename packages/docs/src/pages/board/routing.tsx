@@ -19,6 +19,17 @@ export default function Layout({ children }) {
   )
 }`
 
+const crossPackageRouting = `Cross-package routing split:
+
+@pounce/kit
+  route patterns, matching, links, SPA Router semantics
+
+@pounce/board
+  file-system discovery, inherited layouts, SSR integration, route module loading
+
+Board does not replace Kit's route concepts.
+It packages them behind filesystem conventions.`
+
 export default function BoardRoutingPage() {
 	return (
 		<article>
@@ -26,6 +37,14 @@ export default function BoardRoutingPage() {
 				name="Board Routing"
 				description="File-based routing with support for dynamic segments, catch-all routes, and inherited layouts."
 			/>
+
+			<Section title="How Board Fits the Routing Stack">
+				<p>
+					Board is the full-stack routing layer. It builds on the same route ideas as Kit, then adds
+					filesystem conventions, layout inheritance, and SSR integration.
+				</p>
+				<Code code={crossPackageRouting} lang="text" />
+			</Section>
 
 			<Section title="Directory Conventions">
 				<p>

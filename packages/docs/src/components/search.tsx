@@ -7,7 +7,11 @@ interface SearchState {
 	results: NavLink[]
 }
 
-export default function Search() {
+interface SearchProps {
+	onNavigate?: () => void
+}
+
+export default function Search({ onNavigate }: SearchProps) {
 	const state = reactive<SearchState>({
 		query: '',
 		get results() {
@@ -40,7 +44,13 @@ export default function Search() {
 					{state.results.length > 0 ? (
 						state.results.map((result) => (
 							<li>
-								<A href={result.href} onClick={() => (state.query = '')}>
+								<A
+									href={result.href}
+									onClick={() => {
+										state.query = ''
+										onNavigate?.()
+									}}
+								>
 									{result.title}
 								</A>
 							</li>

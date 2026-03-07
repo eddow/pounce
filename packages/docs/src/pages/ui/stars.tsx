@@ -49,7 +49,7 @@ function StarsPlayground() {
 				maximum={state.maximum}
 				readonly={state.readonly}
 				size={state.size}
-				onChange={(v) => {
+				onChange={(v: number | readonly [number, number]) => {
 					state.value = v
 				}}
 			/>

@@ -42,6 +42,14 @@ describe('Attribute Merging (Class & Style)', () => {
 		expect(node.style.padding).toBe('20px')
 	})
 
+	it('preserves CSS custom properties in declarative style merging', () => {
+		const props = c({ style: '--sidebar-width: 240px;' }, { style: 'color: blue;' })
+		const mount = h('div', props)
+		const node = mount.render(rootEnv)[0] as HTMLElement
+		expect(node.style.getPropertyValue('--sidebar-width')).toBe('240px')
+		expect(node.style.color).toBe('blue')
+	})
+
 	it('reactive classes update correctly when merged', () => {
 		const state = reactive({ isActive: false })
 		const props = c(

@@ -1,8 +1,10 @@
 import { ReactiveProp } from '@pounce/core'
 import { markMounted, markUnmounted } from '@pounce/core/testing'
-import { effect } from 'mutts'
+import { type EffectAccess, effect } from 'mutts'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { sizeable } from './sizeable'
+
+const noopAccess = {} as EffectAccess
 
 function rp(initial: number) {
 	let v = initial
@@ -43,7 +45,7 @@ describe('sizeable directive', () => {
 	})
 
 	it('detects horizontal direction for flex row', () => {
-		const cleanup = sizeable(element, rp(300))
+		const cleanup = sizeable(300)(element, noopAccess)
 		expect(element.classList.contains('sizeable')).toBe(true)
 		expect(element.classList.contains('sizeable-right')).toBe(true)
 		cleanup?.()
@@ -51,13 +53,13 @@ describe('sizeable directive', () => {
 
 	it('detects edge based on element position', () => {
 		parent.appendChild(element) // Move to end — now after flex sibling
-		const cleanup = sizeable(element, rp(300))
+		const cleanup = sizeable(300)(element, noopAccess)
 		expect(element.classList.contains('sizeable-left')).toBe(true)
 		cleanup?.()
 	})
 
 	it('creates resize handle with correct cursor', () => {
-		const cleanup = sizeable(element, rp(300))
+		const cleanup = sizeable(300)(element, noopAccess)
 		const handle = element.querySelector('.sizeable-handle')
 		expect(handle).toBeTruthy()
 		expect(handle?.classList.contains('sizeable-handle-right')).toBe(true)
@@ -66,14 +68,14 @@ describe('sizeable directive', () => {
 	})
 
 	it('initializes CSS variable from value', () => {
-		const cleanup = sizeable(element, rp(250))
+		const cleanup = sizeable(250)(element, noopAccess)
 		expect(parent.style.getPropertyValue('--sizeable-width')).toBe('250px')
 		cleanup?.()
 	})
 
-	it('updates CSS variable and writes back on drag', () => {
+	it('updates CSS variable and writes back via ReactiveProp on drag', () => {
 		const prop = rp(300)
-		const cleanup = sizeable(element, prop)
+		const cleanup = sizeable(prop)(element, noopAccess)
 		const handle = element.querySelector('.sizeable-handle') as HTMLElement
 
 		handle?.dispatchEvent(new MouseEvent('mousedown', { clientX: 100 }))
@@ -88,7 +90,7 @@ describe('sizeable directive', () => {
 	it('warns when no flex:1 sibling found', () => {
 		flexSibling.style.flex = '0'
 		const consoleSpy = vi.spyOn(console, 'warn')
-		const cleanup = sizeable(element, rp(300))
+		const cleanup = sizeable(300)(element, noopAccess)
 		expect(consoleSpy).toHaveBeenCalledWith('use:sizeable requires exactly one flex:1 sibling')
 		cleanup?.()
 		consoleSpy.mockRestore()
@@ -96,7 +98,7 @@ describe('sizeable directive', () => {
 
 	it('supports vertical direction', () => {
 		parent.style.flexDirection = 'column'
-		const cleanup = sizeable(element, rp(300))
+		const cleanup = sizeable(300)(element, noopAccess)
 		expect(element.classList.contains('sizeable-bottom')).toBe(true)
 
 		const handle = element.querySelector('.sizeable-handle') as HTMLElement
@@ -108,13 +110,13 @@ describe('sizeable directive', () => {
 
 	it('initializes CSS variable for vertical direction', () => {
 		parent.style.flexDirection = 'column'
-		const cleanup = sizeable(element, rp(200))
+		const cleanup = sizeable(200)(element, noopAccess)
 		expect(parent.style.getPropertyValue('--sizeable-height')).toBe('200px')
 		cleanup?.()
 	})
 
 	it('cleans up handle and classes on unmount', () => {
-		const cleanup = sizeable(element, rp(300))
+		const cleanup = sizeable(300)(element, noopAccess)
 		expect(element.querySelector('.sizeable-handle')).toBeTruthy()
 		cleanup?.()
 		expect(element.querySelector('.sizeable-handle')).toBeNull()
@@ -129,7 +131,7 @@ describe('sizeable directive', () => {
 		let cleanup: (() => void) | undefined
 		const stop = effect(() => {
 			cleanup?.()
-			cleanup = sizeable(unmounted, rp(300)) as any
+			cleanup = sizeable(300)(unmounted, noopAccess) as any
 		})
 
 		expect(unmounted.classList.contains('sizeable')).toBe(false)

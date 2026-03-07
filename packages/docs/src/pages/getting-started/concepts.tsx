@@ -122,7 +122,9 @@ export default function ConceptsPage() {
 				</p>
 				<Code code={directivesExample} lang="tsx" />
 				<p>
-					See <A href="/core/directives">Directives</A> for the full reference.
+					Use this section as the quick reference, then continue with{' '}
+					<A href="/core/jsx">JSX Factory</A> and <A href="/core/components">Components</A> for the
+					runtime details behind these directives.
 				</p>
 			</Section>
 		</article>

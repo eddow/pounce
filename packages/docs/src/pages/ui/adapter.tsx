@@ -5,39 +5,39 @@ const adapterPattern = `// Adapters are configured in vite.config.ts via the @po
 // Components import Button, Card etc. from '@pounce' and get the adapted version.
 
 // vite.config.ts
-pounceBarrelPlugin({
-  name: '@pounce',
-  skeleton: 'front-end',
-  adapter: '@pounce/adapter-pico', // The adapter is chosen here
+import { pounceBarrelPlugin, pounceMinimalPackage } from '@pounce/core/plugin'
+
+export default defineConfig({
+  plugins: [
+    ...pounceMinimalPackage(),
+    pounceBarrelPlugin({
+      name: '@pounce',
+      skeleton: 'front-end',
+      adapter: '@pounce/adapter-pico', // The adapter is chosen here
+    }),
+  ],
 })`
 
-const adapterStructure = `import type { FrameworkAdapter } from '@pounce'
+const adapterStructure = `import { gather } from '@pounce/ui'
+import { type ButtonProps as BaseButtonProps, buttonModel } from '@pounce/ui/models'
+import { type PicoButtonLikeProps, picoButtonClass, picoComponent } from '../factory'
 
-// An adapter is a Partial<FrameworkAdapter> with:
-const myAdapter: Partial<FrameworkAdapter> = {
-  // Variants — JSX-spreadable attribute bags per variant name:
-  variants: {
-    primary: { class: 'btn-primary', 'data-variant': 'primary' },
-    danger: { class: 'btn-danger', 'data-variant': 'danger' },
-    success: { class: 'btn-success', 'data-variant': 'success' },
-  },
+type ButtonProps = PicoButtonLikeProps<BaseButtonProps>
 
-  // Component-specific configs:
-  components: {
-    Button: { classes: { base: 'my-button' } },
-    Card: { classes: { base: 'my-card' } },
-    Dialog: { classes: { base: 'my-dialog', backdrop: 'my-backdrop' } },
-  },
+export const Button = picoComponent(function Button(props: ButtonProps) {
+  const model = buttonModel(props)
 
-  // Transitions for overlays:
-  transitions: {
-    dialog: { enter: 'fade-in', leave: 'fade-out' },
-    toast: { enter: 'slide-in', leave: 'slide-out' },
-  },
-
-  // Icon factory:
-  iconFactory: (name: string) => <i class={\`icon-\${name}\`} />,
-}`
+  return (
+    <button
+      {...props.el}
+      class={picoButtonClass(props.variant ?? 'secondary', props.outline)}
+      {...model.button}
+    >
+      {model.icon && <span {...model.icon.span}>{model.icon.element}</span>}
+      {model.hasLabel && gather(props.children)}
+    </button>
+  )
+})`
 
 const picoDetails = `// @pounce/adapter-pico maps Pounce's CSS variables to PicoCSS:
 //   --pounce-primary    → --pico-primary
@@ -55,10 +55,10 @@ pounceBarrelPlugin({
 import '@picocss/pico/css/pico.min.css'
 import '@pounce/adapter-pico/css'`
 
-const uiOptions = `import { options } from '@pounce/ui'
+const uiOptions = `import { options } from '@pounce'
 
-// Global UI options are configured by mutating the 'options' object.
-// This is typical for app-wide settings like icon rendering.
+// Global UI options are deliberately tiny.
+// The main extension point is icon rendering.
 
 options.iconFactory = (name, size, el, context) => {
   return <span class={\`icon-\${name}\`} {...el} />
@@ -78,7 +78,10 @@ export default function AdapterPage() {
 			</Section>
 
 			<Section title="Adapter Structure">
-				<p>An adapter provides variants, component configs, transitions, and an icon factory.</p>
+				<p>
+					Adapters are thin visual wrappers around <code>@pounce/ui</code> models. A component calls
+					its model, renders DOM, and applies framework-specific classes.
+				</p>
 				<Code code={adapterStructure} lang="tsx" />
 			</Section>
 
@@ -92,7 +95,8 @@ export default function AdapterPage() {
 
 			<Section title="UI Options">
 				<p>
-					Configure global UI behavior like icon rendering via the <code>options</code> object.
+					Configure shared icon rendering through the <code>options</code> object. Most styling and
+					markup concerns belong in the adapter package itself, not in runtime configuration.
 				</p>
 				<Code code={uiOptions} lang="tsx" />
 			</Section>

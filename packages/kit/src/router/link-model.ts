@@ -109,11 +109,9 @@ export function linkModel(props: LinkProps): LinkModel {
 			const href = props.href
 			if (typeof href === 'string' && href.startsWith('/')) {
 				event.preventDefault()
-				if (client.url.pathname !== href) {
-					const startedAt = perf?.now()
-					if (startedAt != null) recordPerf('route:click', startedAt)
-					client.navigate(href)
-				}
+				const startedAt = perf?.now()
+				if (startedAt != null) recordPerf('route:click', startedAt)
+				client.navigate(href)
 			}
 		},
 		onMousedown(event: MouseEvent) {
@@ -131,10 +129,12 @@ export function linkModel(props: LinkProps): LinkModel {
 		get 'aria-current'() {
 			const href = props.href
 			if (typeof href !== 'string') return undefined
+			const hrefPath = href.split('#')[0]
+			if (!hrefPath) return undefined
 			const pathname = client.url.pathname
 			if (props.matchPrefix)
-				return pathname === href || pathname.startsWith(`${href}/`) ? 'page' : undefined
-			return pathname === href ? 'page' : undefined
+				return pathname === hrefPath || pathname.startsWith(`${hrefPath}/`) ? 'page' : undefined
+			return pathname === hrefPath ? 'page' : undefined
 		},
 	}
 }

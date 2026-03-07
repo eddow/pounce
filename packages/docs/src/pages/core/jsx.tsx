@@ -27,18 +27,28 @@ h('span', null, r(() => state.count))
 // becomes:
 h('input', { value: r(() => form.name, (v) => form.name = v) })`
 
-const thisAttribute = `// this= is a set-only binding for element references:
+const thisAttribute = `// this= captures a reference to the rendered DOM element.
+// The plugin generates a plain setter callback (no r() involved):
 let inputEl: HTMLInputElement
 
 // <input this={inputEl} />
 // becomes:
-h('input', { this: r(() => undefined, (v) => inputEl = v) })
+h('input', { this: (mounted) => inputEl = mounted })
 
-// After render, inputEl holds the real DOM element.`
+// After render, inputEl holds the real DOM element.
+// On unmount, the callback is called with undefined.
+
+// Any LVal works — including computed member expressions:
+const refs: HTMLElement[] = []
+// <li this={refs[i]} />  →  (mounted) => refs[i] = mounted
+
+// You can also pass a function directly:
+// <input this={(el) => console.log('mounted', el)} />`
 
 const twoWayDetails = `// The Babel plugin generates two-way bindings for:
-// 1. Member expressions: obj.prop, arr[i], deep.nested.value
-// 2. Input elements: <input>, <textarea>, <select>
+// 1. Member expressions: obj.prop, obj[index], deep.nested.value
+// 2. Mutable bare identifiers: let/var variables
+// 3. Input elements: <input>, <textarea>, <select>
 
 // For <input>, the plugin also wires up the DOM event listener:
 // - <input value={state.text} />  → listens on 'input' event
@@ -85,8 +95,10 @@ export default function JsxPage() {
 
 			<Section title="Two-Way Binding">
 				<p>
-					When the Babel plugin sees a member expression in a JSX attribute, it generates both a
-					getter and a setter. This enables automatic two-way binding for form elements.
+					When the Babel plugin sees an assignable expression in a JSX attribute — a member
+					expression (<code>obj.prop</code>, <code>obj[i]</code>) or a mutable identifier (
+					<code>let</code>/<code>var</code>) — it generates both a getter and a setter. This enables
+					automatic two-way binding.
 				</p>
 				<Code code={twoWayDetails} lang="tsx" />
 			</Section>
@@ -111,13 +123,13 @@ export default function JsxPage() {
 						{
 							name: '{obj.prop}',
 							type: 'attribute',
-							description: 'Two-way: r(() => obj.prop, (v) => obj.prop = v)',
+							description: 'Two-way: r(() => obj.prop, (v) => obj.prop = v). Also obj[i], let x.',
 							required: false,
 						},
 						{
 							name: 'this={ref}',
 							type: 'attribute',
-							description: 'Set-only: r(() => undefined, (v) => ref = v)',
+							description: 'Setter callback: (mounted) => ref = mounted. No r() involved.',
 							required: false,
 						},
 						{

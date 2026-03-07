@@ -1,29 +1,34 @@
 import { ApiTable, Code, PackageHeader, Section } from '../../components'
 
-const basicUsage = `import { ThemeToggle } from '@pounce'
-import { settings } from './settings' // Your EnvSettings object
+const basicUsage = `import { DisplayProvider, ThemeToggle } from '@pounce'
+import { reactive } from 'mutts'
+
+const settings = reactive({ theme: 'auto' as const })
 
 function Header() {
   return (
-    <header>
-      <ThemeToggle settings={settings} />
-    </header>
+    <DisplayProvider theme={settings.theme}>
+      <header>
+        <ThemeToggle settings={settings} />
+      </header>
+    </DisplayProvider>
   )
 }`
 
-const themeState = `import { ui } from '@pounce'
+const themeState = `import { useDisplayContext } from '@pounce'
 
-console.log(ui.theme) // 'light' | 'dark'`
+function ThemeLabel(_props: {}, env: Env) {
+  const dc = useDisplayContext(env)
+  return <span>{dc.theme}</span>
+}`
 
-const envSnippet = `import { Env } from '@pounce/kit/env'
-import { reactive } from 'mutts'
+const envSnippet = `import { DisplayProvider } from '@pounce'
 
-const settings = reactive({ theme: 'auto' })
-
-// Env resolves 'auto' to the system preference and sets data-theme on its DOM element
-<Env settings={settings}>
+// DisplayProvider resolves 'auto' against the parent provider or system defaults.
+// It sets data-theme, dir, and lang on its own DOM element.
+<DisplayProvider theme="auto" direction="auto" locale="auto" timeZone="auto">
   <App />
-</Env>`
+</DisplayProvider>`
 
 export default function DisplayPage() {
 	return (
@@ -31,14 +36,14 @@ export default function DisplayPage() {
 			<PackageHeader
 				name="@pounce/ui"
 				description="Theme management and display utilities."
-				install="pnpm add @pounce/ui"
+				install="pnpm add @pounce/ui @pounce/adapter-pico @pounce/kit"
 			/>
 
 			<Section title="Theme Toggle">
 				<p>
 					The <code>ThemeToggle</code> component provides a UI for switching between Light, Dark,
-					and Auto (system) themes. It integrates with the <code>EnvSettings</code> from{' '}
-					<code>@pounce/kit</code>.
+					and Auto themes. It mutates a reactive <code>{'{ theme }'}</code> object that you own,
+					which is typically passed into <code>DisplayProvider</code>.
 				</p>
 				<Code code={basicUsage} lang="tsx" />
 
@@ -46,8 +51,8 @@ export default function DisplayPage() {
 					props={[
 						{
 							name: 'settings',
-							type: 'EnvSettings',
-							description: 'The reactive settings object to read/write theme.',
+							type: '{ theme: ThemeValue }',
+							description: 'Reactive object read and mutated by the toggle.',
 						},
 						{
 							name: 'simple',
@@ -56,14 +61,9 @@ export default function DisplayPage() {
 								'If true, shows a simple toggle (light/dark) without the dropdown for Auto.',
 						},
 						{
-							name: 'icons',
-							type: 'Record<string, JSX.Element | string>',
-							description: 'Custom icons for themes.',
-						},
-						{
-							name: 'themes',
-							type: 'string[]',
-							description: 'Additional custom theme names to show in the dropdown.',
+							name: 'el',
+							type: "JSX.IntrinsicElements['button']",
+							description: 'Pass-through attributes for the trigger button.',
 						},
 					]}
 				/>
@@ -71,22 +71,21 @@ export default function DisplayPage() {
 
 			<Section title="Reactive Theme State">
 				<p>
-					The UI package maintains a global reactive <code>ui</code> object that reflects the
-					currently active theme (resolved from settings or system).
+					Read resolved display values from env with <code>useDisplayContext()</code>. This gives
+					you
+					<code>theme</code>, <code>direction</code>, <code>locale</code>, and <code>timeZone</code>{' '}
+					for the current subtree.
 				</p>
 				<Code code={themeState} lang="tsx" />
 			</Section>
 
 			<Section title="Env & DisplayProvider">
 				<p>
-					Theme resolution is handled by the <code>Env</code> component in <code>@pounce/kit</code>.
-					It tracks system preferences and propagates the active theme through the env.
+					<code>DisplayProvider</code> lives in <code>@pounce/kit</code> and is re-exported by the
+					front-end barrel. It resolves <code>auto</code> values against the parent provider or
+					system defaults, then writes the resolved values onto its own DOM wrapper.
 				</p>
 				<Code code={envSnippet} lang="tsx" />
-				<blockquote>
-					[!NOTE] The older <code>DisplayProvider</code> pattern has been unified into the{' '}
-					<code>Env</code> component for better integration with SSR and global settings.
-				</blockquote>
 			</Section>
 		</article>
 	)

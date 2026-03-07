@@ -28,8 +28,8 @@ export default function PureGlyfIndexPage() {
 						<code>color</code> and <code>font-size</code>.
 					</li>
 					<li>
-						📦 <strong>Pounce Integration</strong>: Seamlessly integrates with{' '}
-						<code>@pounce/ui</code> adapters.
+						📦 <strong>Pounce Integration</strong>: Seamlessly integrates with Pounce adapter
+						packages such as <code>@pounce/adapter-pico</code>.
 					</li>
 				</ul>
 			</Section>

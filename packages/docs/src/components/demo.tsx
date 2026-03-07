@@ -71,7 +71,7 @@ export function Demo(props: DemoProps) {
 			{/* Accordion for source code */}
 			<Accordion
 				open={showCode.open}
-				onToggle={(open) => (showCode.open = open)}
+				onToggle={(open: boolean) => (showCode.open = open)}
 				summary="View Source Code"
 			>
 				<Code code={props.source} lang="tsx" />

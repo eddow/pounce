@@ -1,20 +1,24 @@
 import { latch } from '@pounce/core'
 import {
+	client,
 	type ClientRouteDefinition,
 	type LinkProps,
 	linkModel,
 	Router,
 	type RouterRender,
 } from '@pounce/kit'
+import { effect } from 'mutts'
 import AccordionDemo from './components/AccordionDemo'
 import CheckButtonDemo from './components/CheckButtonDemo'
 import DisplayContextDemo from './components/DisplayContextDemo'
 import DockviewDemo from './components/DockviewDemo'
+import DockviewRouterDemo from './components/DockviewRouterDemo'
 import FormDemo from './components/FormDemo'
 import MenuDemo from './components/MenuDemo'
 import MultiSelectDemo from './components/MultiSelectDemo'
 import OverlayDemo from './components/OverlayDemo'
 import ProgressDemo from './components/ProgressDemo'
+import SizeableDemo from './components/SizeableDemo'
 import StarsDemo from './components/StarsDemo'
 
 function AppLink(props: LinkProps) {
@@ -29,7 +33,11 @@ function AppLink(props: LinkProps) {
 	)
 }
 
-type DemoRoute = ClientRouteDefinition & { label: string | null; view: RouterRender<DemoRoute> }
+type DemoRoute = ClientRouteDefinition & {
+	href?: string
+	label: string | null
+	view: RouterRender<DemoRoute>
+}
 
 const routes: DemoRoute[] = [
 	{ path: '/', label: 'Form', view: () => <FormDemo /> },
@@ -38,9 +46,11 @@ const routes: DemoRoute[] = [
 	{ path: '/accordion', label: 'Accordion', view: () => <AccordionDemo /> },
 	{ path: '/checkbutton', label: 'CheckButton', view: () => <CheckButtonDemo /> },
 	{ path: '/dockview', label: 'Dockview', view: () => <DockviewDemo /> },
+	{ path: '/dockview-router', href: '/dockview-router', label: 'DockviewRouter', view: () => <></> },
 	{ path: '/menu', label: 'Menu', view: () => <MenuDemo /> },
 	{ path: '/multiselect', label: 'MultiSelect', view: () => <MultiSelectDemo /> },
 	{ path: '/progress', label: 'Progress', view: () => <ProgressDemo /> },
+	{ path: '/sizeable', label: 'Sizeable', view: () => <SizeableDemo /> },
 	{ path: '/stars', label: 'Stars', view: () => <StarsDemo /> },
 	{ path: '/display-context', label: 'DisplayContext', view: () => <DisplayContextDemo /> },
 	{ path: '/themetoggle', label: null, view: () => <DisplayContextDemo /> },
@@ -64,7 +74,7 @@ function DemoApp() {
 			>
 				<for each={routes.filter((route) => route.label)}>
 					{(route) => (
-						<AppLink href={route.path}>
+						<AppLink href={route.href ?? route.path}>
 							<button style="padding: 6px 12px; border: none; border-radius: 4px; background: transparent; color: #94a3b8; cursor: pointer; font-weight: 500; white-space: nowrap;">
 								{route.label}
 							</button>
@@ -84,3 +94,12 @@ function DemoApp() {
 }
 
 latch('#app', <DemoApp />)
+latch('#dockview-router-app', <DockviewRouterDemo />)
+
+const dockviewEl = document.getElementById('dockview-router-app')!
+effect(() => {
+	const isDockviewRoute = client.url.pathname.startsWith('/dockview-router')
+	const mainEl = document.querySelector('[data-test="demo-content"]') as HTMLElement | null
+	if (mainEl) mainEl.style.display = isDockviewRoute ? 'none' : ''
+	dockviewEl.style.display = isDockviewRoute ? '' : 'none'
+})

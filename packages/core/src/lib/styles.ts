@@ -43,12 +43,11 @@ export type StyleValue = StylePrimitive | null | undefined | false
 export type StyleRecord = Record<string, StyleValue>
 export type StyleInput = StyleRecord | string | StyleInput[] | null | undefined | false
 function kebabToCamelCase(input: string): string {
+	const trimmed = input.trim()
+	if (trimmed.startsWith('--')) return trimmed
 	// Fast path: no dash
-	if (!input.includes('-')) return input
-	return input
-		.trim()
-		.replace(/^-+/, '')
-		.replace(/-([a-z])/g, (_, ch: string) => ch.toUpperCase())
+	if (!trimmed.includes('-')) return trimmed
+	return trimmed.replace(/^-+/, '').replace(/-([a-z])/g, (_, ch: string) => ch.toUpperCase())
 }
 
 function parseCssText(cssText: string): StyleRecord {

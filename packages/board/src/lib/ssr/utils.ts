@@ -198,9 +198,7 @@ export function getSSRData<T>(id: string): T | undefined {
 	const ctx = getContext()
 
 	// 1. If we have a context and it has a matching response, use it
-	if (ctx && ctx.ssr.responses.has(id)) {
-		return ctx.ssr.responses.get(id) as T
-	}
+	if (ctx?.ssr.responses.has(id)) return ctx.ssr.responses.get(id) as T
 
 	// 2. Client-side or Test check (DOM + Cache)
 	// If a document is present but no context, we are either on the client or in a unit test.

@@ -1,4 +1,5 @@
 import { collapse, type PerhapsReactive, ReactiveProp } from '@pounce/core'
+import type { EffectAccess } from 'mutts'
 import { resolveElement } from './shared'
 
 type Direction = 'horizontal' | 'vertical'
@@ -51,80 +52,76 @@ function getProperty(direction: Direction): string {
 	return direction === 'horizontal' ? '--sizeable-width' : '--sizeable-height'
 }
 
-// TODO: Not at all a perhapsReactive: should be a reactive object
-export function sizeable(target: Node | readonly Node[], value: PerhapsReactive<number>) {
-	const el = resolveElement(target as Node | Node[])
-	if (!el?.isConnected) return
+export function sizeable(prop: PerhapsReactive<number>) {
+	return (target: Node | readonly Node[], _access: EffectAccess) => {
+		const el = resolveElement(target as Node | Node[])
+		if (!el?.isConnected) return
 
-	const element: HTMLElement = el
-	const parent = element.parentElement
+		const element: HTMLElement = el
+		const parent = element.parentElement
 
-	if (!parent) {
-		console.warn('use:sizeable requires a parent element')
-		return
-	}
+		if (!parent) {
+			console.warn('use:sizeable requires a parent element')
+			return
+		}
 
-	const siblings = Array.from(parent.children) as HTMLElement[]
-	const flexSibling = findFlexSibling(element, siblings)
-	if (!flexSibling) return
+		const siblings = Array.from(parent.children) as HTMLElement[]
+		const flexSibling = findFlexSibling(element, siblings)
+		if (!flexSibling) return
 
-	const direction = detectDirection(parent)
-	const edge = detectEdge(element, siblings, flexSibling, direction)
-	const property = getProperty(direction)
+		const direction = detectDirection(parent)
+		const edge = detectEdge(element, siblings, flexSibling, direction)
+		const property = getProperty(direction)
+		const rp = prop instanceof ReactiveProp ? prop : null
 
-	// Unwrap to ReactiveProp if needed
-	const prop = value instanceof ReactiveProp ? value : null
+		parent.style.setProperty(property, `${collapse(prop)}px`)
 
-	// Initialize CSS variable from current value
-	const initialSize = collapse(value)
-	parent.style.setProperty(property, `${initialSize}px`)
+		element.classList.add('sizeable', `sizeable-${edge}`)
 
-	element.classList.add('sizeable', `sizeable-${edge}`)
+		const handle = document.createElement('div')
+		handle.className = `sizeable-handle sizeable-handle-${edge}`
+		handle.style.cursor = getCursor(edge)
 
-	const handle = document.createElement('div')
-	handle.className = `sizeable-handle sizeable-handle-${edge}`
-	handle.style.cursor = getCursor(edge)
+		const parentStyle = getComputedStyle(parent)
+		if (parentStyle.position === 'static') parent.style.position = 'relative'
 
-	const parentStyle = getComputedStyle(parent)
-	if (parentStyle.position === 'static') parent.style.position = 'relative'
+		element.appendChild(handle)
 
-	element.appendChild(handle)
+		let startPos = 0
+		let startSize = 0
 
-	let startPos = 0
-	let startSize = 0
+		function onMouseDown(e: MouseEvent) {
+			e.preventDefault()
+			e.stopPropagation()
+			startPos = direction === 'horizontal' ? e.clientX : e.clientY
+			startSize = direction === 'horizontal' ? element.offsetWidth : element.offsetHeight
+			document.addEventListener('mousemove', onMouseMove)
+			document.addEventListener('mouseup', onMouseUp)
+			handle.classList.add('dragging')
+			element.classList.add('dragging')
+		}
 
-	function onMouseDown(e: MouseEvent) {
-		e.preventDefault()
-		e.stopPropagation()
-		startPos = direction === 'horizontal' ? e.clientX : e.clientY
-		startSize = direction === 'horizontal' ? element.offsetWidth : element.offsetHeight
-		document.addEventListener('mousemove', onMouseMove)
-		document.addEventListener('mouseup', onMouseUp)
-		handle.classList.add('dragging')
-		element.classList.add('dragging')
-	}
+		function onMouseMove(e: MouseEvent) {
+			let delta = (direction === 'horizontal' ? e.clientX : e.clientY) - startPos
+			if (edge === 'left' || edge === 'top') delta = -delta
+			const newSize = startSize + delta
+			parent!.style.setProperty(property, `${newSize}px`)
+			rp?.set?.(newSize)
+		}
 
-	function onMouseMove(e: MouseEvent) {
-		let delta = (direction === 'horizontal' ? e.clientX : e.clientY) - startPos
-		if (edge === 'left' || edge === 'top') delta = -delta
-		const newSize = startSize + delta
-		// CSS clamp() on the parent handles min/max — just set the variable
-		parent!.style.setProperty(property, `${newSize}px`)
-		prop?.set?.(newSize)
-	}
+		function onMouseUp() {
+			document.removeEventListener('mousemove', onMouseMove)
+			document.removeEventListener('mouseup', onMouseUp)
+			handle.classList.remove('dragging')
+			element.classList.remove('dragging')
+		}
 
-	function onMouseUp() {
-		document.removeEventListener('mousemove', onMouseMove)
-		document.removeEventListener('mouseup', onMouseUp)
-		handle.classList.remove('dragging')
-		element.classList.remove('dragging')
-	}
+		handle.addEventListener('mousedown', onMouseDown)
 
-	handle.addEventListener('mousedown', onMouseDown)
-
-	return () => {
-		handle.removeEventListener('mousedown', onMouseDown)
-		handle.remove()
-		element.classList.remove('sizeable', `sizeable-${edge}`, 'dragging')
+		return () => {
+			handle.removeEventListener('mousedown', onMouseDown)
+			handle.remove()
+			element.classList.remove('sizeable', `sizeable-${edge}`, 'dragging')
+		}
 	}
 }

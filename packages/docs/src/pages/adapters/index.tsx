@@ -1,17 +1,40 @@
 import { Code, PackageHeader, Section } from '../../components'
 
 const adapterPattern = `// vite.config.ts
-pounceBarrelPlugin({
-  adapter: '@pounce/adapter-pico',
-  // Global options can also be configured here, e.g.:
-  iconFactory: (name) => <i class={\`icon-\${name}\`} />
+import { pounceBarrelPlugin, pounceMinimalPackage } from '@pounce/core/plugin'
+
+export default defineConfig({
+  plugins: [
+    ...pounceMinimalPackage(),
+    pounceBarrelPlugin({
+      name: '@pounce',
+      skeleton: 'front-end',
+      adapter: '@pounce/adapter-pico',
+    }),
+  ],
+})
+
+// app.tsx
+import { Button } from '@pounce'
+
+<Button.primary>Save</Button.primary>`
+
+const wrapperSnippet = `import { gather } from '@pounce/ui'
+import { type ButtonProps as BaseButtonProps, buttonModel } from '@pounce/ui/models'
+import { picoComponent, type PicoButtonLikeProps, picoButtonClass } from '../factory'
+
+export type ButtonProps = PicoButtonLikeProps<BaseButtonProps>
+
+export const Button = picoComponent(function Button(props: ButtonProps) {
+  const model = buttonModel(props)
+
+  return (
+    <button {...props.el} class={picoButtonClass(props.variant ?? 'secondary', props.outline)} {...model.button}>
+      {model.icon && <span {...model.icon.span}>{model.icon.element}</span>}
+      {model.hasLabel && gather(props.children)}
+    </button>
+  )
 })`
-
-const registrySnippet = `import { getAdapter } from '@pounce/ui/adapter'
-
-// Inside a component:
-const adapter = getAdapter('Button')
-return <button class={adapter.classes?.root}>...</button>`
 
 export default function AdaptersIndexPage() {
 	return (
@@ -23,31 +46,31 @@ export default function AdaptersIndexPage() {
 
 			<Section title="The Pattern">
 				<p>
-					Pounce UI components don't contain hardcoded classes like <code>btn</code> or{' '}
-					<code>card</code>. Instead, they request their styling and structure from a central{' '}
-					<strong>Adapter Registry</strong>.
+					Pounce keeps behavior and visuals separate. <code>@pounce/ui</code> owns models,
+					directives, and overlay logic; an adapter such as <code>@pounce/adapter-pico</code>
+					wraps those models with concrete DOM shape and framework classes.
 				</p>
 				<p>
-					This allows you to switch from a custom design to a framework like PicoCSS or Tailwind
-					without changing a single line of application logic.
+					The app itself normally imports through a generated <code>@pounce</code> barrel, so you
+					can swap adapters without changing application imports.
 				</p>
 				<Code code={adapterPattern} lang="tsx" />
 			</Section>
 
-			<Section title="Adapter Composition">
+			<Section title="Wrapper Components">
 				<p>
-					Adapters are composable. You can call <code>setAdapter()</code> multiple times; subsequent
-					calls will merge into the existing configuration, allowing you to override specific
-					components or global behaviors like icons.
+					Adapters are ordinary packages exporting components built on top of headless models. The
+					common pattern is: narrow adapter-side props, call the model, then render DOM and classes.
 				</p>
+				<Code code={wrapperSnippet} lang="tsx" />
 			</Section>
 
 			<Section title="Consumption">
 				<p>
-					Component authors use <code>getAdapter(name)</code> to retrieve the current configuration
-					for their component.
+					Consumers do not install or mutate a global adapter registry. They pick an adapter at
+					build time, import from <code>@pounce</code> or the adapter package, and use the resulting
+					components directly.
 				</p>
-				<Code code={registrySnippet} lang="tsx" />
 			</Section>
 		</article>
 	)

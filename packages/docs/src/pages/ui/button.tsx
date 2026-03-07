@@ -21,7 +21,7 @@ const variantDotSyntax = `// Variant dot-syntax — shorthand for variant="..."
 // asVariant() creates these automatically from the adapter's
 // variant list. Any variant defined in the adapter is available.`
 
-const loadingState = `import { loading } from '@pounce/ui'
+const loadingState = `import { Button, loading } from '@pounce'
 
 function SaveButton(_props: {}, env: Env) {
   env.loading = loading

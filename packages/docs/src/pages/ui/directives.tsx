@@ -1,9 +1,18 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const installSnippet = `import { rootEnv, directives } from '@pounce'
+const installSnippet = `import { rootEnv, badge, intersect, loading, pointer, resize, scroll, sizeable, tail } from '@pounce'
 
-// Add all directives to the root env
-Object.assign(rootEnv, directives)`
+// Register only the directives your app needs
+Object.assign(rootEnv, {
+  badge,
+  intersect,
+  loading,
+  pointer,
+  resize,
+  scroll,
+  sizeable,
+  tail,
+})`
 
 const loadingSnippet = `<button use:loading={state.saving}>
   Submit
@@ -98,8 +107,9 @@ export default function UiDirectivesPage() {
 			<Section title="Installation">
 				<p>
 					UI directives must be registered in the env to be available in JSX via the{' '}
-					<code>use:name</code> syntax. The easiest way is to assign the <code>directives</code>{' '}
-					namespace export into the root env.
+					<code>use:name</code> syntax. Register them explicitly on <code>rootEnv</code> for
+					app-wide availability, or assign them on a local component env when you only need a
+					subset.
 				</p>
 				<Code code={installSnippet} lang="tsx" />
 			</Section>

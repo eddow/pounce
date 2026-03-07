@@ -70,6 +70,55 @@ function NotFoundPage({ url }: { url: string }) {
 
 <Router routes={routes} notFound={NotFoundPage} />`
 
+const routingLayers = `Reactive URL and route matching span a few layers:
+
+@pounce/kit
+  owns route parsing/matching, link behavior, and the SPA Router component
+
+@pounce/ui
+  can compose kit routing primitives into alternate shells such as tabbed navigation
+
+@pounce/board
+  adds file-based route discovery and SSR on top of the same route concepts`
+
+const routerFlow = `Normal SPA flow:
+
+client.url change
+  -> Router observes the pathname reactively
+  -> route matcher resolves the route definition
+  -> Router renders the active view(spec, env)
+
+The Router is the URL-driven component.
+It stays responsible for synchronization with client.url.`
+
+const modelSplit = `Think in two responsibilities:
+
+1. Route logic
+   parseRoute(), matchRoute(), buildRoute(), defineRoute()
+   Pure matching and URL construction.
+
+2. Navigation model
+   Opened routes, active route, activate/close/clear/open semantics.
+   Headless state that can drive different shells.
+
+In the default docs surface today, the built-in Router exposes the SPA shell.
+The same concepts also support richer shells that keep multiple routes alive.`
+
+const dockviewComposition = `One important cross-package pattern is tabbed routing:
+
+@pounce/kit
+  route matching + navigation state
+
+@pounce/ui
+  dockview/tab container primitive
+
+consumer app
+  decides whether navigation swaps one page or accumulates open panels
+
+That lets links keep meaning "navigate to this route"
+while the presentation shell decides whether that means
+replace the visible page or focus/open a tab.`
+
 export default function RouterPage() {
 	return (
 		<article>
@@ -77,6 +126,33 @@ export default function RouterPage() {
 			<p>
 				Client-side router with reactive URL matching, parameter extraction, and SPA navigation.
 			</p>
+
+			<Section title="Cross-Package Routing Concept">
+				<p>
+					Routing in Pounce is not a single monolith. It is a concept that spans the suite: route
+					matching lives in Kit, UI packages can compose alternate navigation shells on top of it,
+					and Board adds file-based routing and SSR conventions.
+				</p>
+				<Code code={routingLayers} lang="text" />
+			</Section>
+
+			<Section title="URL-Driven SPA Router">
+				<p>
+					The built-in <code>Router</code> is the SPA shell. It reacts to <code>client.url</code>,
+					matches the active route, and renders a single active view. This keeps URL tracking and
+					rendering concerns together in Kit.
+				</p>
+				<Code code={routerFlow} lang="text" />
+			</Section>
+
+			<Section title="Route Logic vs Navigation Model">
+				<p>
+					A useful mental split is <strong>route logic</strong> versus{' '}
+					<strong>navigation model</strong>. Route logic answers <em>what matches this URL?</em>{' '}
+					Navigation state answers <em>what is open and which route is active right now?</em>
+				</p>
+				<Code code={modelSplit} lang="text" />
+			</Section>
 
 			<Section title="Route Definitions">
 				<p>
@@ -101,6 +177,11 @@ export default function RouterPage() {
 					sets <code>aria-current="page"</code> on the active link.
 				</p>
 				<Code code={aComponent} lang="tsx" />
+				<p>
+					This is another cross-package seam: links express navigation intent, while the active
+					shell decides how to realize it. In the default SPA shell, that means swapping the active
+					route. In richer shells, the same navigation can open or focus a panel instead.
+				</p>
 			</Section>
 
 			<Section title="defineRoute()">
@@ -113,6 +194,16 @@ export default function RouterPage() {
 
 			<Section title="404 Handling">
 				<Code code={notFound} lang="tsx" />
+			</Section>
+
+			<Section title="Tabbed Navigation as Composition">
+				<p>
+					Kit owns the route semantics, but it does not force a single presentation. A tabbed router
+					is a composition pattern: Kit provides route matching and navigation primitives, UI
+					provides the tab container, and the consuming app decides whether routes should replace
+					each other or stay alive side by side.
+				</p>
+				<Code code={dockviewComposition} lang="text" />
 			</Section>
 
 			<Section title="API Reference">

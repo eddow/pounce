@@ -26,3 +26,11 @@ export { Router } from './components'
 export type { AssertSchema, RouteDefinition } from './defs'
 export { defineRoute } from './defs'
 export * from './logic'
+export type {
+	OpenedRoute,
+	RouterModel,
+	RouterModelConfig,
+	RouterModelRouteDefinition,
+	RouterTitle,
+} from './router-model'
+export { routerModel } from './router-model'

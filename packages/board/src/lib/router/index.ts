@@ -25,14 +25,6 @@ function pathStem(value: string): string {
 	return dotIndex === -1 ? fileName : fileName.slice(0, dotIndex)
 }
 
-function pathDirname(value: string): string {
-	const normalized = normalizePath(value)
-	const lastSlash = normalized.lastIndexOf('/')
-	if (lastSlash === -1) return '.'
-	if (lastSlash === 0) return '/'
-	return normalized.slice(0, lastSlash)
-}
-
 function pathJoin(...parts: string[]): string {
 	if (parts.length === 0) return ''
 	const normalizedParts = parts.map((part) => normalizePath(part))

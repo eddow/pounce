@@ -2,7 +2,9 @@
  * Router component logic tests.
  * Tests the reactive matching + view selection without the full DOM rendering pipeline.
  */
-import { describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { setPlatform } from '../platform/shared'
+import { createTestAdapter } from '../platform/test'
 import { matchRoute, routeMatcher } from './components'
 import { linkModel } from './link-model'
 
@@ -73,6 +75,13 @@ describe('routeMatcher (pre-compiled)', () => {
 		const noRoot = routeMatcher([{ path: '/a' as const }])
 		expect(noRoot('/nope')).toBeNull()
 	})
+
+	test('ignores hash fragments when selecting the matching route', () => {
+		const result = matcher('/a#details')
+		expect(result).not.toBeNull()
+		expect(result!.definition.path).toBe('/a')
+		expect(result!.unusedPath).toBe('#details')
+	})
 })
 
 describe('Router reactive view selection', () => {
@@ -95,5 +104,26 @@ describe('Router reactive view selection', () => {
 		// Same URL → same definition object
 		const home2 = matcher('/')!
 		expect(home2.definition).toBe(home.definition)
+	})
+})
+
+describe('linkModel aria-current', () => {
+	beforeEach(() => setPlatform(createTestAdapter('http://localhost/docs')))
+	afterEach(() => setPlatform(null as never))
+
+	test('matches plain href against pathname', () => {
+		expect(linkModel({ href: '/docs' })['aria-current']).toBe('page')
+	})
+
+	test('strips hash from href before comparing to pathname', () => {
+		expect(linkModel({ href: '/docs#section' })['aria-current']).toBe('page')
+	})
+
+	test('hash-only href returns undefined (no path to match)', () => {
+		expect(linkModel({ href: '#section' })['aria-current']).toBeUndefined()
+	})
+
+	test('fragment href on a different page is not active', () => {
+		expect(linkModel({ href: '/other#section' })['aria-current']).toBeUndefined()
 	})
 })

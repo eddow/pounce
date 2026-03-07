@@ -63,9 +63,8 @@ export default function BoardSsrPage() {
 
 			<Section title="CSS Injection">
 				<p>
-					Styles generated via <code>css</code> templates or <code>Pure-glyf</code> are
-					automatically collected during the server render pass and injected into the{' '}
-					<code>&lt;head&gt;</code>.
+					Styles generated via <code>css</code> templates are automatically collected during the
+					server render pass and injected into the <code>&lt;head&gt;</code>.
 				</p>
 			</Section>
 		</article>

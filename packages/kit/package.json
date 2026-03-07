@@ -23,6 +23,7 @@
 		"type": "git",
 		"url": "git+https://github.com/eddow/pounce.git"
 	},
+	"types": "./dist/dom.d.ts",
 	"exports": {
 		".": {
 			"types": "./dist/dom.d.ts",

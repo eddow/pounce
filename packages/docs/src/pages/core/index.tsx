@@ -80,8 +80,8 @@ export default function CorePage() {
 						lifecycle, mount/use callbacks
 					</li>
 					<li>
-						<A href="/core/directives">Directives</A> — <code>if</code>, <code>when</code>,{' '}
-						<code>for</code>, <code>dynamic</code>
+						<A href="/getting-started/concepts#directives">Directives</A> — <code>if</code>,{' '}
+						<code>when</code>, <code>for</code>, <code>dynamic</code>
 					</li>
 					<li>
 						<A href="/core/env">Env</A> — prototype chain, <code>extend()</code>,{' '}

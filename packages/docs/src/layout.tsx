@@ -4,13 +4,14 @@ import {
 	type Env,
 	Heading,
 	Router,
+	r,
+	sizeable,
+	stored,
 	Text,
 	ThemeToggle,
 	type ThemeValue,
 	Toolbar,
 } from '@pounce'
-import { stored } from '@pounce/kit'
-import { sizeable } from '@pounce/ui'
 import { reactive } from 'mutts'
 import PageNav from './components/page-nav'
 import Search from './components/search'
@@ -24,22 +25,29 @@ const uiState = reactive({ mobileOpen: false })
 // Use stored to persist sidebar width
 const sidebarState = stored({ width: DEFAULT_WIDTH })
 
-export function DocsApp(_props: {}, env: Env) {
-	env.sizeable = sizeable
+export function DocsApp(_props: {}, _env: Env) {
+	const sizeableSidebar = sizeable(
+		r(
+			() => sidebarState.width,
+			(v) => {
+				sidebarState.width = v
+			}
+		)
+	)
+	const closeMobileNav = () => {
+		uiState.mobileOpen = false
+	}
 	return (
 		<DisplayProvider theme={envSettings.theme}>
 			<div
 				class={{ 'docs-layout': true, 'mobile-open': uiState.mobileOpen }}
-				use={(el: HTMLElement) => {
-					el.style.setProperty('--sidebar-width', `${sidebarState.width}px`)
-				}}
+				style={`--sizeable-width: ${sidebarState.width}px;`}
 			>
-				<aside class="docs-sidebar">
+				<aside class="docs-sidebar" use={sizeableSidebar}>
 					<h5>Pounce</h5>
-					<Search />
-					<PageNav />
+					<Search onNavigate={closeMobileNav} />
+					<PageNav onNavigate={closeMobileNav} />
 				</aside>
-				<div class="docs-sidebar-resize" use:sizeable={sidebarState.width} />
 				<div class="docs-main">
 					<header class="docs-header">
 						<Container>

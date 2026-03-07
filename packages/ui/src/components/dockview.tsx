@@ -11,7 +11,7 @@ import {
 import 'dockview-core/dist/styles/dockview.css'
 import { extend, fromAttribute, latch, ReactiveProp } from '@pounce/core'
 import { componentStyle } from '@pounce/kit'
-import { biDi, effect, reactive, type ScopedCallback, unreactive } from 'mutts'
+import { biDi, effect, reactive, root, type ScopedCallback, unreactive } from 'mutts'
 import { Icon } from '../icon'
 
 componentStyle.sass`
@@ -62,7 +62,7 @@ export type DockviewWidgetProps<
 	context: Context
 }
 
-export interface DockviewWidgetScope extends Record<string, any> {
+export interface DockviewWidgetScope extends Record<PropertyKey, unknown> {
 	dockviewApi?: DockviewApi
 	panelApi?: DockviewPanelApi
 }
@@ -80,6 +80,16 @@ export type DockviewHeaderAction = (
 	props: DockviewHeaderActionProps,
 	scope: DockviewWidgetScope
 ) => JSX.Element | null
+
+function logDockview(debug: boolean | string | undefined, event: string, payload?: unknown) {
+	if (!debug) return
+	const label = typeof debug === 'string' ? debug : 'Dockview'
+	if (payload === undefined) {
+		console.log(`[${label}] ${event}`)
+		return
+	}
+	console.log(`[${label}] ${event}`, payload)
+}
 
 // #region Renderers
 
@@ -229,6 +239,8 @@ const DefaultTab = (props: RegularDockviewWidgetProps, { panelApi }: Record<stri
 export const Dockview = (
 	props: {
 		api?: DockviewApi
+		debug?: boolean | string
+		onReady?: (api: DockviewApi) => void
 		widgets: Record<string, DockviewWidget<any>>
 		tabs?: Record<string, DockviewWidget<any>>
 		headerLeft?: DockviewHeaderAction
@@ -241,17 +253,40 @@ export const Dockview = (
 	scope: Record<string, any>
 ) => {
 	const contexts = new Map<string, Record<PropertyKey, any>>()
-	let initialized = false
+	let dockviewApi: DockviewApi | undefined
 
-	const initDockview = (element: HTMLElement) => {
-		if (initialized) throw new Error('Dockview already initialized')
-		initialized = true
-		let instanceApi: DockviewApi | undefined
+	// Capture layout binding from the raw composite attributes (component body — runs once)
+	const attributes = (props as any)[fromAttribute]
+	const layoutBinding = attributes?.getSingle('layout')
+
+	// Snapshot props in the component body (outside any attend effect)
+	// so initDockview reads zero reactive properties.
+	const debugLabel = props.debug
+	const widgetMap = props.widgets
+	const tabMap = props.tabs
+	const onReadyCb = props.onReady
+	const hasLayout =
+		layoutBinding instanceof ReactiveProp
+			? layoutBinding.get() !== undefined
+			: props.layout !== undefined
+
+	const initDockview = (_target: Node | readonly Node[]) => {
+		const element = (Array.isArray(_target) ? _target[0] : _target) as HTMLElement
+		if (dockviewApi) return // already initialized
+		logDockview(debugLabel, 'init:start', {
+			hasLayout,
+			widgetNames: Object.keys(widgetMap),
+		})
 		try {
 			const activeApi = unreactive(
 				createDockview(element, {
 					createComponent({ id, name }: { id: string; name: string }) {
-						const widget = props.widgets[name]
+						logDockview(debugLabel, 'createComponent', {
+							id,
+							name,
+							knownWidgets: Object.keys(widgetMap),
+						})
+						const widget = widgetMap[name]
 						if (!widget) throw new Error(`Widget ${name} not found`)
 						const context = reactive({})
 						contexts.set(id, context)
@@ -265,91 +300,143 @@ export const Dockview = (
 						)
 					},
 					createTabComponent({ id, name }: { id: string; name: string }) {
-						const widget = props.tabs?.[name] ?? DefaultTab
+						logDockview(debugLabel, 'createTabComponent', {
+							id,
+							name,
+							knownTabs: Object.keys(tabMap ?? {}),
+						})
+						const widget = tabMap?.[name] ?? DefaultTab
 						const context = contexts.get(id)
 						if (!context) throw new Error(`Context ${id} not found`)
 						return tabRenderer(widget, context as DockviewWidgetProps, scope)
 					},
 				})
 			)
-			try {
-				if (scope && typeof scope === 'object' && !Object.isFrozen(scope)) {
-					scope.dockviewApi = activeApi
-					scope.api = activeApi
-				}
-			} catch (_e) {
-				// Fallback or ignore if scope is strictly read-only
-			}
-			props.api = instanceApi = activeApi
+			dockviewApi = activeApi
 		} catch (e) {
 			console.error('[Dockview] createDockview CRASHED (sync):', e)
 			return
 		}
-		if (!instanceApi) return
-		const api: DockviewApi = instanceApi
-		const attributes = (props as any)[fromAttribute]
-		const layoutBinding = attributes?.getSingle('layout')
-		const readLayout =
-			layoutBinding instanceof ReactiveProp ? () => layoutBinding.get() : () => props.layout
-		const writeLayout =
-			layoutBinding instanceof ReactiveProp && layoutBinding.set
-				? (value: SerializedDockview | undefined) => layoutBinding.set?.(value)
-				: (value: SerializedDockview | undefined) => {
-						props.layout = value
-					}
-		let applyingExternalLayout = false
-		const receiveLayout = (layout: SerializedDockview | undefined) => {
-			applyingExternalLayout = true
-			try {
-				if (layout) api.fromJSON(layout)
-				else api.closeAllGroups()
-			} finally {
-				applyingExternalLayout = false
+		const api = dockviewApi
+		try {
+			if (scope && typeof scope === 'object' && !Object.isFrozen(scope)) {
+				scope.dockviewApi = api
+				scope.api = api
+				logDockview(debugLabel, 'init:scope-api-set')
 			}
-		}
-		if (layoutBinding instanceof ReactiveProp && layoutBinding.set) {
-			const provideLayout = biDi(receiveLayout, {
-				get: () => layoutBinding.get(),
-				set: (value: SerializedDockview | undefined) => layoutBinding.set?.(value),
-			})
-			api.onDidLayoutChange(() => {
-				if (!applyingExternalLayout) provideLayout(api.toJSON())
-			})
-		} else {
-			effect(() => {
-				const layout = readLayout()
-				if (!applyingExternalLayout) receiveLayout(layout)
-			})
-			api.onDidLayoutChange(() => {
-				if (!applyingExternalLayout) writeLayout(api.toJSON())
-			})
-		}
-		const emptyOptions: Record<string, any> = {}
-		effect(() => {
-			api.updateOptions(props.options ? { ...emptyOptions, ...props.options } : emptyOptions)
-			if (props.options) for (const k of Object.keys(props.options)) emptyOptions[k] = undefined
+		} catch (_e) {}
+		// Set up reactive bindings in root() — detached from the attend:use
+		// effect chain so reactive prop reads don't tear down initDockview.
+		const stopBindings = root((): (() => void) => {
+			const cleanups: (() => void)[] = []
+			const hasControlledLayout =
+				layoutBinding instanceof ReactiveProp
+					? layoutBinding.get() !== undefined
+					: props.layout !== undefined
+			const readLayout =
+				layoutBinding instanceof ReactiveProp ? () => layoutBinding.get() : () => props.layout
+			const writeLayout =
+				layoutBinding instanceof ReactiveProp && layoutBinding.set
+					? (value: SerializedDockview | undefined) => layoutBinding.set?.(value)
+					: (value: SerializedDockview | undefined) => {
+							props.layout = value
+						}
+			let applyingExternalLayout = false
+			const receiveLayout = (layout: SerializedDockview | undefined) => {
+				logDockview(debugLabel, 'layout:receive', {
+					hasLayout: layout !== undefined,
+					panelCount: api.panels.length,
+				})
+				applyingExternalLayout = true
+				try {
+					if (layout) api.fromJSON(layout)
+					else {
+						logDockview(debugLabel, 'layout:close-all-groups', {
+							panelCount: api.panels.length,
+						})
+						api.closeAllGroups()
+					}
+				} finally {
+					applyingExternalLayout = false
+				}
+			}
+			if (!hasControlledLayout) {
+				logDockview(debugLabel, 'layout:uncontrolled')
+			} else if (layoutBinding instanceof ReactiveProp && layoutBinding.set) {
+				const provideLayout = biDi(receiveLayout, {
+					get: () => layoutBinding.get(),
+					set: (value: SerializedDockview | undefined) => layoutBinding.set?.(value),
+				})
+				cleanups.push(
+					api.onDidLayoutChange(() => {
+						if (!applyingExternalLayout) {
+							logDockview(debugLabel, 'layout:onDidLayoutChange:provide', {
+								panelCount: api.panels.length,
+							})
+							provideLayout(api.toJSON())
+						}
+					}).dispose
+				)
+			} else {
+				cleanups.push(
+					effect(() => {
+						const layout = readLayout()
+						if (!applyingExternalLayout) receiveLayout(layout)
+					})
+				)
+				cleanups.push(
+					api.onDidLayoutChange(() => {
+						if (!applyingExternalLayout) {
+							logDockview(debugLabel, 'layout:onDidLayoutChange:write', {
+								panelCount: api.panels.length,
+							})
+							writeLayout(api.toJSON())
+						}
+					}).dispose
+				)
+			}
+			const emptyOptions: Record<string, any> = {}
+			cleanups.push(
+				effect(() => {
+					api.updateOptions(props.options ? { ...emptyOptions, ...props.options } : emptyOptions)
+					if (props.options) for (const k of Object.keys(props.options)) emptyOptions[k] = undefined
+				})
+			)
+			cleanups.push(
+				effect(function maintainHeaderActions() {
+					const { headerLeft, headerRight, headerPrefix } = props
+					api.updateOptions({
+						createLeftHeaderActionComponent:
+							headerLeft &&
+							((group: DockviewGroupPanel) => {
+								return headerActionRenderer(headerLeft, { group }, scope)
+							}),
+						createRightHeaderActionComponent:
+							headerRight &&
+							((group: DockviewGroupPanel) => {
+								return headerActionRenderer(headerRight, { group }, scope)
+							}),
+						createPrefixHeaderActionComponent:
+							headerPrefix &&
+							((group: DockviewGroupPanel) => {
+								return headerActionRenderer(headerPrefix, { group }, scope)
+							}),
+					})
+				})
+			)
+			return () => {
+				for (const c of cleanups) c()
+			}
 		})
-		effect(function maintainHeaderActions() {
-			const { headerLeft, headerRight, headerPrefix } = props
-			api.updateOptions({
-				createLeftHeaderActionComponent:
-					headerLeft &&
-					((group: DockviewGroupPanel) => {
-						return headerActionRenderer(headerLeft, { group }, scope)
-					}),
-				createRightHeaderActionComponent:
-					headerRight &&
-					((group: DockviewGroupPanel) => {
-						return headerActionRenderer(headerRight, { group }, scope)
-					}),
-				createPrefixHeaderActionComponent:
-					headerPrefix &&
-					((group: DockviewGroupPanel) => {
-						return headerActionRenderer(headerPrefix, { group }, scope)
-					}),
+		root(() => onReadyCb?.(api))
+		return () => {
+			logDockview(debugLabel, 'dispose', {
+				panelCount: api.panels.length,
 			})
-		})
-		effect(() => () => api.dispose())
+			stopBindings?.()
+			api.dispose()
+			dockviewApi = undefined
+		}
 	}
 
 	return (

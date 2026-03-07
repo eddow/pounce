@@ -1,11 +1,17 @@
 import { A } from '@pounce'
 import { navigation } from '../nav-index'
 
-export default function PageNav() {
+interface PageNavProps {
+	onNavigate?: () => void
+}
+
+export default function PageNav({ onNavigate }: PageNavProps) {
 	return (
 		<ul>
 			<li>
-				<A href="/">Home</A>
+				<A href="/" onClick={onNavigate}>
+					Home
+				</A>
 			</li>
 			{navigation.map((section) => (
 				<li>
@@ -13,7 +19,9 @@ export default function PageNav() {
 					<ul>
 						{section.links.map((link) => (
 							<li>
-								<A href={link.href}>{link.title}</A>
+								<A href={link.href} onClick={onNavigate}>
+									{link.title}
+								</A>
 							</li>
 						))}
 					</ul>

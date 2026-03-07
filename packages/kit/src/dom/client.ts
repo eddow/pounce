@@ -61,6 +61,9 @@ if (typeof window !== 'undefined') {
 client.navigate = (to: string | URL, options?: NavigateOptions): void => {
 	const startedAt = perf?.now()
 	const href = resolveHref(to)
+	const hashIndex = href.indexOf('#')
+	const pathPart = hashIndex >= 0 ? href.slice(0, hashIndex) : href
+	const hashPart = hashIndex >= 0 ? href.slice(hashIndex) : ''
 	const stateData = options?.state ?? null
 	const method = options?.replace ? 'replaceState' : 'pushState'
 	const navigation = options?.replace ? 'replace' : 'push'
@@ -71,9 +74,14 @@ client.navigate = (to: string | URL, options?: NavigateOptions): void => {
 	} else {
 		pendingNavigation = 'push'
 	}
-	updateHistory(stateData, '', href)
+	updateHistory(stateData, '', pathPart)
 	if (startedAt != null) recordPerf('route:navigate', startedAt)
 	synchronizeUrl(navigation)
+	if (hashPart) {
+		requestAnimationFrame(() => {
+			window.location.hash = hashPart
+		})
+	}
 }
 
 client.replace = (to: string | URL, options?: Omit<NavigateOptions, 'replace'>): void => {

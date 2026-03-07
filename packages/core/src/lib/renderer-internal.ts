@@ -110,7 +110,11 @@ export function setHtmlProperty(
 export function applyStyleProperties(element: Element, computedStyles: Record<string, any>) {
 	element.removeAttribute('style')
 	testing.renderingEvent?.('assign style', element, computedStyles)
-	Object.assign((element as HTMLElement).style, computedStyles)
+	const style = (element as HTMLElement).style
+	for (const [key, value] of Object.entries(computedStyles)) {
+		if (key.startsWith('--')) style.setProperty(key, value == null ? '' : String(value))
+		else (style as any)[key] = value ?? ''
+	}
 }
 
 function attachAttributeValue(
@@ -138,7 +142,7 @@ function attachAttributeValue(
 	if (key === 'style') {
 		element.removeAttribute('style')
 		if (value && typeof value === 'object' && Object.keys(value).length > 0)
-			Object.assign((element as HTMLElement).style, value)
+			applyStyleProperties(element, value)
 		return () => {
 			element.removeAttribute('style')
 		}

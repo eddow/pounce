@@ -6,7 +6,7 @@ Pounce-TS provides automatic two-way binding for form inputs and component prope
 
 The plugin generates a `{ get, set }` pair (two-way binding) when the attribute value is:
 
-- A **member expression** — `state.name`, `props.count`, `obj['key']`
+- A **member expression** — `state.name`, `props.count`, `obj['key']`, `arr[index]`
 - A **mutable bare identifier** — a `let` or `var` variable
 
 It generates **one-way** (read-only) binding when the value is:
