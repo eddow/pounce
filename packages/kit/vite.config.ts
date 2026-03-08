@@ -55,6 +55,8 @@ export default defineConfig({
         node: resolve(projectRootDir, 'src/node/index.ts'),
         intl: resolve(projectRootDir, 'src/intl.tsx'),
         models: resolve(projectRootDir, 'src/models.ts'),
+        'router/index': resolve(projectRootDir, 'src/router/index.ts'),
+        'router/logic': resolve(projectRootDir, 'src/router/logic.ts'),
       },
       formats: ['es', 'cjs'],
       fileName: (format, entryName) => `${entryName}.${format === 'es' ? 'js' : 'cjs'}`,

@@ -12,15 +12,15 @@
 		"jsxFragmentFactory": "Fragment",
 		"lib": ["ESNext", "DOM", "DOM.Iterable"],
 		"paths": {
-			"@pounce/core": ["../../core/src/index.ts"],
-			"@pounce/core/*": ["../../core/src/*"],
-			"@pounce/kit": ["../../kit/src/index.ts"],
-			"@pounce/kit/*": ["../../kit/src/*"],
-			"@pounce/ui": ["../../ui/src/index.ts"],
-			"@pounce/ui/*": ["../../ui/src/*"],
-			"@pounce/ui/models": ["../../ui/src/models/index.ts"],
-			"mutts": ["../../../../mutts/src/index.ts"],
-			"mutts/*": ["../../../../mutts/src/*"]
+			"@pounce/core": ["../../core/dist/index"],
+			"@pounce/core/*": ["../../core/dist/*"],
+			"@pounce/kit": ["../../kit/dist/dom"],
+			"@pounce/kit/*": ["../../kit/dist/*"],
+			"@pounce/ui": ["../../ui/dist/index"],
+			"@pounce/ui/*": ["../../ui/dist/*"],
+			"@pounce/ui/models": ["../../ui/dist/models/index"],
+			"mutts": ["../../../../mutts/dist/browser"],
+			"mutts/*": ["../../../../mutts/dist/*"]
 		}
 	},
 	"include": ["src/**/*"],

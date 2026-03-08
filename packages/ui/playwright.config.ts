@@ -1,7 +1,15 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
 
 const projectRootDir = decodeURIComponent(new URL('.', import.meta.url).pathname)
 const port = 5270
+const managedBrowsersPath = process.env.PLAYWRIGHT_BROWSERS_PATH
+	? path.resolve(process.env.PLAYWRIGHT_BROWSERS_PATH)
+	: process.env.HOME
+		? path.join(process.env.HOME, '.cache', 'ms-playwright')
+		: ''
+const hasManagedBrowsers = managedBrowsersPath ? fs.existsSync(managedBrowsersPath) : false
 
 export default defineConfig({
 	testDir: './tests/e2e',
@@ -22,7 +30,7 @@ export default defineConfig({
 			name: 'chrome',
 			use: {
 				...devices['Desktop Chrome'],
-				channel: 'chrome',
+				...(hasManagedBrowsers ? {} : { channel: 'chrome' as const }),
 			},
 		},
 	],

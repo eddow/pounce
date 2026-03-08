@@ -60,7 +60,7 @@ describe('sizeable directive', () => {
 
 	it('creates resize handle with correct cursor', () => {
 		const cleanup = sizeable(300)(element, noopAccess)
-		const handle = element.querySelector('.sizeable-handle')
+		const handle = parent.querySelector('.sizeable-handle')
 		expect(handle).toBeTruthy()
 		expect(handle?.classList.contains('sizeable-handle-right')).toBe(true)
 		expect((handle as HTMLElement).style.cursor).toBe('col-resize')
@@ -76,9 +76,9 @@ describe('sizeable directive', () => {
 	it('updates CSS variable and writes back via ReactiveProp on drag', () => {
 		const prop = rp(300)
 		const cleanup = sizeable(prop)(element, noopAccess)
-		const handle = element.querySelector('.sizeable-handle') as HTMLElement
+		const handle = parent.querySelector('.sizeable-handle') as HTMLElement
 
-		handle?.dispatchEvent(new MouseEvent('mousedown', { clientX: 100 }))
+		handle.dispatchEvent(new MouseEvent('mousedown', { clientX: 100 }))
 		document.dispatchEvent(new MouseEvent('mousemove', { clientX: 150 }))
 		document.dispatchEvent(new MouseEvent('mouseup'))
 
@@ -96,18 +96,6 @@ describe('sizeable directive', () => {
 		consoleSpy.mockRestore()
 	})
 
-	it('supports vertical direction', () => {
-		parent.style.flexDirection = 'column'
-		const cleanup = sizeable(300)(element, noopAccess)
-		expect(element.classList.contains('sizeable-bottom')).toBe(true)
-
-		const handle = element.querySelector('.sizeable-handle') as HTMLElement
-		expect(handle?.classList.contains('sizeable-handle-bottom')).toBe(true)
-		expect(handle?.style.cursor).toBe('row-resize')
-
-		cleanup?.()
-	})
-
 	it('initializes CSS variable for vertical direction', () => {
 		parent.style.flexDirection = 'column'
 		const cleanup = sizeable(200)(element, noopAccess)
@@ -115,11 +103,23 @@ describe('sizeable directive', () => {
 		cleanup?.()
 	})
 
+	it('supports vertical direction', () => {
+		parent.style.flexDirection = 'column'
+		const cleanup = sizeable(300)(element, noopAccess)
+		expect(element.classList.contains('sizeable-bottom')).toBe(true)
+
+		const handle = parent.querySelector('.sizeable-handle') as HTMLElement
+		expect(handle?.classList.contains('sizeable-handle-bottom')).toBe(true)
+		expect(handle?.style.cursor).toBe('row-resize')
+
+		cleanup?.()
+	})
+
 	it('cleans up handle and classes on unmount', () => {
 		const cleanup = sizeable(300)(element, noopAccess)
-		expect(element.querySelector('.sizeable-handle')).toBeTruthy()
+		expect(parent.querySelector('.sizeable-handle')).toBeTruthy()
 		cleanup?.()
-		expect(element.querySelector('.sizeable-handle')).toBeNull()
+		expect(parent.querySelector('.sizeable-handle')).toBeNull()
 		expect(element.classList.contains('sizeable')).toBe(false)
 	})
 
@@ -135,22 +135,18 @@ describe('sizeable directive', () => {
 		})
 
 		expect(unmounted.classList.contains('sizeable')).toBe(false)
-		expect(unmounted.querySelector('.sizeable-handle')).toBeNull()
+		expect(parent.querySelector('.sizeable-handle')).toBeNull()
 
-		// Clear parent from beforeEach setup
 		parent.innerHTML = ''
-
-		// Append to DOM and register mount state (simulating syncRegistry)
 		parent.appendChild(unmounted)
 		parent.appendChild(flex)
 		markMounted(unmounted)
 		markMounted(flex)
 
-		// Wait for effect to re-run
 		await Promise.resolve()
 
 		expect(unmounted.classList.contains('sizeable')).toBe(true)
-		expect(unmounted.querySelector('.sizeable-handle')).toBeTruthy()
+		expect(parent.querySelector('.sizeable-handle')).toBeTruthy()
 
 		stop()
 		cleanup?.()

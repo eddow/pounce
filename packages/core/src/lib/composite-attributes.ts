@@ -350,11 +350,20 @@ export class CompositeAttributes {
 		// Collect all styles
 		const stylesInput: any[] = []
 		for (const layer of this.layers.map(collapseLayer)) {
-			if (layer && 'style' in layer) {
+			if (!layer) continue
+			if ('style' in layer) {
 				const val = collapse(layer.style)
 				if (Array.isArray(val)) stylesInput.push(...val.flat(Infinity))
 				else if (val) stylesInput.push(val)
 			}
+			const styleProps: Record<string, any> = {}
+			for (const key of stringKeys(layer)) {
+				if (typeof key !== 'string' || !key.startsWith('style:')) continue
+				const styleKey = key.slice('style:'.length)
+				if (!styleKey) continue
+				styleProps[styleKey] = collapse(layer[key])
+			}
+			if (Object.keys(styleProps).length > 0) stylesInput.push(styleProps)
 		}
 		// Use the styles utility to merge them correctly into a single object
 		return styles(...stylesInput)

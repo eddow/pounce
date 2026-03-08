@@ -2,10 +2,11 @@
  * Router component logic tests.
  * Tests the reactive matching + view selection without the full DOM rendering pipeline.
  */
+import { h, latch, PounceElement } from '@pounce/core'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { setPlatform } from '../platform/shared'
 import { createTestAdapter } from '../platform/test'
-import { matchRoute, routeMatcher } from './components'
+import { matchRoute, Router, routeMatcher } from './components'
 import { linkModel } from './link-model'
 
 describe('Router matchRoute wrapper', () => {
@@ -104,6 +105,128 @@ describe('Router reactive view selection', () => {
 		// Same URL → same definition object
 		const home2 = matcher('/')!
 		expect(home2.definition).toBe(home.definition)
+	})
+
+	test('keeps a catch-all branch view mounted while routeSpecification updates reactively', async () => {
+		const adapter = createTestAdapter('http://localhost/dockview-router/notes/1')
+		setPlatform(adapter)
+		const mutableClient = adapter.client as unknown as {
+			url: {
+				href: string
+				origin: string
+				pathname: string
+				search: string
+				hash: string
+				segments: string[]
+				query: Record<string, string>
+			}
+			history: { length: number; navigation: 'load' | 'push' | 'replace' | 'pop' }
+		}
+		let renders = 0
+		let routeScope: Record<PropertyKey, unknown> | undefined
+		const scope = adapter.client as unknown as Record<PropertyKey, unknown>
+		const routes = [
+			{
+				path: '/dockview-router/[...route]' as const,
+				view: (
+					spec: { params: Record<string, string> },
+					currentScope: Record<PropertyKey, unknown>
+				) => {
+					renders += 1
+					routeScope = currentScope
+					const initialRoute = spec.params.route
+					return h(
+						'div',
+						{ 'data-test': 'branch-value' },
+						PounceElement.text(
+							() =>
+								(
+									routeScope?.routeSpecification as
+										| {
+												current: { params: Record<string, string> } | null
+										  }
+										| undefined
+								)?.current?.params.route ?? initialRoute
+						)
+					)
+				},
+			},
+		]
+		const stop = latch(
+			document.body,
+			h(Router, {
+				routes,
+				notFound: () => h('div', { 'data-test': 'branch-value' }, 'missing'),
+			}),
+			scope
+		)
+
+		expect(document.querySelector('[data-test="branch-value"]')?.textContent).toBe('notes/1')
+		expect(renders).toBe(1)
+
+		mutableClient.url.href = 'http://localhost/dockview-router/counter/2'
+		mutableClient.url.pathname = '/dockview-router/counter/2'
+		mutableClient.url.search = ''
+		mutableClient.url.hash = ''
+		mutableClient.url.segments = ['dockview-router', 'counter', '2']
+		mutableClient.url.query = {}
+		mutableClient.history.navigation = 'push'
+		await Promise.resolve()
+
+		expect(
+			(
+				routeScope?.routeSpecification as
+					| {
+							current: { params: Record<string, string> } | null
+					  }
+					| undefined
+			)?.current?.params.route
+		).toBe('counter/2')
+		expect(renders).toBe(1)
+
+		stop()
+	})
+
+	test('renders the matched route when pathname carries a fragment suffix', () => {
+		const adapter = createTestAdapter('http://localhost/docs')
+		setPlatform(adapter)
+		const mutableClient = adapter.client as unknown as {
+			url: {
+				href: string
+				origin: string
+				pathname: string
+				search: string
+				hash: string
+				segments: string[]
+				query: Record<string, string>
+			}
+			history: { length: number; navigation: 'load' | 'push' | 'replace' | 'pop' }
+		}
+		mutableClient.url.href = 'http://localhost/docs#section'
+		mutableClient.url.pathname = '/docs#section'
+		mutableClient.url.search = ''
+		mutableClient.url.hash = '#section'
+		mutableClient.url.segments = ['docs']
+		mutableClient.url.query = {}
+		mutableClient.history.navigation = 'push'
+
+		const stop = latch(
+			document.body,
+			h(Router, {
+				routes: [
+					{
+						path: '/docs' as const,
+						view: () => h('div', { 'data-test': 'fragment-match' }, 'docs route'),
+					},
+				],
+				notFound: () => h('div', { 'data-test': 'fragment-match' }, 'not found'),
+			}),
+			adapter.client as unknown as Record<PropertyKey, unknown>
+		)
+
+		expect(document.querySelector('[data-test="fragment-match"]')?.textContent).toBe('docs route')
+
+		stop()
 	})
 })
 

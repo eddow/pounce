@@ -43,6 +43,7 @@ describe('dockviewRouterInternals', () => {
 				clear: vi.fn(),
 				active: null,
 				opened: [],
+				state: { active: null, opened: [] },
 			}
 		)
 
@@ -67,6 +68,7 @@ describe('dockviewRouterInternals', () => {
 			clear: vi.fn(),
 			active: null,
 			opened: [],
+			state: { active: null, opened: [] },
 		}
 		const widgets = dockviewRouterInternals.createRouteWidgets({ routes }, model as never)
 		const widget = widgets['/users/[id]']
@@ -98,6 +100,7 @@ describe('dockviewRouterInternals', () => {
 			clear: vi.fn(),
 			active: null,
 			opened: [],
+			state: { active: null, opened: [] },
 		}
 		const widgets = dockviewRouterInternals.createRouteWidgets({ routes }, model as never)
 		const widget = widgets['/lazy']
@@ -148,14 +151,41 @@ describe('dockviewRouterInternals', () => {
 	it('syncs the active dockview route back to the client URL only when needed', () => {
 		const replace = vi.fn()
 
-		expect(dockviewRouterInternals.syncActiveRouteToUrl('/users/42', '/start', replace)).toBe(true)
+		expect(dockviewRouterInternals.syncActiveRouteToUrl('/users/42', '/start', '', replace)).toBe(
+			true
+		)
 		expect(replace).toHaveBeenCalledWith('/users/42')
-		expect(dockviewRouterInternals.syncActiveRouteToUrl('/users/42', '/users/42', replace)).toBe(
-			false
+		expect(
+			dockviewRouterInternals.syncActiveRouteToUrl('/users/42', '/users/42', '', replace)
+		).toBe(false)
+	})
+
+	it('normalizes, strips, and prepends a base branch for nested routing', () => {
+		expect(dockviewRouterInternals.normalizeBase('/dockview-router/')).toBe('/dockview-router')
+		expect(
+			dockviewRouterInternals.stripBase('/dockview-router/notes/1?tab=a', '/dockview-router')
+		).toBe('/notes/1?tab=a')
+		expect(dockviewRouterInternals.stripBase('/dockview-router', '/dockview-router')).toBe('/')
+		expect(dockviewRouterInternals.prependBase('/notes/1?tab=a', '/dockview-router')).toBe(
+			'/dockview-router/notes/1?tab=a'
 		)
 	})
 
-	it('opens a new tab on push navigation even if the same URL is already active', () => {
+	it('syncs the active dockview route back to the full client URL when a base is configured', () => {
+		const replace = vi.fn()
+
+		expect(
+			dockviewRouterInternals.syncActiveRouteToUrl(
+				'/notes/1',
+				'/counter/1',
+				'/dockview-router',
+				replace
+			)
+		).toBe(true)
+		expect(replace).toHaveBeenCalledWith('/dockview-router/notes/1')
+	})
+
+	it('opens a new tab when no existing panel matches the URL', () => {
 		const opened = {
 			id: '/users/42#2',
 			url: '/users/42',
@@ -163,13 +193,19 @@ describe('dockviewRouterInternals', () => {
 			match: { definition: createRoutes()[0], params: { id: '42' }, unusedPath: '' },
 		}
 		const api = {
-			panels: [],
+			panels: [{ id: '/users/1#1', params: { url: '/users/1' }, api: { setActive: vi.fn() } }],
 			activePanel: null,
-			addPanel: vi.fn(() => ({ id: opened.id, api: { setActive: vi.fn() } })),
+			addPanel: vi.fn(() => ({ id: '/users/42#2', api: { setActive: vi.fn() } })),
 		} as unknown as DockviewApi
 		const model = {
-			active: { id: '/users/42#1', url: '/users/42', title: 'User 42', match: opened.match },
+			active: {
+				id: '/users/1#1',
+				url: '/users/1',
+				title: 'User 1',
+				match: { definition: createRoutes()[0], params: { id: '1' }, unusedPath: '' },
+			},
 			opened: [],
+			state: { active: null, opened: [] },
 			matcher: vi.fn(),
 			open: vi.fn(() => opened),
 			close: vi.fn(),
@@ -187,16 +223,24 @@ describe('dockviewRouterInternals', () => {
 		expect(api.addPanel as unknown as ReturnType<typeof vi.fn>).toHaveBeenCalledTimes(1)
 	})
 
-	it('reuses an existing tab on non-push navigation when the URL is already open', () => {
+	it('reuses an existing tab on push navigation when the URL is already open', () => {
 		const existing = {
 			id: '/users/42#2',
 			url: '/users/42',
 			title: 'User 42',
 			match: { definition: createRoutes()[0], params: { id: '42' }, unusedPath: '' },
 		}
+		const openPanel = vi.fn()
 		const setActive = vi.fn()
 		const api = {
-			panels: [{ id: existing.id, api: { setActive } }],
+			panels: [
+				{
+					id: existing.id,
+					group: { model: { openPanel } },
+					api: { setActive },
+					params: { url: '/users/42' },
+				},
+			],
 			activePanel: null,
 			addPanel: vi.fn(),
 		} as unknown as DockviewApi
@@ -208,6 +252,106 @@ describe('dockviewRouterInternals', () => {
 				match: { definition: createRoutes()[0], params: { id: '1' }, unusedPath: '' },
 			},
 			opened: [existing],
+			state: { active: null, opened: [] },
+			matcher: vi.fn(),
+			open: vi.fn(),
+			close: vi.fn(),
+			activate: vi.fn(),
+			clear: vi.fn(),
+		}
+
+		const result = dockviewRouterInternals.syncClientRouteToDockview(api, model as never, {
+			url: '/users/42',
+			navigation: 'push',
+		})
+
+		expect(result).toBeNull()
+		expect(model.activate).toHaveBeenCalledWith(existing.id)
+		expect(setActive).toHaveBeenCalledTimes(1)
+		expect(openPanel).toHaveBeenCalledTimes(1)
+		expect(openPanel).toHaveBeenCalledWith(api.panels[0])
+		expect(model.open).not.toHaveBeenCalled()
+		expect(api.addPanel as unknown as ReturnType<typeof vi.fn>).not.toHaveBeenCalled()
+	})
+
+	it('clears a previous router runtime error after successful existing-tab reuse', () => {
+		const existing = {
+			id: '/users/42#2',
+			url: '/users/42',
+			title: 'User 42',
+			match: { definition: createRoutes()[0], params: { id: '42' }, unusedPath: '' },
+		}
+		const openPanel = vi.fn()
+		const setActive = vi.fn()
+		const clearError = vi.fn()
+		const reportError = vi.fn()
+		const api = {
+			panels: [
+				{
+					id: existing.id,
+					group: { model: { openPanel } },
+					api: { setActive },
+					params: { url: '/users/42' },
+				},
+			],
+			activePanel: null,
+			addPanel: vi.fn(),
+		} as unknown as DockviewApi
+		const model = {
+			active: null,
+			opened: [existing],
+			state: { active: null, opened: [] },
+			matcher: vi.fn(),
+			open: vi.fn(),
+			close: vi.fn(),
+			activate: vi.fn(),
+			clear: vi.fn(),
+		}
+
+		const result = dockviewRouterInternals.syncClientRouteToDockview(
+			api,
+			model as never,
+			{ url: '/users/42', navigation: 'push' },
+			undefined,
+			reportError,
+			clearError
+		)
+
+		expect(result).toBeNull()
+		expect(reportError).not.toHaveBeenCalled()
+		expect(clearError).toHaveBeenCalledTimes(1)
+	})
+
+	it('reuses an existing tab on replace navigation when the URL is already open', () => {
+		const existing = {
+			id: '/users/42#2',
+			url: '/users/42',
+			title: 'User 42',
+			match: { definition: createRoutes()[0], params: { id: '42' }, unusedPath: '' },
+		}
+		const openPanel = vi.fn()
+		const setActive = vi.fn()
+		const api = {
+			panels: [
+				{
+					id: existing.id,
+					group: { model: { openPanel } },
+					api: { setActive },
+					params: { url: '/users/42' },
+				},
+			],
+			activePanel: null,
+			addPanel: vi.fn(),
+		} as unknown as DockviewApi
+		const model = {
+			active: {
+				id: '/users/1#1',
+				url: '/users/1',
+				title: 'User 1',
+				match: { definition: createRoutes()[0], params: { id: '1' }, unusedPath: '' },
+			},
+			opened: [existing],
+			state: { active: null, opened: [] },
 			matcher: vi.fn(),
 			open: vi.fn(),
 			close: vi.fn(),
@@ -220,9 +364,11 @@ describe('dockviewRouterInternals', () => {
 			navigation: 'replace',
 		})
 
-		expect(result).toBe(existing)
+		expect(result).toBeNull()
 		expect(model.activate).toHaveBeenCalledWith(existing.id)
 		expect(setActive).toHaveBeenCalledTimes(1)
+		expect(openPanel).toHaveBeenCalledTimes(1)
+		expect(openPanel).toHaveBeenCalledWith(api.panels[0])
 		expect(model.open).not.toHaveBeenCalled()
 		expect(api.addPanel as unknown as ReturnType<typeof vi.fn>).not.toHaveBeenCalled()
 	})
@@ -276,5 +422,106 @@ describe('dockviewRouterInternals', () => {
 		expect(model.close).toHaveBeenCalledWith('/users/1#1')
 		expect(model.activate).toHaveBeenCalledWith('/users/2#1')
 		expect(result).toBe(active)
+	})
+
+	it('returns undefined when openRoutePanel hits a synchronous addPanel error', () => {
+		const error = new Error('add failed')
+		const api = {
+			panels: [],
+			activePanel: null,
+			addPanel: vi.fn(() => {
+				throw error
+			}),
+		} as unknown as DockviewApi
+		const opened = {
+			id: '/users/42',
+			url: '/users/42',
+			title: 'User 42',
+			match: {
+				definition: createRoutes()[0],
+				params: { id: '42' },
+				unusedPath: '',
+			},
+		}
+		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+		const result = dockviewRouterInternals.openRoutePanel(api, opened as never)
+
+		expect(result).toBeUndefined()
+		expect(consoleError).toHaveBeenCalledWith(
+			'[DockviewRouter] openRoutePanel error:',
+			'/users/42',
+			error
+		)
+		consoleError.mockRestore()
+	})
+
+	it('returns null when reusing an existing tab throws while focusing it', () => {
+		const error = new Error('focus failed')
+		const existing = {
+			id: '/users/42#2',
+			url: '/users/42',
+			title: 'User 42',
+			match: { definition: createRoutes()[0], params: { id: '42' }, unusedPath: '' },
+		}
+		const api = {
+			panels: [
+				{
+					id: existing.id,
+					group: {
+						model: {
+							openPanel: vi.fn(() => {
+								throw error
+							}),
+						},
+					},
+					api: { setActive: vi.fn() },
+					params: { url: '/users/42' },
+				},
+			],
+			activePanel: null,
+			addPanel: vi.fn(),
+		} as unknown as DockviewApi
+		const model = {
+			active: null,
+			opened: [existing],
+			state: { active: null, opened: [] },
+			matcher: vi.fn(),
+			open: vi.fn(),
+			close: vi.fn(),
+			activate: vi.fn(),
+			clear: vi.fn(),
+		}
+		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+		const reportError = vi.fn()
+		const clearError = vi.fn()
+
+		const result = dockviewRouterInternals.syncClientRouteToDockview(
+			api,
+			model as never,
+			{
+				url: '/users/42',
+				navigation: 'push',
+			},
+			undefined,
+			reportError,
+			clearError
+		)
+
+		expect(result).toBeNull()
+		expect(model.activate).toHaveBeenCalledWith(existing.id)
+		expect(model.open).not.toHaveBeenCalled()
+		expect(api.addPanel as unknown as ReturnType<typeof vi.fn>).not.toHaveBeenCalled()
+		expect(clearError).not.toHaveBeenCalled()
+		expect(consoleError).toHaveBeenCalledWith(
+			'[DockviewRouter] openPanel error:',
+			existing.id,
+			error
+		)
+		expect(reportError).toHaveBeenCalledWith(
+			dockviewRouterInternals.formatDockviewRouterError('openPanel', existing.id, error),
+			error
+		)
+		consoleError.mockRestore()
 	})
 })

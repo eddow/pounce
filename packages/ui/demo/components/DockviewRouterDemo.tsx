@@ -1,19 +1,30 @@
-import { client, buildRoute, type ClientRouteDefinition, type RouterModelRouteDefinition } from '@pounce/kit'
+import { buildRoute, linkModel, type ClientRouteDefinition, type RouterModelRouteDefinition } from '@pounce/kit'
 import { DockviewRouter } from '@pounce/ui'
 import { reactive } from 'mutts'
 
 type DemoRoute = ClientRouteDefinition
 
+const dockviewRouterBase = '/dockview-router'
+
 function overviewUrl() {
-	return '/dockview-router'
+	return dockviewRouterBase
 }
 
 function counterUrl(id: number) {
-	return buildRoute('/dockview-router/counter/[id:integer]', { id: String(id) })
+	return buildRoute(`${dockviewRouterBase}/counter/[id:integer]`, { id: String(id) })
+}
+
+function crashUrl(id: number) {
+	return buildRoute(`${dockviewRouterBase}/crash/[id:integer]`, { id: String(id) })
 }
 
 function notesUrl(id: number) {
-	return buildRoute('/dockview-router/notes/[id:integer]', { id: String(id) })
+	return buildRoute(`${dockviewRouterBase}/notes/[id:integer]`, { id: String(id) })
+}
+
+function crashCounterPanel(shouldCrash: boolean, id: string) {
+	if (shouldCrash) throw new Error(`Counter ${id} crashed`)
+	return ''
 }
 
 const OverviewPanel = () => {
@@ -35,11 +46,13 @@ const OverviewPanel = () => {
 }
 
 const CounterPanel = (props: { id: string }) => {
-	const state = reactive({ count: Number(props.id) || 0 })
+	const state = reactive({ count: Number(props.id) || 0, crash: false })
+	const siblingNotesUrl = notesUrl(Number(props.id) || 1)
 	return (
 		<div data-test={`dockview-router-counter-${props.id}`} style="height: 100%; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #111827; color: white; box-sizing: border-box;">
 			<h3 style="margin: 0;">Counter route {props.id}</h3>
 			<div style="font-size: 32px; font-weight: 700;">{state.count}</div>
+			{crashCounterPanel(state.crash, props.id)}
 			<div style="display: flex; gap: 8px; flex-wrap: wrap;">
 				<button
 					data-test={`dockview-router-counter-inc-${props.id}`}
@@ -50,13 +63,20 @@ const CounterPanel = (props: { id: string }) => {
 					Increment
 				</button>
 				<button
-					data-test={`dockview-router-counter-open-notes-${props.id}`}
+					data-test={`dockview-router-counter-crash-${props.id}`}
 					onClick={() => {
-						client.navigate(notesUrl(Number(props.id) || 1))
+						state.crash = true
 					}}
 				>
-					Open sibling notes
+					Crash panel
 				</button>
+				<a
+					data-test={`dockview-router-counter-open-notes-${props.id}`}
+					href={siblingNotesUrl}
+					{...linkModel({ href: siblingNotesUrl })}
+				>
+					Open sibling notes
+				</a>
 			</div>
 			<p style="margin: 0; color: #94a3b8;">
 				This panel is route-backed. Switching tabs should replace the current URL with this route.
@@ -83,42 +103,56 @@ const NotesPanel = (props: { id: string }) => {
 	)
 }
 
+const CrashPanel = (props: { id: string }) => {
+	throw new Error(`Crash route ${props.id} crashed`)
+}
+
 const routerRoutes: readonly RouterModelRouteDefinition<DemoRoute>[] = [
 	{
-		path: '/dockview-router',
+		path: '/',
 		title: 'Overview',
 		view: () => <OverviewPanel />,
 	},
 	{
-		path: '/dockview-router/counter/[id:integer]',
+		path: '/counter/[id:integer]',
 		title: (params) => `Counter ${params.id}`,
 		view: (match) => <CounterPanel id={match.params.id} />,
 	},
 	{
-		path: '/dockview-router/notes/[id:integer]',
+		path: '/notes/[id:integer]',
 		title: (params) => `Notes ${params.id}`,
 		view: (match) => <NotesPanel id={match.params.id} />,
+	},
+	{
+		path: '/crash/[id:integer]',
+		title: (params) => `Crash ${params.id}`,
+		view: (match) => <CrashPanel id={match.params.id} />,
 	},
 ]
 
 const dockviewRouterEl = { style: 'height: 100%; width: 100%;' }
 const dockviewRouterOptions = { singleTabMode: 'default' } as const
+const navLinks = [
+	{ label: 'Open Counter 1', href: counterUrl(1) },
+	{ label: 'Open Notes 1', href: notesUrl(1) },
+	{ label: 'Open Crash 1', href: crashUrl(1) },
+	{ label: 'Open Counter 2', href: counterUrl(2) },
+]
 
 export default function DockviewRouterDemo() {
-	const openCounter = (id: number) => client.navigate(counterUrl(id))
-	const openNotes = (id: number) => client.navigate(notesUrl(id))
 	return (
 		<div data-test="dockview-router-demo" style="display: flex; flex-direction: column; gap: 16px; height: calc(100vh - 40px); max-height: 600px; padding: 20px; background: #0f172a; color: white; box-sizing: border-box;">
 			<div style="display: flex; gap: 8px;">
-				<button onClick={() => openCounter(1)}>Open Counter 1</button>
-				<button onClick={() => openNotes(1)}>Open Notes 1</button>
-				<button onClick={() => openCounter(2)}>Open Counter 2</button>
+				<for each={navLinks}>
+					{(nav) => <a href={nav.href} {...linkModel({ href: nav.href })}>{nav.label}</a>}
+				</for>
 			</div>
 			<div
 				class="dockview-theme-dark"
 				style="flex: 1; border: 1px solid #334155; border-radius: 12px; overflow: hidden; background: #020617;"
 			>
 				<DockviewRouter
+					base={dockviewRouterBase}
 					debug="DockviewRouterDemo"
 					el={dockviewRouterEl}
 					routes={routerRoutes}

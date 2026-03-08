@@ -16,8 +16,13 @@ import {
 	routerModel,
 } from '@pounce/kit'
 import type { DockviewApi, DockviewOptions, SerializedDockview } from 'dockview-core'
-import { effect } from 'mutts'
-import { Dockview, type DockviewHeaderAction, type DockviewWidget } from './dockview'
+import { caught, effect, reactive } from 'mutts'
+import {
+	Dockview,
+	type DockviewHeaderAction,
+	type DockviewWidget,
+	type PanelErrorHandler,
+} from './dockview'
 
 export type DockviewRouteWidgetParams = Record<string, string> & {
 	url: string
@@ -26,6 +31,7 @@ export type DockviewRouteWidgetParams = Record<string, string> & {
 
 export interface DockviewRouterProps<Definition extends ClientRouteDefinition> {
 	readonly routes: readonly RouterModelRouteDefinition<Definition>[]
+	readonly base?: string
 	readonly getRouteId?: RouterModelConfig<Definition>['getRouteId']
 	readonly debug?: boolean | string
 	readonly extraWidgets?: Record<string, DockviewWidget<any>>
@@ -43,7 +49,10 @@ export interface DockviewRouterProps<Definition extends ClientRouteDefinition> {
 	readonly onRouteError?: RouterOnRouteError<Definition>
 	readonly initialUrl?: string
 	readonly initialUrls?: readonly string[]
+	readonly onPanelError?: PanelErrorHandler
 }
+
+type DockviewRouterErrorReporter = (message: string, error: unknown) => void
 
 function logDockviewRouter(
 	debug: DockviewRouterProps<any>['debug'],
@@ -57,6 +66,20 @@ function logDockviewRouter(
 		return
 	}
 	console.log(`[${label}] ${event}`, payload)
+}
+
+function formatDockviewRouterError(stage: string, subject: string, error: unknown) {
+	const detail = error instanceof Error ? error.message : String(error)
+	return `DockviewRouter ${stage} failed for ${subject}: ${detail}`
+}
+
+function reportDockviewRouterError(
+	stage: string,
+	subject: string,
+	error: unknown,
+	report?: DockviewRouterErrorReporter
+) {
+	report?.(formatDockviewRouterError(stage, subject, error), error)
 }
 
 function isExactRouteMatch<Definition extends ClientRouteDefinition>(
@@ -82,7 +105,7 @@ function renderRoutePanel<Definition extends ClientRouteDefinition>(
 	scope: Record<PropertyKey, unknown>
 ): JSX.Element {
 	function wrap(content: JSX.Element | JSX.Element[]): JSX.Element {
-		return <div style="display: contents">{content}</div>
+		return <>{content}</>
 	}
 	const match = props.model.matcher(props.url)
 	if (!isExactRouteMatch(match, props.route)) {
@@ -131,71 +154,105 @@ function createRouteWidgets<Definition extends ClientRouteDefinition>(
 function openRoutePanel<Definition extends ClientRouteDefinition>(
 	api: DockviewApi,
 	opened: OpenedRoute<Definition>,
-	debug?: DockviewRouterProps<Definition>['debug']
+	debug?: DockviewRouterProps<Definition>['debug'],
+	reportError?: DockviewRouterErrorReporter
 ) {
-	const existing = api.panels.find((panel) => panel.id === opened.id)
-	if (existing) {
-		logDockviewRouter(debug, 'openRoutePanel:existing', {
+	try {
+		const existing = api.panels.find((panel) => panel.id === opened.id)
+		if (existing) {
+			logDockviewRouter(debug, 'openRoutePanel:existing', {
+				activePanelId: api.activePanel?.id,
+				panelCount: api.panels.length,
+				routeId: opened.id,
+				url: opened.url,
+			})
+			existing.api.setActive()
+			existing.group.model.openPanel(existing)
+			return existing
+		}
+		const candidate = api.activePanel ?? api.panels[0]
+		const referencePanel =
+			candidate && api.panels.some((p) => p.id === candidate.id) ? candidate : undefined
+		logDockviewRouter(debug, 'openRoutePanel:add', {
+			activePanelId: api.activePanel?.id,
+			panelCount: api.panels.length,
+			referencePanelId: referencePanel?.id,
+			routeId: opened.id,
+			url: opened.url,
+		})
+		const panel = api.addPanel({
+			id: opened.id,
+			title: opened.title,
+			component: opened.match.definition.path,
+			params: {
+				...opened.match.params,
+				url: opened.url,
+				routeId: opened.id,
+			},
+			floating: false,
+			...(referencePanel
+				? { position: { referencePanel, direction: 'within' as const } }
+				: { position: { direction: 'right' as const } }),
+		})
+		logDockviewRouter(debug, 'openRoutePanel:added', {
 			activePanelId: api.activePanel?.id,
 			panelCount: api.panels.length,
 			routeId: opened.id,
 			url: opened.url,
 		})
-		existing.api.setActive()
-		return existing
+		return panel
+	} catch (e) {
+		console.error('[DockviewRouter] openRoutePanel error:', opened.id, e)
+		reportDockviewRouterError('openRoutePanel', opened.id, e, reportError)
+		return undefined
 	}
-	const candidate = api.activePanel ?? api.panels[0]
-	const referencePanel =
-		candidate && api.panels.some((p) => p.id === candidate.id) ? candidate : undefined
-	logDockviewRouter(debug, 'openRoutePanel:add', {
-		activePanelId: api.activePanel?.id,
-		panelCount: api.panels.length,
-		referencePanelId: referencePanel?.id,
-		routeId: opened.id,
-		url: opened.url,
-	})
-	const panel = api.addPanel({
-		id: opened.id,
-		title: opened.title,
-		component: opened.match.definition.path,
-		params: {
-			...opened.match.params,
-			url: opened.url,
-			routeId: opened.id,
-		},
-		floating: false,
-		...(referencePanel
-			? { position: { referencePanel, direction: 'within' as const } }
-			: { position: { direction: 'right' as const } }),
-	})
-	logDockviewRouter(debug, 'openRoutePanel:added', {
-		activePanelId: api.activePanel?.id,
-		panelCount: api.panels.length,
-		routeId: opened.id,
-		url: opened.url,
-	})
-	return panel
 }
 
 function openInitialRoutes<Definition extends ClientRouteDefinition>(
 	api: DockviewApi,
 	model: RouterModel<Definition>,
 	urls: readonly string[],
-	debug?: DockviewRouterProps<Definition>['debug']
+	debug?: DockviewRouterProps<Definition>['debug'],
+	reportError?: DockviewRouterErrorReporter
 ) {
 	for (const url of urls) {
-		logDockviewRouter(debug, 'openInitialRoutes:open', { url })
-		const opened = model.open(url)
-		if (!opened) {
-			logDockviewRouter(debug, 'openInitialRoutes:miss', { url })
-			continue
+		try {
+			logDockviewRouter(debug, 'openInitialRoutes:open', { url })
+			const opened = model.open(url)
+			if (!opened) {
+				logDockviewRouter(debug, 'openInitialRoutes:miss', { url })
+				continue
+			}
+			openRoutePanel(api, opened, debug, reportError)
+		} catch (e) {
+			console.error('[DockviewRouter] openInitialRoutes error:', url, e)
+			reportDockviewRouterError('openInitialRoutes', url, e, reportError)
 		}
-		openRoutePanel(api, opened, debug)
 	}
 }
 
-function getClientRouteUrl() {
-	return `${client.url.pathname}${client.url.search}`
+function normalizeBase(base: string | undefined) {
+	if (!base || base === '/') return ''
+	const normalized = base.startsWith('/') ? base : `/${base}`
+	return normalized.endsWith('/') ? normalized.slice(0, -1) : normalized
+}
+
+function stripBase(url: string, base: string) {
+	if (!base) return url
+	if (url === base) return '/'
+	if (url.startsWith(`${base}/`)) return url.slice(base.length)
+	return url
+}
+
+function prependBase(url: string, base: string) {
+	if (!base) return url
+	if (!url || url === '/') return base
+	if (/^[?#]/.test(url)) return `${base}${url}`
+	return `${base}${url.startsWith('/') ? url : `/${url}`}`
+}
+
+function getClientRouteUrl(base = '') {
+	return stripBase(`${client.url.pathname}${client.url.search}`, base)
 }
 
 function findOpenedRouteByUrl<Definition extends ClientRouteDefinition>(
@@ -212,10 +269,11 @@ function findOpenedRouteByUrl<Definition extends ClientRouteDefinition>(
 function syncActiveRouteToUrl(
 	activeUrl: string | undefined,
 	currentUrl: string,
+	base = '',
 	replace: (url: string) => void = (url) => client.replace(url)
 ) {
 	if (!activeUrl || activeUrl === currentUrl) return false
-	replace(activeUrl)
+	replace(prependBase(activeUrl, base))
 	return true
 }
 
@@ -226,53 +284,84 @@ function syncClientRouteToDockview<Definition extends ClientRouteDefinition>(
 		url: string
 		navigation: NavigationKind
 	},
-	debug?: DockviewRouterProps<Definition>['debug']
+	debug?: DockviewRouterProps<Definition>['debug'],
+	reportError?: DockviewRouterErrorReporter,
+	clearError?: () => void
 ) {
 	if (!context.url) {
 		logDockviewRouter(debug, 'syncClientRouteToDockview:skip-empty')
+		clearError?.()
 		return null
 	}
-	if (context.navigation !== 'push') {
-		const activePanel = api.activePanel
-		if (activePanel?.params?.url === context.url) {
-			logDockviewRouter(debug, 'syncClientRouteToDockview:skip-active', {
-				navigation: context.navigation,
-				url: context.url,
-			})
-			return null
-		}
+	const activePanel = api.activePanel
+	if (activePanel?.params?.url === context.url) {
+		logDockviewRouter(debug, 'syncClientRouteToDockview:skip-active', {
+			navigation: context.navigation,
+			url: context.url,
+		})
+		clearError?.()
+		return null
+	}
+	try {
 		const existingPanel = api.panels.find((p) => p.params?.url === context.url)
 		if (existingPanel) {
-			model.activate(existingPanel.id)
-			existingPanel.api.setActive()
+			let reuseSuccess = true
+			try {
+				model.activate(existingPanel.id)
+			} catch (e) {
+				reuseSuccess = false
+				console.error('[DockviewRouter] model.activate error:', existingPanel.id, e)
+				reportDockviewRouterError('model.activate', existingPanel.id, e, reportError)
+			}
+			try {
+				existingPanel.api.setActive()
+			} catch (e) {
+				reuseSuccess = false
+				console.error('[DockviewRouter] setActive error:', existingPanel.id, e)
+				reportDockviewRouterError('setActive', existingPanel.id, e, reportError)
+			}
+			try {
+				existingPanel.group.model.openPanel(existingPanel)
+			} catch (e) {
+				reuseSuccess = false
+				console.error('[DockviewRouter] openPanel error:', existingPanel.id, e)
+				reportDockviewRouterError('openPanel', existingPanel.id, e, reportError)
+			}
 			logDockviewRouter(debug, 'syncClientRouteToDockview:reuse-existing', {
 				navigation: context.navigation,
 				routeId: existingPanel.id,
 				url: context.url,
 			})
+			if (reuseSuccess) clearError?.()
 			return null
 		}
-	}
-	logDockviewRouter(debug, 'syncClientRouteToDockview:open', {
-		activeUrl: api.activePanel?.params?.url,
-		navigation: context.navigation,
-		url: context.url,
-	})
-	const opened = model.open(context.url)
-	if (!opened) {
-		logDockviewRouter(debug, 'syncClientRouteToDockview:miss', {
+		logDockviewRouter(debug, 'syncClientRouteToDockview:open', {
+			activeUrl: api.activePanel?.params?.url,
 			navigation: context.navigation,
 			url: context.url,
 		})
+		const opened = model.open(context.url)
+		if (!opened) {
+			logDockviewRouter(debug, 'syncClientRouteToDockview:miss', {
+				navigation: context.navigation,
+				url: context.url,
+			})
+			clearError?.()
+			return null
+		}
+		openRoutePanel(api, opened, debug, reportError)
+		logDockviewRouter(debug, 'syncClientRouteToDockview:opened', {
+			panelCount: api.panels.length,
+			routeId: opened.id,
+			url: opened.url,
+		})
+		clearError?.()
+		return opened
+	} catch (e) {
+		console.error('[DockviewRouter] syncClientRouteToDockview error:', context.url, e)
+		reportDockviewRouterError('syncClientRouteToDockview', context.url, e, reportError)
 		return null
 	}
-	openRoutePanel(api, opened, debug)
-	logDockviewRouter(debug, 'syncClientRouteToDockview:opened', {
-		panelCount: api.panels.length,
-		routeId: opened.id,
-		url: opened.url,
-	})
-	return opened
 }
 
 function reconcileDockviewRouteState<Definition extends ClientRouteDefinition>(
@@ -312,36 +401,67 @@ function reconcileDockviewRouteState<Definition extends ClientRouteDefinition>(
 function bindDockviewRouter<Definition extends ClientRouteDefinition>(
 	api: DockviewApi,
 	model: RouterModel<Definition>,
-	debug?: DockviewRouterProps<Definition>['debug']
+	base: string,
+	debug?: DockviewRouterProps<Definition>['debug'],
+	reportError?: DockviewRouterErrorReporter,
+	clearError?: () => void
 ) {
 	let syncing = false
 	const reconcileFromPanels = () => {
-		logDockviewRouter(debug, 'bindDockviewRouter:sync-from-panels', {
-			activePanelId: api.activePanel?.id,
-			panelCount: api.panels.length,
-		})
-		reconcileDockviewRouteState(api, model, debug)
+		try {
+			logDockviewRouter(debug, 'bindDockviewRouter:sync-from-panels', {
+				activePanelId: api.activePanel?.id,
+				panelCount: api.panels.length,
+			})
+			reconcileDockviewRouteState(api, model, debug)
+		} catch (e) {
+			console.error('[DockviewRouter] reconcileFromPanels error:', e)
+			reportDockviewRouterError(
+				'reconcileFromPanels',
+				api.activePanel?.id ?? 'dockview',
+				e,
+				reportError
+			)
+		}
 	}
 	const syncActivePanelToUrl = () => {
 		if (syncing) return
-		logDockviewRouter(debug, 'bindDockviewRouter:sync-active-to-url', {
-			activePanelId: api.activePanel?.id,
-			panelCount: api.panels.length,
-		})
-		const active = reconcileDockviewRouteState(api, model, debug)
-		syncActiveRouteToUrl(active?.url, getClientRouteUrl())
+		try {
+			logDockviewRouter(debug, 'bindDockviewRouter:sync-active-to-url', {
+				activePanelId: api.activePanel?.id,
+				panelCount: api.panels.length,
+			})
+			const active = reconcileDockviewRouteState(api, model, debug)
+			syncActiveRouteToUrl(active?.url, getClientRouteUrl(base), base)
+			clearError?.()
+		} catch (e) {
+			console.error('[DockviewRouter] syncActivePanelToUrl error:', e)
+			reportDockviewRouterError(
+				'syncActivePanelToUrl',
+				api.activePanel?.id ?? 'dockview',
+				e,
+				reportError
+			)
+		}
 	}
 	const onAdd = api.onDidAddPanel(reconcileFromPanels)
 	const onRemove = api.onDidRemovePanel(reconcileFromPanels)
 	const onActive = api.onDidActivePanelChange(syncActivePanelToUrl)
 	const stopEffect = effect(() => {
+		caught((error: unknown) => {
+			console.error('[DockviewRouter] bindDockviewRouter reactive error:', error)
+			reportDockviewRouterError('bindDockviewRouter', 'reactive-read', error, reportError)
+		})
 		const context = {
-			url: getClientRouteUrl(),
+			url: getClientRouteUrl(base),
 			navigation: client.history.navigation,
 		}
 		syncing = true
 		try {
-			syncClientRouteToDockview(api, model, context, debug)
+			syncClientRouteToDockview(api, model, context, debug, reportError, clearError)
+		} catch (e) {
+			console.error('[DockviewRouter] bindDockviewRouter effect error:', e)
+			reportDockviewRouterError('bindDockviewRouter', context.url, e, reportError)
 		} finally {
 			syncing = false
 		}
@@ -360,10 +480,12 @@ export const DockviewRouter = <Definition extends ClientRouteDefinition>(
 	scope: Record<PropertyKey, unknown>
 ) => {
 	const props = defaults(inputProps, {})
+	const state = reactive({ runtimeError: null as string | null })
+	const base = normalizeBase(props.base)
 	const initialUrls = inputProps.initialUrls?.length
-		? [...inputProps.initialUrls]
+		? inputProps.initialUrls.map((url) => stripBase(url, base))
 		: inputProps.initialUrl
-			? [inputProps.initialUrl]
+			? [stripBase(inputProps.initialUrl, base)]
 			: []
 	let nextRouteId = 0
 	const model = routerModel<Definition>({
@@ -376,14 +498,37 @@ export const DockviewRouter = <Definition extends ClientRouteDefinition>(
 	})
 	const widgets = createRouteWidgets(props, model)
 	let stopBindings: (() => void) | undefined
+	const clearRuntimeError = () => {
+		if (state.runtimeError !== null) state.runtimeError = null
+	}
+	const reportRuntimeError: DockviewRouterErrorReporter = (message) => {
+		state.runtimeError = message
+	}
 	const onReady = (api: DockviewApi) => {
-		logDockviewRouter(props.debug, 'setup:ready', {
-			initialUrls,
-			panelCount: api.panels.length,
-		})
-		openInitialRoutes(api, model, initialUrls, props.debug)
-		reconcileDockviewRouteState(api, model, props.debug)
-		stopBindings = bindDockviewRouter(api, model, props.debug)
+		try {
+			logDockviewRouter(props.debug, 'setup:ready', {
+				base,
+				initialUrls,
+				panelCount: api.panels.length,
+			})
+			openInitialRoutes(api, model, initialUrls, props.debug, reportRuntimeError)
+			reconcileDockviewRouteState(api, model, props.debug)
+			stopBindings = bindDockviewRouter(
+				api,
+				model,
+				base,
+				props.debug,
+				reportRuntimeError,
+				clearRuntimeError
+			)
+		} catch (e) {
+			console.error('[DockviewRouter] onReady error:', e)
+			reportDockviewRouterError('onReady', base || '/', e, reportRuntimeError)
+		}
+	}
+	const errorBannerRef = { current: null as HTMLDivElement | null }
+	const setErrorBannerEl = (el: HTMLElement) => {
+		errorBannerRef.current = el as HTMLDivElement
 	}
 	const setup = () => {
 		return () => {
@@ -391,13 +536,30 @@ export const DockviewRouter = <Definition extends ClientRouteDefinition>(
 			stopBindings?.()
 		}
 	}
+	effect(() => {
+		const el = errorBannerRef.current
+		if (!el) return
+		if (state.runtimeError) {
+			el.style.display = 'block'
+			el.textContent = state.runtimeError
+		} else {
+			el.style.display = 'none'
+			el.textContent = ''
+		}
+	})
 	try {
 		;(scope as Record<string, unknown>).routerModel = model
 	} catch (_error) {}
 	return (
 		<div use={setup} style="display: contents">
+			<div
+				use={setErrorBannerEl}
+				data-test="dockview-router-runtime-error"
+				style="display: none; margin: 0 0 12px 0; padding: 10px 12px; border: 1px solid #f87171; border-radius: 8px; background: #450a0a; color: #fecaca; font-size: 13px; white-space: pre-wrap;"
+			/>
 			<Dockview
 				onReady={onReady}
+				onPanelError={props.onPanelError}
 				widgets={widgets}
 				tabs={props.tabs}
 				headerLeft={props.headerLeft}
@@ -416,9 +578,13 @@ export const dockviewRouterInternals = {
 	bindDockviewRouter,
 	createRouteWidgets,
 	findOpenedRouteByUrl,
+	formatDockviewRouterError,
 	getClientRouteUrl,
+	normalizeBase,
+	prependBase,
 	reconcileDockviewRouteState,
 	renderRoutePanel,
+	stripBase,
 	syncActiveRouteToUrl,
 	syncClientRouteToDockview,
 	openInitialRoutes,

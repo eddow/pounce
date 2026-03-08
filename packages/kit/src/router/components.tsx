@@ -216,6 +216,16 @@ export function Router<Definition extends ClientRouteDefinition>(
 	let lastErroredSignature: string | undefined
 	let lastNavigationUrl: string | undefined
 	let activeNavigationFrom: string | undefined
+	let lastRenderedDefinition: RouterRouteDefinition<Definition> | undefined
+	let lastRenderedOutput: Node[] | undefined
+	const routeSpecificationState = untracked(() =>
+		reactive({
+			current: null as RouteSpecification<RouterRouteDefinition<Definition>> | null,
+		})
+	)
+	try {
+		;(scope as Record<string, unknown>).routeSpecification = routeSpecificationState
+	} catch (_error) {}
 	const lazyStates = new Map<
 		RouteWildcard,
 		{
@@ -239,6 +249,21 @@ export function Router<Definition extends ClientRouteDefinition>(
 			route: match?.definition ?? null,
 			to: vm.url,
 		}
+	}
+
+	function publishRouteSpecification(
+		match: RouteSpecification<RouterRouteDefinition<Definition>> | null
+	) {
+		if (!match) {
+			routeSpecificationState.current = null
+			return null
+		}
+		const published = {
+			...match,
+			params: { ...match.params },
+		}
+		routeSpecificationState.current = published
+		return published
 	}
 
 	function emitRouteStart(match: RouteSpecification<RouterRouteDefinition<Definition>> | null) {
@@ -417,18 +442,30 @@ export function Router<Definition extends ClientRouteDefinition>(
 			emitRouteStart(match)
 			if (matchStartedAt != null) recordPerf('route:match', matchStartedAt)
 
-			if (match && (match.unusedPath === '' || match.unusedPath === '/')) {
+			if (
+				match &&
+				(match.unusedPath === '' || match.unusedPath === '/' || match.unusedPath.startsWith('#'))
+			) {
 				model.clear()
 				const opened = model.open(vm.url)
-				const current = opened?.match ?? match
+				const current = publishRouteSpecification(opened?.match ?? match)
+				if (!current) throw new Error('Route specification missing after successful match')
+				if (lastRenderedDefinition === current.definition && lastRenderedOutput) {
+					emitRouteEnd(current, 'match')
+					return lastRenderedOutput
+				}
 				if (hasRouteView(current.definition)) {
 					try {
 						const renderStartedAt = perf?.now()
 						const output = renderElements(current.definition.view(current, scope))
 						if (renderStartedAt != null) recordPerf('route:render', renderStartedAt)
+						lastRenderedDefinition = current.definition
+						lastRenderedOutput = output
 						emitRouteEnd(current, 'match')
 						return output
 					} catch (err) {
+						lastRenderedDefinition = undefined
+						lastRenderedOutput = undefined
 						emitRouteError(current, err)
 						console.error('Router view error:', err)
 						return renderElements(
@@ -454,9 +491,13 @@ export function Router<Definition extends ClientRouteDefinition>(
 						const renderStartedAt = perf?.now()
 						const output = renderElements(cachedView(current, scope))
 						if (renderStartedAt != null) recordPerf('route:render', renderStartedAt)
+						lastRenderedDefinition = current.definition
+						lastRenderedOutput = output
 						emitRouteEnd(current, 'match')
 						return output
 					} catch (err) {
+						lastRenderedDefinition = undefined
+						lastRenderedOutput = undefined
 						emitRouteError(current, err)
 						console.error('Router view error:', err)
 						return renderElements(
@@ -474,7 +515,7 @@ export function Router<Definition extends ClientRouteDefinition>(
 					}
 				}
 				emitRouteEnd(current, 'match')
-				return renderElements(
+				const output = renderElements(
 					<LazyRouteOutlet
 						route={current.definition}
 						match={current}
@@ -482,14 +523,23 @@ export function Router<Definition extends ClientRouteDefinition>(
 						loading={vm.loading}
 					/>
 				)
+				lastRenderedDefinition = current.definition
+				lastRenderedOutput = output
+				return output
 			}
 			model.clear()
+			publishRouteSpecification(null)
+			lastRenderedDefinition = undefined
+			lastRenderedOutput = undefined
 			const notFoundStartedAt = perf?.now()
 			const output = renderElements(vm.notFound({ routes: vm.routes, url: vm.url }, scope))
 			if (notFoundStartedAt != null) recordPerf('route:not-found', notFoundStartedAt)
 			emitRouteEnd(null, 'not-found')
 			return output
 		} catch (err) {
+			publishRouteSpecification(null)
+			lastRenderedDefinition = undefined
+			lastRenderedOutput = undefined
 			emitRouteError(null, err)
 			console.error('Router matching error:', err)
 			return renderElements(

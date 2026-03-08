@@ -45,10 +45,15 @@
 			"import": "./dist/intl.js",
 			"default": "./dist/intl.js"
 		},
+		"./router": {
+			"types": "./dist/router/index.d.ts",
+			"import": "./dist/router/index.js",
+			"default": "./dist/router/index.js"
+		},
 		"./router/logic": {
-			"types": "./src/router/logic.ts",
-			"import": "./src/router/logic.ts",
-			"default": "./src/router/logic.ts"
+			"types": "./dist/router/logic.d.ts",
+			"import": "./dist/router/logic.js",
+			"default": "./dist/router/logic.js"
 		},
 		"./models": {
 			"types": "./dist/models.d.ts",

@@ -50,6 +50,37 @@ describe('Attribute Merging (Class & Style)', () => {
 		expect(node.style.color).toBe('blue')
 	})
 
+	it('completes spread style with style:* overrides', () => {
+		const props = c({ style: 'color: red; padding: 10px;' }, { 'style:padding': '20px' })
+		const mount = h('div', props)
+		const node = mount.render(rootEnv)[0] as HTMLElement
+		expect(node.style.color).toBe('red')
+		expect(node.style.padding).toBe('20px')
+	})
+
+	it('lets later style layers override earlier style:* entries', () => {
+		const props = c(
+			{ 'style:padding': '10px', 'style:color': 'red' },
+			{ style: 'padding: 20px; color: blue;' }
+		)
+		const mount = h('div', props)
+		const node = mount.render(rootEnv)[0] as HTMLElement
+		expect(node.style.padding).toBe('20px')
+		expect(node.style.color).toBe('blue')
+	})
+
+	it('reactive style:* updates merged style output', () => {
+		const state = reactive({ padding: '10px' })
+		const props = c({ style: 'color: red;' }, { 'style:padding': r(() => state.padding) })
+		const mount = h('div', props)
+		const node = mount.render(rootEnv)[0] as HTMLElement
+		expect(node.style.color).toBe('red')
+		expect(node.style.padding).toBe('10px')
+		state.padding = '24px'
+		expect(node.style.color).toBe('red')
+		expect(node.style.padding).toBe('24px')
+	})
+
 	it('reactive classes update correctly when merged', () => {
 		const state = reactive({ isActive: false })
 		const props = c(

@@ -94,6 +94,7 @@ export function pounceCorePlugin(options: PounceCorePluginOptions = {}) {
 			if (id.startsWith('\0') || id.includes('?')) return null
 			if (!/\.(tsx?|jsx?)$/.test(id)) return null
 			if (id.includes('node_modules') && !id.includes('/pounce/packages/')) return null
+			if (/(^|\/)dist\//.test(id)) return null
 
 			const result = transformSync(code, {
 				filename: id,

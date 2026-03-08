@@ -16,6 +16,7 @@ function createPanelApi() {
 	let titleListener: ((value: { title: string } | string) => void) | undefined
 	let paramsListener: ((value: Record<string, unknown>) => void) | undefined
 	const api = {
+		id: 'panel-1',
 		close: vi.fn(),
 		setTitle: vi.fn(),
 		updateParameters: vi.fn(),
@@ -71,7 +72,9 @@ describe('Dockview renderer internals', () => {
 			return noop()
 		}
 
-		const content = dockviewInternals.contentRenderer(Widget, props, vi.fn(), scope)
+		const content = dockviewInternals.contentRenderer(Widget, props, vi.fn(), scope, (fn) =>
+			effect(fn)
+		)
 		document.body.appendChild(content.element)
 		content.init({
 			api: panel.api,
@@ -80,7 +83,9 @@ describe('Dockview renderer internals', () => {
 			containerApi: scope.api as never,
 		} satisfies GroupPanelPartInitParameters)
 
-		const tab = dockviewInternals.tabRenderer(Tab, props as DockviewWidgetProps, scope)
+		const tab = dockviewInternals.tabRenderer(Tab, props as DockviewWidgetProps, scope, (fn) =>
+			effect(fn)
+		)
 		document.body.appendChild(tab.element)
 		tab.init({
 			api: panel.api,
@@ -113,7 +118,13 @@ describe('Dockview renderer internals', () => {
 		}
 		const scope = { api: { id: 'dockview-api' } }
 
-		const content = dockviewInternals.contentRenderer(noop as DockviewWidget, props, vi.fn(), scope)
+		const content = dockviewInternals.contentRenderer(
+			noop as DockviewWidget,
+			props,
+			vi.fn(),
+			scope,
+			(fn) => effect(fn)
+		)
 		document.body.appendChild(content.element)
 		content.init({
 			api: panel.api,
@@ -138,6 +149,40 @@ describe('Dockview renderer internals', () => {
 		// Params update via onDidParametersChange listener
 		panel.fireParams({ panelId: 'counter-9' })
 		expect(typed.params.panelId).toBe('counter-9')
+
+		content.dispose?.()
+	})
+
+	it('calls onPanelError when a panel widget throws', () => {
+		const panel = createPanelApi()
+		const props: Partial<DockviewWidgetProps<DemoParams, DemoContext>> = {
+			context: reactive({}),
+		}
+		const scope = { api: { id: 'dockview-api' } }
+		const onPanelError = vi.fn()
+		const Widget: DockviewWidget<any, any> = () => {
+			throw new Error('boom')
+		}
+
+		const content = dockviewInternals.contentRenderer(
+			Widget,
+			props,
+			vi.fn(),
+			scope,
+			(fn) => effect(fn),
+			onPanelError
+		)
+		document.body.appendChild(content.element)
+		content.init({
+			api: panel.api,
+			params: { panelId: 'counter-1' },
+			title: 'Counter 1',
+			containerApi: scope.api as never,
+		} satisfies GroupPanelPartInitParameters)
+
+		expect(onPanelError).toHaveBeenCalledTimes(1)
+		expect(onPanelError).toHaveBeenCalledWith('panel-1', expect.any(Error), content.element)
+		expect((onPanelError.mock.calls[0]?.[1] as Error).message).toBe('boom')
 
 		content.dispose?.()
 	})

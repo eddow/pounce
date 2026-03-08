@@ -3,6 +3,8 @@ import {
 	parsePathSegment,
 	type RouteParams,
 } from '@pounce/kit/router/logic'
+import { type RouteRegistryEntry, routeRegistry } from './expose.js'
+import type { HTTPVerb, PounceRequest } from './expose-types.js'
 
 /**
  * Convert a file path to a file:// URL without encoding special characters like brackets.
@@ -480,7 +482,47 @@ export async function buildRouteTree(
 				;(globalThis as any).__POUNCE_CURRENT_BASE_URL__ = baseUrl.replace(/\\/g, '/')
 
 				try {
-					await loader()
+					const mod = await loader()
+					// Auto-register plain exported verb functions (get, post, etc.)
+					// if the module didn't already call expose()
+					const normalizedBase = baseUrl.replace(/\\/g, '/')
+					if (mod && typeof mod === 'object' && !routeRegistry.has(normalizedBase)) {
+						const verbs: HTTPVerb[] = ['get', 'post', 'put', 'patch', 'delete', 'stream']
+						const entry: RouteRegistryEntry = {
+							endpoints: new Map(),
+							middle: [],
+							filePath: fullPath,
+						}
+						for (const verb of verbs) {
+							const fn = (mod as Record<string, unknown>)[verb]
+							if (typeof fn === 'function') {
+								entry.endpoints.set(verb, {
+									handler: async (req: PounceRequest) => {
+										const result = await (fn as Function)({
+											request: req.raw,
+											params: req.params,
+											url: req.url,
+										})
+										if (result instanceof Response) return result
+										if (result && typeof result === 'object' && 'status' in result) {
+											return new Response(
+												result.data !== undefined ? JSON.stringify(result.data) : result.error,
+												{
+													status: result.status,
+													headers: { 'Content-Type': 'application/json', ...result.headers },
+												}
+											)
+										}
+										return result
+									},
+									middle: [],
+								})
+							}
+						}
+						if (entry.endpoints.size > 0) {
+							routeRegistry.set(normalizedBase, entry)
+						}
+					}
 				} catch (e) {
 					console.error(`Failed to process API route ${fullPath}`, e)
 				} finally {

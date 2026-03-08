@@ -82,10 +82,7 @@ export function sizeable(prop: PerhapsReactive<number>) {
 		handle.className = `sizeable-handle sizeable-handle-${edge}`
 		handle.style.cursor = getCursor(edge)
 
-		const parentStyle = getComputedStyle(parent)
-		if (parentStyle.position === 'static') parent.style.position = 'relative'
-
-		element.appendChild(handle)
+		parent.insertBefore(handle, element.nextSibling)
 
 		let startPos = 0
 		let startSize = 0

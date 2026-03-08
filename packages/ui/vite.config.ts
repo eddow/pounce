@@ -52,6 +52,10 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@pounce/ui': resolve(__dirname, 'src/index.ts'),
+			'@pounce/core': resolve(__dirname, '../core/src/dom/index.ts'),
+			'@pounce/kit/intl': resolve(__dirname, '../kit/src/intl.tsx'),
+			'@pounce/kit': resolve(__dirname, '../kit/src/dom/index.ts'),
+			'mutts': resolve(__dirname, '../../../mutts/src/index.ts'),
 		},
 	},
 })

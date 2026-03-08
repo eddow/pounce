@@ -1,13 +1,11 @@
 import { latch } from '@pounce/core'
 import {
-	client,
 	type ClientRouteDefinition,
 	type LinkProps,
 	linkModel,
 	Router,
 	type RouterRender,
 } from '@pounce/kit'
-import { effect } from 'mutts'
 import AccordionDemo from './components/AccordionDemo'
 import CheckButtonDemo from './components/CheckButtonDemo'
 import DisplayContextDemo from './components/DisplayContextDemo'
@@ -46,7 +44,12 @@ const routes: DemoRoute[] = [
 	{ path: '/accordion', label: 'Accordion', view: () => <AccordionDemo /> },
 	{ path: '/checkbutton', label: 'CheckButton', view: () => <CheckButtonDemo /> },
 	{ path: '/dockview', label: 'Dockview', view: () => <DockviewDemo /> },
-	{ path: '/dockview-router', href: '/dockview-router', label: 'DockviewRouter', view: () => <></> },
+	{
+		path: '/dockview-router/[...route]',
+		href: '/dockview-router',
+		label: 'DockviewRouter',
+		view: () => <DockviewRouterDemo />,
+	},
 	{ path: '/menu', label: 'Menu', view: () => <MenuDemo /> },
 	{ path: '/multiselect', label: 'MultiSelect', view: () => <MultiSelectDemo /> },
 	{ path: '/progress', label: 'Progress', view: () => <ProgressDemo /> },
@@ -94,12 +97,3 @@ function DemoApp() {
 }
 
 latch('#app', <DemoApp />)
-latch('#dockview-router-app', <DockviewRouterDemo />)
-
-const dockviewEl = document.getElementById('dockview-router-app')!
-effect(() => {
-	const isDockviewRoute = client.url.pathname.startsWith('/dockview-router')
-	const mainEl = document.querySelector('[data-test="demo-content"]') as HTMLElement | null
-	if (mainEl) mainEl.style.display = isDockviewRoute ? 'none' : ''
-	dockviewEl.style.display = isDockviewRoute ? '' : 'none'
-})

@@ -1,5 +1,6 @@
 import {
 	Container,
+	client,
 	DisplayProvider,
 	type Env,
 	Heading,
@@ -25,6 +26,16 @@ const uiState = reactive({ mobileOpen: false })
 // Use stored to persist sidebar width
 const sidebarState = stored({ width: DEFAULT_WIDTH })
 
+function scrollToHashTarget() {
+	const hash = client.url.hash
+	if (!hash) return
+	const targetId = decodeURIComponent(hash.slice(1))
+	if (!targetId) return
+	requestAnimationFrame(() => {
+		document.getElementById(targetId)?.scrollIntoView({ block: 'start' })
+	})
+}
+
 export function DocsApp(_props: {}, _env: Env) {
 	const sizeableSidebar = sizeable(
 		r(
@@ -41,7 +52,7 @@ export function DocsApp(_props: {}, _env: Env) {
 		<DisplayProvider theme={envSettings.theme}>
 			<div
 				class={{ 'docs-layout': true, 'mobile-open': uiState.mobileOpen }}
-				style={`--sizeable-width: ${sidebarState.width}px;`}
+				style={{ '--sizeable-width': `${sidebarState.width}px` }}
 			>
 				<aside class="docs-sidebar" use={sizeableSidebar}>
 					<h5>Pounce</h5>
@@ -67,6 +78,10 @@ export function DocsApp(_props: {}, _env: Env) {
 					<Container tag="main" el={{ style: 'padding: 2rem 0;' }}>
 						<Router
 							routes={routes}
+							onRouteEnd={() => {
+								closeMobileNav()
+								scrollToHashTarget()
+							}}
 							notFound={({ url }: { url: string }) => (
 								<section style="padding: 2rem 0;">
 									<Heading level={2}>Not found</Heading>

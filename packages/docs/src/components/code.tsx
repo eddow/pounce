@@ -20,15 +20,12 @@ componentStyle.sass`
 	
 	pre
 		margin: 0
-		padding: 1rem
-		overflow-x: auto
-		background: var(--pounce-bg-muted, #f5f5f5)
-		color: var(--pounce-fg, #333)
-		
-		// Dark theme support
-		[data-theme="dark"] &
-			background: var(--pounce-bg-muted, #1a1a1a)
-			color: var(--pounce-fg, #e0e0e0)
+		padding: 0
+		overflow: hidden
+
+	.hljs
+		display: block
+		border-radius: 0.5rem
 	
 	code
 		font-family: 'Fira Code', 'Consolas', monospace

@@ -1,4 +1,4 @@
-import { reactive } from 'mutts'
+import { reactive, untracked } from 'mutts'
 import type {
 	ClientRouteDefinition,
 	RouteAnalyzer,
@@ -71,8 +71,10 @@ export function routerModel<Definition extends ClientRouteDefinition>(
 	}>({ active: null, opened: [] })
 
 	function setActive(value: OpenedRoute<Definition> | null) {
-		raw.active = value
-		state.active = value
+		untracked(() => {
+			raw.active = value
+			state.active = value
+		})
 	}
 
 	function createNavigationContext(
@@ -164,17 +166,29 @@ export function routerModel<Definition extends ClientRouteDefinition>(
 	function activate(id: string) {
 		const existing = raw.opened.find((entry) => entry.id === id)
 		if (!existing) return
-		setActive(existing)
+		try {
+			setActive(existing)
+		} catch (e) {
+			console.error('[RouterModel] setActive error:', existing.id, e)
+		}
 	}
 
 	function close(id: string) {
 		const index = raw.opened.findIndex((entry) => entry.id === id)
 		if (index === -1) return
 		const wasActive = raw.active?.id === id
-		raw.opened.splice(index, 1)
-		state.opened.splice(index, 1)
+		try {
+			raw.opened.splice(index, 1)
+			state.opened.splice(index, 1)
+		} catch (e) {
+			console.error('[RouterModel] close error:', id, e)
+		}
 		if (!wasActive) return
-		setActive(raw.opened[index] ?? raw.opened[index - 1] ?? null)
+		try {
+			setActive(raw.opened[index] ?? raw.opened[index - 1] ?? null)
+		} catch (e) {
+			console.error('[RouterModel] setActive error:', id, e)
+		}
 	}
 
 	function clear() {

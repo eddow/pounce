@@ -11,7 +11,17 @@ import {
 import 'dockview-core/dist/styles/dockview.css'
 import { extend, fromAttribute, latch, ReactiveProp } from '@pounce/core'
 import { componentStyle } from '@pounce/kit'
-import { biDi, effect, reactive, root, type ScopedCallback, unreactive } from 'mutts'
+import {
+	biDi,
+	caught,
+	effect,
+	effectContext,
+	reactive,
+	root,
+	type ScopedCallback,
+	unreactive,
+	withEffectContext,
+} from 'mutts'
 import { Icon } from '../icon'
 
 componentStyle.sass`
@@ -93,11 +103,24 @@ function logDockview(debug: boolean | string | undefined, event: string, payload
 
 // #region Renderers
 
+export type PanelErrorHandler = (panelId: string, error: unknown, element: HTMLElement) => void
+type Spawn = (fn: () => void) => ScopedCallback
+
+function renderPanelError(element: HTMLElement, panelId: string, error: unknown) {
+	element.innerHTML = ''
+	const msg = document.createElement('div')
+	msg.style.cssText = 'color:#e55;padding:8px;font-size:12px;white-space:pre-wrap'
+	msg.textContent = `⚠ Panel error (${panelId}): ${error instanceof Error ? error.message : String(error)}`
+	element.appendChild(msg)
+}
+
 function contentRenderer(
 	Widget: DockviewWidget,
 	props: Partial<DockviewWidgetProps>,
 	onDispose: ScopedCallback,
-	scope: Record<string, any>
+	scope: Record<string, any>,
+	spawn: Spawn,
+	onPanelError?: PanelErrorHandler
 ): IContentRenderer {
 	const element = document.createElement('div')
 	element.classList.add('pounce-dv-item', 'body')
@@ -107,6 +130,7 @@ function contentRenderer(
 	return {
 		element,
 		init: ({ api: panelApi, params, title }: GroupPanelPartInitParameters) => {
+			let mountedCleanup: ScopedCallback | undefined
 			params = reactive(params)
 			const internalState = reactive({ title })
 			const context = props.context ?? reactive({})
@@ -126,27 +150,40 @@ function contentRenderer(
 				size,
 				context,
 			})
+			const panelId = panelApi.id
 			cleanups.push(
 				panelApi.onDidTitleChange(
 					(e: any) => (internalState.title = typeof e === 'string' ? e : e.title)
 				).dispose,
 				effect(() => panelApi.updateParameters(params)),
+				() => mountedCleanup?.(),
 				panelApi.onDidParametersChange((payload: any) => {
 					Object.assign(params, payload)
 				}).dispose,
-				latch(
-					element,
-					<Widget
-						title={(props as DockviewWidgetProps).title}
-						params={(props as DockviewWidgetProps).params}
-						size={(props as DockviewWidgetProps).size}
-						context={(props as DockviewWidgetProps).context}
-					/>,
-					extend(scope, {
-						dockviewApi: scope.dockviewApi ?? scope.api,
-						panelApi: unreactive(panelApi),
+				spawn(() => {
+					caught((error: unknown) => {
+						console.error('[Dockview] Panel error:', panelId, error)
+						queueMicrotask(() => {
+							mountedCleanup?.()
+							mountedCleanup = undefined
+							renderPanelError(element, panelId, error)
+							onPanelError?.(panelId, error, element)
+						})
 					})
-				)
+					mountedCleanup = latch(
+						element,
+						<Widget
+							title={(props as DockviewWidgetProps).title}
+							params={(props as DockviewWidgetProps).params}
+							size={(props as DockviewWidgetProps).size}
+							context={(props as DockviewWidgetProps).context}
+						/>,
+						extend(scope, {
+							dockviewApi: scope.dockviewApi ?? scope.api,
+							panelApi: unreactive(panelApi),
+						})
+					)
+				})
 			)
 		},
 		layout: (width: number, height: number) => {
@@ -162,30 +199,46 @@ function contentRenderer(
 function tabRenderer(
 	Widget: DockviewWidget,
 	props: DockviewWidgetProps,
-	scope: Record<string, any>
+	scope: Record<string, any>,
+	spawn: Spawn,
+	onPanelError?: PanelErrorHandler
 ): IContentRenderer {
 	const element = document.createElement('div')
 	element.classList.add('pounce-dv-item', 'tab')
 	let cleanup: ScopedCallback | undefined
+	let mountedCleanup: ScopedCallback | undefined
 
 	return {
 		element,
 		init: ({ api: panelApi }: GroupPanelPartInitParameters) => {
-			cleanup = latch(
-				element,
-				<Widget
-					title={(props as DockviewWidgetProps).title}
-					params={(props as DockviewWidgetProps).params}
-					size={(props as DockviewWidgetProps).size}
-					context={(props as DockviewWidgetProps).context}
-				/>,
-				extend(scope, {
-					dockviewApi: scope.dockviewApi ?? scope.api,
-					panelApi: unreactive(panelApi),
+			const panelId = panelApi.id
+			cleanup = spawn(() => {
+				caught((error: unknown) => {
+					console.error('[Dockview] Tab error:', panelId, error)
+					queueMicrotask(() => {
+						mountedCleanup?.()
+						mountedCleanup = undefined
+						renderPanelError(element, panelId, error)
+						onPanelError?.(panelId, error, element)
+					})
 				})
-			)
+				mountedCleanup = latch(
+					element,
+					<Widget
+						title={(props as DockviewWidgetProps).title}
+						params={(props as DockviewWidgetProps).params}
+						size={(props as DockviewWidgetProps).size}
+						context={(props as DockviewWidgetProps).context}
+					/>,
+					extend(scope, {
+						dockviewApi: scope.dockviewApi ?? scope.api,
+						panelApi: unreactive(panelApi),
+					})
+				)
+			})
 		},
 		dispose() {
+			mountedCleanup?.()
 			cleanup?.()
 		},
 	}
@@ -194,21 +247,36 @@ function tabRenderer(
 function headerActionRenderer(
 	Widget: DockviewHeaderAction,
 	{ group }: DockviewHeaderActionProps,
-	scope: Record<string, any>
+	scope: Record<string, any>,
+	spawn: Spawn,
+	onPanelError?: PanelErrorHandler
 ) {
 	const element = document.createElement('div')
 	element.classList.add('pounce-dv-item')
 	let cleanup: ScopedCallback | undefined
+	let mountedCleanup: ScopedCallback | undefined
 	return {
 		element,
 		init() {
-			cleanup = latch(
-				element,
-				<Widget group={group} />,
-				extend(scope, { dockviewApi: scope.dockviewApi ?? scope.api })
-			)
+			cleanup = spawn(() => {
+				caught((error: unknown) => {
+					console.error('[Dockview] Header action error:', group.id, error)
+					queueMicrotask(() => {
+						mountedCleanup?.()
+						mountedCleanup = undefined
+						renderPanelError(element, group.id, error)
+						onPanelError?.(group.id, error, element)
+					})
+				})
+				mountedCleanup = latch(
+					element,
+					<Widget group={group} />,
+					extend(scope, { dockviewApi: scope.dockviewApi ?? scope.api })
+				)
+			})
 		},
 		dispose() {
+			mountedCleanup?.()
 			cleanup?.()
 		},
 	}
@@ -241,6 +309,7 @@ export const Dockview = (
 		api?: DockviewApi
 		debug?: boolean | string
 		onReady?: (api: DockviewApi) => void
+		onPanelError?: PanelErrorHandler
 		widgets: Record<string, DockviewWidget<any>>
 		tabs?: Record<string, DockviewWidget<any>>
 		headerLeft?: DockviewHeaderAction
@@ -265,6 +334,7 @@ export const Dockview = (
 	const widgetMap = props.widgets
 	const tabMap = props.tabs
 	const onReadyCb = props.onReady
+	const onPanelErrorCb = props.onPanelError
 	const hasLayout =
 		layoutBinding instanceof ReactiveProp
 			? layoutBinding.get() !== undefined
@@ -277,6 +347,10 @@ export const Dockview = (
 			hasLayout,
 			widgetNames: Object.keys(widgetMap),
 		})
+		// spawn will be set once the root() block captures the effect context.
+		// createComponent/createTabComponent are called lazily by dockview-core,
+		// always after root() has run, so spawn is guaranteed to be set.
+		let spawn: Spawn
 		try {
 			const activeApi = unreactive(
 				createDockview(element, {
@@ -296,7 +370,9 @@ export const Dockview = (
 							() => {
 								contexts.delete(id)
 							},
-							scope
+							scope,
+							spawn,
+							onPanelErrorCb
 						)
 					},
 					createTabComponent({ id, name }: { id: string; name: string }) {
@@ -308,7 +384,7 @@ export const Dockview = (
 						const widget = tabMap?.[name] ?? DefaultTab
 						const context = contexts.get(id)
 						if (!context) throw new Error(`Context ${id} not found`)
-						return tabRenderer(widget, context as DockviewWidgetProps, scope)
+						return tabRenderer(widget, context as DockviewWidgetProps, scope, spawn, onPanelErrorCb)
 					},
 				})
 			)
@@ -317,7 +393,7 @@ export const Dockview = (
 			console.error('[Dockview] createDockview CRASHED (sync):', e)
 			return
 		}
-		const api = dockviewApi
+		const api = dockviewApi!
 		try {
 			if (scope && typeof scope === 'object' && !Object.isFrozen(scope)) {
 				scope.dockviewApi = api
@@ -327,7 +403,11 @@ export const Dockview = (
 		} catch (_e) {}
 		// Set up reactive bindings in root() — detached from the attend:use
 		// effect chain so reactive prop reads don't tear down initDockview.
+		// Panel renderers use `spawn` to create child effects under this root,
+		// so `caught()` error boundaries bubble up through the dockview's tree.
 		const stopBindings = root((): (() => void) => {
+			const ctx = effectContext()
+			spawn = (fn) => withEffectContext(ctx, () => effect(fn))
 			const cleanups: (() => void)[] = []
 			const hasControlledLayout =
 				layoutBinding instanceof ReactiveProp
@@ -409,17 +489,17 @@ export const Dockview = (
 						createLeftHeaderActionComponent:
 							headerLeft &&
 							((group: DockviewGroupPanel) => {
-								return headerActionRenderer(headerLeft, { group }, scope)
+								return headerActionRenderer(headerLeft, { group }, scope, spawn, onPanelErrorCb)
 							}),
 						createRightHeaderActionComponent:
 							headerRight &&
 							((group: DockviewGroupPanel) => {
-								return headerActionRenderer(headerRight, { group }, scope)
+								return headerActionRenderer(headerRight, { group }, scope, spawn, onPanelErrorCb)
 							}),
 						createPrefixHeaderActionComponent:
 							headerPrefix &&
 							((group: DockviewGroupPanel) => {
-								return headerActionRenderer(headerPrefix, { group }, scope)
+								return headerActionRenderer(headerPrefix, { group }, scope, spawn, onPanelErrorCb)
 							}),
 					})
 				})
@@ -428,7 +508,11 @@ export const Dockview = (
 				for (const c of cleanups) c()
 			}
 		})
-		root(() => onReadyCb?.(api))
+		try {
+			root(() => onReadyCb?.(api))
+		} catch (e) {
+			console.error('[Dockview] onReady error:', e)
+		}
 		return () => {
 			logDockview(debugLabel, 'dispose', {
 				panelCount: api.panels.length,
