@@ -83,7 +83,8 @@ export default expose({
 
 Key points:
 
-- `get`, `post`, `put`, `patch`, `del`, and `stream` register API endpoints
+- API endpoints are declared only inside `expose({ ... })`
+- `get`, `post`, `put`, `patch`, `delete`, and `stream` are the supported endpoint keys
 - nested keys beginning with `/` define subpaths
 - `stream` is served as `text/event-stream`
 - `provide()` is not a normal HTTP endpoint; it is used for SSR and SPA page-prop loading

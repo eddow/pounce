@@ -1,13 +1,3 @@
-import { ApiError, type HttpMethod } from './core.js'
-import type { ExtractPathParams } from './inference.js'
-import { PounceResponse } from './response.js'
-
-export type InterceptorMiddleware = (
-	request: Request,
-	next: (req: Request) => Promise<PounceResponse>
-) => Promise<PounceResponse>
-
-import type { AssertSchema, RouteDefinition } from '../router/defs.js'
 import {
 	addContextInterceptor,
 	callPromiseHook,
@@ -16,6 +6,14 @@ import {
 	callStreamGuardHook,
 	getContext,
 } from './context.js'
+import { ApiError, type HttpMethod } from './core.js'
+import type { ExtractPathParams } from './inference.js'
+import { PounceResponse } from './response.js'
+
+export type InterceptorMiddleware = (
+	request: Request,
+	next: (req: Request) => Promise<PounceResponse>
+) => Promise<PounceResponse>
 
 interface InterceptorEntry {
 	pattern: string | RegExp
@@ -144,7 +142,7 @@ export function createApiClientFactory(executor: RequestExecutor) {
 	function apiClient(
 		input: any,
 		paramsOrOptions: any = {},
-		maybeOptions: any = {}
+		_maybeOptions: any = {}
 	): ApiClientInstance<any> {
 		let url: URL
 		let template: string | undefined
@@ -173,24 +171,17 @@ export function createApiClientFactory(executor: RequestExecutor) {
 			return new URL(`/${inputStr}`, origin)
 		}
 
-		if (typeof input === 'object' && input !== null && 'buildUrl' in input) {
-			const routeDef = input as RouteDefinition
-			const params = paramsOrOptions
-			options = maybeOptions
-			url = buildUrlObj(routeDef.buildUrl(params))
+		if (typeof input === 'object' && input !== null && !(input instanceof URL)) {
+			return input as ApiClientInstance<any>
+		}
+		options = paramsOrOptions
+		if (typeof input === 'string') {
+			if (input.includes('[') && input.includes(']')) {
+				template = input
+			}
+			url = buildUrlObj(input)
 		} else {
-			if (typeof input === 'object' && input !== null && !(input instanceof URL)) {
-				return input as ApiClientInstance<any>
-			}
-			options = paramsOrOptions
-			if (typeof input === 'string') {
-				if (input.includes('[') && input.includes(']')) {
-					template = input
-				}
-				url = buildUrlObj(input)
-			} else {
-				url = input
-			}
+			url = input as URL
 		}
 
 		const ctx = getContext()
@@ -367,7 +358,7 @@ export function createApiClientFactory(executor: RequestExecutor) {
 			async put<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T> {
 				return requestWithRetry<T>('PUT', url, body, options?.signal)
 			},
-			async del<T>(
+			async delete<T>(
 				params?: Record<string, string | number>,
 				options?: { signal?: AbortSignal }
 			): Promise<T> {
@@ -456,7 +447,7 @@ export function createApiClientFactory(executor: RequestExecutor) {
 	const api = new Proxy(apiClient, {
 		get(target, prop, receiver) {
 			if (prop in target) return Reflect.get(target, prop, receiver)
-			const methods = ['get', 'prefetch', 'post', 'put', 'del', 'patch']
+			const methods = ['get', 'prefetch', 'post', 'put', 'delete', 'patch']
 			if (typeof prop === 'string' && methods.includes(prop)) {
 				const currentPath = typeof window !== 'undefined' ? window.location.href : '.'
 				const instance = target(currentPath)
@@ -469,18 +460,10 @@ export function createApiClientFactory(executor: RequestExecutor) {
 	return api
 }
 
-export interface ApiClient {
-	<P extends string>(
-		input: P | URL | object,
-		options?: { timeout?: number; retries?: number; retryDelay?: number; signal?: AbortSignal }
-	): ApiClientInstance<P>
-
-	<P extends string, Q extends AssertSchema>(
-		routeDef: RouteDefinition<P, Q>,
-		params: any,
-		options?: { timeout?: number; retries?: number; retryDelay?: number; signal?: AbortSignal }
-	): ApiClientInstance<string>
-}
+export type ApiClient = <P extends string>(
+	input: P | URL | object,
+	options?: { timeout?: number; retries?: number; retryDelay?: number; signal?: AbortSignal }
+) => ApiClientInstance<P>
 
 export interface ApiClientInstance<P extends string> {
 	get<T>(
@@ -493,7 +476,7 @@ export interface ApiClientInstance<P extends string> {
 	): Promise<T>
 	post<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T>
 	put<T>(body: unknown, options?: { signal?: AbortSignal }): Promise<T>
-	del<T>(
+	delete<T>(
 		params?: ExtractPathParams<P> | Record<string, string | number>,
 		options?: { signal?: AbortSignal }
 	): Promise<T>

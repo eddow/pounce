@@ -68,15 +68,17 @@ Proxies are **imported and called in your code**, not accessed via HTTP:
 
 ```ts
 // In a route handler
-import { legacyApi } from "../../lib/proxies/legacy.js";
+import { expose } from '@pounce/board/server'
+import { legacyApi } from '../../lib/proxies/legacy.js'
 
-export async function get({ params }) {
-  // Call external API through proxy
-  const user = await fetch(legacyApi.baseUrl + legacyApi.endpoints.getUser.path, {
-    // ... apply transforms from proxy config
-  });
-  return { status: 200, data: user };
-}
+export default expose({
+  get: async ({ params }) => {
+    const user = await fetch(legacyApi.baseUrl + legacyApi.endpoints.getUser.path, {
+      // ... apply transforms from proxy config
+    })
+    return { status: 200, data: user }
+  },
+})
 ```
 
 ```ts

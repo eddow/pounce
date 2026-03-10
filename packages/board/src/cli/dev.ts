@@ -186,6 +186,7 @@ export async function runDevServer(options: DevServerOptions = {}) {
 							params: matchedRoute.params,
 							url,
 							raw: c.req.raw,
+							request: c.req.raw,
 						}
 						const providedData = ((await provideHandler(pounceReq)) ?? {}) as Record<
 							string,

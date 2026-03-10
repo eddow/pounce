@@ -25,6 +25,7 @@ export interface PounceRequest<Params = Record<string, string>> {
 	params: Params
 	url: URL
 	raw: Request
+	request: Request
 }
 
 export type RouteHandler<Params> = (req: PounceRequest<Params>) => any
@@ -63,10 +64,8 @@ export type RouteNode<CurrentParams> = {
 }
 
 // Backward-compatible alias kept for existing imports/usages.
-export type ValidatedTree<
-	CurrentParams,
-	T = RouteNode<Prettify<CurrentParams>>,
-> = T extends RouteNode<Prettify<CurrentParams>> ? T : never
+export type ValidatedTree<CurrentParams, T = RouteNode<Prettify<CurrentParams>>> =
+	T extends RouteNode<Prettify<CurrentParams>> ? T : never
 
 // ==========================================
 // CLIENT KIT UTILITIES (Type Extraction)

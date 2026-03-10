@@ -7,7 +7,7 @@
 export {
 	type ApiClientInstance,
 	api,
-	del,
+	delete,
 	get,
 	type InterceptorMiddleware,
 	intercept,

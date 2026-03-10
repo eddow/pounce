@@ -26,6 +26,16 @@ const uiState = reactive({ mobileOpen: false })
 // Use stored to persist sidebar width
 const sidebarState = stored({ width: DEFAULT_WIDTH })
 
+function scrollAfterRouteChange() {
+	if (client.url.hash) {
+		scrollToHashTarget()
+		return
+	}
+	requestAnimationFrame(() => {
+		window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+	})
+}
+
 function scrollToHashTarget() {
 	const hash = client.url.hash
 	if (!hash) return
@@ -80,7 +90,7 @@ export function DocsApp(_props: {}, _env: Env) {
 							routes={routes}
 							onRouteEnd={() => {
 								closeMobileNav()
-								scrollToHashTarget()
+								scrollAfterRouteChange()
 							}}
 							notFound={({ url }: { url: string }) => (
 								<section style="padding: 2rem 0;">

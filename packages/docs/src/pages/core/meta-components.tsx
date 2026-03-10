@@ -50,7 +50,7 @@ function Header() {
   )
 }
 
-// Equivalent to <> ... </> (JSX Fragment)`
+// Equivalent to <> ... </> (JSX Fragment) but accepts meta-attributes`
 
 const envMeta = `import { extend } from '@pounce'
 

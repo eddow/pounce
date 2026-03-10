@@ -1,4 +1,4 @@
-import { caught, effect, isReactive, lift, link, memoize, morph, reactive, unreactive } from 'mutts'
+import { caught, effect, isReactive, lift, link, morph, reactive, unreactive } from 'mutts'
 import { perf } from '../perf'
 import { document } from '../shared'
 import {
@@ -40,26 +40,27 @@ export const intrinsicComponentAliases = extend(null, {
 			throw new DynamicRenderingError(
 				`[pounce] Invalid children for 'for' component: ${JSON.stringify(props.children)}. Children must evaluate to one function.`
 			)
-		const body = collapse(Array.isArray(props.children) ? props.children[0] : props.children)
+		const body = collapse(Array.isArray(props.children) ? props.children[0] : props.children) as (
+			item: T
+		) => Children
 		if (typeof body !== 'function') {
 			throw new DynamicRenderingError(
 				`[pounce] Invalid children for 'for' component: ${JSON.stringify(props.children)}. Children must evaluate to a function.`
 			)
 		}
 		// Lock to fence on purpose
-		const cb = (item: T) => {
+		const forIter = (item: T) => {
 			perfCounters.forIterations++
 			perf?.mark('for:iter:start')
-			const res = (body as (item: T) => Children)(item)
+			const res = body(item)
 			perf?.mark('for:iter:end')
 			perf?.measure('for:iter', 'for:iter:start', 'for:iter:end')
 			return res
 		}
-		const memoizedCb = memoize.lenient(cb)
 		// morph and processChildren must be called here (component body, runs once) — NOT inside produce.
 		// produce runs inside the render:for effect; any reactive reads there (including processChildren
 		// reading the morph cache) would subscribe render:for to array mutations → rebuild fence fires.
-		const morphed = morph(() => collapse(props.each), memoizedCb)
+		const morphed = morph(() => collapse(props.each), forIter)
 		const nodes = lift(() => {
 			perf?.mark('for:update:start')
 			const res = processChildren(morphed, env)

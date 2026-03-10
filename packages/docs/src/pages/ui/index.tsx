@@ -290,6 +290,12 @@ export default function UIPage() {
 					<li>
 						<code>use:scroll</code> — scroll position tracking
 					</li>
+					<li>
+						<code>use:sizeable</code> — makes elements resizable by dragging
+					</li>
+					<li>
+						<code>use:tail</code> — auto-scroll to bottom for chat logs
+					</li>
 				</ul>
 			</Section>
 		</article>

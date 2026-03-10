@@ -3,6 +3,8 @@
 ## Overview
 Tree-shakeable SVG icon library. Each icon is a CSS class name injected on-demand via the `/*#__PURE__*/` IIFE pattern, enabling bundlers to eliminate unused icons and their CSS.
 
+`pure-glyf` is standalone first. The main package, plugin, generator, and inject APIs do not depend on Pounce. Only the optional `./pounce` export integrates with Pounce.
+
 ## Architecture
 - **Core**: `inject.ts` manages a deduplicated set of styles. Styles are injected ONLY when `mount()` is called.
 - **Generator**: `generator.ts` converts SVGs into data URIs and wraps them in generated TypeScript code.
@@ -32,6 +34,7 @@ Exports:
 - `.` (main): Exports `mount`, `sheet`, `onInject`.
 - `./plugin`: Vite plugin.
 - `./inject`: Internal injection utility (exposed for generated code).
+- `./pounce`: Optional adapter that registers a pure-glyf-backed `options.iconFactory` for `@pounce/ui`.
 
 ## Performance Optimization
 
@@ -85,14 +88,15 @@ export default defineConfig({
 ```
 
 ### Pounce Adapter (`./pounce` export)
-`pure-glyf/pounce` exports `createGlyfIconFactory(icons)` — a bridge that adapts a pure-glyf icon map to Pounce's `iconFactory` signature. Optional: only available when `@pounce/core` and `@pounce/ui` peer deps are installed.
+`pure-glyf/pounce` exports `registerGlyfIconFactory()` — an optional adapter for Pounce applications. It assigns `@pounce/ui`'s `options.iconFactory` so generated `pure-glyf/icons` strings can be used directly by Pounce UI components. This export depends on `@pounce/core` and `@pounce/ui`.
 
 ```typescript
-import { tablerSun, tablerMoon } from 'pure-glyf/icons'
-import { createGlyfIconFactory } from 'pure-glyf/pounce'
+import { mount } from 'pure-glyf'
+import { registerGlyfIconFactory } from 'pure-glyf/pounce'
 import { options } from '@pounce/ui'
 
-options.iconFactory = createGlyfIconFactory({ sun: tablerSun, moon: tablerMoon })
+mount()
+registerGlyfIconFactory()
 ```
 
 Build note: `vite.config.ts` uses `pounceCorePlugin` for JSX transform on `pounce.tsx`, and `beforeWriteFile` in `vite-plugin-dts` rewrites relative `../ui/dist/...` paths back to `@pounce/ui` in generated `.d.ts` files.

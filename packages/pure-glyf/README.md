@@ -6,6 +6,8 @@
 
 `pure-glyf` takes a different approach to icon management. Instead of inlining SVGs (bloating your DOM) or using sprites (complexity), it converts your SVGs into CSS classes that inject their styles on demand. The result? Zero runtime overhead for unused icons, perfect tree-shaking, and a developer experience that feels like magic.
 
+`pure-glyf` is a **standalone library**. You can use it in any web application with Vite or Rollup. If you are using Pounce, it also ships an optional `pure-glyf/pounce` adapter that wires generated icon class names into `@pounce/ui`'s `options.iconFactory`.
+
 ---
 
 ## Features
@@ -35,6 +37,14 @@ npm install pure-glyf
 pnpm add pure-glyf
 # or
 yarn add pure-glyf
+```
+
+### Optional Pounce integration
+
+If you also want to use the `pure-glyf/pounce` adapter, install the Pounce packages used by that adapter in your application:
+
+```bash
+pnpm add @pounce/core @pounce/ui
 ```
 
 ## Usage
@@ -96,7 +106,7 @@ export default defineConfig({
         // Usage: lucHome, lucUser
         luc: './node_modules/lucide-static/icons',
       },
-      dts: 'src/pure-glyf-icons.d.ts' 
+      dts: '.generated-types/pure-glyf-icons.d.ts' 
     })
   ]
 });
@@ -183,6 +193,22 @@ function App() {
 }
 ```
 
+## Optional Pounce Integration
+
+If your application uses Pounce, `pure-glyf` can register itself as the `@pounce/ui` icon factory.
+
+```tsx
+import { mount } from 'pure-glyf'
+import { registerGlyfIconFactory } from 'pure-glyf/pounce'
+
+mount()
+registerGlyfIconFactory()
+```
+
+After registration, generated `pure-glyf/icons` exports can be passed directly to Pounce UI components expecting icon names. (First of which is `<Icon name={...} />`)
+
+The `pure-glyf/pounce` adapter is optional and is the only part of this package that depends on Pounce.
+
 ## Configuration
 
 The `pureGlyfPlugin` accepts the following options:
@@ -195,7 +221,7 @@ A record mapping prefixes to directory paths.
 ### `dts` (Optional)
 Path to generate the TypeScript declaration file. 
 - **Default**: `pure-glyf.d.ts` in the project root.
-- **Recommendation**: Set this to a path included in your `tsconfig.json` (e.g., `src/pure-glyf-icons.d.ts`).
+- **Recommendation**: Set this to a generated file path outside `src` (e.g., `.generated-types/pure-glyf-icons.d.ts`) and include it from `tsconfig.json`.
 
 ## Programmatic Generation
 

@@ -1,3 +1,4 @@
+import { PounceResponse } from '@pounce/kit'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { clearSSRData, getCollectedSSRResponses } from '../ssr/utils.js'
 import {
@@ -5,7 +6,7 @@ import {
 	clearInterceptors,
 	clearRouteRegistry,
 	config,
-	del,
+	delete as deleteRequest,
 	disableSSR,
 	enableSSR,
 	get,
@@ -17,7 +18,6 @@ import {
 	setRouteRegistry,
 } from './client.js'
 import { ApiError } from './core.js'
-import { PounceResponse } from './response.js'
 
 describe('api client SSR integration', () => {
 	beforeEach(() => {
@@ -286,7 +286,7 @@ describe('HTTP methods', () => {
 		})
 	})
 
-	describe('.del()', () => {
+	describe('.delete()', () => {
 		it('should send DELETE request', async () => {
 			const mockFetch = vi.fn().mockResolvedValue(
 				new Response(JSON.stringify({ deleted: true }), {
@@ -296,7 +296,7 @@ describe('HTTP methods', () => {
 			)
 			vi.stubGlobal('fetch', mockFetch)
 
-			const result = await api('/resource/123').del()
+			const result = await api('/resource/123').delete()
 
 			expect(result).toEqual({ deleted: true })
 			expect(mockFetch).toHaveBeenCalledWith(
@@ -314,7 +314,7 @@ describe('HTTP methods', () => {
 			)
 			vi.stubGlobal('fetch', mockFetch)
 
-			await api('/resource').del({ force: 'true', cascade: 'false' })
+			await api('/resource').delete({ force: 'true', cascade: 'false' })
 
 			const expectedUrl = new URL('http://localhost/resource')
 			expectedUrl.searchParams.set('force', 'true')
@@ -325,7 +325,7 @@ describe('HTTP methods', () => {
 			)
 		})
 
-		it('should support del() direct export', async () => {
+		it('should support delete() direct export', async () => {
 			const mockFetch = vi.fn().mockResolvedValue(
 				new Response(JSON.stringify({ ok: true }), {
 					status: 200,
@@ -334,7 +334,7 @@ describe('HTTP methods', () => {
 			)
 			vi.stubGlobal('fetch', mockFetch)
 
-			await del({ id: '123' })
+			await deleteRequest({ id: '123' })
 
 			const expectedUrl = new URL('http://localhost/test')
 			expectedUrl.searchParams.set('id', '123')
@@ -465,7 +465,7 @@ describe('Error handling', () => {
 			.mockResolvedValue(new Response(null, { status: 500, statusText: 'Internal Server Error' }))
 		vi.stubGlobal('fetch', mockFetch)
 
-		await expect(api('/resource').del()).rejects.toThrow(ApiError)
+		await expect(api('/resource').delete()).rejects.toThrow(ApiError)
 	})
 
 	it('should throw ApiError for non-OK PATCH response', async () => {
@@ -724,7 +724,7 @@ describe('SSR server-side dispatch', () => {
 		setRouteRegistry(mockRegistry)
 		enableSSR()
 
-		const result = await api('/items/999').del()
+		const result = await api('/items/999').delete()
 
 		expect(result).toEqual({ deleted: true })
 		expect(mockRegistry.match).toHaveBeenCalledWith('/items/999', 'DELETE')

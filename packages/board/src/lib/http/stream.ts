@@ -1,18 +1,20 @@
-import type { RequestContext, RouteHandler } from './core.js'
+import type { RequestContext } from './core.js'
 
 export type StreamCleanup = () => void
 
-export type StreamHandler = (
-	context: RequestContext,
-	send: <T>(data: T) => void
+export type StreamHandler<T = RequestContext> = (
+	context: T,
+	send: <Data>(data: Data) => void
 ) => StreamCleanup | Promise<StreamCleanup>
 
 /**
  * Defines a route handler that returns a Server-Sent Events stream.
  * Converts the custom stream handler into a standard RouteHandler returning a Response.
  */
-export function defineStreamRoute(handler: StreamHandler): RouteHandler {
-	return async (context: RequestContext) => {
+export function defineStreamRoute<T = RequestContext>(
+	handler: StreamHandler<T>
+): (ctx: T) => Promise<Response> {
+	return async (context: T) => {
 		let cleanup: StreamCleanup | undefined
 
 		const stream = new ReadableStream({

@@ -355,12 +355,11 @@ export async function buildRouteTree(
 			try {
 				const mod = await loader()
 				const handlers: Record<string, RouteHandler> = {}
-				const methods = ['get', 'post', 'put', 'del', 'patch', 'delete']
+				const methods = ['get', 'post', 'put', 'patch', 'delete']
 				for (const method of methods) {
 					const exportName = method
 					if (typeof mod[exportName] === 'function') {
-						const upperMethod =
-							method === 'del' || method === 'delete' ? 'DELETE' : method.toUpperCase()
+						const upperMethod = method === 'delete' ? 'DELETE' : method.toUpperCase()
 						handlers[upperMethod] = mod[exportName]
 					}
 				}
@@ -420,12 +419,11 @@ export async function buildRouteTree(
 				const mod = await loader()
 				if (name.endsWith('.ts')) {
 					const handlers: Record<string, RouteHandler> = {}
-					const methods = ['get', 'post', 'put', 'del', 'patch', 'delete']
+					const methods = ['get', 'post', 'put', 'patch', 'delete']
 					for (const method of methods) {
 						const exportName = method
 						if (typeof mod[exportName] === 'function') {
-							const upperMethod =
-								method === 'del' || method === 'delete' ? 'DELETE' : method.toUpperCase()
+							const upperMethod = method === 'delete' ? 'DELETE' : method.toUpperCase()
 							handlers[upperMethod] = mod[exportName]
 						}
 					}
@@ -479,13 +477,12 @@ export async function buildRouteTree(
 					try {
 						const mod = await importFn(entryPath)
 						const handlers: Record<string, RouteHandler> = {}
-						const methods = ['get', 'post', 'put', 'del', 'patch', 'delete'] // include delete alias
+						const methods = ['get', 'post', 'put', 'patch', 'delete']
 						for (const method of methods) {
 							// exports can be 'get', 'GET', etc.
 							const exportName = method
 							if (typeof mod[exportName] === 'function') {
-								const upperMethod =
-									method === 'del' || method === 'delete' ? 'DELETE' : method.toUpperCase()
+								const upperMethod = method === 'delete' ? 'DELETE' : method.toUpperCase()
 								handlers[upperMethod] = mod[exportName]
 							}
 						}
@@ -530,12 +527,11 @@ export async function buildRouteTree(
 
 						if (entry.name.endsWith('.ts')) {
 							const handlers: Record<string, RouteHandler> = {}
-							const methods = ['get', 'post', 'put', 'del', 'patch', 'delete']
+							const methods = ['get', 'post', 'put', 'patch', 'delete']
 							for (const method of methods) {
 								const exportName = method
 								if (typeof mod[exportName] === 'function') {
-									const upperMethod =
-										method === 'del' || method === 'delete' ? 'DELETE' : method.toUpperCase()
+									const upperMethod = method === 'delete' ? 'DELETE' : method.toUpperCase()
 									handlers[upperMethod] = mod[exportName]
 								}
 							}

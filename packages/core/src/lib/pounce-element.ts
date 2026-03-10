@@ -1,6 +1,7 @@
 import {
 	addUnreactiveProps,
 	attend,
+	CompareSymbol,
 	effect,
 	formatCleanupReason,
 	link,
@@ -44,6 +45,16 @@ export type Env<T = any> = Record<PropertyKey, T>
  */
 @unreactive
 export class PounceElement {
+	[CompareSymbol](other: unknown, deepCompare: (a: any, b: any) => boolean): boolean {
+		if (!(other instanceof PounceElement)) return false
+		if (this.tag !== other.tag) return false
+		if (this.isReactivityLeaf !== other.isReactivityLeaf) return false
+		if (this.isSingleNode !== other.isSingleNode) return false
+
+		// Compare meta (props) deeply
+		return deepCompare(this.meta, other.meta)
+	}
+
 	// Core properties
 	static text(retrieve: () => string | number) {
 		return new PounceElement(

@@ -16,10 +16,14 @@ const created = await api('/api/users').post<User>({ name: 'Alice' })
 // With path params (type-inferred from URL)
 const user = await api('/api/users/[id]').get<User>({ id: '42' })
 
-// With typed route definitions
+// With callable endpoints (recommended)
 import { defineRoute } from '@pounce/kit'
-const userRoute = defineRoute('/api/users/[id]')
-const user = await api(userRoute, { id: '42' }).get<User>()
+const users = {
+  byId: defineRoute('/api/users/[id]'),
+  list: defineRoute('/api/users'),
+}
+const user = await users.byId({ id: '42' }).get<User>()
+const all = await users.list().get<User[]>()
 
 // Warm a GET before it is needed
 await api('/api/users/[id]').prefetch<User>({ id: '42' })

@@ -16,7 +16,6 @@ import {
 	setResponseHook,
 	setStreamGuardHook,
 } from '@pounce/kit'
-import type { z } from 'zod'
 import { clearSSRData as clearSSRState, getSSRData, getSSRId, injectSSRData } from '../ssr/utils.js'
 import type { ExtractPathParams } from '../types/inference.js'
 import {
@@ -33,7 +32,6 @@ declare global {
 }
 
 import { addContextInterceptor, getContext } from '../http/context.js'
-import type { RouteDefinition } from '../router/defs.js'
 
 export interface ApiClientInstance<P extends string = string> {
 	get: <T>(
@@ -43,7 +41,7 @@ export interface ApiClientInstance<P extends string = string> {
 	) => HydratedPromise<T>
 	post: <T>(body: unknown) => Promise<T>
 	put: <T>(body: unknown) => Promise<T>
-	del: <T>(
+	delete: <T>(
 		...params: keyof ExtractPathParams<P> extends never
 			? [params?: Record<string, string>]
 			: [params: ExtractPathParams<P>]
@@ -245,9 +243,7 @@ async function dispatchWithTimeout(request: Request, timeout: number): Promise<R
 }
 
 function resolveInputUrl<P extends string>(
-	input: P | URL | RouteDefinition<P, any> | ApiClientInstance<P> | object,
-	paramsOrOptions: unknown = {},
-	maybeOptions: unknown = {}
+	input: P | URL | ApiClientInstance<P> | object
 ): URL | null {
 	const ctx = getContext()
 	const origin =
@@ -272,11 +268,6 @@ function resolveInputUrl<P extends string>(
 		return new URL(`/${inputStr}`, origin)
 	}
 
-	if (typeof input === 'object' && input !== null && 'buildUrl' in input) {
-		const routeDef = input as RouteDefinition<P, any>
-		return buildUrlObj(routeDef.buildUrl(paramsOrOptions))
-	}
-
 	if (typeof input === 'object' && input !== null && !(input instanceof URL)) {
 		return null
 	}
@@ -289,13 +280,12 @@ function resolveInputUrl<P extends string>(
 		return new URL(input)
 	}
 
-	void maybeOptions
 	return null
 }
 
 function withQuery<P extends string>(
 	baseUrl: URL,
-	template: P | URL | RouteDefinition<P, any> | ApiClientInstance<P> | object,
+	template: P | URL | ApiClientInstance<P> | object,
 	params?: Record<string, string>
 ): URL {
 	const currentUrl = new URL(baseUrl)
@@ -377,36 +367,23 @@ type ClientOptions = {
 }
 
 function createWrappedInstance<P extends string>(
-	input: P | URL | RouteDefinition<P, any> | ApiClientInstance<P>,
-	paramsOrOptions: unknown,
-	maybeOptions: unknown
+	input: P | URL | ApiClientInstance<P>,
+	paramsOrOptions: unknown
 ): ApiClientInstance<P> {
-	// Plain objects that are neither RouteDefinition nor URL are passed through as-is (e.g. proxy objects)
-	if (
-		typeof input === 'object' &&
-		input !== null &&
-		!(input instanceof URL) &&
-		!('buildUrl' in input)
-	) {
+	// Plain objects that are neither URL are passed through as-is (e.g. proxy objects)
+	if (typeof input === 'object' && input !== null && !(input instanceof URL)) {
 		return input as unknown as ApiClientInstance<P>
 	}
-	const baseUrl = resolveInputUrl(input, paramsOrOptions, maybeOptions)
-	const instance: KitApiClientInstance<P> =
-		typeof input === 'object' && input !== null && 'buildUrl' in input
-			? (boardKitApi(
-					input as RouteDefinition<P, any>,
-					paramsOrOptions,
-					maybeOptions as ClientOptions | undefined
-				) as KitApiClientInstance<P>)
-			: (boardKitApi(
-					input as P | URL | object,
-					paramsOrOptions as ClientOptions | undefined
-				) as KitApiClientInstance<P>)
+	const baseUrl = resolveInputUrl(input)
+	const instance: KitApiClientInstance<P> = boardKitApi(
+		input as P | URL | object,
+		paramsOrOptions as ClientOptions | undefined
+	) as KitApiClientInstance<P>
 	return wrapInstance(input, instance as KitApiClientInstance<P>, baseUrl)
 }
 
 function wrapInstance<P extends string>(
-	input: P | URL | RouteDefinition<P, any> | ApiClientInstance<P> | object,
+	input: P | URL | ApiClientInstance<P> | object,
 	instance: KitApiClientInstance<P>,
 	baseUrl: URL | null
 ): ApiClientInstance<P> {
@@ -430,13 +407,13 @@ function wrapInstance<P extends string>(
 		put<T>(body: unknown): Promise<T> {
 			return instance.put<T>(body)
 		},
-		del<T>(
+		delete<T>(
 			...args: keyof ExtractPathParams<P> extends never
 				? [params?: Record<string, string>]
 				: [params: ExtractPathParams<P>]
 		): Promise<T> {
 			const params = args[0] as Record<string, string> | undefined
-			return instance.del<T>(params)
+			return instance.delete<T>(params)
 		},
 		patch<T>(body: unknown): Promise<T> {
 			return instance.patch<T>(body)
@@ -445,11 +422,10 @@ function wrapInstance<P extends string>(
 }
 
 function apiClient<P extends string>(
-	input: P | URL | RouteDefinition<P, any> | ApiClientInstance<P>,
-	paramsOrOptions: any = {},
-	maybeOptions: any = {}
+	input: P | URL | ApiClientInstance<P>,
+	paramsOrOptions: any = {}
 ): ApiClientInstance<P> {
-	return createWrappedInstance(input, paramsOrOptions, maybeOptions)
+	return createWrappedInstance(input, paramsOrOptions)
 }
 
 /**
@@ -461,7 +437,7 @@ function apiClient<P extends string>(
 export const api = new Proxy(apiClient, {
 	get(target, prop, receiver) {
 		if (prop in target) return Reflect.get(target, prop, receiver)
-		const methods = ['get', 'post', 'put', 'del', 'patch']
+		const methods = ['get', 'post', 'put', 'delete', 'patch']
 		if (typeof prop === 'string' && methods.includes(prop)) {
 			const currentPath = typeof window !== 'undefined' ? window.location.href : '.'
 			return Reflect.get(target(currentPath), prop)
@@ -483,18 +459,10 @@ export function clearInterceptors(): void {
 
 export type { InterceptorMiddleware }
 
-export interface ApiClient {
-	<P extends string>(
-		input: P | URL | object,
-		options?: { timeout?: number; retries?: number; retryDelay?: number }
-	): ApiClientInstance<P>
-
-	<P extends string, Q extends z.ZodType>(
-		routeDef: RouteDefinition<P, Q>,
-		params: any,
-		options?: { timeout?: number; retries?: number; retryDelay?: number }
-	): ApiClientInstance<string>
-}
+export type ApiClient = <P extends string>(
+	input: P | URL | object,
+	options?: { timeout?: number; retries?: number; retryDelay?: number }
+) => ApiClientInstance<P>
 
 /**
  * Direct method exports for current route ("server pendant")
@@ -513,9 +481,11 @@ export function put<T>(body: unknown): Promise<T> {
 	return api.put<T>(body)
 }
 
-export function del<T>(params?: Record<string, string>): Promise<T> {
-	return api.del<T>(params)
+function deleteRequest<T>(params?: Record<string, string>): Promise<T> {
+	return api.delete<T>(params)
 }
+
+export { deleteRequest as delete }
 
 export function patch<T>(body: unknown): Promise<T> {
 	return api.patch<T>(body)

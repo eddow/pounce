@@ -5,10 +5,20 @@ The universal `api()` client in `@pounce/board` handles local SSR dispatch, hydr
 ## Basic usage
 
 ```ts
-import { api } from '@pounce/board'
+import { api, defineRoute } from '@pounce/board'
 
+// Inline paths — quick one-off calls
 const post = await api('/posts/[id]').get<{ id: string; title: string }>({ id: '1' })
 const created = await api('/posts').post<{ id: string }>({ title: 'Hello' })
+
+// Callable endpoints — reusable and type-safe
+const posts = {
+  byId: defineRoute('/posts/[id]'),
+  list: defineRoute('/posts'),
+}
+
+const samePost = await posts.byId({ id: '1' }).get<{ id: string; title: string }>()
+const allPosts = await posts.list().get<{ id: string; title: string }[]>()
 ```
 
 ## Supported inputs
@@ -21,8 +31,6 @@ const created = await api('/posts').post<{ id: string }>({ title: 'Hello' })
   - `api('./stats')`
 - an absolute URL
   - `api('https://example.com/api/posts')`
-- a route definition
-  - `api(postsRoute, { id: '1' })`
 
 The package also exposes direct methods bound to the current route:
 

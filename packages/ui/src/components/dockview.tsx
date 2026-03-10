@@ -4,13 +4,16 @@ import {
 	type DockviewGroupPanel,
 	type DockviewOptions,
 	type DockviewPanelApi,
+	type DockviewTheme,
 	type GroupPanelPartInitParameters,
 	type IContentRenderer,
 	type SerializedDockview,
+	themeDracula,
+	themeLight,
 } from 'dockview-core'
 import 'dockview-core/dist/styles/dockview.css'
 import { extend, fromAttribute, latch, ReactiveProp } from '@pounce/core'
-import { componentStyle } from '@pounce/kit'
+import { componentStyle, useDisplayContext } from '@pounce/kit'
 import {
 	biDi,
 	caught,
@@ -317,15 +320,23 @@ export const Dockview = (
 		headerPrefix?: DockviewHeaderAction
 		el?: JSX.GlobalHTMLAttributes
 		options?: DockviewOptions
+		themeSync?:
+			| boolean
+			| {
+					light?: DockviewTheme
+					dark?: DockviewTheme
+			  }
 		layout?: SerializedDockview
 	},
 	scope: Record<string, any>
 ) => {
 	const contexts = new Map<string, Record<PropertyKey, any>>()
 	let dockviewApi: DockviewApi | undefined
+	const display = useDisplayContext(scope as any)
 
 	// Capture layout binding from the raw composite attributes (component body — runs once)
 	const attributes = (props as any)[fromAttribute]
+	const apiBinding = attributes?.getSingle('api')
 	const layoutBinding = attributes?.getSingle('layout')
 
 	// Snapshot props in the component body (outside any attend effect)
@@ -401,6 +412,11 @@ export const Dockview = (
 				logDockview(debugLabel, 'init:scope-api-set')
 			}
 		} catch (_e) {}
+		if (apiBinding instanceof ReactiveProp && apiBinding.set) {
+			apiBinding.set(api)
+		} else if ('api' in props) {
+			props.api = api
+		}
 		// Set up reactive bindings in root() — detached from the attend:use
 		// effect chain so reactive prop reads don't tear down initDockview.
 		// Panel renderers use `spawn` to create child effects under this root,
@@ -478,8 +494,23 @@ export const Dockview = (
 			const emptyOptions: Record<string, any> = {}
 			cleanups.push(
 				effect(() => {
-					api.updateOptions(props.options ? { ...emptyOptions, ...props.options } : emptyOptions)
+					const themeSync = props.themeSync ?? true
+					const mappedTheme =
+						display.theme === 'dark'
+							? themeSync && typeof themeSync === 'object' && themeSync.dark
+								? themeSync.dark
+								: themeDracula
+							: themeSync && typeof themeSync === 'object' && themeSync.light
+								? themeSync.light
+								: themeLight
+					const nextOptions = props.options
+						? { ...emptyOptions, ...props.options }
+						: { ...emptyOptions }
+					if (themeSync !== false) nextOptions.theme = props.options?.theme ?? mappedTheme
+					else nextOptions.theme = props.options?.theme
+					api.updateOptions(nextOptions)
 					if (props.options) for (const k of Object.keys(props.options)) emptyOptions[k] = undefined
+					emptyOptions.theme = undefined
 				})
 			)
 			cleanups.push(
@@ -519,6 +550,11 @@ export const Dockview = (
 			})
 			stopBindings?.()
 			api.dispose()
+			if (apiBinding instanceof ReactiveProp && apiBinding.set) {
+				apiBinding.set(undefined)
+			} else if ('api' in props) {
+				props.api = undefined
+			}
 			dockviewApi = undefined
 		}
 	}

@@ -1,4 +1,4 @@
-import { reactive } from 'mutts'
+// File: packages/core/src/shared.ts
 
 const _g = globalThis as any
 export let window: Window = _g.window
@@ -33,4 +33,4 @@ export const setPlatformAPIs = (
 
 export let entryPoint = 'non-initialized'
 
-export const mountedNodes = reactive(new WeakSet<Node>())
+export const mountedNodes = new WeakSet<Node>()

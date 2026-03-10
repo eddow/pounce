@@ -43,6 +43,7 @@ export {
 // Proxy
 export { defineProxy, type ProxyConfig, type ProxyEndpointConfig } from '../lib/http/proxy.js'
 export { defineRoute, type RouteDefinition } from '../lib/router/defs.js'
+export { expose } from '../lib/router/expose.js'
 // Router
 export {
 	buildRouteTree,

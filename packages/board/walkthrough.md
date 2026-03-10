@@ -440,7 +440,7 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 - [x] Implement `.get<T>(params?)`
 - [x] Implement `.post<T>(body)`
 - [x] Implement `.put<T>(body)`
-- [x] Implement `.del<T>(params?)`
+- [x] Implement `.delete<T>(params?)`
 - [x] Implement `.patch<T>(body)`
 
 ### 3.3 SSR Awareness
@@ -736,7 +736,7 @@ export default defineConfig({
 #### `lib/http/client.spec.ts`
 - [x] Test `api(".")` relative path resolution
 - [x] Test `api("/abs")` absolute path handling
-- [x] Test `.get()`, `.post()`, `.put()`, `.del()`, `.patch()` methods
+- [x] Test `.get()`, `.post()`, `.put()`, `.delete()`, `.patch()` methods
 - [x] Test SSR mode returns cached data
 - [x] Test client mode fetches from network
 - [x] Test error response typing

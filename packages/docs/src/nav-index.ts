@@ -6,6 +6,7 @@ export interface NavLink {
 export interface NavSection {
 	title: string
 	links: NavLink[]
+	collapsible?: boolean
 }
 
 export const navigation: NavSection[] = [
@@ -18,6 +19,7 @@ export const navigation: NavSection[] = [
 	},
 	{
 		title: '@pounce/core',
+		collapsible: true,
 		links: [
 			{ title: 'Overview', href: '/core' },
 			{ title: 'JSX Factory', href: '/core/jsx' },
@@ -31,6 +33,7 @@ export const navigation: NavSection[] = [
 	},
 	{
 		title: '@pounce/kit',
+		collapsible: true,
 		links: [
 			{ title: 'Overview', href: '/kit' },
 			{ title: 'Router', href: '/kit/router' },
@@ -43,6 +46,7 @@ export const navigation: NavSection[] = [
 	},
 	{
 		title: '@pounce/ui',
+		collapsible: true,
 		links: [
 			{ title: 'Overview', href: '/ui' },
 			{ title: 'Button', href: '/ui/button' },
@@ -65,6 +69,7 @@ export const navigation: NavSection[] = [
 	},
 	{
 		title: 'Adapters',
+		collapsible: true,
 		links: [
 			{ title: 'Overview', href: '/adapters' },
 			{ title: 'PicoCSS', href: '/adapters/pico' },
@@ -73,6 +78,7 @@ export const navigation: NavSection[] = [
 	},
 	{
 		title: '@pounce/board',
+		collapsible: true,
 		links: [
 			{ title: 'Overview', href: '/board' },
 			{ title: 'Routing', href: '/board/routing' },

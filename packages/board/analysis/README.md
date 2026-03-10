@@ -30,16 +30,16 @@ npm install pounce-board
 ### 3. Define a Route
 ```ts
 // routes/users/[id]/index.ts
-import type { GetRequest } from "pounce/http";
-import { middleware } from "./common";
+import { expose } from '@pounce/board/server'
 
-export async function get({ params, context }: GetRequest<{ id: string }>) {
-  // context.user is available due to middleware
-  return {
-	status: 200,
-	data: { id: params.id, name: "John Doe" }
-  };
-}
+export default expose<{ id: string }>({
+	get: async ({ params }) => {
+		return {
+			status: 200,
+			data: { id: params.id, name: 'John Doe' },
+		}
+	},
+})
 ```
 
 ### 4. Add Middleware

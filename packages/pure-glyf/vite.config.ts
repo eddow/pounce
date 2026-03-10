@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path';
 import { pounceCorePlugin } from '@pounce/core/plugin';
 
 const isWatch = process.argv.includes('--watch');
+const pounceDts = "export declare function registerGlyfIconFactory(): void;\n";
 
 function ensureStableTypeEntrypoints() {
   const distDir = resolve(import.meta.dirname, 'dist');
@@ -13,7 +14,7 @@ function ensureStableTypeEntrypoints() {
     ['plugin.d.ts', "export * from '../src/plugin'\n"],
     ['inject.d.ts', "export * from '../src/inject'\n"],
     ['generator.d.ts', "export * from '../src/generator'\n"],
-    ['pounce.d.ts', "export * from '../src/pounce'\n"],
+    ['pounce.d.ts', pounceDts],
   ];
   return {
     name: 'ensure-stable-type-entrypoints',
@@ -30,9 +31,10 @@ function ensureStableTypeEntrypoints() {
 
 export default defineConfig({
   plugins: [
-    ...(isWatch ? [ensureStableTypeEntrypoints()] : []),
+    ensureStableTypeEntrypoints(),
     pounceCorePlugin(),
     dts({
+      exclude: ['src/pounce.tsx'],
       insertTypesEntry: true,
       beforeWriteFile(filePath, content) {
         return {
@@ -41,6 +43,10 @@ export default defineConfig({
             .replace(/from\s+['"]\.\.[\/\w.-]*\/ui\/dist[\/\w.-]*['"]/g, "from '@pounce/ui'")
             .replace(/from\s+['"]\.\.[\/\w.-]*\/core\/dist[\/\w.-]*['"]/g, "from '@pounce/core'")
         }
+      },
+      afterBuild() {
+        const pounceDtsPath = resolve(import.meta.dirname, 'dist/pounce.d.ts');
+        writeFileSync(pounceDtsPath, pounceDts);
       }
     })
   ],

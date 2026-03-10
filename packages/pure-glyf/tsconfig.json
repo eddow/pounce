@@ -19,7 +19,7 @@
 		"paths": {
 			"@pounce/core": ["../core/dist/jsx.d.ts"],
 			"@pounce/core/*": ["../core/dist/*"],
-			"@pounce/ui": ["../ui/dist/index.d.ts"]
+			"@pounce/ui": ["./types/pounce-ui.d.ts"]
 		},
 		"declaration": true,
 		"declarationDir": "./dist",

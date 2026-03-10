@@ -46,6 +46,8 @@ function Nav(_p: {}, env: any) {
     <nav>
       <a href="/edit" when:hasRights="edit">Edit</a>
       <a href="/view" when:hasRights="view">View</a>
+      {/* else shows if no when: conditions matched */}
+      <span else>No access</span>
     </nav>
   )
 }`
@@ -63,6 +65,7 @@ function App() {
 
 // Namespaced syntax for env-based directives:
 // <div use:resize={sizeCallback} />
+// <input use:focus />          // defaults to true
 // <input use:value={state.val} update:value={(v) => state.val = v} />`
 
 const pickNameMeta = `// Oracle-based selection: env.maxSize(availableOptions) picks what to render
@@ -75,8 +78,19 @@ function ResponsiveImage(_p: {}, env: any) {
       .find((s) => s >= size.width)
   }
 
+  env.resize = (element: HTMLElement, value: any, access: any) => {
+    // Handle resize events for the element
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        size.width = entry.contentRect.width
+      }
+    })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }
+
   return (
-    <div use:resize={(s) => size.width = s.width}>
+    <div use:resize={true}>
       <img src="/img-400.webp"  pick:maxSize={400}  />
       <img src="/img-800.webp"  pick:maxSize={800}  />
       <img src="/img-1600.webp" pick:maxSize={Infinity} />
@@ -103,9 +117,10 @@ export default function MetaAttributesPage() {
 
 			<Section title="if / else">
 				<p>
-					<code>if</code> conditionally renders an element based on a reactive expression. The
-					element is created/destroyed in the DOM as the condition changes. Use an adjacent{' '}
-					<code>else</code> for fallback rendering.
+					<code>if</code> conditionally renders an element based on a <strong>reactive</strong>{' '}
+					expression. The element is created/destroyed in the DOM as the condition changes. Use an
+					adjacent <code>else</code> for fallback rendering. The <code>else</code> executes if no
+					preceding <code>if</code> or <code>when</code> conditions have been satisfied.
 				</p>
 				<Code code={ifElseMeta} lang="tsx" />
 			</Section>
@@ -115,7 +130,9 @@ export default function MetaAttributesPage() {
 					<code>if:some-path={'{value}'}</code> renders the element only if the value at{' '}
 					<code>some-path</code> in <code>env</code> matches. It supports dash-separated paths
 					(e.g., <code>if:user-role="admin"</code> resolves to{' '}
-					<code>env.user?.role === "admin"</code>).
+					<code>env.user?.role === "admin"</code>). <strong>Important:</strong> The env lookup is{' '}
+					<strong>not reactive</strong> - changes to env properties won't trigger re-renders. Use{' '}
+					<code>if={}</code> (without namespace) for reactive conditions.
 				</p>
 				<Code code={ifNameMeta} lang="tsx" />
 			</Section>
@@ -136,7 +153,8 @@ export default function MetaAttributesPage() {
 					function at <code>path</code> in <code>env</code>{' '}
 					<strong>WITHIN a reactive effect</strong>. The mixin receives{' '}
 					<code>(target, value, access)</code> and can return an <code>EffectCloser</code> for
-					cleanup. <code>update:path</code> provides a two-way binding callback for these mixins.
+					cleanup. Boolean attributes without values default to <code>true</code>.{' '}
+					<code>update:path</code> provides a two-way binding callback for these mixins.
 				</p>
 				<Code code={useMeta} lang="tsx" />
 			</Section>

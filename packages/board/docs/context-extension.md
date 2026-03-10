@@ -44,9 +44,9 @@ export const withAuth: Middleware = async (ctx, next) => {
 ## Example: using extended context in a handler
 
 ```ts
-import type { RouteHandler } from '@pounce/board/server'
+import { expose, type RouteHandler } from '@pounce/board/server'
 
-export const getProfile: RouteHandler = async (ctx) => {
+const getProfile: RouteHandler = async (ctx) => {
 	if (!ctx.user) {
 		return Response.json({ error: 'Unauthorized' }, { status: 401 })
 	}
@@ -56,6 +56,10 @@ export const getProfile: RouteHandler = async (ctx) => {
 		role: ctx.user.role,
 	})
 }
+
+export default expose({
+	get: getProfile,
+})
 ```
 
 ## Multiple middleware layers

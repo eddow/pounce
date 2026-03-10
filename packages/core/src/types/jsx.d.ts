@@ -62,6 +62,36 @@ declare global {
 		}
 		type ElementType = string | ((props: any, ...args: any[]) => any)
 
+		type UnionToIntersection<U> = (U extends any ? (value: U) => void : never) extends (
+			value: infer I
+		) => void
+			? I
+			: never
+
+		type Simplify<T> = { [K in keyof T]: T[K] }
+
+		type PlainObject<T> = T extends readonly any[]
+			? never
+			: T extends Record<string, any>
+				? T extends (...args: any[]) => any
+					? never
+					: T extends (...args: any[]) => any
+						? never
+						: T
+				: never
+
+		type OptionalObjectProps<Props> = {
+			[K in Extract<keyof Props, string> as undefined extends Props[K]
+				? PlainObject<NonNullable<Props[K]>> extends never
+					? never
+					: K
+				: never]: NonNullable<Props[K]>
+		}
+
+		type NamespacedProps<Props> = {
+			[K in keyof OptionalObjectProps<Props> & string as `${K}:${string}`]?: any
+		}
+
 		type ExtractComponentProps<C, Props> = C extends { props: infer ExplicitProps }
 			? ExplicitProps
 			: C extends (props: infer InferredProps, ...args: any[]) => any
@@ -69,7 +99,8 @@ declare global {
 				: Props
 
 		type LibraryManagedAttributes<Component, Props> = ComponentIntrinsicAttributes<Component> &
-			Props
+			Props &
+			NamespacedProps<Props>
 
 		type RenderOutput<T> = T extends JSX.Element ? ReturnType<T['render']> : T
 

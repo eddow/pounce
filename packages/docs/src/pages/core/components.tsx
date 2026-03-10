@@ -32,19 +32,20 @@ class PounceElement {
 
 const lifecycleExample = `function AutoFocus() {
   return (
-    <input
-      use:focus={(el: HTMLInputElement) => {
-        // Called after the element is mounted in the DOM.
-        el.focus()
-
-        // Return a cleanup function (optional)
-        return () => console.log('input removed')
-      }}
-    />
+    <input use:focus />
   )
 }
 
-// use= (without namespace) receives the raw element:
+// Named use: directives receive (element, value, access)
+// The directive function is resolved from the environment (env.focus)
+// Boolean attributes without values default to true
+function CustomDirective() {
+  return (
+    <div use:custom={{ option: 'value' }} />
+  )
+}
+
+// Plain use= (without namespace) receives the raw element:
 function MeasureSize() {
   let div: HTMLDivElement
   return (
@@ -116,11 +117,12 @@ export default function ComponentsPage() {
 				<Code code={renderOnce} lang="tsx" />
 			</Section>
 
-			<Section title="Lifecycle: use= and mount">
+			<Section title="Lifecycle: use= and use: directives">
 				<p>
-					The <code>use:</code> directive (or plain <code>use=</code>) registers a callback that
-					runs after the element is mounted in the DOM. Return a cleanup function to run when the
-					element is removed.
+					The <code>use:</code> directive (namespace) registers a named directive that's resolved
+					from the environment and called with <code>(element, value, access)</code>. Boolean
+					attributes without values default to <code>true</code>. The plain <code>use=</code>{' '}
+					directive (without namespace) receives the raw element directly.
 				</p>
 				<Code code={lifecycleExample} lang="tsx" />
 			</Section>

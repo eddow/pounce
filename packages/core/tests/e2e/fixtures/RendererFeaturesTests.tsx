@@ -4,6 +4,11 @@ import type { Env } from '@pounce/core'
 
 type Role = 'guest' | 'member' | 'admin'
 
+type IconLikeProps = {
+	name: string
+	el?: JSX.GlobalHTMLAttributes
+}
+
 function FancyDynamicComponent(
 	props: {
 		class?: string
@@ -307,13 +312,23 @@ type OptionalNamespacedProps = JSX.LibraryManagedAttributes<
 >
 type AssertTrue<T extends true> = T
 
+type IconLikeNamespacedProps = JSX.LibraryManagedAttributes<
+	(_: IconLikeProps) => JSX.Element,
+	IconLikeProps
+>
+
 type RequiredNamespacedProps = JSX.LibraryManagedAttributes<
 	typeof ListItem,
 	{ item: { id: number; label: string } }
 >
 // biome-ignore lint/suspicious/noUnusedIdentifiers -- compile-time namespace type assertions
 type _NamespacedTypeAssertions = [
-	AssertTrue<Extract<keyof OptionalNamespacedProps, `config:${string}`> extends never ? true : false>,
+	OptionalNamespacedProps['config:heading'],
+	OptionalNamespacedProps['config:count'],
+	IconLikeNamespacedProps['el:title'],
+	IconLikeNamespacedProps['el:class'],
+	IconLikeNamespacedProps['el:aria-hidden'],
+	AssertTrue<Extract<keyof OptionalNamespacedProps, `config:${string}`> extends never ? false : true>,
 	OptionalNamespacedProps['config'],
 	AssertTrue<Extract<keyof RequiredNamespacedProps, `item:${string}`> extends never ? true : false>,
 ]

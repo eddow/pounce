@@ -1,10 +1,12 @@
 export * from './base-client'
 export * from './context'
 export * from './core'
+export * from './defs'
 export * from './inference'
 export * from './response'
 
 import { createApiClientFactory } from './base-client'
+import { _registerApi } from './defs'
 
 export const api = createApiClientFactory(async (req: Request, timeout: number) => {
 	const controller = new AbortController()
@@ -18,3 +20,5 @@ export const api = createApiClientFactory(async (req: Request, timeout: number) 
 		clearTimeout(id)
 	}
 })
+
+_registerApi(api)

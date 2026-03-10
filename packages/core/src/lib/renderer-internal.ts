@@ -117,6 +117,17 @@ export function applyStyleProperties(element: Element, computedStyles: Record<st
 	}
 }
 
+function setElementClass(element: Element, cls: string) {
+	if (element instanceof SVGElement) {
+		element.setAttribute('class', cls)
+		return () => element.removeAttribute('class')
+	}
+	;(element as HTMLElement).className = cls
+	return () => {
+		;(element as HTMLElement).className = ''
+	}
+}
+
 function attachAttributeValue(
 	element: Element,
 	key: string,
@@ -134,8 +145,7 @@ function attachAttributeValue(
 	if (key === 'class') {
 		const cls = classNames(value)
 		if (!cls) return
-		element.className = cls
-		return () => (element.className = '')
+		return setElementClass(element, cls)
 	}
 
 	// 3. Style

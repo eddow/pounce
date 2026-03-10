@@ -1,12 +1,24 @@
 import { ApiTable, Code, PackageHeader, Section } from '../../components'
 
 const factorySnippet = `// Browser — auto-configured with fetch
-import { api } from '@pounce'
+import { api, defineRoute } from '@pounce'
 
-// Simple GET with path params
-const user = await api('/users/:id', { id: '123' }).get()
+// Inline — quick one-off calls
+const user = await api('/users/[id]').get({ id: '123' })
 
-// POST with body
+// Reusable callable endpoints (recommended)
+const users = {
+  byId:  defineRoute('/users/[id]'),
+  list:  defineRoute('/users', {
+    assert: (p: { page?: number }) => ({ page: String(p.page ?? 1) })
+  }),
+}
+
+const alice = await users.byId({ id: '123' }).get()
+const page2 = await users.list({ page: 2 }).get()
+await users.byId({ id: '123' }).delete()
+
+// POST with body (path only, no params)
 const created = await api('/users').post({ name: 'Alice' })`
 
 const interceptorSnippet = `import { intercept } from '@pounce'
@@ -52,6 +64,38 @@ export default function KitApiPage() {
 				<Code code={factorySnippet} lang="tsx" />
 			</Section>
 
+			<Section title="Two Patterns">
+				<p>You can use the API client in two ways:</p>
+				<ul>
+					<li>
+						<strong>Inline paths</strong> — quick one-off calls with <code>api('/path')</code>
+					</li>
+					<li>
+						<strong>Callable endpoints</strong> — reusable, type-safe routes with{' '}
+						<code>defineRoute</code>
+					</li>
+				</ul>
+				<Code
+					code={`
+// Inline — good for one-off calls
+const user = await api('/users/[id]').get({ id: '123' })
+
+// Callable endpoints — reusable and type-safe
+const users = {
+  byId: defineRoute('/users/[id]'),
+  list: defineRoute('/users', {
+    assert: (p: { page?: number }) => ({ page: String(p.page ?? 1) })
+  }),
+}
+
+const alice = await users.byId({ id: '123' }).get()
+const page2 = await users.list({ page: 2 }).get()
+await users.byId({ id: '123' }).delete()
+				`}
+					lang="tsx"
+				/>
+			</Section>
+
 			<Section title="Interceptors">
 				<p>
 					Interceptors allow you to transform requests and responses globaly or within a specific
@@ -73,10 +117,16 @@ export default function KitApiPage() {
 				<ApiTable
 					props={[
 						{
-							name: 'api(path, params?)',
+							name: 'api(path)',
 							type: 'function',
 							description:
-								'Creates a request builder. Call .get(), .post(body), .put(body), .delete() on the result.',
+								'Creates a request builder for a path string. Call .get(params?), .post(body), .put(body), .delete(params?), .patch(body) on the result.',
+						},
+						{
+							name: 'defineRoute(path, schema?)',
+							type: 'function',
+							description:
+								'Returns a callable endpoint: call it with params to get a request builder directly. Optionally validates query params via schema.assert().',
 						},
 						{
 							name: 'intercept(pattern, handler)',

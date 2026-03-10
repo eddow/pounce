@@ -99,7 +99,12 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
 				// API routes require an EXACT match (no leftover unusedPath)
 				if (match && (!match.unusedPath || match.unusedPath === '/')) {
 					apiHandled = true
-					const pounceReq: PounceRequest = { params: match.params, url, raw: c.req.raw }
+					const pounceReq: PounceRequest = {
+						params: match.params,
+						url,
+						raw: c.req.raw,
+						request: c.req.raw,
+					}
 
 					let finalHandler: ((req: PounceRequest) => any) | null = null
 

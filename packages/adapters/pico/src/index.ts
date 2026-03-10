@@ -4,9 +4,11 @@
  * Usage:
  * ```tsx
  * import { Button, Card, Modal } from '@pounce/adapter-pico'
- * import '@pounce/adapter-pico/css'
  * ```
  */
+
+// Import PicoCSS base styles as a side effect
+import '@picocss/pico/css/pico.min.css'
 
 // Export all components
 export * from './components'

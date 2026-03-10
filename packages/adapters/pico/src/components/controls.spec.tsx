@@ -1,4 +1,5 @@
 import { document, latch } from '@pounce/core'
+import { reactive } from 'mutts'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
 	CheckboxFixture,
@@ -6,6 +7,7 @@ import {
 	RadioFixture,
 	SwitchFixture,
 } from '../../demo/sections/FormControls'
+import { RadioButton } from './radiobutton'
 
 describe('control components', () => {
 	let container: HTMLElement
@@ -46,6 +48,35 @@ describe('control components', () => {
 		expect(input.checked).toBe(true)
 		expect(input.disabled).toBe(true)
 		expect(input.name).toBe('color')
+	})
+
+	it('updates selected styling when RadioButton group is bound directly to reactive state', () => {
+		const state = reactive({ current: 'one' })
+
+		stop = latch(
+			container,
+			<div>
+				<RadioButton value="one" group={state.current} aria-label="One">
+					One
+				</RadioButton>
+				<RadioButton value="two" group={state.current} aria-label="Two">
+					Two
+				</RadioButton>
+			</div>
+		)
+
+		const buttons = container.querySelectorAll('button')
+		const first = buttons[0] as HTMLButtonElement
+		const second = buttons[1] as HTMLButtonElement
+
+		expect(first.className).not.toContain('outline')
+		expect(second.className).toContain('outline')
+
+		second.click()
+
+		expect(state.current).toBe('two')
+		expect(first.className).toContain('outline')
+		expect(second.className).not.toContain('outline')
 	})
 
 	it('keeps model-owned progress attributes over passthrough element props', () => {

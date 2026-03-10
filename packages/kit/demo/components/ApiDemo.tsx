@@ -1,6 +1,6 @@
 import { reactive, resource } from 'mutts'
 import { ApiError } from '../../src/api/core'
-import { api, intercept } from '../../src/api'
+import { api, defineRoute, intercept } from '../../src/api'
 import { componentStyle } from '../../src/css'
 
 type Post = { id: number; title: string; body: string; userId: number }
@@ -23,17 +23,22 @@ const state = reactive({
 	userId: 1,
 })
 
-// Define a base entry point
+// Inline paths — quick one-off calls
 const postsApi = api('https://jsonplaceholder.typicode.com/posts')
-// Entry point with path params
 const postDetailApi = api('https://jsonplaceholder.typicode.com/posts/[id]')
 
+// Callable endpoints — reusable and type-safe
+const posts = {
+  list: defineRoute('https://jsonplaceholder.typicode.com/posts'),
+  byId: defineRoute('https://jsonplaceholder.typicode.com/posts/[id]'),
+}
+
 export default function ApiDemo() {
-	// Showing the resource code using number parameter and cancellation signal
+	// Using inline path with resource
 	const post = resource(({ signal }) => postDetailApi.get({ id: state.postId }, { signal }))
 
-	// Query params demo using a base entry point with numbers
-	const userPosts = resource(({ signal }) => postsApi.get({ userId: state.userId }, { signal }))
+	// Using callable endpoint with resource
+	const userPosts = resource(({ signal }) => posts.list().get({ userId: state.userId }, { signal }))
 
 	function prevPost() {
 		if (state.postId > 0) state.postId--

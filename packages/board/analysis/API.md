@@ -11,7 +11,7 @@ Creates an API client for a specific path or proxy object.
   - `http://` or `https://` = Full external URL
 
 **Returns:**
-An object with HTTP methods: `get`, `post`, `put`, `del`, `patch`
+An object with HTTP methods: `get`, `post`, `put`, `delete`, `patch`
 
 **Examples:**
 ```ts
@@ -32,7 +32,7 @@ Makes a POST request.
 #### `put<T>(body: unknown): Promise<T>`
 Makes a PUT request.
 
-#### `del<T>(params?: Record<string, string>): Promise<T>`
+#### `delete<T>(params?: Record<string, string>): Promise<T>`
 Makes a DELETE request.
 
 #### `patch<T>(body: unknown): Promise<T>`
@@ -71,17 +71,17 @@ Executes a middleware stack.
 
 ## 4. Route Handlers
 ### Handler Functions
-Each HTTP method exports a function:
+HTTP handlers are declared inside `expose()`:
 ```ts
-export async function get({ params, context }: {
-  params: Record<string, string>;
-  context: Record<string, unknown>;
-}) {
-  return {
-    status: number;
-    data?: unknown;
-    error?: string;
-  };
-}
+import { expose } from '@pounce/board/server'
+
+export default expose({
+  get: async ({ params }) => {
+    return {
+      status: 200,
+      data: { id: params.id },
+    }
+  },
+})
 ```
 
