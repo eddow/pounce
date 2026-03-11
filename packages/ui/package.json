@@ -28,6 +28,11 @@
 			"import": "./dist/dockview.js",
 			"default": "./dist/dockview.js"
 		},
+		"./palette": {
+			"types": "./dist/palette.d.ts",
+			"import": "./dist/palette.js",
+			"default": "./dist/palette.js"
+		},
 		"./models": {
 			"types": "./dist/models/index.d.ts",
 			"import": "./dist/models.js",

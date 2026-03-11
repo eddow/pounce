@@ -33,6 +33,7 @@ export default defineConfig({
 				dockview: resolve(__dirname, 'src/dockview.ts'),
 				index: resolve(__dirname, 'src/index.ts'),
 				models: resolve(__dirname, 'src/models/index.ts'),
+				palette: resolve(__dirname, 'src/palette.ts'),
 			},
 			formats: ['es'],
 		},
@@ -54,6 +55,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@pounce/ui/dockview': resolve(__dirname, 'src/dockview.ts'),
+			'@pounce/ui/palette': resolve(__dirname, 'src/palette.ts'),
 			'@pounce/ui': resolve(__dirname, 'src/index.ts'),
 			'@pounce/core': resolve(__dirname, '../core/src/dom/index.ts'),
 			'@pounce/kit/intl': resolve(__dirname, '../kit/src/intl.tsx'),

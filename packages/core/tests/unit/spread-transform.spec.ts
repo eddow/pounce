@@ -85,4 +85,10 @@ describe('spread attribute babel transform', () => {
 		expect(out).toContain('this:mounted=>track(mounted)')
 		expect(out).not.toContain('this:r(')
 	})
+
+	it('keeps member-expression attrs on standard getter/setter ReactiveProp emission', () => {
+		const out = transform(`<div value={state.count} />`)
+		expect(out).toContain('value:_pounce_r(()=>state.count,val=>state.count=val)')
+		expect(out).not.toContain('_pounce_r(state,"count")')
+	})
 })

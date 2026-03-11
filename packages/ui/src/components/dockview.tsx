@@ -166,12 +166,10 @@ function contentRenderer(
 				spawn(() => {
 					caught((error: unknown) => {
 						console.error('[Dockview] Panel error:', panelId, error)
-						queueMicrotask(() => {
-							mountedCleanup?.()
-							mountedCleanup = undefined
-							renderPanelError(element, panelId, error)
-							onPanelError?.(panelId, error, element)
-						})
+						mountedCleanup?.()
+						mountedCleanup = undefined
+						renderPanelError(element, panelId, error)
+						onPanelError?.(panelId, error, element)
 					})
 					mountedCleanup = latch(
 						element,
@@ -218,12 +216,10 @@ function tabRenderer(
 			cleanup = spawn(() => {
 				caught((error: unknown) => {
 					console.error('[Dockview] Tab error:', panelId, error)
-					queueMicrotask(() => {
-						mountedCleanup?.()
-						mountedCleanup = undefined
-						renderPanelError(element, panelId, error)
-						onPanelError?.(panelId, error, element)
-					})
+					mountedCleanup?.()
+					mountedCleanup = undefined
+					renderPanelError(element, panelId, error)
+					onPanelError?.(panelId, error, element)
 				})
 				mountedCleanup = latch(
 					element,
@@ -264,12 +260,10 @@ function headerActionRenderer(
 			cleanup = spawn(() => {
 				caught((error: unknown) => {
 					console.error('[Dockview] Header action error:', group.id, error)
-					queueMicrotask(() => {
-						mountedCleanup?.()
-						mountedCleanup = undefined
-						renderPanelError(element, group.id, error)
-						onPanelError?.(group.id, error, element)
-					})
+					mountedCleanup?.()
+					mountedCleanup = undefined
+					renderPanelError(element, group.id, error)
+					onPanelError?.(group.id, error, element)
 				})
 				mountedCleanup = latch(
 					element,

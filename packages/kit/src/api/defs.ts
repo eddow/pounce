@@ -10,6 +10,14 @@ type QueryParams<Q extends AssertSchema> = Parameters<Q['assert']>[0]
 type AllParams<P extends string, Q extends AssertSchema | undefined> = Q extends AssertSchema
 	? PathParams<P> & QueryParams<Q>
 	: PathParams<P>
+type RequiredKeys<T> = keyof {
+	[K in keyof T as {} extends Pick<T, K> ? never : K]: true
+}
+type RouteArgs<P extends string, Q extends AssertSchema | undefined> = [
+	RequiredKeys<AllParams<P, Q>>,
+] extends [never]
+	? [params?: AllParams<P, Q>]
+	: [params: AllParams<P, Q>]
 
 export interface RouteDefinition<
 	Path extends string = string,
@@ -23,7 +31,7 @@ export interface RouteDefinition<
 export type CallableRoute<
 	Path extends string = string,
 	QuerySchema extends AssertSchema = AssertSchema,
-> = ((params: AllParams<Path, QuerySchema>) => ApiClientInstance<Path>) &
+> = ((...args: RouteArgs<Path, QuerySchema>) => ApiClientInstance<Path>) &
 	RouteDefinition<Path, QuerySchema>
 
 // Injected by api/index.ts after the singleton is created — avoids circular dep at evaluation time
@@ -36,7 +44,7 @@ export function defineRoute<Path extends string, QuerySchema extends AssertSchem
 	path: Path,
 	querySchema?: QuerySchema
 ): CallableRoute<Path, QuerySchema> {
-	const buildUrl = (params: any): string => {
+	const buildUrl = (params: Record<string, unknown> = {}): string => {
 		let url: string = path
 		const queryParams = new URLSearchParams()
 		const pathKeys = new Set<string>()
@@ -66,11 +74,12 @@ export function defineRoute<Path extends string, QuerySchema extends AssertSchem
 		return qs ? `${url}?${qs}` : url
 	}
 
-	const fn = (params: AllParams<Path, QuerySchema>): ApiClientInstance<Path> => {
+	const fn = (...args: RouteArgs<Path, QuerySchema>): ApiClientInstance<Path> => {
 		if (!_api)
 			throw new Error(
 				'[pounce] api not initialised — import from @pounce/kit before calling a route'
 			)
+		const params = (args[0] ?? {}) as Record<string, unknown>
 		return _api(buildUrl(params)) as ApiClientInstance<Path>
 	}
 

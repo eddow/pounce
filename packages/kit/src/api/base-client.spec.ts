@@ -111,6 +111,22 @@ describe('defineRoute callable', () => {
 		expect(calledUrl.searchParams.get('limit')).toBe('5')
 	})
 
+	it('allows zero-arg calls for routes without required params', async () => {
+		const mockExecutor = vi.fn(
+			async () =>
+				new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } })
+		)
+		const client = createApiClientFactory(mockExecutor)
+		_registerApi(client as any)
+
+		const listUsers = defineRoute('/users')
+		await listUsers().get()
+
+		const calledUrl = new URL((mockExecutor.mock.calls as any)[0][0].url)
+		expect(calledUrl.pathname).toBe('/users')
+		expect(calledUrl.search).toBe('')
+	})
+
 	it('throws when a required path param is missing', () => {
 		const getUser = defineRoute('/users/[id]')
 		expect(() => getUser({} as any)).toThrow('Missing path parameter: id')

@@ -123,6 +123,22 @@ The `nav.ts` module also exports non-model DOM helpers:
 
 These are related to the UI interaction layer but are not model-returning APIs.
 
+### Palette models
+
+The palette system is exported from the `@pounce/ui/palette` subpath rather than the root package entry.
+
+It includes:
+
+- `createPaletteModel`
+- `paletteCommandBoxModel`
+- `paletteAddItemModel`
+- `paletteToolbarModel`
+- `paletteStatusbarModel`
+- `paletteDisplayCustomizationModel`
+- `paletteContainerModel`
+
+See [palette.md](./palette.md).
+
 ## Feedback and status models
 
 ### `progressModel`

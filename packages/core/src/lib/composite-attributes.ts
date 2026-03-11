@@ -17,7 +17,14 @@ export class ReactiveProp<T> {
 	constructor(
 		public get: () => T,
 		public set?: (v: T) => void
-	) {}
+	) {
+		if (typeof get !== 'function') {
+			throw new TypeError('[pounce] ReactiveProp get must be a function')
+		}
+		if (set !== undefined && typeof set !== 'function') {
+			throw new TypeError('[pounce] ReactiveProp set must be a function')
+		}
+	}
 }
 export type PerhapsReactive<T> = T | ReactiveProp<T>
 /**

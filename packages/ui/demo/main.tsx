@@ -15,6 +15,7 @@ import FormDemo from './components/FormDemo'
 import MenuDemo from './components/MenuDemo'
 import MultiSelectDemo from './components/MultiSelectDemo'
 import OverlayDemo from './components/OverlayDemo'
+import PaletteDemo from './components/PaletteDemo'
 import ProgressDemo from './components/ProgressDemo'
 import SizeableDemo from './components/SizeableDemo'
 import StarsDemo from './components/StarsDemo'
@@ -52,6 +53,7 @@ const routes: DemoRoute[] = [
 	},
 	{ path: '/menu', label: 'Menu', view: () => <MenuDemo /> },
 	{ path: '/multiselect', label: 'MultiSelect', view: () => <MultiSelectDemo /> },
+	{ path: '/palette', label: 'Palette', view: () => <PaletteDemo /> },
 	{ path: '/progress', label: 'Progress', view: () => <ProgressDemo /> },
 	{ path: '/sizeable', label: 'Sizeable', view: () => <SizeableDemo /> },
 	{ path: '/stars', label: 'Stars', view: () => <StarsDemo /> },

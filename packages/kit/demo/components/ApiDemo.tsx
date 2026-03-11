@@ -38,7 +38,7 @@ export default function ApiDemo() {
 	const post = resource(({ signal }) => postDetailApi.get({ id: state.postId }, { signal }))
 
 	// Using callable endpoint with resource
-	const userPosts = resource(({ signal }) => posts.list({}).get({ userId: state.userId }, { signal }))
+	const userPosts = resource(({ signal }) => posts.list().get({ userId: state.userId }, { signal }))
 
 	function prevPost() {
 		if (state.postId > 0) state.postId--

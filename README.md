@@ -72,6 +72,10 @@ pnpm run lint
 - **[@pounce/kit](./packages/kit)** - Client utilities and routing documentation
 - **[@pounce/ui](./packages/ui)** - UI components documentation
 
+## AI
+
+For documentation-aware MCP workflows around Pounce, you can use **[`soup-chop`](https://www.npmjs.com/package/soup-chop)** as a documentation MCP.
+
 ## License
 
 MIT

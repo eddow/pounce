@@ -3,7 +3,9 @@
 	"compilerOptions": {
 		"noEmit": true,
 		"paths": {
-			"@pounce/ui": ["./src/index.ts"]
+			"@pounce/ui": ["./src/index.ts"],
+			"@pounce/ui/palette": ["./src/palette.ts"],
+			"@pounce/ui/dockview": ["./src/dockview.ts"]
 		}
 	},
 	"include": [
