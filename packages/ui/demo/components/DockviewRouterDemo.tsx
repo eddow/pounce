@@ -1,5 +1,5 @@
 import { buildRoute, linkModel, type ClientRouteDefinition, type RouterModelRouteDefinition } from '@pounce/kit'
-import { DockviewRouter } from '@pounce/ui'
+import { DockviewRouter } from '@pounce/ui/dockview'
 import { reactive } from 'mutts'
 
 type DemoRoute = ClientRouteDefinition

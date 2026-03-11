@@ -1,6 +1,4 @@
 export { type UiComponent, uiComponent, type WithVariant } from './component'
-export * from './components/dockview'
-export * from './components/dockview-router'
 export * from './components/infinite-scroll'
 export * from './directives'
 export * from './icon'

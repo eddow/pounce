@@ -217,3 +217,32 @@ called from a `use=` mount callback. They return a cleanup function.
 7. **Spread groups**: Each model exposes element-keyed spread groups (`model.button`, `model.input`, `model.label`, etc.). Adapters spread them directly: `<button {...model.button} {...props.el}>`.
 8. **`gather` for children**: Always wrap `props.children` with `gather()` in adapters that also render an icon — CSS `order` requires a single flex item.
 9. **`JSX.IntrinsicElements['tag']` for spread types**: Use this, not `BaseHTMLAttributes<T>` — the latter omits element-specific attrs like `disabled`.
+10. **Button/RadioButton icon prop**: Use the `icon` prop directly on Button/RadioButton components for icon-only buttons. The model handles icon rendering internally. **Do NOT wrap icons manually** - this causes "false" text display issues.
+11. **Tooltip pattern**: Use `el:title` for tooltips on Button/RadioButton components. The `el:` prefix passes attributes to the underlying element.
+
+### Button/RadioButton Icon Usage
+
+```tsx
+// ✅ CORRECT - Use icon prop directly
+<Button icon="star" el:title="Star" aria-label="Star" />
+<RadioButton value="star" group={selected} icon="star" el:title="Select star" />
+
+// ❌ WRONG - Manual icon wrapping causes issues
+<Button el:title="Star">
+  <Icon name="star" />  {/* This creates "false" text display */}
+</Button>
+```
+
+### Tooltip Pattern
+
+```tsx
+// ✅ CORRECT - Use el:title for tooltips
+<Button icon="settings" el:title="Open Settings" onClick={openSettings} />
+
+// ✅ ALSO CORRECT - For complex tooltips
+<Button 
+  icon="settings" 
+  el:title={{ text: "Open Settings", placement: "bottom" }}
+  onClick={openSettings} 
+/>
+```

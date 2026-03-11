@@ -23,6 +23,11 @@
 			"import": "./dist/index.js",
 			"default": "./dist/index.js"
 		},
+		"./dockview": {
+			"types": "./dist/dockview.d.ts",
+			"import": "./dist/dockview.js",
+			"default": "./dist/dockview.js"
+		},
 		"./models": {
 			"types": "./dist/models/index.d.ts",
 			"import": "./dist/models.js",
@@ -51,11 +56,19 @@
 	"dependencies": {
 		"@pounce/core": "workspace:*",
 		"@pounce/kit": "workspace:*",
-		"dockview-core": "^5.0.0",
 		"mutts": "link:../../../mutts"
+	},
+	"peerDependencies": {
+		"dockview-core": "^5.0.0"
+	},
+	"peerDependenciesMeta": {
+		"dockview-core": {
+			"optional": true
+		}
 	},
 	"devDependencies": {
 		"@types/node": "^25.1.0",
+		"dockview-core": "^5.0.0",
 		"jsdom": "^27.4.0",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.1",

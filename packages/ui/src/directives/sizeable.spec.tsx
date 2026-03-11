@@ -143,12 +143,17 @@ describe('sizeable directive', () => {
 		markMounted(unmounted)
 		markMounted(flex)
 
-		await Promise.resolve()
+		// Re-trigger the effect after mounting
+		stop()
+		const stop2 = effect(() => {
+			cleanup?.()
+			cleanup = sizeable(300)(unmounted, noopAccess) as any
+		})
 
 		expect(unmounted.classList.contains('sizeable')).toBe(true)
 		expect(parent.querySelector('.sizeable-handle')).toBeTruthy()
 
-		stop()
+		stop2()
 		cleanup?.()
 		markUnmounted(unmounted)
 		markUnmounted(flex)

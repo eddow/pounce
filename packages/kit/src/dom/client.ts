@@ -306,3 +306,10 @@ function interceptHistoryMethod(method: 'pushState' | 'replaceState'): void {
 		history[method] = original as History['pushState']
 	})
 }
+
+// Export the client and register with platform
+export { client }
+setPlatform({
+	client,
+	mountHead: (content, env) => mountHeadContent(document.head, content, env),
+})

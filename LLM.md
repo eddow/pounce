@@ -59,6 +59,7 @@ A package may import from its own `src/` directory (e.g., `@pounce/core` importi
    - **Getter object**: `const state = { get variant() { return props.variant } }` — deferred until evaluated.
    - **Callback/effect**: reads inside `effect()`, `attend()`, event handlers, or `<for each>` callbacks are fine.
 2. **Adapter architecture**: `@pounce/ui` is headless (models + types only). Import components from the adapter: `import { Button } from '@pounce/adapter-pico'`. No `setAdapter`, no `FrameworkAdapter`, no registry. `DisplayProvider` is DOM-only — import from `@pounce/kit/dom`.
+3. **Dockview lives on a subpath**: `Dockview` and `DockviewRouter` are exported from `@pounce/ui/dockview`, not from the root `@pounce/ui` entry. This keeps `dockview-core` optional/tree-shakeable for consumers that do not use Dockview.
 
 ## Babel Plugin Binding Rules
 1. **Two-way** (`r(getter, setter)`): member expressions (`state.name`, `props.count`, `arr[index]`) and mutable bare identifiers (`let`/`var`).

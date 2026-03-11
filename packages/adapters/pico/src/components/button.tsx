@@ -22,8 +22,10 @@ export const Button = picoComponent(function Button(props: ButtonProps) {
 			class={picoButtonClass(props.variant ?? 'secondary', props.outline)}
 			{...model.button}
 		>
-			{model.icon && <span {...model.icon.span}>{model.icon.element}</span>}
-			{model.hasLabel && gather(props.children)}
+			<span if={model.icon} {...model.icon!.span}>
+				{model.icon!.element}
+			</span>
+			<fragment if={model.hasLabel}>{gather(props.children)}</fragment>
 		</button>
 	)
 })

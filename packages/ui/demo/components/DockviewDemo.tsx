@@ -1,4 +1,4 @@
-import { Dockview, type DockviewHeaderAction, type DockviewWidget } from '@pounce/ui'
+import { Dockview, type DockviewHeaderAction, type DockviewWidget } from '@pounce/ui/dockview'
 import { Orientation, type DockviewApi, type SerializedDockview } from 'dockview-core'
 import { effect, reactive, untracked } from 'mutts'
 

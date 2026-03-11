@@ -10,6 +10,7 @@ function ensureStableTypeEntrypoints() {
 	const distDir = resolve(__dirname, 'dist')
 	const entrypoints = [
 		['index.d.ts', "export * from '../src/index'\n"],
+		['dockview.d.ts', "export * from '../src/dockview'\n"],
 		['models/index.d.ts', "export * from '../../src/models/index'\n"],
 	]
 	return {
@@ -29,6 +30,7 @@ export default defineConfig({
 	build: {
 		lib: {
 			entry: {
+				dockview: resolve(__dirname, 'src/dockview.ts'),
 				index: resolve(__dirname, 'src/index.ts'),
 				models: resolve(__dirname, 'src/models/index.ts'),
 			},
@@ -37,7 +39,7 @@ export default defineConfig({
 		sourcemap: true,
 		emptyOutDir: !isWatch,
 		rollupOptions: {
-			external: [/^@pounce\//, /^mutts/],
+			external: [/^@pounce\//, /^dockview-core/, /^mutts/],
 		},
 	},
 	plugins: [
@@ -51,6 +53,7 @@ export default defineConfig({
 	// For demo/e2e development: resolve @pounce/ui to source instead of dist
 	resolve: {
 		alias: {
+			'@pounce/ui/dockview': resolve(__dirname, 'src/dockview.ts'),
 			'@pounce/ui': resolve(__dirname, 'src/index.ts'),
 			'@pounce/core': resolve(__dirname, '../core/src/dom/index.ts'),
 			'@pounce/kit/intl': resolve(__dirname, '../kit/src/intl.tsx'),

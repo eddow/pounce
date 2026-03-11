@@ -446,6 +446,11 @@ export function Router<Definition extends ClientRouteDefinition>(
 				match &&
 				(match.unusedPath === '' || match.unusedPath === '/' || match.unusedPath.startsWith('#'))
 			) {
+				// Scroll to top for push/replace navigation in SPA Router (not pop)
+				if (vm.scrollToTop && client.history.navigation !== 'pop') {
+					requestAnimationFrame(() => window.scrollTo(0, 0))
+				}
+
 				model.clear()
 				const opened = model.open(vm.url)
 				const current = publishRouteSpecification(opened?.match ?? match)
