@@ -384,7 +384,7 @@ export function bind<T>(dst: ReactiveProp<T>, src: ReactiveProp<T>, defaultValue
 	if (!dst.set) throw new Error('dst is read-only')
 	if (defaultValue !== undefined && src.get() == null) src.set!(defaultValue)
 	let writing = false
-	const stopSrcToDst = effect.named('bind:srcToDst')(() => {
+	const stopSrcToDst = effect`bind:srcToDst`(() => {
 		const v = src.get()
 		if (!writing) {
 			writing = true
@@ -395,7 +395,7 @@ export function bind<T>(dst: ReactiveProp<T>, src: ReactiveProp<T>, defaultValue
 			}
 		}
 	})
-	const stopDstToSrc = effect.named('bind:dstToSrc')(() => {
+	const stopDstToSrc = effect`bind:dstToSrc`(() => {
 		const v = dst.get()
 		if (!writing) {
 			writing = true

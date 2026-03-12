@@ -6,7 +6,6 @@ import {
 	lift,
 	link,
 	morph,
-	named,
 	reactiveOptions,
 	type ScopedCallback,
 	tag,
@@ -134,7 +133,7 @@ export function reconcile(parent: Node, newChildren: Node | readonly Node[]): Sc
 		)
 	}
 	if (isReactive(newChildren)) {
-		const stopRedraw = effect.named('reconciler:redraw')(reconciler)
+		const stopRedraw = effect`reconciler:redraw`(reconciler)
 		// Anchor the redraw effect to the reactive children so GC doesn't collect it.
 		// Root effects use FinalizationRegistry — if nobody holds the cleanup, GC kills the effect.
 		link(newChildren, stopRedraw)
@@ -246,11 +245,7 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 		isReactive(children) || children.some((c) => isReactive(c))
 			? tag(
 					'flatInput',
-					lift(
-						named('link:flatInput', () =>
-							unwrap((children as Child[]).flat(Infinity).filter(Boolean))
-						)
-					)
+					lift`link:flatInput`(() => unwrap((children as Child[]).flat(Infinity).filter(Boolean)))
 				)
 			: (children as Child[]).flat(Infinity).filter(Boolean)
 
@@ -259,13 +254,9 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 	const flatElements: readonly PounceElement[] = needsMorph
 		? tag(
 				'flatElements',
-				morph(
-					flatInput,
-					named('flatElements', (c) => pounceElement(collapse(c), env)),
-					{
-						pure: (c) => !(c instanceof ReactiveProp),
-					}
-				)
+				morph`flatElements`(flatInput, (c) => pounceElement(collapse(c), env), {
+					pure: (c) => !(c instanceof ReactiveProp),
+				})
 			)
 		: (flatInput.map((c) => pounceElement(c, env)) as readonly PounceElement[])
 
@@ -273,53 +264,44 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 		needsMorph || flatElements.some((e) => e.guarded)
 			? tag(
 					'conditioned',
-					lift(
-						named('lift:conditioned', () => {
-							const picks: Record<string, Set<unknown>> = {}
-							// Pass 1: Gather options
-							for (const e of flatElements)
-								if (e.meta?.guards.pick)
-									for (const [key, value] of Object.entries(e.meta.guards.pick)) {
-										let set = picks[key]
-										if (!set) {
-											set = new Set()
-											picks[key] = set
-										}
-										set.add(collapse(value))
+					lift`lift:conditioned`(() => {
+						const picks: Record<string, Set<unknown>> = {}
+						for (const e of flatElements)
+							if (e.meta?.guards.pick)
+								for (const [key, value] of Object.entries(e.meta.guards.pick)) {
+									let set = picks[key]
+									if (!set) {
+										set = new Set()
+										picks[key] = set
 									}
-							// Oracle Phase: Call env to find the winning subsets
-							for (const key of Object.keys(picks)) {
-								const options = picks[key]
-								picks[key] = new Set() // By default, picks nothing if oracle fails/missing
-								const oracle = getEnvPath(env, key)
-								if (oracle && typeof oracle === 'function') {
-									const result = oracle(options)
-									const chosen = Array.isArray(result) || result instanceof Set ? result : [result]
-									picks[key] = new Set(chosen)
-								} else throw new DynamicRenderingError(`Pick oracle "${key}" not found in env`)
-							}
-
-							// Pass 2: Map elements with the newly evaluated subsets
-							let ifOccurred = false
-							return flatElements
-								.map((e) => {
-									const shouldRender = e.shouldRender(ifOccurred, env, picks)
-									if (shouldRender) ifOccurred = true
-									if (shouldRender !== false) return e
-								})
-								.filter(Boolean) as PounceElement[]
-						})
-					)
+									set.add(collapse(value))
+								}
+						for (const key of Object.keys(picks)) {
+							const options = picks[key]
+							picks[key] = new Set()
+							const oracle = getEnvPath(env, key)
+							if (oracle && typeof oracle === 'function') {
+								const result = oracle(options)
+								const chosen = Array.isArray(result) || result instanceof Set ? result : [result]
+								picks[key] = new Set(chosen)
+							} else throw new DynamicRenderingError(`Pick oracle "${key}" not found in env`)
+						}
+						let ifOccurred = false
+						return flatElements
+							.map((e) => {
+								const shouldRender = e.shouldRender(ifOccurred, env, picks)
+								if (shouldRender) ifOccurred = true
+								if (shouldRender !== false) return e
+							})
+							.filter(Boolean) as PounceElement[]
+					})
 				)
 			: flatElements
 	// Render the elements to nodes
 	const rendered: readonly (Node | readonly Node[])[] = isReactive(conditioned)
 		? tag(
 				'rendered',
-				morph.pure(
-					conditioned,
-					named('rendered', (e: PounceElement) => e.render(env))
-				)
+				morph.pure`rendered`(conditioned, (e: PounceElement) => e.render(env))
 			)
 		: conditioned.map((e: PounceElement) => e.render(env))
 
@@ -335,7 +317,10 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 		!isReactive(conditioned) && conditioned.every((e) => e.isReactivityLeaf || e.isSingleNode)
 	const nodes =
 		!allSingleNode || recurReactive(rendered)
-			? tag('nodes', lift(named('lift:nodes', () => rendered.flat(Infinity) as Node[])))
+			? tag(
+					'nodes',
+					lift`lift:nodes`(() => rendered.flat(Infinity) as Node[])
+				)
 			: ((rendered as any[]).flat(Infinity) as Node[])
 
 	if (isReactive(nodes)) {

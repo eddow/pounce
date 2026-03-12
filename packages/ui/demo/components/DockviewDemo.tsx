@@ -74,7 +74,7 @@ function createDefaultLayout(): SerializedDockview {
 const CounterWidget: DockviewWidget<CounterParams, DemoContext> = (props) => {
 	const state = reactive({ value: untracked(() => props.params.initial) })
 
-	effect(() => {
+	effect`DockviewDemo.CounterWidget.syncContext`(() => {
 		props.context.badge = String(state.value)
 		props.context.status = state.value % 2 === 0 ? 'even' : 'odd'
 		props.context.accent = state.value % 2 === 0 ? '#0f766e' : '#7c3aed'
@@ -121,7 +121,7 @@ const CounterWidget: DockviewWidget<CounterParams, DemoContext> = (props) => {
 const NotesWidget: DockviewWidget<NotesParams, DemoContext> = (props) => {
 	const state = reactive({ text: untracked(() => props.params.initial) })
 
-	effect(() => {
+	effect`DockviewDemo.NotesWidget.syncContext`(() => {
 		props.context.badge = String(state.text.length)
 		props.context.status = state.text.length === 0 ? 'empty' : 'draft'
 		props.context.accent = state.text.length === 0 ? '#64748b' : '#ea580c'
@@ -218,7 +218,7 @@ export default function DockviewDemo() {
 	let nextCounter = 2
 	let nextNotes = 2
 
-	effect(() => {
+	effect`DockviewDemo.syncApiState`(() => {
 		const api = state.api
 		if (!api) {
 			state.panelCount = 0

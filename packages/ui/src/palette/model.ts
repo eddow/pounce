@@ -1,4 +1,4 @@
-import { reactive } from 'mutts'
+import { lift, reactive } from 'mutts'
 import { executePaletteIntent } from './dispatch'
 import { createPaletteIntentSource } from './intents'
 import { createPaletteRegistry } from './registry'
@@ -7,6 +7,7 @@ import type {
 	PaletteDisplayItem,
 	PaletteEntryDefinition,
 	PaletteEntryId,
+	PaletteGroupedProposition,
 	PaletteIntent,
 	PaletteIntentId,
 	PaletteIntentSource,
@@ -15,9 +16,10 @@ import type {
 	PaletteQuery,
 	PaletteRegistry,
 	PaletteResolvedDisplayItem,
+	PaletteResolvedEntry,
 	PaletteResolvedIntent,
 	PaletteRuntimeState,
-	PaletteSearchModel,
+	PaletteSearch,
 	PaletteState,
 } from './types'
 
@@ -27,7 +29,7 @@ export interface PaletteModel {
 	readonly state: PaletteState
 	readonly runtime: PaletteRuntimeState
 	readonly display: PaletteDisplayConfiguration
-	readonly search: PaletteSearchModel
+	readonly search: PaletteSearch
 
 	run(intentId: PaletteIntentId): unknown
 	derive(entryId: PaletteEntryId): readonly PaletteIntent[]
@@ -69,7 +71,10 @@ function entryMatchesText(entry: PaletteEntryDefinition, textQuery: string | und
 		.filter((value) => value !== undefined)
 		.join(' ')
 		.toLowerCase()
-	return searchText.includes(textQuery)
+	return textQuery
+		.split(/\s+/)
+		.filter((term) => term.length > 0)
+		.every((term) => searchText.includes(term))
 }
 
 function intentMatchesText(
@@ -89,7 +94,10 @@ function intentMatchesText(
 		.filter((value) => value !== undefined)
 		.join(' ')
 		.toLowerCase()
-	return searchText.includes(textQuery)
+	return textQuery
+		.split(/\s+/)
+		.filter((term) => term.length > 0)
+		.every((term) => searchText.includes(term))
 }
 
 function resolveDerivedIntent(
@@ -195,8 +203,64 @@ export function createPaletteModel(options?: {
 
 	const state = reactive(options?.state ?? {})
 	const runtime = reactive(options?.runtime ?? {})
+
+	function generateGroupedPropositions(
+		existingResults: PaletteMatch[],
+		textQuery?: string,
+		categoryFilter?: Set<string>
+	): PaletteGroupedProposition[] {
+		void textQuery
+		void categoryFilter
+		const propositions: PaletteGroupedProposition[] = []
+		const intentsByEntry = new Map<string, PaletteResolvedIntent[]>()
+
+		for (const result of existingResults) {
+			if (result.kind === 'intent') {
+				const entryId = result.entry.id
+				if (!intentsByEntry.has(entryId)) {
+					intentsByEntry.set(entryId, [])
+				}
+				intentsByEntry.get(entryId)!.push(result)
+			}
+		}
+
+		for (const intents of intentsByEntry.values()) {
+			if (intents.length < 2) continue
+			const entry = intents[0].entry
+			const resolvedEntry: PaletteResolvedEntry = {
+				kind: 'entry',
+				entry,
+			}
+
+			if (entry.schema.type === 'enum') {
+				const options = intents.map(
+					(resolved) => resolved.intent.id.split(':').at(-1) ?? resolved.intent.mode
+				)
+				propositions.push({
+					kind: 'grouped-proposition',
+					label: `${entry.label} (${options.join(', ')})`,
+					description: `${options.length} selected options`,
+					intents,
+					entries: [resolvedEntry],
+					type: 'enum-subset',
+				})
+				continue
+			}
+
+			propositions.push({
+				kind: 'grouped-proposition',
+				label: `${entry.label} (all modes)`,
+				description: `All ${intents.length} available modes`,
+				intents,
+				entries: [resolvedEntry],
+				type: 'intent-group',
+			})
+		}
+
+		return propositions
+	}
+
 	const display = reactive({
-		toolbars: [],
 		...(options?.display ?? {}),
 		container: {
 			surfaces: [],
@@ -206,27 +270,10 @@ export function createPaletteModel(options?: {
 		},
 	})
 
-	const searchResults = reactive([]) as PaletteMatch[]
-	const searchQuery = reactive({}) as {
-		text?: string
-		categories?: readonly string[]
-	}
-
-	const search: PaletteSearchModel = {
-		get query(): PaletteQuery {
-			return searchQuery
-		},
-
-		get results(): readonly PaletteMatch[] {
-			return searchResults
-		},
-
-		search(next: PaletteQuery) {
-			searchQuery.text = undefined
-			searchQuery.categories = undefined
-			Object.assign(searchQuery, next)
-			const textQuery = next.text?.toLowerCase().trim()
-			const categoryFilter = new Set(next.categories ?? [])
+	const search: PaletteSearch = (query: PaletteQuery) =>
+		lift`createPaletteModel.search`(() => {
+			const textQuery = query.text?.toLowerCase().trim()
+			const categoryFilter = new Set(query.categories ?? [])
 			const results: PaletteMatch[] = []
 
 			for (const resolved of collectResolvedIntents(registry, intents)) {
@@ -240,7 +287,8 @@ export function createPaletteModel(options?: {
 			}
 
 			for (const entry of registry.entries) {
-				if (results.some((r) => r.kind === 'intent' && r.entry.id === entry.id)) continue
+				if (results.some((result) => result.kind === 'intent' && result.entry.id === entry.id))
+					continue
 				if (!entryMatchesCategories(entry, categoryFilter)) continue
 				if (!entryMatchesText(entry, textQuery)) continue
 				results.push({
@@ -249,9 +297,9 @@ export function createPaletteModel(options?: {
 				})
 			}
 
-			searchResults.splice(0, searchResults.length, ...results)
-		},
-	}
+			results.push(...generateGroupedPropositions(results, textQuery, categoryFilter))
+			return results
+		})
 
 	return {
 		registry,

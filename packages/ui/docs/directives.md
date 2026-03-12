@@ -3,6 +3,9 @@
 `@pounce/ui` exports the following DOM directives from `src/directives/index.ts`:
 
 - `badge`
+- `drag`
+- `dragging`
+- `drop`
 - `intersect`
 - `loading`
 - `pointer`
@@ -27,6 +30,22 @@ Exports:
 - `BadgePosition`
 
 Use when an element needs a lightweight count or status marker.
+
+### `drag`, `drop`, and `dragging`
+
+A reactive Native HTML5 Drag and Drop implementation.
+
+Exports:
+
+- `drag`
+- `drop`
+- `dragging`
+- `DraggingCallback`
+
+Use for orchestrating drag-and-drop interactions across components without relying on external state managers.
+- **`use:drag={payload}`**: Makes an element draggable and stores its payload globally during the drag lifecycle.
+- **`use:dragging={(payload, isHovering) => cleanup | false}`**: A drop-zone validator. Returning `false` rejects the drop. Returning a function executes it on `dragleave` or `drop`.
+- **`use:drop={(payload) => void}`**: The final drop handler, automatically catching the active drag payload safely.
 
 ### `intersect`
 

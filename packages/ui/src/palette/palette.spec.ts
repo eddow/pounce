@@ -83,7 +83,7 @@ describe('Palette subpath entry point', () => {
 		const mockPalette: PaletteModelLike = {
 			state: {},
 			runtime: {},
-			display: { toolbars: [] },
+			display: { container: { surfaces: [], editMode: false } },
 			resolveEntry: () => undefined,
 		}
 
@@ -194,6 +194,7 @@ describe('Palette subpath entry point', () => {
 	it('exports display configuration types', () => {
 		// Test display item types
 		const displayItem: PaletteDisplayItem = {
+			kind: 'intent',
 			intentId: 'test:intent',
 			presenter: 'button',
 			showText: true,
@@ -223,6 +224,7 @@ describe('Palette subpath entry point', () => {
 
 		// Test resolved display item type
 		const resolvedDisplay: PaletteResolvedDisplayItem = {
+			kind: 'intent',
 			intentId: 'test:intent',
 			presenter: 'toggle',
 			intent: {

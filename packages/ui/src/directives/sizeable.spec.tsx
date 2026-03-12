@@ -129,7 +129,7 @@ describe('sizeable directive', () => {
 		flex.style.flex = '1'
 
 		let cleanup: (() => void) | undefined
-		const stop = effect(() => {
+		const stop = effect`sizeable.spec.deferSetup.initial`(() => {
 			cleanup?.()
 			cleanup = sizeable(300)(unmounted, noopAccess) as any
 		})
@@ -145,7 +145,7 @@ describe('sizeable directive', () => {
 
 		// Re-trigger the effect after mounting
 		stop()
-		const stop2 = effect(() => {
+		const stop2 = effect`sizeable.spec.deferSetup.remounted`(() => {
 			cleanup?.()
 			cleanup = sizeable(300)(unmounted, noopAccess) as any
 		})

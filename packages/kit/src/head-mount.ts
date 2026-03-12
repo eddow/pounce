@@ -61,7 +61,7 @@ function reconcileRange(
 	}
 
 	if (isReactive(children)) {
-		const stop = effect.named('head:reconcile')(sync)
+		const stop = effect`head:reconcile`(sync)
 		link(children, stop)
 		return stop
 	}

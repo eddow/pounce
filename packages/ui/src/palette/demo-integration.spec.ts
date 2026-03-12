@@ -1,5 +1,23 @@
 import { describe, expect, it } from 'vitest'
 import { createPaletteModel } from './model'
+import type { PaletteDisplayItem, PaletteToolbarSurface } from './types'
+
+function toolbarSurface(id: string, items: readonly PaletteDisplayItem[]): PaletteToolbarSurface {
+	return {
+		id,
+		type: 'toolbar',
+		region: 'top',
+		visible: true,
+		items,
+	}
+}
+
+function toolbarAt(
+	palette: ReturnType<typeof createPaletteModel>,
+	index: number
+): PaletteToolbarSurface {
+	return palette.display.container!.surfaces[index] as PaletteToolbarSurface
+}
 
 describe('Phase 7: Demo integration', () => {
 	it('demonstrates grouped presentation in main toolbar', () => {
@@ -17,10 +35,11 @@ describe('Phase 7: Demo integration', () => {
 				},
 			],
 			display: {
-				toolbars: [
-					{
-						id: 'main-toolbar',
-						items: [
+				container: {
+					editMode: false,
+					dropTargets: [],
+					surfaces: [
+						toolbarSurface('1', [
 							// Grouped presentation
 							{
 								kind: 'item-group',
@@ -37,13 +56,13 @@ describe('Phase 7: Demo integration', () => {
 								presenter: 'toggle',
 								showText: true,
 							},
-						],
-					},
-				],
+						]),
+					],
+				},
 			},
 		})
 
-		const mainToolbar = palette.display.toolbars[0]
+		const mainToolbar = toolbarAt(palette, 0)
 		expect(mainToolbar.items).toHaveLength(2)
 
 		// First item should be the item-group
@@ -66,10 +85,11 @@ describe('Phase 7: Demo integration', () => {
 				},
 			],
 			display: {
-				toolbars: [
-					{
-						id: 'settings-toolbar',
-						items: [
+				container: {
+					editMode: false,
+					dropTargets: [],
+					surfaces: [
+						toolbarSurface('1', [
 							// Atomic items for contrast
 							{
 								kind: 'intent',
@@ -95,13 +115,13 @@ describe('Phase 7: Demo integration', () => {
 								entryId: 'ui.theme',
 								showText: true,
 							},
-						],
-					},
-				],
+						]),
+					],
+				},
 			},
 		})
 
-		const settingsToolbar = palette.display.toolbars[0]
+		const settingsToolbar = toolbarAt(palette, 0)
 		expect(settingsToolbar.items).toHaveLength(4)
 
 		// Should have atomic intents
@@ -131,11 +151,11 @@ describe('Phase 7: Demo integration', () => {
 				},
 			],
 			display: {
-				toolbars: [
-					{
-						id: 'main-toolbar',
-						items: [
-							// Grouped subset in main toolbar
+				container: {
+					editMode: false,
+					dropTargets: [],
+					surfaces: [
+						toolbarSurface('1', [
 							{
 								kind: 'item-group',
 								group: {
@@ -145,18 +165,13 @@ describe('Phase 7: Demo integration', () => {
 									presenter: 'radio-group',
 								},
 							},
-						],
-					},
-					{
-						id: 'settings-toolbar',
-						items: [
-							// Richer editor in settings toolbar
+						]),
+						toolbarSurface('2', [
 							{
 								kind: 'editor',
 								entryId: 'ui.theme',
 								showText: true,
 							},
-							// Atomic intents in settings toolbar
 							{
 								kind: 'intent',
 								intentId: 'ui.theme:set:light',
@@ -175,14 +190,14 @@ describe('Phase 7: Demo integration', () => {
 								presenter: 'radio',
 								showText: true,
 							},
-						],
-					},
-				],
+						]),
+					],
+				},
 			},
 		})
 
-		const mainToolbar = palette.display.toolbars[0]
-		const settingsToolbar = palette.display.toolbars[1]
+		const mainToolbar = toolbarAt(palette, 0)
+		const settingsToolbar = toolbarAt(palette, 1)
 
 		// Main toolbar: grouped subset (light/dark pair)
 		const mainItemGroup = mainToolbar.items[0]
@@ -221,16 +236,11 @@ describe('Phase 7: Demo integration', () => {
 				},
 			],
 			display: {
-				toolbars: [
-					{
-						id: 'main-toolbar',
-						items: [
-							// Before: manually-authored enum radio cluster would be:
-							// { kind: 'intent', intentId: 'ui.theme:set:light', presenter: 'radio' }
-							// { kind: 'intent', intentId: 'ui.theme:set:dark', presenter: 'radio' }
-							// { kind: 'intent', intentId: 'ui.theme:set:system', presenter: 'radio' }
-
-							// After: replaced with item-group
+				container: {
+					editMode: false,
+					dropTargets: [],
+					surfaces: [
+						toolbarSurface('1', [
 							{
 								kind: 'item-group',
 								group: {
@@ -240,13 +250,13 @@ describe('Phase 7: Demo integration', () => {
 									presenter: 'radio-group',
 								},
 							},
-						],
-					},
-				],
+						]),
+					],
+				},
 			},
 		})
 
-		const mainToolbar = palette.display.toolbars[0]
+		const mainToolbar = toolbarAt(palette, 0)
 		expect(mainToolbar.items).toHaveLength(1)
 
 		// Should be a single item-group instead of multiple atomic intents

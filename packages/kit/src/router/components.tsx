@@ -414,7 +414,7 @@ export function Router<Definition extends ClientRouteDefinition>(
 					if (!(host instanceof Element)) return
 
 					let stopLatched: (() => void) | undefined
-					const stopEffect = effect.named('router:lazy-outlet')(() => {
+					const stopEffect = effect`router:lazy-outlet`(() => {
 						const current = matcher(vm.url)
 						if (!current || current.definition.path !== lazyProps.route.path) return
 

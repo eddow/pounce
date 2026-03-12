@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { paletteContainerModel, resolveContainerSurface } from './container'
+import { paletteContainerModel } from './container'
 import { createPaletteModel } from './model'
-import type { PaletteContainerRegion, PaletteSurfaceType, PaletteToolbarDefinition } from './types'
 
 describe('paletteContainerModel', () => {
 	let palette: ReturnType<typeof createPaletteModel>
@@ -54,16 +53,17 @@ describe('paletteContainerModel', () => {
 		const settings = container.createSurface('bottom', 'settings', 'App Settings')
 
 		expect(toolbar).toEqual({
-			id: 'toolbar-1',
+			id: '1',
 			type: 'toolbar',
 			region: 'top',
 			visible: true,
 			position: 0,
 			label: 'Main Toolbar',
+			items: [],
 		})
 
 		expect(command).toEqual({
-			id: 'command-1',
+			id: '2',
 			type: 'command',
 			region: 'right',
 			visible: true,
@@ -72,7 +72,7 @@ describe('paletteContainerModel', () => {
 		})
 
 		expect(settings).toEqual({
-			id: 'settings-1',
+			id: '3',
 			type: 'settings',
 			region: 'bottom',
 			visible: true,
@@ -222,24 +222,20 @@ describe('paletteContainerModel', () => {
 		expect(finalInsertionPoints).toHaveLength(5) // Back to fewer insertion points
 	})
 
-	it('should couple toolbar surfaces with toolbar definitions', () => {
+	it('should create toolbar surfaces with embedded items', () => {
 		const container = paletteContainerModel({ palette })
 
-		// Create a toolbar surface
 		const surface = container.createSurface('top', 'toolbar', 'Test Toolbar')
 
-		// Should create corresponding toolbar definition
-		expect(palette.display.toolbars).toHaveLength(1)
-		expect(palette.display.toolbars[0]).toEqual({
-			id: surface.id,
-			items: [],
-		})
+		expect(surface.type).toBe('toolbar')
+		if (surface.type !== 'toolbar') {
+			throw new Error('Expected toolbar surface')
+		}
+		expect(surface.items).toEqual([])
+		expect(container.surfaces).toEqual(expect.arrayContaining([surface]))
 
-		// Remove the surface
 		container.removeSurface(surface.id)
-
-		// Should also remove toolbar definition
-		expect(palette.display.toolbars).toHaveLength(0)
+		expect(container.surfaces).toEqual([])
 	})
 
 	it('should handle cross-region moves with populated destinations', () => {
@@ -286,79 +282,5 @@ describe('paletteContainerModel', () => {
 		)
 		expect(() => container.hideSurface('non-existent')).toThrow("Surface 'non-existent' not found")
 		expect(() => container.showSurface('non-existent')).toThrow("Surface 'non-existent' not found")
-	})
-})
-
-describe('resolveContainerSurface', () => {
-	let palette: ReturnType<typeof createPaletteModel>
-
-	beforeEach(() => {
-		palette = createPaletteModel({
-			display: {
-				toolbars: [
-					{
-						id: 'toolbar-1',
-						items: [],
-					},
-				],
-			},
-		})
-	})
-
-	it('should resolve toolbar surfaces', () => {
-		const surface = {
-			id: 'toolbar-1',
-			type: 'toolbar' as PaletteSurfaceType,
-			region: 'top' as PaletteContainerRegion,
-			visible: true,
-		}
-
-		const resolved = resolveContainerSurface(surface, palette)
-
-		expect(resolved.isLinked).toBe(true)
-		expect(resolved.surface).toEqual(surface)
-		expect(resolved.toolbar).toEqual({
-			id: 'toolbar-1',
-			items: [],
-		})
-	})
-
-	it('should resolve unlinked toolbar surfaces', () => {
-		const surface = {
-			id: 'toolbar-2',
-			type: 'toolbar' as PaletteSurfaceType,
-			region: 'top' as PaletteContainerRegion,
-			visible: true,
-		}
-
-		const resolved = resolveContainerSurface(surface, palette)
-
-		expect(resolved.isLinked).toBe(false)
-		expect(resolved.surface).toEqual(surface)
-		expect(resolved.toolbar).toBeUndefined()
-	})
-
-	it('should resolve non-toolbar surfaces', () => {
-		const commandSurface = {
-			id: 'command-1',
-			type: 'command' as PaletteSurfaceType,
-			region: 'right' as PaletteContainerRegion,
-			visible: true,
-		}
-
-		const settingsSurface = {
-			id: 'settings-1',
-			type: 'settings' as PaletteSurfaceType,
-			region: 'bottom' as PaletteContainerRegion,
-			visible: true,
-		}
-
-		const commandResolved = resolveContainerSurface(commandSurface, palette)
-		expect(commandResolved.isLinked).toBe(false)
-		expect(commandResolved.toolbar).toBeUndefined()
-
-		const settingsResolved = resolveContainerSurface(settingsSurface, palette)
-		expect(settingsResolved.isLinked).toBe(false)
-		expect(settingsResolved.toolbar).toBeUndefined()
 	})
 })

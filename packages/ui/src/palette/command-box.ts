@@ -1,6 +1,44 @@
-import { reactive } from 'mutts'
+import { lift, reactive } from 'mutts'
 import type { PaletteModel } from './model'
 import type { PaletteCategory, PaletteIntentId, PaletteMatch, PaletteQuery } from './types'
+
+/**
+ * A keyword token in the command box input
+ */
+export interface KeywordToken {
+	readonly keyword: string
+	readonly type: 'category' | 'composed-name' | 'enum-value'
+	readonly source?: string // source entry or intent ID for enum values
+}
+
+/**
+ * Keyword dictionary for Space-to-Select functionality
+ */
+export interface KeywordDictionary {
+	/**
+	 * All available keywords mapped to their types and sources
+	 */
+	readonly keywords: ReadonlyMap<string, KeywordToken>
+
+	/**
+	 * Check if a word is a valid keyword
+	 */
+	isValidKeyword(word: string): boolean
+
+	/**
+	 * Get keyword token information
+	 */
+	getKeyword(word: string): KeywordToken | undefined
+
+	/**
+	 * Get all keywords of a specific type
+	 */
+	getKeywordsByType(type: KeywordToken['type']): KeywordToken[]
+}
+
+function normalizeKeyword(value: string): string {
+	return value.trim().toLowerCase()
+}
 
 export interface PaletteCommandBoxModel {
 	/**
@@ -13,17 +51,16 @@ export interface PaletteCommandBoxModel {
 	}
 
 	/**
-	 * Current search query from the palette's search model
-	 * Note: This is read directly from palette.search.query to ensure synchronization
+	 * Current reactive search query owned by the command box
 	 */
 	readonly query: PaletteQuery
 
 	/**
-	 * Filtered search results from the palette's search model
-	 * Note: Results are not grouped or enhanced with command-box-specific metadata yet
-	 * This is deferred to a future implementation slice
+	 * Filtered search results derived reactively from `palette.search(query)`
 	 */
 	readonly results: readonly PaletteMatch[]
+
+	readonly suggestions: readonly PaletteCommandBoxKeywordSuggestion[]
 
 	/**
 	 * Available category chips for filtering
@@ -51,6 +88,41 @@ export interface PaletteCommandBoxModel {
 	}
 
 	/**
+	 * Keyword tokens for Space-to-Select functionality
+	 */
+	readonly keywords: {
+		readonly dictionary: KeywordDictionary
+		readonly tokens: readonly KeywordToken[]
+		readonly active: readonly KeywordToken[]
+
+		/**
+		 * Add a keyword token (when Space-to-Select recognizes a keyword)
+		 */
+		addToken(keyword: string): void
+
+		/**
+		 * Remove the last keyword token (Backspace behavior)
+		 */
+		removeLast(): KeywordToken | undefined
+
+		/**
+		 * Remove a specific keyword token (click-on-chip behavior)
+		 */
+		removeToken(keyword: string): boolean
+
+		/**
+		 * Clear all keyword tokens
+		 */
+		clear(): void
+	}
+
+	/**
+	 * Handle keyboard input for Space-to-Select functionality
+	 * Returns true if the event was handled (preventing default behavior)
+	 */
+	handleKeyDown(event: KeyboardEvent): boolean
+
+	/**
 	 * Execute the currently selected result or a specific intent
 	 *
 	 * Behavior:
@@ -65,10 +137,184 @@ export interface PaletteCommandBoxModel {
 	execute(intentId?: PaletteIntentId): unknown
 
 	/**
-	 * Update the search query and refresh results
-	 * Delegates to palette.search.search() to maintain single search path
+	 * Update the search query
 	 */
 	search(query: PaletteQuery): void
+}
+
+export interface PaletteCommandBoxKeywordSuggestion {
+	readonly keyword: string
+	readonly isActive: boolean
+}
+
+export function setPaletteCommandBoxInput(commandBox: PaletteCommandBoxModel, event: Event) {
+	if (event.currentTarget instanceof HTMLInputElement) {
+		commandBox.input.value = event.currentTarget.value
+	}
+}
+
+function focusAdjacentPaletteCommandChip(target: HTMLButtonElement, offset: number) {
+	const chipButtons =
+		target.parentElement?.querySelectorAll<HTMLButtonElement>('[data-command-chip]')
+	if (!chipButtons) return
+	const index = Array.from(chipButtons).findIndex((entry) => entry === target)
+	const next = chipButtons[index + offset]
+	if (next) {
+		next.focus()
+		return
+	}
+	const input = target.parentElement?.querySelector<HTMLInputElement>(
+		'[data-test="palette-command-input"]'
+	)
+	input?.focus()
+}
+
+export function handlePaletteCommandChipKeydown(options: {
+	commandBox: PaletteCommandBoxModel
+	event: KeyboardEvent
+	token: string
+	type?: 'category' | 'keyword'
+}) {
+	const { commandBox, event, token, type = 'category' } = options
+	if (!(event.currentTarget instanceof HTMLButtonElement)) return
+	if (event.key === 'ArrowLeft') {
+		focusAdjacentPaletteCommandChip(event.currentTarget, -1)
+		event.preventDefault()
+		return
+	}
+	if (event.key === 'ArrowRight') {
+		focusAdjacentPaletteCommandChip(event.currentTarget, 1)
+		event.preventDefault()
+		return
+	}
+	if (event.key === 'Backspace' || event.key === 'Delete') {
+		if (type === 'category') {
+			commandBox.categories.toggle(token)
+		} else {
+			commandBox.keywords.removeToken(token)
+		}
+		const chipButtons =
+			event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[data-command-chip]')
+		const next = chipButtons?.[Math.max(0, (chipButtons?.length ?? 1) - 2)]
+		if (next) {
+			next.focus()
+		} else {
+			const input = event.currentTarget.parentElement?.querySelector<HTMLInputElement>(
+				'[data-test="palette-command-input"]'
+			)
+			input?.focus()
+		}
+		event.preventDefault()
+	}
+}
+
+export function handlePaletteCommandBoxInputKeydown(options: {
+	commandBox: PaletteCommandBoxModel
+	event: KeyboardEvent
+	onMatch: (match: PaletteMatch) => void
+	onAfterExecute?: () => void
+}) {
+	const { commandBox, event, onMatch, onAfterExecute } = options
+	if (!(event.currentTarget instanceof HTMLInputElement)) return false
+
+	const handled = commandBox.handleKeyDown(event)
+	if (handled) return true
+
+	if (event.key === 'ArrowDown') {
+		commandBox.selection.next()
+		return true
+	}
+	if (event.key === 'ArrowUp') {
+		commandBox.selection.previous()
+		return true
+	}
+	if (event.key === 'Enter') {
+		const result = commandBox.selection.item ?? commandBox.results[0]
+		if (result) {
+			onMatch(result)
+			onAfterExecute?.()
+			return true
+		}
+	}
+	return false
+}
+
+/**
+ * Create a keyword dictionary from palette entries and intents
+ */
+function createKeywordDictionary(palette: PaletteModel): KeywordDictionary {
+	const keywords = new Map<string, KeywordToken>()
+	const addKeyword = (keyword: string, type: KeywordToken['type'], source: string) => {
+		const normalized = normalizeKeyword(keyword)
+		if (normalized.length < 2 || keywords.has(normalized)) return
+		keywords.set(normalized, {
+			keyword: normalized,
+			type,
+			source,
+		})
+	}
+
+	for (const entry of palette.registry.entries) {
+		if (entry.categories) {
+			for (const category of entry.categories) {
+				addKeyword(category, 'category', entry.id)
+			}
+		}
+	}
+
+	for (const entry of palette.registry.entries) {
+		const segments = entry.id.split(/[._]/).filter((s) => s.length > 0)
+		for (const segment of segments) {
+			addKeyword(segment, 'composed-name', entry.id)
+		}
+
+		const labelSegments = entry.label.split(/[\s\-_]/).filter((s) => s.length > 0)
+		for (const segment of labelSegments) {
+			addKeyword(segment, 'composed-name', entry.id)
+		}
+	}
+
+	for (const entry of palette.registry.entries) {
+		if (entry.schema.type === 'enum') {
+			for (const option of entry.schema.options) {
+				const value = typeof option === 'string' ? option : option.value
+				const label = typeof option === 'string' ? option : (option.label ?? value)
+
+				addKeyword(value, 'enum-value', entry.id)
+
+				const labelSegments = label.split(/[\s\-_]/).filter((s) => s.length > 0)
+				for (const segment of labelSegments) {
+					addKeyword(segment, 'enum-value', entry.id)
+				}
+			}
+		}
+	}
+
+	return {
+		keywords,
+
+		isValidKeyword(word: string): boolean {
+			return keywords.has(normalizeKeyword(word))
+		},
+
+		getKeyword(word: string): KeywordToken | undefined {
+			return keywords.get(normalizeKeyword(word))
+		},
+
+		getKeywordsByType(type: KeywordToken['type']): KeywordToken[] {
+			return Array.from(keywords.values()).filter((token) => token.type === type)
+		},
+	}
+}
+
+function matchEntryIds(result: PaletteMatch): readonly string[] {
+	switch (result.kind) {
+		case 'entry':
+		case 'intent':
+			return [result.entry.id]
+		case 'grouped-proposition':
+			return result.entries.map((entry) => entry.entry.id)
+	}
 }
 
 /**
@@ -87,17 +333,48 @@ export function paletteCommandBoxModel(options: {
 	// Category filter state
 	const categoryState = reactive({
 		manual: [] as PaletteCategory[],
-		typed: [] as PaletteCategory[],
+	})
+
+	// Keyword token state
+	const keywordTokenState = reactive({
+		tokens: [] as KeywordToken[],
 	})
 
 	// Selection state
 	const selectionState = reactive({ index: -1 })
+	const manualQueryState = reactive({
+		active: false,
+		text: '',
+		categories: [] as PaletteCategory[],
+	})
 
-	// Derive available categories from registry
-	const categoryRegistryState = reactive({ available: [] as PaletteCategory[] })
+	// Create keyword dictionary
+	const keywordDictionary = createKeywordDictionary(palette)
+	const suggestions = lift`paletteCommandBoxModel.suggestions`(() => {
+		const inputValue = inputState.value.trim()
+		const currentWord = inputValue.split(/\s+/).pop()?.toLowerCase() || ''
+		const chosenKeywords = new Set(
+			keywordTokenState.tokens.map((token) => token.keyword.toLowerCase())
+		)
 
-	// Update available categories when registry changes
-	function updateAvailableCategories() {
+		if (currentWord.length === 0) return [] as PaletteCommandBoxKeywordSuggestion[]
+
+		const remainingEntryIds = new Set(searchResults.flatMap((result) => matchEntryIds(result)))
+		const availableKeywordTokens = Array.from(keywordDictionary.keywords.values()).filter((token) =>
+			remainingEntryIds.has(token.source ?? '')
+		)
+
+		return availableKeywordTokens
+			.filter((token) => token.keyword.startsWith(currentWord))
+			.filter((token) => !chosenKeywords.has(token.keyword))
+			.map((token) => ({
+				keyword: token.keyword,
+				isActive: false,
+			}))
+	})
+
+	// Reactive available categories derived from registry
+	const availableCategories = lift`paletteCommandBoxModel.availableCategories`(() => {
 		const categories = new Set<PaletteCategory>()
 
 		// Add categories from entries
@@ -129,52 +406,128 @@ export function paletteCommandBoxModel(options: {
 			}
 		}
 
-		categoryRegistryState.available.splice(
-			0,
-			categoryRegistryState.available.length,
-			...Array.from(categories).sort()
-		)
-	}
+		return Array.from(categories).sort()
+	})
 
-	function splitInputIntoCategories(value: string) {
+	function removeTokenFromInput(value: string, tokenToRemove: string): string {
 		const tokens = value
 			.split(/\s+/)
 			.map((token) => token.trim())
 			.filter((token) => token.length > 0)
-		const categories: PaletteCategory[] = []
-		const textTokens: string[] = []
-		for (const token of tokens) {
-			const normalized = token.startsWith('#') ? token.slice(1) : token
-			if (categoryRegistryState.available.includes(normalized)) {
-				if (!categories.includes(normalized)) categories.push(normalized)
-				continue
-			}
-			textTokens.push(token)
-		}
-		return {
-			categories,
-			text: textTokens.join(' '),
-		}
-	}
 
-	function removeTokenFromInput(value: string, category: PaletteCategory) {
-		const tokens = value
-			.split(/\s+/)
-			.map((token) => token.trim())
-			.filter((token) => token.length > 0)
 		for (let index = tokens.length - 1; index >= 0; index -= 1) {
 			const token = tokens[index]
-			const normalized = token.startsWith('#') ? token.slice(1) : token
-			if (normalized === category) {
+			const normalizedToken = normalizeKeyword(token)
+			const normalizedTarget = normalizeKeyword(tokenToRemove)
+
+			if (token.startsWith('#') && normalizeKeyword(token.slice(1)) === normalizedTarget) {
+				tokens.splice(index, 1)
+				break
+			}
+
+			if (normalizedToken === normalizedTarget) {
 				tokens.splice(index, 1)
 				break
 			}
 		}
+
 		return tokens.join(' ')
 	}
 
-	function activeCategories() {
-		return Array.from(new Set([...categoryState.manual, ...categoryState.typed]))
+	const parsedInput = lift`paletteCommandBoxModel.parsedInput`(() => {
+		const tokens = inputState.value
+			.split(/\s+/)
+			.map((token) => token.trim())
+			.filter((token) => token.length > 0)
+
+		const categories: PaletteCategory[] = []
+		const keywords: KeywordToken[] = []
+		const textTokens: string[] = []
+		const resolveCategory = (token: string) =>
+			availableCategories.find((category) => normalizeKeyword(category) === normalizeKeyword(token))
+
+		for (const token of tokens) {
+			if (token.startsWith('#')) {
+				const category = resolveCategory(token.slice(1))
+				if (category) {
+					if (!categories.includes(category)) categories.push(category)
+					continue
+				}
+			}
+
+			const category = resolveCategory(token)
+			if (category) {
+				if (!categories.includes(category)) categories.push(category)
+				continue
+			}
+
+			const keywordToken = keywordDictionary.getKeyword(token)
+			if (
+				keywordToken &&
+				!keywords.some(
+					(keyword) => normalizeKeyword(keyword.keyword) === normalizeKeyword(keywordToken.keyword)
+				)
+			) {
+				keywords.push(keywordToken)
+			}
+
+			textTokens.push(token)
+		}
+
+		return {
+			categories,
+			keywords,
+			text: textTokens.join(' '),
+		}
+	})
+
+	const selectedKeywords = lift`paletteCommandBoxModel.selectedKeywords`(() =>
+		keywordTokenState.tokens.filter(
+			(token) => !parsedInput.keywords.some((parsedToken) => parsedToken.keyword === token.keyword)
+		)
+	)
+
+	const textKeywords = lift`paletteCommandBoxModel.textKeywords`(() =>
+		selectedKeywords
+			.filter((keyword) => keyword.type !== 'category')
+			.map((keyword) => keyword.keyword)
+	)
+
+	const activeKeywords = lift`paletteCommandBoxModel.activeKeywords`(() => {
+		return [...selectedKeywords, ...parsedInput.keywords]
+	})
+
+	const activeCategories = lift`paletteCommandBoxModel.activeCategories`(() => {
+		const categoryKeywords = activeKeywords
+			.filter((keyword) => keyword.type === 'category')
+			.map((keyword) => keyword.keyword)
+		return Array.from(
+			new Set([...categoryState.manual, ...parsedInput.categories, ...categoryKeywords])
+		)
+	})
+
+	const query = {
+		get text(): string {
+			if (manualQueryState.active) {
+				return manualQueryState.text
+			}
+			const searchText =
+				textKeywords.length > 0
+					? `${parsedInput.text} ${textKeywords.join(' ')}`.trim()
+					: parsedInput.text
+			return searchText
+		},
+		get categories(): readonly PaletteCategory[] {
+			if (manualQueryState.active) {
+				return manualQueryState.categories
+			}
+			return activeCategories
+		},
+	}
+	const searchResults = palette.search(query)
+
+	function useLocalQuery() {
+		manualQueryState.active = false
 	}
 
 	function removeCategory(category: PaletteCategory) {
@@ -184,27 +537,12 @@ export function paletteCommandBoxModel(options: {
 			categoryState.manual.splice(index, 1)
 			removed = true
 		}
-		const typedIndex = categoryState.typed.lastIndexOf(category)
-		if (typedIndex >= 0) {
-			categoryState.typed.splice(typedIndex, 1)
+		if (parsedInput.categories.includes(category)) {
 			inputState.value = removeTokenFromInput(inputState.value, category)
 			removed = true
 		}
 		return removed
 	}
-
-	function syncQuery() {
-		const parsed = splitInputIntoCategories(inputState.value)
-		categoryState.typed.splice(0, categoryState.typed.length, ...parsed.categories)
-		const categories = activeCategories()
-		model.search({
-			text: parsed.text,
-			categories,
-		})
-	}
-
-	// Initialize available categories
-	updateAvailableCategories()
 
 	// Create the command box model
 	const model: PaletteCommandBoxModel = {
@@ -214,8 +552,8 @@ export function paletteCommandBoxModel(options: {
 					return inputState.value
 				},
 				set value(value: string) {
+					useLocalQuery()
 					inputState.value = value
-					syncQuery()
 					model.selection.clear()
 				},
 				get placeholder() {
@@ -228,45 +566,106 @@ export function paletteCommandBoxModel(options: {
 		},
 
 		get query(): PaletteQuery {
-			return palette.search.query
+			return query
 		},
 
 		get results(): readonly PaletteMatch[] {
-			return palette.search.results
+			return searchResults
+		},
+
+		get suggestions(): readonly PaletteCommandBoxKeywordSuggestion[] {
+			return suggestions
 		},
 
 		get categories() {
 			return {
 				get available() {
-					return categoryRegistryState.available
+					return availableCategories
 				},
 				get active() {
-					return activeCategories()
+					return activeCategories
 				},
 				toggle(category: PaletteCategory) {
+					useLocalQuery()
 					if (!removeCategory(category)) {
 						categoryState.manual.push(category)
 					}
-					syncQuery()
-					// Reset selection when categories change
 					model.selection.clear()
 				},
 				removeLast() {
-					const active = activeCategories()
+					useLocalQuery()
+					const active = activeCategories
 					const category = active[active.length - 1]
 					if (!category) return undefined
 					if (!removeCategory(category)) return undefined
-					syncQuery()
 					model.selection.clear()
 					return category
 				},
 				clear() {
 					if (categoryState.manual.length > 0) {
+						useLocalQuery()
 						categoryState.manual.splice(0, categoryState.manual.length)
-						syncQuery()
-						// Reset selection when categories clear
 						model.selection.clear()
 					}
+				},
+			}
+		},
+
+		get keywords() {
+			return {
+				get dictionary() {
+					return keywordDictionary
+				},
+
+				get tokens() {
+					return keywordTokenState.tokens
+				},
+
+				get active() {
+					return activeKeywords
+				},
+
+				addToken(keyword: string): void {
+					const keywordToken = keywordDictionary.getKeyword(keyword)
+					if (!keywordToken) return
+
+					const existing = keywordTokenState.tokens.find(
+						(token) => normalizeKeyword(token.keyword) === normalizeKeyword(keywordToken.keyword)
+					)
+					if (existing) return
+
+					useLocalQuery()
+					keywordTokenState.tokens.push(keywordToken)
+					model.selection.clear()
+				},
+
+				removeLast(): KeywordToken | undefined {
+					if (keywordTokenState.tokens.length === 0) return undefined
+
+					useLocalQuery()
+					const removed = keywordTokenState.tokens.pop()
+					model.selection.clear()
+					return removed
+				},
+
+				removeToken(keyword: string): boolean {
+					const normalized = normalizeKeyword(keyword)
+					const tokenIndex = keywordTokenState.tokens.findIndex(
+						(token) => normalizeKeyword(token.keyword) === normalized
+					)
+					if (tokenIndex < 0) return false
+
+					useLocalQuery()
+					keywordTokenState.tokens.splice(tokenIndex, 1)
+					model.selection.clear()
+					return true
+				},
+
+				clear() {
+					if (keywordTokenState.tokens.length === 0) return
+					useLocalQuery()
+					keywordTokenState.tokens.splice(0, keywordTokenState.tokens.length)
+					model.selection.clear()
 				},
 			}
 		},
@@ -325,12 +724,78 @@ export function paletteCommandBoxModel(options: {
 		},
 
 		search(query: PaletteQuery) {
-			palette.search.search(query)
+			manualQueryState.active = true
+			manualQueryState.text = query.text ?? ''
+			manualQueryState.categories.splice(
+				0,
+				manualQueryState.categories.length,
+				...(query.categories ? [...query.categories] : [])
+			)
+			model.selection.clear()
+		},
+
+		handleKeyDown(event: KeyboardEvent): boolean {
+			// Handle Backspace for removing last keyword token
+			if (event.key === 'Backspace') {
+				const inputValue = inputState.value
+				const cursorPos = (event.target as HTMLInputElement).selectionStart ?? 0
+
+				// Only handle Backspace when cursor is at end and input is empty or ends with space
+				if (
+					cursorPos === inputValue.length &&
+					(inputValue.length === 0 || inputValue.endsWith(' '))
+				) {
+					const removed = model.keywords.removeLast()
+					if (removed) {
+						event.preventDefault()
+						return true
+					}
+				}
+				return false
+			}
+
+			// Only handle Space key without modifiers
+			if (event.key !== ' ' || event.ctrlKey || event.metaKey || event.altKey) {
+				return false
+			}
+
+			// Get current input value and cursor position
+			const inputValue = inputState.value
+			const cursorPos = (event.target as HTMLInputElement).selectionStart ?? 0
+
+			// Extract the word at cursor position
+			const words = inputValue.split(/\s+/)
+			let currentWord = ''
+			let wordStartPos = 0
+
+			// Find the word at cursor position
+			let charCount = 0
+			for (let i = 0; i < words.length; i++) {
+				const word = words[i]
+				if (charCount + word.length >= cursorPos) {
+					currentWord = word
+					wordStartPos = charCount
+					break
+				}
+				charCount += word.length + 1 // +1 for space
+			}
+
+			// Check if the current word is a valid keyword
+			const keywordToken = keywordDictionary.getKeyword(currentWord)
+			if (!keywordToken) {
+				event.preventDefault()
+				return true
+			}
+
+			useLocalQuery()
+			model.keywords.addToken(keywordToken.keyword)
+			inputState.value = removeTokenFromInput(inputState.value, currentWord)
+			model.selection.clear()
+
+			event.preventDefault()
+			return true
 		},
 	}
-
-	// Initial search to populate results
-	model.search({})
 
 	return model
 }

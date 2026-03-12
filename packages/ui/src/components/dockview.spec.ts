@@ -61,7 +61,7 @@ describe('Dockview renderer internals', () => {
 
 		const Widget: DockviewWidget<any, any> = (wp, sc) => {
 			captured.widget = sc
-			effect(() => {
+			effect`dockview.spec.Widget.syncBadge`(() => {
 				wp.context.badge = String(shared.value)
 			})
 			return noop()

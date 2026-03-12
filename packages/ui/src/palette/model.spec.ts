@@ -127,30 +127,32 @@ describe('createPaletteModel', () => {
 			],
 		})
 
-		palette.search.search({ text: 'dark' })
+		const darkQuery = { text: 'dark' }
+		const darkResults = palette.search(darkQuery)
 		expect(
-			palette.search.results.some(
+			darkResults.some(
 				(result) => result.kind === 'intent' && result.intent.id === 'ui.theme:set:dark'
 			)
 		).toBe(true)
 
-		palette.search.search({ text: 'fast save' })
+		const saveQuery = { text: 'fast save' }
+		const saveResults = palette.search(saveQuery)
 		expect(
-			palette.search.results.some(
+			saveResults.some(
 				(result) => result.kind === 'intent' && result.intent.id === 'file.save:quick'
 			)
 		).toBe(true)
 
-		palette.search.search({ categories: ['dim'] })
+		const dimQuery = { categories: ['dim'] as const }
+		const dimResults = palette.search(dimQuery)
 		expect(
-			palette.search.results.some(
+			dimResults.some(
 				(result) => result.kind === 'intent' && result.intent.id === 'ui.theme:set:dark'
 			)
 		).toBe(true)
 
-		palette.search.search({})
-		expect(palette.search.query.text).toBeUndefined()
-		expect(palette.search.query.categories).toBeUndefined()
+		const emptyResults = palette.search({})
+		expect(emptyResults.length).toBeGreaterThan(0)
 	})
 
 	it('writes plain setting intents directly through palette.state', () => {

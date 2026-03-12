@@ -1,12 +1,12 @@
+import { lift } from 'mutts'
 import type { PaletteModel } from './model'
 import type {
 	PaletteContainerDropTarget,
 	PaletteContainerRegion,
 	PaletteContainerSurface,
-	PaletteDisplayItem,
 	PaletteInsertionPoint,
 	PaletteSurfaceType,
-	PaletteToolbarDefinition,
+	PaletteToolbarSurface,
 } from './types'
 
 // Internal mutable version of container configuration for reactive updates
@@ -14,13 +14,6 @@ interface MutablePaletteContainerConfiguration {
 	surfaces: PaletteContainerSurface[]
 	editMode: boolean
 	dropTargets?: PaletteContainerDropTarget[]
-}
-
-// Internal mutable version of display configuration for reactive updates
-interface MutablePaletteDisplayConfiguration {
-	toolbars: PaletteToolbarDefinition[]
-	statusbar?: PaletteDisplayItem[]
-	container?: MutablePaletteContainerConfiguration
 }
 
 export interface PaletteContainerModel {
@@ -50,21 +43,23 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 
 	// Container configuration should already be initialized by createPaletteModel
 	const container = palette.display.container as MutablePaletteContainerConfiguration
+	let nextSurfaceId =
+		container.surfaces.reduce((maxId, surface) => {
+			const numericId = Number.parseInt(surface.id, 10)
+			return Number.isNaN(numericId) ? maxId : Math.max(maxId, numericId)
+		}, 0) + 1
 
 	function enterEditMode(): void {
 		container.editMode = true
-		updateDropTargets()
 	}
 
 	function exitEditMode(): void {
 		container.editMode = false
-		container.dropTargets = []
 	}
 
-	function updateDropTargets(): void {
+	const dropTargets = lift`paletteContainerModel.dropTargets`(() => {
 		if (!container.editMode) {
-			container.dropTargets = []
-			return
+			return []
 		}
 
 		const targets: PaletteContainerDropTarget[] = []
@@ -86,8 +81,8 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 			}
 		}
 
-		container.dropTargets = targets
-	}
+		return targets
+	})
 
 	function createSurface(
 		region: PaletteContainerRegion,
@@ -95,6 +90,34 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 		label?: string
 	): PaletteContainerSurface {
 		const id = generateSurfaceId(type)
+		if (type === 'toolbar') {
+			const surface: PaletteToolbarSurface = {
+				id,
+				type: 'toolbar',
+				region,
+				visible: true,
+				position: getSurfacesInRegion(region).length,
+				label: label ?? generateDefaultLabel(id, type),
+				items: [],
+			}
+			container.surfaces = [...container.surfaces, surface]
+			return surface
+		}
+
+		if (type === 'status') {
+			const surface: PaletteContainerSurface = {
+				id,
+				type: 'status',
+				region,
+				visible: true,
+				position: getSurfacesInRegion(region).length,
+				label: label ?? generateDefaultLabel(id, type),
+				items: [],
+			}
+			container.surfaces = [...container.surfaces, surface]
+			return surface
+		}
+
 		const surface: PaletteContainerSurface = {
 			id,
 			type,
@@ -103,19 +126,7 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 			position: getSurfacesInRegion(region).length,
 			label: label ?? generateDefaultLabel(id, type),
 		}
-
-		// If creating a toolbar surface, also create a corresponding toolbar definition
-		if (type === 'toolbar') {
-			const mutableDisplay = palette.display as MutablePaletteDisplayConfiguration
-			const newToolbar: PaletteToolbarDefinition = {
-				id,
-				items: [],
-			}
-			mutableDisplay.toolbars = [...palette.display.toolbars, newToolbar]
-		}
-
 		container.surfaces = [...container.surfaces, surface]
-		updateDropTargets()
 		return surface
 	}
 
@@ -125,14 +136,7 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 			throw new Error(`Surface '${surfaceId}' not found`)
 		}
 
-		// If removing a toolbar surface, also remove the corresponding toolbar definition
-		if (surface.type === 'toolbar') {
-			const mutableDisplay = palette.display as MutablePaletteDisplayConfiguration
-			mutableDisplay.toolbars = palette.display.toolbars.filter((t) => t.id !== surfaceId)
-		}
-
 		container.surfaces = container.surfaces.filter((s) => s.id !== surfaceId)
-		updateDropTargets()
 	}
 
 	function moveSurface(
@@ -189,7 +193,6 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 		})
 
 		container.surfaces = newSurfaces
-		updateDropTargets()
 	}
 
 	function renameSurface(surfaceId: string, label: string): void {
@@ -267,15 +270,14 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 	}
 
 	function generateSurfaceId(type: PaletteSurfaceType): string {
-		const existingSurfaces = container.surfaces.filter((s) => s.type === type)
-		const counter = existingSurfaces.length + 1
-		return `${type}-${counter}`
+		void type
+		return String(nextSurfaceId++)
 	}
 
 	function generateDefaultLabel(id: string, type: PaletteSurfaceType): string {
 		switch (type) {
 			case 'toolbar':
-				return `Toolbar ${id.split('-')[1] ?? '1'}`
+				return `Toolbar ${id}`
 			case 'command':
 				return 'Command Palette'
 			case 'settings':
@@ -305,7 +307,7 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 			return container.surfaces
 		},
 		get dropTargets() {
-			return container.dropTargets ?? []
+			return dropTargets
 		},
 		get insertionPoints() {
 			return getInsertionPoints()
@@ -321,31 +323,5 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 		hideSurface,
 		getSurfacesInRegion,
 		getInsertionPointsInRegion,
-	}
-}
-
-// Helper function to link toolbar definitions with container surfaces
-export interface PaletteContainerSurfaceModel {
-	readonly surface: PaletteContainerSurface
-	readonly toolbar?: PaletteToolbarDefinition
-	readonly isLinked: boolean
-}
-
-export function resolveContainerSurface(
-	surface: PaletteContainerSurface,
-	palette: PaletteModel
-): PaletteContainerSurfaceModel {
-	if (surface.type === 'toolbar') {
-		const toolbar = palette.display.toolbars.find((t) => t.id === surface.id)
-		return {
-			surface,
-			toolbar,
-			isLinked: toolbar !== undefined,
-		}
-	}
-
-	return {
-		surface,
-		isLinked: false,
 	}
 }

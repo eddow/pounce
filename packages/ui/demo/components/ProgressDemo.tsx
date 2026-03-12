@@ -6,7 +6,7 @@ export default function ProgressDemo() {
 		progress: 0,
 	})
 
-	effect(() => {
+	effect`ProgressDemo.animateProgress`(() => {
 		const interval = setInterval(() => {
 			state.progress = (state.progress + 1) % 101
 		}, 100)

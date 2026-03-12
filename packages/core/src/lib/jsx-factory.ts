@@ -24,7 +24,7 @@ import { extend } from './utils'
 
 export const intrinsicComponentAliases = extend(null, {
 	env(props: { children?: any; [key: string]: any }, env: Env) {
-		effect.named('attr:env')(() => {
+		effect`attr:env`(() => {
 			for (const [key, value] of Object.entries(props)) if (key !== 'children') env[key] = value
 		})
 		return props.children
@@ -60,8 +60,8 @@ export const intrinsicComponentAliases = extend(null, {
 		// morph and processChildren must be called here (component body, runs once) — NOT inside produce.
 		// produce runs inside the render:for effect; any reactive reads there (including processChildren
 		// reading the morph cache) would subscribe render:for to array mutations → rebuild fence fires.
-		const morphed = morph(() => collapse(props.each), forIter)
-		const nodes = lift(() => {
+		const morphed = morph`for:iter`(() => collapse(props.each), forIter)
+		const nodes = lift`for:update`(() => {
 			perf?.mark('for:update:start')
 			const res = processChildren(morphed, env)
 			perf?.mark('for:update:end')
@@ -91,7 +91,7 @@ export const intrinsicComponentAliases = extend(null, {
 			let stopRender: (() => void) | undefined
 			function tryAgain() {
 				stopRender?.()
-				stopRender = effect.named('try:render')(() => {
+				stopRender = effect`try:render`(() => {
 					result.error = undefined
 					caught((error) => {
 						result.error = unreactive(
@@ -105,7 +105,7 @@ export const intrinsicComponentAliases = extend(null, {
 				})
 			}
 			tryAgain()
-			const rv = lift(() => {
+			const rv = lift`try:result`(() => {
 				const src = result.error ?? partial
 				return Array.isArray(src) ? src : src ? [src] : []
 			}) as any
@@ -117,7 +117,7 @@ export const intrinsicComponentAliases = extend(null, {
 		const inAttrs = (props as any)[fromAttribute] as CompositeAttributes
 		const tagProp = inAttrs.getSingle('tag', true)
 
-		const nodes = lift(() => {
+		const nodes = lift`dynamic:switch`(() => {
 			perf?.mark('dynamic:switch:start')
 			const tag = collapse(tagProp)
 			let res: any

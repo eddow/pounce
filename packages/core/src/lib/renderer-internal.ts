@@ -1,4 +1,4 @@
-import { biDi, effect, named, reactiveOptions, root, type ScopedCallback } from 'mutts'
+import { biDi, captioned, effect, reactiveOptions, root, type ScopedCallback } from 'mutts'
 import { CompositeAttributes, ReactiveProp } from './composite-attributes'
 import { pounceOptions, testing } from './debug'
 import { classNames } from './styles'
@@ -176,8 +176,8 @@ function attachAttribute(element: Element, key: string, value: any): ScopedCallb
 		}
 
 		// Helper to push DOM changes back to the signal
-		const provide = biDi(
-			named(`attr:${key}`, (v: any) => setHtmlProperty(element, key, v)),
+		const provide = captioned(biDi)`attr:${key}`(
+			(v: any) => setHtmlProperty(element, key, v),
 			binding
 		)
 
@@ -205,15 +205,12 @@ function attachAttribute(element: Element, key: string, value: any): ScopedCallb
 				}
 			}
 		}
-
-		//const eff = effect(named(`attr:${key}`, () => setHtmlProperty(element, key, binding.get())))
-
 		return cleanup
 	}
 
 	// One-way binding/setter
 	return value instanceof ReactiveProp
-		? effect.named(`attr:${key}:setter`)(() => attachAttributeValue(element, key, value.get()))
+		? effect`attr:${key}:setter`(() => attachAttributeValue(element, key, value.get()))
 		: attachAttributeValue(element, key, value)
 }
 

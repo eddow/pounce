@@ -1,19 +1,33 @@
+import { effect, reactive } from 'mutts'
 import type { PaletteModel } from './model'
 import type {
+	PaletteContainerConfiguration,
 	PaletteDisplayConfiguration,
 	PaletteDisplayItem,
 	PaletteDisplayPresenterFamily,
 	PaletteEntryDefinition,
 	PaletteIntent,
 	PaletteResolvedDisplayItem,
-	PaletteToolbarDefinition,
-	PaletteToolbarId,
+	PaletteToolbarSurface,
 } from './types'
 
-// Internal mutable version of display configuration for reactive updates
+interface MutablePaletteContainerConfiguration {
+	surfaces: PaletteContainerConfiguration['surfaces']
+	editMode: boolean
+	dropTargets?: PaletteContainerConfiguration['dropTargets']
+}
+
 interface MutablePaletteDisplayConfiguration {
-	toolbars: PaletteToolbarDefinition[]
 	statusbar?: PaletteDisplayItem[]
+	container?: MutablePaletteContainerConfiguration
+}
+
+function findToolbar(palette: PaletteModel, toolbar: PaletteToolbarSurface): PaletteToolbarSurface {
+	const currentToolbar = palette.display.container?.surfaces.find(
+		(surface): surface is PaletteToolbarSurface =>
+			surface.type === 'toolbar' && (surface === toolbar || surface.id === toolbar.id)
+	)
+	return currentToolbar ?? toolbar
 }
 
 export interface PaletteToolbarModel {
@@ -25,79 +39,71 @@ export interface PaletteStatusbarModel {
 }
 
 export interface PaletteDisplayCustomizationModel {
-	addToToolbar(toolbarId: PaletteToolbarId, item: PaletteDisplayItem): void
+	addToToolbar(toolbar: PaletteToolbarSurface, item: PaletteDisplayItem, index?: number): void
 	addToStatusbar(item: PaletteDisplayItem): void
-	removeFromToolbar(
-		toolbarId: PaletteToolbarId,
-		itemId: string,
-		kind: 'intent' | 'editor' | 'item-group'
-	): void
-	removeFromStatusbar(itemId: string, kind: 'intent' | 'editor' | 'item-group'): void
+	removeFromToolbar(toolbar: PaletteToolbarSurface, item: PaletteDisplayItem): void
+	removeFromStatusbar(item: PaletteDisplayItem): void
 	moveWithinToolbar(
-		toolbarId: PaletteToolbarId,
-		itemId: string,
-		kind: 'intent' | 'editor' | 'item-group',
+		toolbar: PaletteToolbarSurface,
+		item: PaletteDisplayItem,
 		nextIndex: number
 	): void
 	moveToToolbar(
-		toolbarId: PaletteToolbarId,
-		itemId: string,
-		kind: 'intent' | 'editor' | 'item-group',
-		targetToolbarId: PaletteToolbarId,
+		sourceToolbar: PaletteToolbarSurface,
+		item: PaletteDisplayItem,
+		targetToolbar: PaletteToolbarSurface,
 		targetIndex?: number
 	): void
-	setPresenter(
-		toolbarId: PaletteToolbarId,
-		itemId: string,
-		kind: 'intent' | 'editor' | 'item-group',
-		presenter?: string
-	): void
+	setPresenter(toolbar: PaletteToolbarSurface, item: PaletteDisplayItem, presenter?: string): void
 }
 
 export function paletteToolbarModel(props: {
 	palette: PaletteModel
-	toolbar: PaletteToolbarDefinition
+	toolbar: PaletteToolbarSurface
 }): PaletteToolbarModel {
 	const { palette, toolbar } = props
 
-	const items = toolbar.items
-		.map((item) => palette.resolveDisplayItem(item))
-		.filter((item): item is PaletteResolvedDisplayItem => item !== undefined)
+	const state = reactive<{ items: readonly PaletteResolvedDisplayItem[] }>({ items: [] })
 
-	return { items }
+	effect`paletteToolbarModel.items`(() => {
+		const currentToolbar = findToolbar(palette, toolbar)
+		state.items = currentToolbar.items
+			.map((item) => palette.resolveDisplayItem(item))
+			.filter((item): item is PaletteResolvedDisplayItem => item !== undefined)
+	})
+
+	return {
+		get items() {
+			return state.items
+		},
+	}
 }
 
 export function paletteStatusbarModel(props: { palette: PaletteModel }): PaletteStatusbarModel {
 	const { palette } = props
 
-	const items = (palette.display.statusbar ?? [])
-		.map((item) => palette.resolveDisplayItem(item))
-		.filter((item): item is PaletteResolvedDisplayItem => item !== undefined)
+	const state = reactive<{ items: readonly PaletteResolvedDisplayItem[] }>({ items: [] })
 
-	return { items }
+	effect`paletteStatusbarModel.items`(() => {
+		state.items = (palette.display.statusbar ?? [])
+			.map((item) => palette.resolveDisplayItem(item))
+			.filter((item): item is PaletteResolvedDisplayItem => item !== undefined)
+	})
+
+	return {
+		get items() {
+			return state.items
+		},
+	}
 }
 
 export function paletteDisplayCustomizationModel(props: {
 	palette: PaletteModel
+	container?: { removeSurface(id: string): void }
 }): PaletteDisplayCustomizationModel {
-	const { palette } = props
+	const { palette, container } = props
 
-	function getItemId(item: PaletteDisplayItem): string {
-		switch (item.kind) {
-			case 'intent':
-				return item.intentId
-			case 'editor':
-				return item.entryId
-			case 'item-group': {
-				// Include options in identity to distinguish different subsets of the same entry
-				const optionsHash =
-					item.group.kind === 'enum-options' ? [...item.group.options].sort().join('|') : ''
-				return `group:${item.group.entryId}:${item.group.kind}:${optionsHash}`
-			}
-		}
-	}
-
-	function getItemIdentifier(item: PaletteDisplayItem): {
+	function getItemIdentity(item: PaletteDisplayItem): {
 		id: string
 		kind: 'intent' | 'editor' | 'item-group'
 	} {
@@ -107,7 +113,6 @@ export function paletteDisplayCustomizationModel(props: {
 			case 'editor':
 				return { id: item.entryId, kind: 'editor' }
 			case 'item-group': {
-				// Include options in identity to distinguish different subsets of the same entry
 				const optionsHash =
 					item.group.kind === 'enum-options' ? [...item.group.options].sort().join('|') : ''
 				return {
@@ -118,52 +123,62 @@ export function paletteDisplayCustomizationModel(props: {
 		}
 	}
 
-	function findToolbar(toolbarId: PaletteToolbarId): PaletteToolbarDefinition {
-		const toolbar = palette.display.toolbars.find(
-			(t: PaletteToolbarDefinition) => t.id === toolbarId
-		)
-		if (!toolbar) {
-			throw new Error(`Toolbar '${toolbarId}' not found`)
-		}
-		return toolbar
-	}
-
-	function findItemIndex(
-		items: readonly PaletteDisplayItem[],
-		itemId: string,
-		kind: 'intent' | 'editor' | 'item-group'
-	): number {
+	function findItemIndex(items: readonly PaletteDisplayItem[], item: PaletteDisplayItem): number {
+		const { id: itemId, kind } = getItemIdentity(item)
 		return items.findIndex((item: PaletteDisplayItem) => {
-			const itemIdentifier = getItemIdentifier(item)
-			return itemIdentifier.id === itemId && itemIdentifier.kind === kind
+			const itemIdentity = getItemIdentity(item)
+			return itemIdentity.id === itemId && itemIdentity.kind === kind
 		})
 	}
 
-	function addToToolbar(toolbarId: PaletteToolbarId, item: PaletteDisplayItem): void {
-		const toolbar = findToolbar(toolbarId)
+	function matchesItem(currentItem: PaletteDisplayItem, targetItem: PaletteDisplayItem): boolean {
+		const currentIdentity = getItemIdentity(currentItem)
+		const targetIdentity = getItemIdentity(targetItem)
+		return currentIdentity.id === targetIdentity.id && currentIdentity.kind === targetIdentity.kind
+	}
 
-		const itemId = getItemId(item)
-		const existingIndex = toolbar.items.findIndex(
-			(i: PaletteDisplayItem) => getItemId(i) === itemId
+	function removeItems(
+		items: readonly PaletteDisplayItem[],
+		targetItem: PaletteDisplayItem
+	): PaletteDisplayItem[] {
+		return items.filter((item) => !matchesItem(item, targetItem))
+	}
+
+	function addItemToToolbar(
+		toolbar: PaletteToolbarSurface,
+		item: PaletteDisplayItem,
+		index?: number
+	): void {
+		const currentToolbar = findToolbar(palette, toolbar)
+		const { id: itemId } = getItemIdentity(item)
+		const existingIndex = currentToolbar.items.findIndex(
+			(i: PaletteDisplayItem) => getItemIdentity(i).id === itemId
 		)
 		if (existingIndex >= 0) {
-			const updatedItems = [...toolbar.items]
+			const updatedItems = [...currentToolbar.items]
 			updatedItems[existingIndex] = item
-			updateToolbar(toolbarId, { ...toolbar, items: updatedItems })
+			updateToolbar(currentToolbar, { ...currentToolbar, items: updatedItems })
 			return
 		}
 
-		updateToolbar(toolbarId, {
-			...toolbar,
-			items: [...toolbar.items, item],
+		const updatedItems = [...currentToolbar.items]
+		if (index !== undefined) {
+			updatedItems.splice(index, 0, item)
+		} else {
+			updatedItems.push(item)
+		}
+
+		updateToolbar(currentToolbar, {
+			...currentToolbar,
+			items: updatedItems,
 		})
 	}
 
 	function addToStatusbar(item: PaletteDisplayItem): void {
 		const currentStatusbar = palette.display.statusbar ?? []
-		const itemId = getItemId(item)
+		const { id: itemId } = getItemIdentity(item)
 		const existingIndex = currentStatusbar.findIndex(
-			(i: PaletteDisplayItem) => getItemId(i) === itemId
+			(i: PaletteDisplayItem) => getItemIdentity(i).id === itemId
 		)
 		if (existingIndex >= 0) {
 			const updatedStatusbar = [...currentStatusbar]
@@ -175,76 +190,79 @@ export function paletteDisplayCustomizationModel(props: {
 		updateDisplay({ ...palette.display, statusbar: [...currentStatusbar, item] })
 	}
 
-	function removeFromToolbar(
-		toolbarId: PaletteToolbarId,
-		itemId: string,
-		kind: 'intent' | 'editor' | 'item-group'
-	): void {
-		const toolbar = findToolbar(toolbarId)
+	function removeToolbarItem(toolbar: PaletteToolbarSurface, item: PaletteDisplayItem): void {
+		const currentToolbar = findToolbar(palette, toolbar)
+		const updatedItems = removeItems(currentToolbar.items, item)
 
-		const updatedItems = toolbar.items.filter((item: PaletteDisplayItem) => {
-			const itemIdentifier = getItemIdentifier(item)
-			return !(itemIdentifier.id === itemId && itemIdentifier.kind === kind)
-		})
-		updateToolbar(toolbarId, { ...toolbar, items: updatedItems })
-	}
-
-	function removeFromStatusbar(itemId: string, kind: 'intent' | 'editor' | 'item-group'): void {
-		const currentStatusbar = palette.display.statusbar ?? []
-		const updatedStatusbar = currentStatusbar.filter((item: PaletteDisplayItem) => {
-			const itemIdentifier = getItemIdentifier(item)
-			return !(itemIdentifier.id === itemId && itemIdentifier.kind === kind)
-		})
-		updateDisplay({ ...palette.display, statusbar: updatedStatusbar })
-	}
-
-	function moveWithinToolbar(
-		toolbarId: PaletteToolbarId,
-		itemId: string,
-		kind: 'intent' | 'editor' | 'item-group',
-		nextIndex: number
-	): void {
-		const toolbar = findToolbar(toolbarId)
-
-		const currentIndex = findItemIndex(toolbar.items, itemId, kind)
-		if (currentIndex < 0) {
-			throw new Error(`Item '${itemId}' (${kind}) not found in toolbar '${toolbarId}'`)
-		}
-
-		if (nextIndex < 0 || nextIndex >= toolbar.items.length) {
-			throw new Error(
-				`Invalid target index ${nextIndex} for toolbar '${toolbarId}' with ${toolbar.items.length} items`
-			)
-		}
-
-		const updatedItems = [...toolbar.items]
-		const [movedItem] = updatedItems.splice(currentIndex, 1)
-		updatedItems.splice(nextIndex, 0, movedItem)
-
-		updateToolbar(toolbarId, { ...toolbar, items: updatedItems })
-	}
-
-	function moveToToolbar(
-		toolbarId: PaletteToolbarId,
-		itemId: string,
-		kind: 'intent' | 'editor' | 'item-group',
-		targetToolbarId: PaletteToolbarId,
-		targetIndex?: number
-	): void {
-		if (toolbarId === targetToolbarId) {
-			if (targetIndex === undefined) return
-			moveWithinToolbar(toolbarId, itemId, kind, targetIndex)
+		if (updatedItems.length === 0 && container) {
+			container.removeSurface(currentToolbar.id)
 			return
 		}
 
-		const sourceToolbar = findToolbar(toolbarId)
-		const targetToolbar = findToolbar(targetToolbarId)
-		const currentIndex = findItemIndex(sourceToolbar.items, itemId, kind)
+		updateToolbar(currentToolbar, { ...currentToolbar, items: updatedItems })
+	}
+
+	function removeFromStatusbar(item: PaletteDisplayItem): void {
+		const currentStatusbar = palette.display.statusbar ?? []
+		const updatedStatusbar = removeItems(currentStatusbar, item)
+		updateDisplay({ ...palette.display, statusbar: updatedStatusbar })
+	}
+
+	function moveItemWithinToolbar(
+		toolbar: PaletteToolbarSurface,
+		item: PaletteDisplayItem,
+		nextIndex: number
+	): void {
+		const currentToolbar = findToolbar(palette, toolbar)
+		const currentIndex = findItemIndex(currentToolbar.items, item)
+		const { id: itemId, kind } = getItemIdentity(item)
 		if (currentIndex < 0) {
-			throw new Error(`Item '${itemId}' (${kind}) not found in toolbar '${toolbarId}'`)
+			throw new Error(`Item '${itemId}' (${kind}) not found in toolbar '${currentToolbar.id}'`)
 		}
 
-		const item = sourceToolbar.items[currentIndex]
+		if (nextIndex < 0 || nextIndex >= currentToolbar.items.length) {
+			throw new Error(
+				`Invalid target index ${nextIndex} for toolbar '${currentToolbar.id}' with ${currentToolbar.items.length} items`
+			)
+		}
+
+		const updatedItems = [...currentToolbar.items]
+		const [movedItem] = updatedItems.splice(currentIndex, 1)
+		updatedItems.splice(nextIndex, 0, movedItem)
+
+		updateToolbar(currentToolbar, { ...currentToolbar, items: updatedItems })
+	}
+
+	function moveToToolbar(
+		sourceToolbar: PaletteToolbarSurface,
+		item: PaletteDisplayItem,
+		targetToolbar: PaletteToolbarSurface,
+		targetIndex?: number
+	): void {
+		const currentSourceToolbar = findToolbar(palette, sourceToolbar)
+		const currentTargetToolbar = findToolbar(palette, targetToolbar)
+		if (currentSourceToolbar === currentTargetToolbar) {
+			if (targetIndex === undefined) return
+			moveItemWithinToolbar(currentSourceToolbar, item, targetIndex)
+			return
+		}
+
+		moveItemBetweenToolbars(currentSourceToolbar, item, currentTargetToolbar, targetIndex)
+	}
+
+	function moveItemBetweenToolbars(
+		sourceToolbar: PaletteToolbarSurface,
+		item: PaletteDisplayItem,
+		targetToolbar: PaletteToolbarSurface,
+		targetIndex?: number
+	): void {
+		const currentIndex = findItemIndex(sourceToolbar.items, item)
+		const { id: itemId, kind } = getItemIdentity(item)
+		if (currentIndex < 0) {
+			throw new Error(`Item '${itemId}' (${kind}) not found in toolbar '${sourceToolbar.id}'`)
+		}
+
+		const movedItem = sourceToolbar.items[currentIndex]
 		const sourceItems = [...sourceToolbar.items]
 		sourceItems.splice(currentIndex, 1)
 
@@ -253,27 +271,26 @@ export function paletteDisplayCustomizationModel(props: {
 			Math.max(targetIndex ?? targetItems.length, 0),
 			targetItems.length
 		)
-		targetItems.splice(normalizedIndex, 0, item)
+		targetItems.splice(normalizedIndex, 0, movedItem)
 
-		updateToolbar(toolbarId, { ...sourceToolbar, items: sourceItems })
-		updateToolbar(targetToolbarId, { ...targetToolbar, items: targetItems })
+		updateToolbar(sourceToolbar, { ...sourceToolbar, items: sourceItems })
+		updateToolbar(targetToolbar, { ...targetToolbar, items: targetItems })
 	}
 
-	function setPresenter(
-		toolbarId: PaletteToolbarId,
-		itemId: string,
-		kind: 'intent' | 'editor' | 'item-group',
+	function setToolbarItemPresenter(
+		toolbar: PaletteToolbarSurface,
+		item: PaletteDisplayItem,
 		presenter?: string
 	): void {
-		const toolbar = findToolbar(toolbarId)
-
-		const itemIndex = findItemIndex(toolbar.items, itemId, kind)
+		const currentToolbar = findToolbar(palette, toolbar)
+		const itemIndex = findItemIndex(currentToolbar.items, item)
+		const { id: itemId, kind } = getItemIdentity(item)
 		if (itemIndex < 0) {
-			throw new Error(`Item '${itemId}' (${kind}) not found in toolbar '${toolbarId}'`)
+			throw new Error(`Item '${itemId}' (${kind}) not found in toolbar '${currentToolbar.id}'`)
 		}
 
-		const currentItem = toolbar.items[itemIndex]
-		const updatedItems = [...toolbar.items]
+		const currentItem = currentToolbar.items[itemIndex]
+		const updatedItems = [...currentToolbar.items]
 
 		if (currentItem.kind === 'item-group') {
 			// For item-groups, presenter lives under group.presenter
@@ -290,37 +307,51 @@ export function paletteDisplayCustomizationModel(props: {
 			updatedItems[itemIndex] = presenter === undefined ? baseItem : { ...baseItem, presenter }
 		}
 
-		updateToolbar(toolbarId, { ...toolbar, items: updatedItems })
+		updateToolbar(currentToolbar, { ...currentToolbar, items: updatedItems })
 	}
 
 	function updateToolbar(
-		toolbarId: PaletteToolbarId,
-		updatedToolbar: PaletteToolbarDefinition
+		toolbar: PaletteToolbarSurface,
+		updatedToolbar: PaletteToolbarSurface
 	): void {
-		const updatedToolbars = palette.display.toolbars.map((toolbar: PaletteToolbarDefinition) =>
-			toolbar.id === toolbarId ? updatedToolbar : toolbar
-		)
-		updateDisplay({ ...palette.display, toolbars: updatedToolbars })
+		const surfaces = palette.display.container?.surfaces ?? []
+		updateDisplay({
+			...palette.display,
+			container: {
+				...(palette.display.container ?? { surfaces: [], editMode: false, dropTargets: [] }),
+				surfaces: surfaces.map((surface) =>
+					surface.type === 'toolbar' && (surface === toolbar || surface.id === toolbar.id)
+						? updatedToolbar
+						: surface
+				),
+			},
+		})
 	}
 
 	function updateDisplay(updatedDisplay: PaletteDisplayConfiguration): void {
 		const mutableDisplay = palette.display as MutablePaletteDisplayConfiguration
-		if (updatedDisplay.toolbars) {
-			mutableDisplay.toolbars = [...updatedDisplay.toolbars]
-		}
 		if (updatedDisplay.statusbar !== undefined) {
 			mutableDisplay.statusbar = [...updatedDisplay.statusbar]
+		}
+		if (updatedDisplay.container) {
+			mutableDisplay.container = {
+				...updatedDisplay.container,
+				surfaces: [...updatedDisplay.container.surfaces],
+				dropTargets: updatedDisplay.container.dropTargets
+					? [...updatedDisplay.container.dropTargets]
+					: undefined,
+			}
 		}
 	}
 
 	return {
-		addToToolbar,
+		addToToolbar: addItemToToolbar,
 		addToStatusbar,
-		removeFromToolbar,
+		removeFromToolbar: removeToolbarItem,
 		removeFromStatusbar,
-		moveWithinToolbar,
+		moveWithinToolbar: moveItemWithinToolbar,
 		moveToToolbar,
-		setPresenter,
+		setPresenter: setToolbarItemPresenter,
 	}
 }
 

@@ -15,7 +15,7 @@ import type {
 	PaletteEntryDefinition,
 	PaletteIntent,
 	PaletteIntentDisplayItem,
-	PaletteToolbarDefinition,
+	PaletteToolbarSurface,
 } from './types'
 
 const testEntry: PaletteEntryDefinition = {
@@ -68,6 +68,16 @@ function editorItem(entryId: string, presenter = 'default'): PaletteEditorDispla
 	}
 }
 
+function toolbarSurface(id: string, items: readonly PaletteDisplayItem[]): PaletteToolbarSurface {
+	return {
+		id,
+		type: 'toolbar',
+		region: 'top',
+		visible: true,
+		items,
+	}
+}
+
 describe('palette display', () => {
 	describe('paletteToolbarModel', () => {
 		it('resolves intent display items in a toolbar', () => {
@@ -76,10 +86,7 @@ describe('palette display', () => {
 				intents: [testIntent],
 			})
 
-			const toolbar: PaletteToolbarDefinition = {
-				id: 'test-toolbar',
-				items: [intentItem('test.setting:toggle', 'toggle')],
-			}
+			const toolbar = toolbarSurface('test-toolbar', [intentItem('test.setting:toggle', 'toggle')])
 
 			const model = paletteToolbarModel({ palette, toolbar })
 
@@ -96,10 +103,7 @@ describe('palette display', () => {
 				definitions: [testEnumEntry],
 			})
 
-			const toolbar: PaletteToolbarDefinition = {
-				id: 'test-toolbar',
-				items: [editorItem('test.theme', 'select')],
-			}
+			const toolbar = toolbarSurface('test-toolbar', [editorItem('test.theme', 'select')])
 
 			const model = paletteToolbarModel({ palette, toolbar })
 
@@ -117,10 +121,7 @@ describe('palette display', () => {
 				intents: [testIntent],
 			})
 
-			const toolbar: PaletteToolbarDefinition = {
-				id: 'test-toolbar',
-				items: [intentItem('missing:intent')],
-			}
+			const toolbar = toolbarSurface('test-toolbar', [intentItem('missing:intent')])
 
 			const model = paletteToolbarModel({ palette, toolbar })
 			expect(model.items).toHaveLength(0)
@@ -133,7 +134,6 @@ describe('palette display', () => {
 				definitions: [testEntry],
 				intents: [testIntent],
 				display: {
-					toolbars: [],
 					statusbar: [],
 				},
 			})
@@ -152,7 +152,6 @@ describe('palette display', () => {
 		it('filters unresolved statusbar items', () => {
 			const palette = createPaletteModel({
 				display: {
-					toolbars: [],
 					statusbar: [intentItem('missing:intent')],
 				},
 			})
@@ -166,20 +165,25 @@ describe('palette display', () => {
 		it('adds and updates toolbar items', () => {
 			const palette = createPaletteModel({
 				display: {
-					toolbars: [{ id: 'toolbar-1', items: [] }],
+					container: {
+						editMode: false,
+						dropTargets: [],
+						surfaces: [toolbarSurface('1', [])],
+					},
 				},
 			})
 
 			const model = paletteDisplayCustomizationModel({ palette })
-			model.addToToolbar('toolbar-1', intentItem('test.setting:toggle', 'button'))
-			model.addToToolbar('toolbar-1', {
+			const toolbar = palette.display.container!.surfaces[0] as PaletteToolbarSurface
+			model.addToToolbar(toolbar, intentItem('test.setting:toggle', 'button'))
+			model.addToToolbar(toolbar, {
 				...intentItem('test.setting:toggle', 'toggle'),
 				showText: true,
 			})
 
-			const toolbar = palette.display.toolbars[0]
-			expect(toolbar.items).toHaveLength(1)
-			expect(toolbar.items[0]).toEqual({
+			const updatedToolbar = palette.display.container!.surfaces[0] as PaletteToolbarSurface
+			expect(updatedToolbar.items).toHaveLength(1)
+			expect(updatedToolbar.items[0]).toEqual({
 				kind: 'intent',
 				intentId: 'test.setting:toggle',
 				presenter: 'toggle',
@@ -190,56 +194,66 @@ describe('palette display', () => {
 		it('adds, moves, updates, and removes editor items', () => {
 			const palette = createPaletteModel({
 				display: {
-					toolbars: [
-						{
-							id: 'toolbar-1',
-							items: [intentItem('test.setting:toggle', 'toggle')],
-						},
-					],
+					container: {
+						editMode: false,
+						dropTargets: [],
+						surfaces: [toolbarSurface('1', [intentItem('test.setting:toggle', 'toggle')])],
+					},
 				},
 			})
 
 			const model = paletteDisplayCustomizationModel({ palette })
-			model.addToToolbar('toolbar-1', editorItem('test.theme', 'select'))
-			model.moveWithinToolbar('toolbar-1', 'test.theme', 'editor', 0)
-			model.setPresenter('toolbar-1', 'test.theme', 'editor', 'radio-like')
+			const toolbar = palette.display.container!.surfaces[0] as PaletteToolbarSurface
+			const editor = editorItem('test.theme', 'select')
+			model.addToToolbar(toolbar, editor)
+			let updatedToolbar = palette.display.container!.surfaces[0] as PaletteToolbarSurface
+			const updatedEditor = updatedToolbar.items.find(
+				(item) => item.kind === 'editor' && item.entryId === 'test.theme'
+			)
+			expect(updatedEditor).toBeDefined()
+			model.moveWithinToolbar(updatedToolbar, updatedEditor!, 0)
 
-			let toolbar = palette.display.toolbars[0]
-			expect(toolbar.items[0]).toEqual({
+			updatedToolbar = palette.display.container!.surfaces[0] as PaletteToolbarSurface
+			model.setPresenter(updatedToolbar, updatedToolbar.items[0], 'radio-like')
+
+			updatedToolbar = palette.display.container!.surfaces[0] as PaletteToolbarSurface
+			expect(updatedToolbar.items[0]).toEqual({
 				kind: 'editor',
 				entryId: 'test.theme',
 				presenter: 'radio-like',
 			})
 
-			model.removeFromToolbar('toolbar-1', 'test.theme', 'editor')
-			toolbar = palette.display.toolbars[0]
-			expect(toolbar.items).toHaveLength(1)
-			expect(toolbar.items[0]).toEqual(intentItem('test.setting:toggle', 'toggle'))
+			model.removeFromToolbar(updatedToolbar, updatedToolbar.items[0])
+			updatedToolbar = palette.display.container!.surfaces[0] as PaletteToolbarSurface
+			expect(updatedToolbar.items).toHaveLength(1)
+			expect(updatedToolbar.items[0]).toEqual(intentItem('test.setting:toggle', 'toggle'))
 		})
 
 		it('clears explicit presenters while preserving other properties', () => {
 			const palette = createPaletteModel({
 				display: {
-					toolbars: [
-						{
-							id: 'toolbar-1',
-							items: [
+					container: {
+						editMode: false,
+						dropTargets: [],
+						surfaces: [
+							toolbarSurface('1', [
 								{
 									kind: 'intent',
 									intentId: 'test.setting:toggle',
 									presenter: 'pill',
 									showText: false,
 								},
-							],
-						},
-					],
+							]),
+						],
+					},
 				},
 			})
 
 			const model = paletteDisplayCustomizationModel({ palette })
-			model.setPresenter('toolbar-1', 'test.setting:toggle', 'intent')
+			const toolbar = palette.display.container!.surfaces[0] as PaletteToolbarSurface
+			model.setPresenter(toolbar, toolbar.items[0], undefined)
 
-			const item = palette.display.toolbars[0]?.items[0]
+			const item = (palette.display.container!.surfaces[0] as PaletteToolbarSurface).items[0]
 			expect(item).not.toHaveProperty('presenter')
 			expect(item?.showText).toBe(false)
 		})
@@ -247,7 +261,6 @@ describe('palette display', () => {
 		it('adds and removes statusbar items by kind', () => {
 			const palette = createPaletteModel({
 				display: {
-					toolbars: [],
 					statusbar: [],
 				},
 			})
@@ -257,39 +270,34 @@ describe('palette display', () => {
 			model.addToStatusbar(editorItem('test.theme', 'select'))
 			expect(palette.display.statusbar).toHaveLength(2)
 
-			model.removeFromStatusbar('test.setting:toggle', 'intent')
-			model.removeFromStatusbar('test.theme', 'editor')
+			const [intentStatusItem, editorStatusItem] = palette.display.statusbar ?? []
+			model.removeFromStatusbar(intentStatusItem)
+			model.removeFromStatusbar(editorStatusItem)
 			expect(palette.display.statusbar).toHaveLength(0)
 		})
 
 		it('throws precise errors for invalid operations', () => {
 			const palette = createPaletteModel({
 				display: {
-					toolbars: [
-						{
-							id: 'toolbar-1',
-							items: [intentItem('test1'), intentItem('test2')],
-						},
-					],
+					container: {
+						editMode: false,
+						dropTargets: [],
+						surfaces: [toolbarSurface('1', [intentItem('test1'), intentItem('test2')])],
+					},
 				},
 			})
 
 			const model = paletteDisplayCustomizationModel({ palette })
+			const existingToolbar = palette.display.container!.surfaces[0] as PaletteToolbarSurface
 
-			expect(() => model.addToToolbar('missing', intentItem('test'))).toThrow(
-				"Toolbar 'missing' not found"
+			expect(() => model.moveWithinToolbar(existingToolbar, intentItem('missing'), 0)).toThrow(
+				"Item 'missing' (intent) not found in toolbar '1'"
 			)
-			expect(() => model.removeFromToolbar('missing', 'test', 'intent')).toThrow(
-				"Toolbar 'missing' not found"
+			expect(() => model.moveWithinToolbar(existingToolbar, existingToolbar.items[0], -1)).toThrow(
+				"Invalid target index -1 for toolbar '1' with 2 items"
 			)
-			expect(() => model.moveWithinToolbar('toolbar-1', 'missing', 'intent', 0)).toThrow(
-				"Item 'missing' (intent) not found in toolbar 'toolbar-1'"
-			)
-			expect(() => model.moveWithinToolbar('toolbar-1', 'test1', 'intent', -1)).toThrow(
-				"Invalid target index -1 for toolbar 'toolbar-1' with 2 items"
-			)
-			expect(() => model.moveWithinToolbar('toolbar-1', 'test1', 'intent', 2)).toThrow(
-				"Invalid target index 2 for toolbar 'toolbar-1' with 2 items"
+			expect(() => model.moveWithinToolbar(existingToolbar, existingToolbar.items[0], 2)).toThrow(
+				"Invalid target index 2 for toolbar '1' with 2 items"
 			)
 		})
 	})

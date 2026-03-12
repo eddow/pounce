@@ -11,6 +11,7 @@ import CheckButtonDemo from './components/CheckButtonDemo'
 import DisplayContextDemo from './components/DisplayContextDemo'
 import DockviewDemo from './components/DockviewDemo'
 import DockviewRouterDemo from './components/DockviewRouterDemo'
+import DragDropDemo from './components/DragDropDemo'
 import FormDemo from './components/FormDemo'
 import MenuDemo from './components/MenuDemo'
 import MultiSelectDemo from './components/MultiSelectDemo'
@@ -51,6 +52,7 @@ const routes: DemoRoute[] = [
 		label: 'DockviewRouter',
 		view: () => <DockviewRouterDemo />,
 	},
+	{ path: '/drag-drop', label: 'Drag & Drop', view: () => <DragDropDemo /> },
 	{ path: '/menu', label: 'Menu', view: () => <MenuDemo /> },
 	{ path: '/multiselect', label: 'MultiSelect', view: () => <MultiSelectDemo /> },
 	{ path: '/palette', label: 'Palette', view: () => <PaletteDemo /> },

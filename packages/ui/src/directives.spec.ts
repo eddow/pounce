@@ -3,6 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
 	type BadgeOptions,
 	badge,
+	drag,
+	dragging,
+	drop,
 	type IntersectOptions,
 	intersect,
 	loading,
@@ -411,6 +414,184 @@ describe('Directives', () => {
 		it('should handle array target', () => {
 			cleanup = loading([element], true)
 			expect(element.getAttribute('aria-busy')).toBe('true')
+		})
+	})
+
+	describe('drag and drop', () => {
+		let element: HTMLElement
+		let targetElement: HTMLElement
+		let cleanupDrag: (() => void) | undefined
+		let cleanupDrop: (() => void) | undefined
+		let cleanupDragging: (() => void) | undefined
+
+		beforeEach(() => {
+			element = document.createElement('div')
+			targetElement = document.createElement('div')
+			document.body.appendChild(element)
+			document.body.appendChild(targetElement)
+		})
+
+		afterEach(() => {
+			// reset internal state by firing dragend on a dummy instance
+			const resetEl = document.createElement('div')
+			const resetCleanup = drag(resetEl, null)
+			resetEl.dispatchEvent(new Event('dragstart') as DragEvent) // Sets to null
+			resetEl.dispatchEvent(new Event('dragend') as DragEvent) // Sets to undefined
+			resetCleanup?.()
+
+			cleanupDrag?.()
+			cleanupDrop?.()
+			cleanupDragging?.()
+			element.remove()
+			targetElement.remove()
+		})
+
+		it('drag should set draggable and track payload', () => {
+			cleanupDrag = drag(element, { id: 1 })
+			expect(element.getAttribute('draggable')).toBe('true')
+
+			const dragStartEvent = new Event('dragstart') as DragEvent
+			element.dispatchEvent(dragStartEvent)
+
+			// The payload is active, let's test it by setting up a drop
+			let droppedPayload: any = null
+			cleanupDrop = drop(targetElement, (p) => {
+				droppedPayload = p
+			})
+
+			const dropEvent = new Event('drop') as DragEvent
+			dropEvent.preventDefault = vi.fn()
+			targetElement.dispatchEvent(dropEvent)
+
+			expect(droppedPayload).toEqual({ id: 1 })
+		})
+
+		it('drag should evaluate function payloads', () => {
+			cleanupDrag = drag(element, () => ({ dynamic: true }))
+			const dragStartEvent = new Event('dragstart') as DragEvent
+			element.dispatchEvent(dragStartEvent)
+
+			let droppedPayload: any = null
+			cleanupDrop = drop(targetElement, (p) => {
+				droppedPayload = p
+			})
+
+			const dropEvent = new Event('drop') as DragEvent
+			dropEvent.preventDefault = vi.fn()
+			targetElement.dispatchEvent(dropEvent)
+
+			expect(droppedPayload).toEqual({ dynamic: true })
+		})
+
+		it('drag should clear payload on dragend', () => {
+			cleanupDrag = drag(element, 'test')
+			element.dispatchEvent(new Event('dragstart') as DragEvent)
+			element.dispatchEvent(new Event('dragend') as DragEvent)
+
+			let droppedPayload: any = null
+			cleanupDrop = drop(targetElement, (p) => {
+				droppedPayload = p
+			})
+
+			const dropEvent = new Event('drop') as DragEvent
+			targetElement.dispatchEvent(dropEvent)
+
+			expect(droppedPayload).toBeNull() // Drop shouldn't have executed
+		})
+
+		it('drop should preventDefault during dragover if payload is active', () => {
+			cleanupDrag = drag(element, 'test')
+			element.dispatchEvent(new Event('dragstart') as DragEvent)
+
+			cleanupDrop = drop(targetElement, vi.fn())
+
+			const dragOverEvent = new Event('dragover') as DragEvent
+			dragOverEvent.preventDefault = vi.fn()
+			targetElement.dispatchEvent(dragOverEvent)
+
+			expect(dragOverEvent.preventDefault).toHaveBeenCalled()
+		})
+
+		it('drop should not preventDefault during dragover if no payload is active', () => {
+			cleanupDrop = drop(targetElement, vi.fn())
+
+			const dragOverEvent = new Event('dragover') as DragEvent
+			dragOverEvent.preventDefault = vi.fn()
+			targetElement.dispatchEvent(dragOverEvent)
+
+			expect(dragOverEvent.preventDefault).not.toHaveBeenCalled()
+		})
+
+		it('dragging should manage hover state and cleanup', () => {
+			cleanupDrag = drag(element, 'payload')
+			element.dispatchEvent(new Event('dragstart') as DragEvent)
+
+			const cleanupHoverFn = vi.fn()
+			const draggingCallback = vi.fn().mockReturnValue(cleanupHoverFn)
+
+			cleanupDragging = dragging(targetElement, draggingCallback)
+
+			const dragEnterEvent = new Event('dragenter') as DragEvent
+			dragEnterEvent.preventDefault = vi.fn()
+			targetElement.dispatchEvent(dragEnterEvent)
+
+			expect(draggingCallback).toHaveBeenCalledWith('payload', true, targetElement)
+			expect(dragEnterEvent.preventDefault).toHaveBeenCalled()
+
+			const dragLeaveEvent = new Event('dragleave') as DragEvent
+			targetElement.dispatchEvent(dragLeaveEvent)
+
+			expect(cleanupHoverFn).toHaveBeenCalled()
+		})
+
+		it('dragging should handle false explicitly to reject drops', () => {
+			cleanupDrag = drag(element, 'payload')
+			element.dispatchEvent(new Event('dragstart') as DragEvent)
+
+			const draggingCallback = vi.fn().mockReturnValue(false)
+			cleanupDragging = dragging(targetElement, draggingCallback)
+
+			const dragEnterEvent = new Event('dragenter') as DragEvent
+			dragEnterEvent.preventDefault = vi.fn()
+			targetElement.dispatchEvent(dragEnterEvent)
+
+			// It shouldn't prevent default, because we returned false
+			expect(dragEnterEvent.preventDefault).not.toHaveBeenCalled()
+
+			// Over shouldn't prevent either
+			const dragOverEvent = new Event('dragover') as DragEvent
+			dragOverEvent.preventDefault = vi.fn()
+			targetElement.dispatchEvent(dragOverEvent)
+
+			expect(dragOverEvent.preventDefault).not.toHaveBeenCalled()
+		})
+
+		it('dragging should supply false to callback if no cleanup returned', () => {
+			cleanupDrag = drag(element, 'payload')
+			element.dispatchEvent(new Event('dragstart') as DragEvent)
+
+			const draggingCallback = vi.fn().mockReturnValue(undefined)
+			cleanupDragging = dragging(targetElement, draggingCallback)
+
+			targetElement.dispatchEvent(new Event('dragenter') as DragEvent)
+			expect(draggingCallback).toHaveBeenCalledWith('payload', true, targetElement)
+
+			targetElement.dispatchEvent(new Event('dragleave') as DragEvent)
+			expect(draggingCallback).toHaveBeenCalledWith('payload', false, targetElement)
+		})
+
+		it('dragging should handle drop event as leave for cleanup', () => {
+			cleanupDrag = drag(element, 'payload')
+			element.dispatchEvent(new Event('dragstart') as DragEvent)
+
+			const cleanupHoverFn = vi.fn()
+			const draggingCallback = vi.fn().mockReturnValue(cleanupHoverFn)
+			cleanupDragging = dragging(targetElement, draggingCallback)
+
+			targetElement.dispatchEvent(new Event('dragenter') as DragEvent)
+			targetElement.dispatchEvent(new Event('drop') as DragEvent)
+
+			expect(cleanupHoverFn).toHaveBeenCalled()
 		})
 	})
 })

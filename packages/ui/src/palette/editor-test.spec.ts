@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { createPaletteModel } from './model'
-import type { PaletteDisplayItem } from './types'
+import type { PaletteDisplayItem, PaletteToolbarSurface } from './types'
+
+function toolbarSurface(id: string, items: readonly PaletteDisplayItem[]): PaletteToolbarSurface {
+	return {
+		id,
+		type: 'toolbar',
+		region: 'top',
+		visible: true,
+		items,
+	}
+}
 
 describe('editor-style display items', () => {
 	it('should support editor display items alongside intent items', () => {
@@ -21,10 +31,11 @@ describe('editor-style display items', () => {
 				},
 			],
 			display: {
-				toolbars: [
-					{
-						id: 'main-toolbar',
-						items: [
+				container: {
+					editMode: false,
+					dropTargets: [],
+					surfaces: [
+						toolbarSurface('1', [
 							{
 								kind: 'intent',
 								intentId: 'game.speed:step:up',
@@ -40,13 +51,13 @@ describe('editor-style display items', () => {
 								entryId: 'ui.theme',
 								presenter: 'select',
 							},
-						] as PaletteDisplayItem[],
-					},
-				],
+						] as PaletteDisplayItem[]),
+					],
+				},
 			},
 		})
 
-		const toolbar = palette.display.toolbars[0]
+		const toolbar = palette.display.container!.surfaces[0] as PaletteToolbarSurface
 		expect(toolbar.items).toHaveLength(3)
 
 		// Resolve intent display item

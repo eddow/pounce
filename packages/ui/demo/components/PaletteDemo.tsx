@@ -7,21 +7,27 @@ import {
 	createPaletteModel,
 	getDefaultDisplayPresenter,
 	getDisplayPresenterFamily,
+	handlePaletteCommandBoxInputKeydown,
+	handlePaletteCommandChipKeydown,
 	paletteCommandBoxModel,
 	paletteContainerModel,
 	paletteDisplayCustomizationModel,
+	setPaletteCommandBoxInput,
 	type PaletteAddItemCandidate,
 	type PaletteContainerRegion,
 	type PaletteDisplayItem,
 	type PaletteDisplayPresenterFamily,
 	type PaletteEditorDisplayItem,
 	type PaletteEntryDefinition,
+	type PaletteGroupedProposition,
 	type PaletteIntentDisplayItem,
 	type PaletteItemGroupDisplayItem,
-	type PaletteMatch,
 	type PaletteResolvedDisplayItem,
-	type PaletteToolbarDefinition,
+	type PaletteResolvedEntry,
+	type PaletteResolvedIntent,
+	type PaletteToolbarSurface,
 } from '@pounce/ui/palette'
+import { type PaletteMatch } from '@pounce/ui/palette'
 import { starsModel, type StarStatus, type StarsValue } from '../../src/models/stars'
 
 type DemoResolvedDisplayItem = Extract<PaletteResolvedDisplayItem, { kind: 'intent' }>
@@ -139,71 +145,45 @@ const palette = createPaletteModel({
 		'game.speed': 1,
 	},
 	display: {
-		toolbars: [
-			{
-				id: 'palette-top',
-				items: [
-					{ kind: 'intent', intentId: 'ui.notifications:toggle', presenter: 'toggle', showText: false },
-					{ kind: 'intent', intentId: 'ui.theme:set:light', presenter: 'radio', showText: false },
-					{ kind: 'intent', intentId: 'ui.theme:set:dark', presenter: 'radio', showText: false },
-					{ kind: 'intent', intentId: 'ui.layout:flip', presenter: 'flip', showText: false },
-				],
-			},
-			{
-				id: 'palette-left',
-				items: [
-					// Item-group demonstration: light/dark theme pair - visual only
-					{
-						kind: 'item-group',
-						group: {
-							kind: 'enum-options',
-							entryId: 'ui.theme',
-							options: ['light', 'dark'],
-							presenter: 'radio-group',
-						},
-						showText: false, // Make it purely visual with icons
-					},
-					{ kind: 'editor', entryId: 'ui.theme', presenter: 'select', showText: false },
-					{ kind: 'intent', intentId: 'ui.theme:set:system', presenter: 'radio', showText: false },
-					{ kind: 'intent', intentId: 'editor.fontSize:step:up', presenter: 'step', showText: false },
-				],
-			},
-			{
-				id: 'palette-right',
-				items: [
-					{ kind: 'editor', entryId: 'editor.fontSize', presenter: 'slider', showText: true },
-					{ kind: 'intent', intentId: 'editor.fontSize:step:down', presenter: 'step', showText: true },
-					{ kind: 'intent', intentId: 'editor.fontSize:step:up', presenter: 'step', showText: true },
-				],
-			},
-			{
-				id: 'palette-bottom',
-				items: [
-					{ kind: 'intent', intentId: 'game.speed:step:down', presenter: 'step', showText: true },
-					{ kind: 'editor', entryId: 'game.speed', presenter: 'stars', showText: true },
-					{ kind: 'intent', intentId: 'game.speed:step:up', presenter: 'step', showText: true },
-					{ kind: 'intent', intentId: 'game.speed:stash:0', presenter: 'stash', showText: true },
-				],
-			},
-		],
 		container: {
 			editMode: false,
 			surfaces: [
 				{
-					id: 'palette-top',
+					id: '1',
 					type: 'toolbar',
 					region: 'top',
 					visible: true,
 					position: 0,
 					label: 'Main Toolbar',
+					items: [
+						{ kind: 'intent', intentId: 'ui.notifications:toggle', presenter: 'toggle', showText: false },
+						{ kind: 'intent', intentId: 'ui.theme:set:light', presenter: 'radio', showText: false },
+						{ kind: 'intent', intentId: 'ui.theme:set:dark', presenter: 'radio', showText: false },
+						{ kind: 'intent', intentId: 'ui.layout:flip', presenter: 'flip', showText: false },
+					],
 				},
 				{
-					id: 'palette-left',
+					id: '2',
 					type: 'toolbar',
 					region: 'left',
 					visible: true,
 					position: 0,
 					label: 'Theme Rail',
+					items: [
+						{
+							kind: 'item-group',
+							group: {
+								kind: 'enum-options',
+								entryId: 'ui.theme',
+								options: ['light', 'dark'],
+								presenter: 'radio-group',
+							},
+							showText: false,
+						},
+						{ kind: 'editor', entryId: 'ui.theme', presenter: 'select', showText: false },
+						{ kind: 'intent', intentId: 'ui.theme:set:system', presenter: 'radio', showText: false },
+						{ kind: 'intent', intentId: 'editor.fontSize:step:up', presenter: 'step', showText: false },
+					],
 				},
 				{
 					id: 'palette-right',
@@ -212,6 +192,11 @@ const palette = createPaletteModel({
 					visible: true,
 					position: 0,
 					label: 'Editor Rail',
+					items: [
+						{ kind: 'editor', entryId: 'editor.fontSize', presenter: 'slider', showText: true },
+						{ kind: 'intent', intentId: 'editor.fontSize:step:down', presenter: 'step', showText: true },
+						{ kind: 'intent', intentId: 'editor.fontSize:step:up', presenter: 'step', showText: true },
+					],
 				},
 				{
 					id: 'palette-bottom',
@@ -220,6 +205,12 @@ const palette = createPaletteModel({
 					visible: true,
 					position: 0,
 					label: 'Playback Bar',
+					items: [
+						{ kind: 'intent', intentId: 'game.speed:step:down', presenter: 'step', showText: true },
+						{ kind: 'editor', entryId: 'game.speed', presenter: 'stars', showText: true },
+						{ kind: 'intent', intentId: 'game.speed:step:up', presenter: 'step', showText: true },
+						{ kind: 'intent', intentId: 'game.speed:stash:0', presenter: 'stash', showText: true },
+					],
 				},
 			],
 			dropTargets: [],
@@ -311,15 +302,15 @@ const REGION_LAYOUT = {
 } satisfies Record<PaletteContainerRegion, string>
 const REGION_ORDER: readonly PaletteContainerRegion[] = ['top', 'left', 'right', 'bottom']
 
-function isIntentDisplayItem(displayItem: PaletteToolbarDefinition['items'][number]): displayItem is PaletteIntentDisplayItem {
+function isIntentDisplayItem(displayItem: PaletteToolbarSurface['items'][number]): displayItem is PaletteIntentDisplayItem {
 	return displayItem.kind === 'intent'
 }
 
-function isEditorDisplayItem(displayItem: PaletteToolbarDefinition['items'][number]): displayItem is PaletteEditorDisplayItem {
+function isEditorDisplayItem(displayItem: PaletteToolbarSurface['items'][number]): displayItem is PaletteEditorDisplayItem {
 	return displayItem.kind === 'editor'
 }
 
-function isItemGroupDisplayItem(displayItem: PaletteToolbarDefinition['items'][number]): displayItem is PaletteItemGroupDisplayItem {
+function isItemGroupDisplayItem(displayItem: PaletteToolbarSurface['items'][number]): displayItem is PaletteItemGroupDisplayItem {
 	return displayItem.kind === 'item-group'
 }
 
@@ -400,8 +391,10 @@ const DEMO_PRESENTERS: DemoPresenterCatalog = {
 	},
 }
 
-function demoToolbar(toolbarId = 'palette-top') {
-	const toolbar = palette.display.toolbars.find((entry) => entry.id === toolbarId)
+function demoToolbar(toolbarId = '1') {
+	const toolbar = container.surfaces.find(
+		(entry): entry is PaletteToolbarSurface => entry.id === toolbarId && entry.type === 'toolbar'
+	)
 	if (!toolbar) {
 		throw new Error(`Toolbar '${toolbarId}' not found`)
 	}
@@ -542,6 +535,13 @@ function focusEditorShortcut(entryId: string) {
 }
 
 function handleDemoShortcut(event: KeyboardEvent) {
+	// Handle backtick for edit mode toggle
+	if (event.key === '`') {
+		event.preventDefault()
+		toggleEditMode()
+		return
+	}
+	
 	if (container.editMode || isEditableTarget(event.target)) return
 	const intent = shortcutIntent(event)
 	if (intent) {
@@ -763,17 +763,39 @@ function isDemoDisabled(displayItem: PaletteIntentDisplayItem, resolved: DemoRes
 }
 
 function commandLabel(match: PaletteMatch) {
-	return match.kind === 'intent' ? (match.intent.label ?? match.entry.label) : match.entry.label
+	if (match.kind === 'intent') {
+		const intentMatch = match as PaletteResolvedIntent
+		return intentMatch.intent.label ?? intentMatch.entry.label
+	} else if (match.kind === 'grouped-proposition') {
+		return match.label
+	} else {
+		const entryMatch = match as PaletteResolvedEntry
+		return entryMatch.entry.label
+	}
 }
 
 function commandMeta(match: PaletteMatch) {
-	return match.kind === 'intent'
-		? `${match.intent.mode} • ${match.intent.id}${
-				match.intent.binding ? ` • ${formatShortcut(match.intent.binding)}` : ''
-			}`
-		: `entry • ${match.entry.id}${
-				editorShortcut(match.entry.id) ? ` • ${formatShortcut(editorShortcut(match.entry.id))}` : ''
-			}`
+	if (match.kind === 'intent') {
+		return `${match.intent.mode} • ${match.intent.id}${
+			match.intent.binding ? ` • ${formatShortcut(match.intent.binding)}` : ''
+		}`
+	} else if (match.kind === 'grouped-proposition') {
+		return `${match.type} • ${match.intents.length} intents${match.description ? ` • ${match.description}` : ''}`
+	} else {
+		return `entry • ${match.entry.id}${
+			editorShortcut(match.entry.id) ? ` • ${formatShortcut(editorShortcut(match.entry.id))}` : ''
+		}`
+	}
+}
+
+function commandKey(match: PaletteMatch) {
+	if (match.kind === 'intent') return `intent:${match.intent.id}`
+	if (match.kind === 'grouped-proposition') {
+		return `group:${match.type}:${match.entries.map((entry) => entry.entry.id).join('|')}:${match.intents
+			.map((intent) => intent.intent.id)
+			.join('|')}`
+	}
+	return `entry:${match.entry.id}`
 }
 
 function addCandidateLabel(candidate: PaletteAddItemCandidate) {
@@ -794,74 +816,16 @@ function addCandidateMeta(candidate: PaletteAddItemCandidate) {
 	}`
 }
 
-function setCommandInput(event: Event) {
-	if (event.currentTarget instanceof HTMLInputElement) {
-		commandBox.input.value = event.currentTarget.value
-	}
-}
-
-function onCommandInputKeydown(event: KeyboardEvent) {
-	if (!(event.currentTarget instanceof HTMLInputElement)) return
-	if (event.key === 'Backspace') {
-		if (event.currentTarget.value.length > 0) return
-		const removed = commandBox.categories.removeLast()
-		if (removed) {
-			event.preventDefault()
-		}
-		return
-	}
-	if (event.key === 'ArrowLeft' && event.currentTarget.value.length === 0) {
-		const chipButtons = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[data-command-chip]')
-		const last = chipButtons?.[chipButtons.length - 1]
-		if (last) {
-			last.focus()
-			event.preventDefault()
-		}
-	}
-}
-
-function focusAdjacentChip(target: HTMLButtonElement, offset: number) {
-	const chipButtons = target.parentElement?.querySelectorAll<HTMLButtonElement>('[data-command-chip]')
-	if (!chipButtons) return
-	const index = Array.from(chipButtons).findIndex((entry) => entry === target)
-	const next = chipButtons[index + offset]
-	if (next) {
-		next.focus()
-		return
-	}
-	const input = target.parentElement?.querySelector<HTMLInputElement>('[data-test="palette-command-input"]')
-	input?.focus()
-}
-
-function onCommandChipKeydown(event: KeyboardEvent, category: string) {
-	if (!(event.currentTarget instanceof HTMLButtonElement)) return
-	if (event.key === 'ArrowLeft') {
-		focusAdjacentChip(event.currentTarget, -1)
-		event.preventDefault()
-		return
-	}
-	if (event.key === 'ArrowRight') {
-		focusAdjacentChip(event.currentTarget, 1)
-		event.preventDefault()
-		return
-	}
-	if (event.key === 'Backspace' || event.key === 'Delete') {
-		commandBox.categories.toggle(category)
-		const chipButtons = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[data-command-chip]')
-		const next = chipButtons?.[Math.max(0, (chipButtons?.length ?? 1) - 2)]
-		if (next) {
-			next.focus()
-		} else {
-			const input = event.currentTarget.parentElement?.querySelector<HTMLInputElement>('[data-test="palette-command-input"]')
-			input?.focus()
-		}
-		event.preventDefault()
-	}
-}
-
 function runMatch(match: PaletteMatch) {
 	if (match.kind === 'intent') {
 		commandBox.execute(match.intent.id)
+		return
+	} else if (match.kind === 'grouped-proposition') {
+		// For grouped propositions, execute the first intent for now
+		// TODO: Handle grouped proposition execution properly
+		if (match.intents.length > 0) {
+			commandBox.execute(match.intents[0].intent.id)
+		}
 		return
 	}
 	commandBox.input.value = match.entry.label
@@ -887,7 +851,6 @@ function openAddPopup(region: PaletteContainerRegion, toolbarId?: string) {
 function createToolbarAt(region: PaletteContainerRegion, index: number) {
 	const createdSurface = container.createSurface(region, 'toolbar', `${region} toolbar`)
 	container.moveSurface(createdSurface.id, region, index)
-	openAddPopup(region, createdSurface.id)
 }
 
 function startToolbarMove(toolbarId: string) {
@@ -955,8 +918,10 @@ function closeItemConfig() {
 
 function addCandidateToToolbar(candidate: PaletteAddItemCandidate) {
 	if (!demoUi.addToolbarId || toolbarContainsItem(demoUi.addToolbarId, candidate)) return
+	const toolbar = demoToolbar(demoUi.addToolbarId)
+	if (!toolbar) return
 	if (candidate.kind === 'intent') {
-		customization.addToToolbar(demoUi.addToolbarId, {
+		customization.addToToolbar(toolbar, {
 			kind: 'intent',
 			intentId: candidate.intent.id,
 			presenter: getDefaultDisplayPresenter(candidate.intent, candidate.entry),
@@ -967,7 +932,7 @@ function addCandidateToToolbar(candidate: PaletteAddItemCandidate) {
 	}
 
 	if (candidate.kind === 'item-group') {
-		customization.addToToolbar(demoUi.addToolbarId, {
+		customization.addToToolbar(toolbar, {
 			kind: 'item-group',
 			group: candidate.group,
 		})
@@ -975,7 +940,7 @@ function addCandidateToToolbar(candidate: PaletteAddItemCandidate) {
 		return
 	}
 
-	customization.addToToolbar(demoUi.addToolbarId, {
+	customization.addToToolbar(toolbar, {
 		kind: 'editor',
 		entryId: candidate.entry.id,
 		presenter: defaultEditorPresenter(candidate.entry),
@@ -992,6 +957,8 @@ function filteredAddCandidates() {
 }
 
 function moveToolbarItem(toolbarId: string, itemId: string, itemKind: PaletteDisplayItem['kind'], offset: number) {
+	const toolbar = demoToolbar(toolbarId)
+	if (!toolbar) return
 	const items = toolbarDisplayItems(toolbarId)
 	const currentIndex = items.findIndex((displayItem) => {
 		const identity = itemIdentity(displayItem)
@@ -999,27 +966,32 @@ function moveToolbarItem(toolbarId: string, itemId: string, itemKind: PaletteDis
 	})
 	const nextIndex = currentIndex + offset
 	if (currentIndex < 0 || nextIndex < 0 || nextIndex >= items.length) return
-	customization.moveWithinToolbar(toolbarId, itemId, itemKind, nextIndex)
+	customization.moveWithinToolbar(toolbar, items[currentIndex], nextIndex)
 }
 
 function placeDraggedItem(toolbarId: string, index: number) {
 	if (!demoUi.draggingItemToolbarId || !demoUi.draggingItemId || !demoUi.draggingItemKind) return
+	const targetToolbar = demoToolbar(toolbarId)
+	if (!targetToolbar) return
+	const sourceToolbar = demoToolbar(demoUi.draggingItemToolbarId)
+	if (!sourceToolbar) return
+	const draggedItem = toolbarDisplayItems(demoUi.draggingItemToolbarId).find((displayItem) => {
+		const identity = itemIdentity(displayItem)
+		return identity.id === demoUi.draggingItemId && identity.kind === demoUi.draggingItemKind
+	})
+	if (!draggedItem) return
 	if (demoUi.draggingItemToolbarId === toolbarId) {
-		customization.moveWithinToolbar(toolbarId, demoUi.draggingItemId, demoUi.draggingItemKind, index)
+		customization.moveWithinToolbar(targetToolbar, draggedItem, index)
 		stopItemDrag()
 		return
 	}
-	customization.moveToToolbar(
-		demoUi.draggingItemToolbarId,
-		demoUi.draggingItemId,
-		demoUi.draggingItemKind,
-		toolbarId,
-		index
-	)
+	customization.moveToToolbar(sourceToolbar, draggedItem, targetToolbar, index)
 	stopItemDrag()
 }
 
 function cycleToolbarPresenter(toolbarId: string, itemId: string, itemKind: PaletteDisplayItem['kind']) {
+	const toolbar = demoToolbar(toolbarId)
+	if (!toolbar) return
 	const item = toolbarDisplayItems(toolbarId).find((displayItem) => {
 		const identity = itemIdentity(displayItem)
 		return identity.id === itemId && identity.kind === itemKind
@@ -1046,11 +1018,18 @@ function cycleToolbarPresenter(toolbarId: string, itemId: string, itemKind: Pale
 	}
 	const currentIndex = options.indexOf(current)
 	const next = options[(currentIndex + 1) % options.length]
-	customization.setPresenter(toolbarId, itemId, itemKind, next)
+	customization.setPresenter(toolbar, item, next)
 }
 
 function removeToolbarItem(toolbarId: string, itemId: string, itemKind: PaletteDisplayItem['kind']) {
-	customization.removeFromToolbar(toolbarId, itemId, itemKind)
+	const toolbar = demoToolbar(toolbarId)
+	if (!toolbar) return
+	const item = toolbarDisplayItems(toolbarId).find((displayItem) => {
+		const identity = itemIdentity(displayItem)
+		return identity.id === itemId && identity.kind === itemKind
+	})
+	if (!item) return
+	customization.removeFromToolbar(toolbar, item)
 	if (
 		demoUi.configToolbarId === toolbarId &&
 		demoUi.configItemId === itemId &&
@@ -1075,7 +1054,15 @@ function moveToolbarItemToToolbar(
 	itemKind: PaletteDisplayItem['kind'],
 	targetToolbarId: string
 ) {
-	customization.moveToToolbar(toolbarId, itemId, itemKind, targetToolbarId)
+	const sourceToolbar = demoToolbar(toolbarId)
+	const targetToolbar = demoToolbar(targetToolbarId)
+	if (!sourceToolbar || !targetToolbar) return
+	const item = toolbarDisplayItems(toolbarId).find((displayItem) => {
+		const identity = itemIdentity(displayItem)
+		return identity.id === itemId && identity.kind === itemKind
+	})
+	if (!item) return
+	customization.moveToToolbar(sourceToolbar, item, targetToolbar)
 	if (
 		demoUi.configToolbarId === toolbarId &&
 		demoUi.configItemId === itemId &&
@@ -1128,7 +1115,6 @@ function renderToolbarSurface(toolbarId: string) {
 			<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
 				<strong>{container.surfaces.find((surface) => surface.id === toolbarId)?.label ?? toolbarId}</strong>
 				<div style="display: flex; gap: 6px; flex-wrap: wrap;">
-					<button if={container.editMode} onClick={() => openAddPopup(position?.region ?? 'top', toolbarId)}>+</button>
 					<button if={container.editMode} onClick={() => (moving ? stopToolbarMove() : startToolbarMove(toolbarId))}>
 						{moving ? 'Cancel move' : 'Move'}
 					</button>
@@ -1344,6 +1330,44 @@ export default function PaletteDemo() {
 			use={bindDemoShortcuts}
 			style="position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr) auto; gap: 12px; height: calc(100vh - 40px); max-height: calc(100vh - 40px); min-height: 680px; padding: 16px; border-radius: 18px; background: #0f172a; color: #e2e8f0; overflow: hidden; box-sizing: border-box;"
 		>
+			<style>{`
+				.palette-command-row {
+					display: flex;
+					align-items: center;
+					gap: 8px;
+				}
+				.palette-command-result {
+					flex: 1;
+					padding: 10px 12px;
+					border: 1px solid #475569;
+					border-radius: 8px;
+					text-align: left;
+					background: #0f172a;
+					color: #e2e8f0;
+				}
+				.palette-command-result:hover,
+				.palette-command-result[data-selected='true'] {
+					background: #1d4ed8;
+					border-color: #60a5fa;
+					color: #eff6ff;
+				}
+				.palette-command-drag {
+					padding: 8px;
+					border: 1px solid #475569;
+					border-radius: 6px;
+					background: #1e293b;
+					color: #94a3b8;
+					cursor: grab;
+					font-size: 12px;
+					opacity: 0;
+					pointer-events: none;
+				}
+				.palette-command-row:hover .palette-command-drag,
+				.palette-command-drag[data-selected='true'] {
+					opacity: 1;
+					pointer-events: auto;
+				}
+			`}</style>
 			<button
 				data-test="palette-edit-toggle"
 				onMouseenter={() => (demoUi.handleExpanded = true)}
@@ -1360,7 +1384,206 @@ export default function PaletteDemo() {
 				{(region) => renderRegionShell(region)}
 			</for>
 
-			<div style="grid-column: 2; grid-row: 2; min-width: 0; min-height: 0; overflow: auto; padding: 8px; border-radius: 16px; background: #111827; border: 1px solid #1f2937;">
+			<div 
+				style="grid-column: 2; grid-row: 2; min-width: 0; min-height: 0; overflow: auto; padding: 8px; border-radius: 16px; background: #111827; border: 1px solid #1f2937;"
+				use:drop={(payload: any) => {
+					if (!container.editMode) return
+					if (payload.type === 'item') {
+						// Delete the dragged item
+						if (payload.sourceToolbarId && payload.sourceItemId && payload.sourceItemKind) {
+							const toolbar = demoToolbar(payload.sourceToolbarId)
+							const item = payload.sourceToolbarId
+								? toolbarDisplayItems(payload.sourceToolbarId).find((displayItem) => {
+										const identity = itemIdentity(displayItem)
+										return (
+											identity.id === payload.sourceItemId &&
+											identity.kind === payload.sourceItemKind
+										)
+									})
+								: undefined
+							if (toolbar && item) customization.removeFromToolbar(toolbar, item)
+						}
+					} else if (payload.type === 'toolbar') {
+						// Delete the entire toolbar
+						container.removeSurface(payload.toolbarId)
+					}
+				}}
+				use:dragging={(payload: any, isEnter: boolean, el: HTMLElement) => {
+					if (!container.editMode || !payload) return false
+					const accepts = payload.type === 'item' || payload.type === 'toolbar'
+					if (!accepts) return false
+					if (isEnter) {
+						el.style.background = '#991b1b' // Red for delete zone
+						el.style.borderColor = '#dc2626'
+						el.style.color = '#fef2f2'
+						return () => {
+							el.style.background = ''
+							el.style.borderColor = ''
+							el.style.color = ''
+						}
+					}
+				}}
+			>
+				{/* Central dialog overlay for edit mode */}
+				<div if={container.editMode} style="position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; background: rgba(2, 6, 23, 0.72);">
+					<div style="width: min(640px, calc(100% - 32px)); max-height: min(70vh, 640px); overflow: auto; padding: 16px; border-radius: 16px; background: #0f172a; border: 1px solid #334155; box-shadow: 0 16px 60px rgba(0, 0, 0, 0.45);">
+						<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+							<div>
+								<strong style="font-size: 16px;">Magic Mode - Command Box</strong>
+								<div style="color: #94a3b8; font-size: 12px;">Drag items out or press Enter to execute</div>
+							</div>
+							<button onClick={toggleEditMode} style="padding: 4px 8px; border: 1px solid #475569; border-radius: 6px; background: #1e293b; color: #e2e8f0;">
+								Close
+							</button>
+						</div>
+						
+						{/* Command Box */}
+						<div style="margin-top: 16px;">
+							<div style="display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; align-items: center;">
+								{/* Chips */}
+								<for each={commandBox.categories.active}>
+									{(category) => (
+										<button
+											data-command-chip={category}
+											onClick={() => commandBox.categories.toggle(category)}
+											onKeydown={(event) =>
+												handlePaletteCommandChipKeydown({ commandBox, event, token: category, type: 'category' })
+											}
+											style={`padding: 4px 8px; border: 1px solid; border-radius: 999px; ${tone(true, false)}`}
+										>
+											#{category} ×
+										</button>
+									)}
+								</for>
+								<for each={commandBox.keywords.tokens}>
+									{(keywordToken) => (
+										<button
+											data-command-chip={keywordToken.keyword}
+											onClick={() => commandBox.keywords.removeToken(keywordToken.keyword)}
+											onKeydown={(event) =>
+												handlePaletteCommandChipKeydown({
+													commandBox,
+													event,
+													token: keywordToken.keyword,
+													type: 'keyword',
+												})
+											}
+											style={`padding: 4px 8px; border: 1px solid #60a5fa; border-radius: 999px; background: #1e3a8a; color: #bfdbfe;`}
+										>
+											{keywordToken.keyword} ×
+										</button>
+									)}
+								</for>
+								
+								{/* Input */}
+								<input
+									data-test="palette-command-input"
+									value={commandBox.input.value}
+									placeholder={commandBox.input.placeholder}
+									onInput={(event) => setPaletteCommandBoxInput(commandBox, event)}
+									onKeydown={(event) =>
+										handlePaletteCommandBoxInputKeydown({
+											commandBox,
+											event,
+											onMatch: runMatch,
+											onAfterExecute: () => {
+												if (container.editMode) toggleEditMode()
+											},
+										})
+									}
+									style="flex: 1; min-width: 120px; padding: 0; border: 0; background: transparent; color: #e2e8f0;"
+								/>
+							</div>
+							
+							{/* Keyword suggestions */}
+							<div if={commandBox.suggestions.length > 0} style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; padding: 8px 12px; border-radius: 6px; background: #1e293b;">
+								<span style="color: #94a3b8; font-size: 12px;">Available keywords:</span>
+								<for each={commandBox.suggestions}>
+									{(suggestion) => (
+										<button
+											onClick={() => {
+												commandBox.keywords.addToken(suggestion.keyword)
+												// Clear the entire input after adding a keyword
+												commandBox.input.value = ''
+											}}
+											style={`padding: 2px 6px; border: 1px solid #475569; border-radius: 4px; background: ${suggestion.isActive ? '#60a5fa' : '#334155'}; color: ${suggestion.isActive ? '#bfdbfe' : '#94a3b8'}; font-size: 11px; cursor: pointer;`}
+											title={`Click to add ${suggestion.keyword} as chip`}
+										>
+											{suggestion.keyword}
+										</button>
+									)}
+								</for>
+							</div>
+							
+							{/* Command Results */}
+							<div style="display: grid; gap: 8px; margin-top: 12px;">
+								<for each={commandBox.results.slice(0, 6)}>
+									{(match) => {
+										const key = commandKey(match)
+										const resultIndex = commandBox.results.findIndex((entry) => commandKey(entry) === key)
+										const selected = commandBox.selection.item !== undefined && commandKey(commandBox.selection.item) === key
+										return (
+											<div class="palette-command-row">
+												<button
+													data-test={`palette-command-result-${resultIndex}`}
+													class="palette-command-result"
+													data-selected={selected ? 'true' : undefined}
+													onClick={() => runMatch(match)}
+													style="text-align: left;"
+												>
+													<div>{commandLabel(match)}</div>
+													<div style="color: #94a3b8; font-size: 12px;">{commandMeta(match)}</div>
+												</button>
+												<button
+													class="palette-command-drag"
+													data-selected={selected ? 'true' : undefined}
+													use:drag={() => {
+														let candidate
+														if (match.kind === 'intent') {
+															candidate = { kind: 'intent' as const, intent: match.intent, entry: match.entry }
+														} else if (match.kind === 'grouped-proposition') {
+															// Create a true group candidate for grouped propositions
+															if (match.type === 'intent-group') {
+																// For intent groups, create an item-group candidate
+																candidate = { 
+																	kind: 'item-group' as const, 
+																	entryId: match.entries[0].entry.id,
+																	options: match.intents.map((intent: PaletteResolvedIntent) => {
+																		// Extract the mode from intent.id (format: "entryId:mode")
+																		const parts = intent.intent.id.split(':')
+																		return parts[parts.length - 1]
+																	})
+																}
+															} else if (match.type === 'enum-subset') {
+																// For enum subsets, create an item-group candidate
+																candidate = { 
+																	kind: 'item-group' as const, 
+																	entryId: match.entries[0].entry.id,
+																	options: match.intents.map((intent: PaletteResolvedIntent) => {
+																		// Extract the option from intent.id (format: "entryId:set:option")
+																		const parts = intent.intent.id.split(':')
+																		return parts[parts.length - 1]
+																	})
+																}
+															}
+														} else {
+															candidate = { kind: 'editor' as const, entry: match.entry }
+														}
+														return { type: 'item', candidate }
+													}}
+													title="Drag to add to toolbar"
+												>
+													⋮⋮
+												</button>
+											</div>
+										)
+									}}
+								</for>
+							</div>
+						</div>
+					</div>
+				</div>
+
 				<div style="display: grid; gap: 16px; min-height: max-content;">
 					<div>
 						<h2 style="margin: 0 0 8px;">Palette Demo</h2>
@@ -1368,74 +1591,8 @@ export default function PaletteDemo() {
 							The root `palette-demo` node is now the toolbared container. The center content
 							scrolls independently while toolbars live on the shell.
 						</p>
-						<div if={container.editMode} style="margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: #172554; color: #bfdbfe;">
-							Edit mode is active. Use the `+` actions on the container regions and click a toolbar
-							item to configure it inline.
-						</div>
-					</div>
-
-					<div>
-						<h3 style="margin: 0 0 10px;">Input Box</h3>
-						<div style="padding: 14px; border-radius: 10px; background: #334155;">
-							<div style="display: grid; gap: 8px; padding: 10px 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a;">
-								<div if={commandBox.categories.active.length > 0} style="display: flex; flex-wrap: wrap; gap: 8px;">
-									<for each={commandBox.categories.active}>
-										{(category) => (
-											<button
-												data-command-chip={category}
-												onClick={() => commandBox.categories.toggle(category)}
-												onKeydown={(event) => onCommandChipKeydown(event, category)}
-												style={`padding: 4px 8px; border: 1px solid; border-radius: 999px; ${tone(true, false)}`}
-											>
-												#{category} ×
-											</button>
-										)}
-									</for>
-								</div>
-								<input
-									data-test="palette-command-input"
-									value={commandBox.input.value}
-									placeholder={commandBox.input.placeholder}
-									onInput={setCommandInput}
-									onKeydown={onCommandInputKeydown}
-									style="width: 100%; padding: 0; border: 0; background: transparent; color: #e2e8f0;"
-								/>
-							</div>
-							<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
-								<for each={commandBox.categories.available}>
-									{(category) => {
-										const active = commandBox.categories.active.includes(category)
-										return (
-											<button onClick={() => commandBox.categories.toggle(category)} style={`padding: 6px 10px; border: 1px solid; border-radius: 999px; ${tone(active, false)}`}>
-												#{category}
-											</button>
-										)
-									}}
-								</for>
-							</div>
-							<div style="margin-top: 10px; color: #94a3b8; font-size: 12px;">
-								Type category tokens to promote chips, keep free text for the remaining query, and
-								use visible shortcut hints to discover faster command paths.
-							</div>
-							<div style="display: grid; gap: 8px; margin-top: 12px;">
-								<for each={commandBox.results.slice(0, 6)}>
-									{(match) => {
-										const resultIndex = commandBox.results.findIndex((entry) => entry === match)
-										const selected = commandBox.selection.index === resultIndex
-										return (
-											<button
-												data-test={`palette-command-result-${resultIndex}`}
-												onMouseenter={() => commandBox.selection.set(resultIndex)}
-												onClick={() => runMatch(match)}
-												style={`padding: 10px 12px; border: 1px solid; border-radius: 8px; text-align: left; ${tone(selected, false)}`}
-											>
-												<div>{commandLabel(match)}</div>
-												<div style="color: #94a3b8; font-size: 12px;">{commandMeta(match)}</div>
-											</button>
-										)
-									}}
-								</for>
-							</div>
+						<div if={!container.editMode} style="margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: #172554; color: #bfdbfe;">
+							Press <code>`</code> to enter Magic Mode for toolbar customization.
 						</div>
 					</div>
 
@@ -1515,40 +1672,6 @@ export default function PaletteDemo() {
 								<pre style="margin: 8px 0 0; color: #cbd5e1; white-space: pre-wrap;">{JSON.stringify(palette.display, null, 2)}</pre>
 							</div>
 						</div>
-					</div>
-				</div>
-			</div>
-
-			<div if={demoUi.addToolbarId !== undefined} style="position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; background: rgba(2, 6, 23, 0.72);">
-				<div style="width: min(640px, calc(100% - 32px)); max-height: min(70vh, 640px); overflow: auto; padding: 16px; border-radius: 16px; background: #0f172a; border: 1px solid #334155; box-shadow: 0 16px 60px rgba(0, 0, 0, 0.45);">
-					<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-						<div>
-							<strong>Add item</strong>
-							<div style="color: #94a3b8;">Region: {demoUi.addRegion} · Toolbar: {demoUi.addToolbarId}</div>
-						</div>
-						<button onClick={closeAddPopup}>Close</button>
-					</div>
-					<input
-						data-test="palette-add-popup-input"
-						value={demoUi.addQuery}
-						placeholder="Search intents or entry editors…"
-						onInput={setAddQuery}
-						style="width: 100%; margin-top: 12px; padding: 10px 12px; border-radius: 8px; border: 1px solid #475569; background: #111827; color: #e2e8f0;"
-					/>
-					<div style="display: grid; gap: 8px; margin-top: 12px;">
-						<for each={filteredAddCandidates().slice(0, 12)}>
-							{(candidate) => {
-								return (
-									<button
-										onClick={() => addCandidateToToolbar(candidate)}
-										style="padding: 10px 12px; border: 1px solid #475569; border-radius: 10px; background: #111827; color: #e2e8f0; text-align: left;"
-									>
-										<div>{addCandidateLabel(candidate)}</div>
-										<div style="color: #94a3b8; font-size: 12px;">{addCandidateMeta(candidate)}</div>
-									</button>
-								)
-							}}
-						</for>
 					</div>
 				</div>
 			</div>

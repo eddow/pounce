@@ -447,7 +447,7 @@ function bindDockviewRouter<Definition extends ClientRouteDefinition>(
 	const onAdd = api.onDidAddPanel(reconcileFromPanels)
 	const onRemove = api.onDidRemovePanel(reconcileFromPanels)
 	const onActive = api.onDidActivePanelChange(syncActivePanelToUrl)
-	const stopEffect = effect(() => {
+	const stopEffect = effect`bindDockviewRouter.syncClientRoute`(() => {
 		caught((error: unknown) => {
 			console.error('[DockviewRouter] bindDockviewRouter reactive error:', error)
 			reportDockviewRouterError('bindDockviewRouter', 'reactive-read', error, reportError)
@@ -536,7 +536,7 @@ export const DockviewRouter = <Definition extends ClientRouteDefinition>(
 			stopBindings?.()
 		}
 	}
-	effect(() => {
+	effect`DockviewRouter.renderRuntimeError`(() => {
 		const el = errorBannerRef.current
 		if (!el) return
 		if (state.runtimeError) {

@@ -19,7 +19,7 @@ describe('executePaletteIntent', () => {
 		mockPalette = {
 			state: {},
 			runtime: {},
-			display: { toolbars: [] },
+			display: { container: { surfaces: [], editMode: false } },
 			resolveEntry: () => undefined,
 		}
 

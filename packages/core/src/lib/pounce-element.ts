@@ -60,7 +60,7 @@ export class PounceElement {
 		return new PounceElement(
 			() => {
 				let node: Text | undefined
-				effect.named('PounceElement.text')(() => {
+				effect`PounceElement.text`(() => {
 					if (node) node.data = String(retrieve())
 					else node = document.createTextNode(String(retrieve()))
 				})
@@ -130,7 +130,7 @@ Note: "à la morph" means it can be attended - if it uses array-diff
 	applyDirectives(target: Node | readonly Node[], env: Env) {
 		if (!this.meta) return
 		const stopThis = root(() =>
-			effect.named('attr:this')(() => {
+			effect`attr:this`(() => {
 				const these = this.meta!.directives().this
 				for (const usage of these) {
 					if (typeof usage !== 'function')
@@ -143,7 +143,7 @@ Note: "à la morph" means it can be attended - if it uses array-diff
 			})
 		)
 		const stopUse = root(() =>
-			attend(
+			attend`attr:use`(
 				() => this.meta!.directives().use,
 				(usage, access) => {
 					const cb: unknown = collapse(usage)
@@ -155,7 +155,7 @@ Note: "à la morph" means it can be attended - if it uses array-diff
 			)
 		)
 		const stopNamed = root(() =>
-			attend(
+			attend`attr:named`(
 				() => Object.keys(this.meta!.directives().named || {}),
 				(key, access) => {
 					const cb = getEnvPath<Function>(env, key)
@@ -189,7 +189,7 @@ Note: "à la morph" means it can be attended - if it uses array-diff
 		}
 
 		let partial: Node | readonly Node[] | undefined
-		const stopRender = effect.named(`render:${tagName}`)(({ reaction }) => {
+		const stopRender = effect`render:${tagName}`(({ reaction }) => {
 			if (reaction) {
 				if (!pounceOptions.checkRebuild) return
 				const reasons =

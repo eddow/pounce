@@ -30,13 +30,13 @@ export default function CounterWebComponent(props: {
 		label: 'Counter Component (JSX)',
 	})
 
-	effect.named('Counter')(() => {
+	effect`Counter`(() => {
 		console.log('🎯 Counter component mounted!')
 		return () => {
 			console.log('👋 Counter component unmounted!', { finalCount: vm.count })
 		}
 	})
-	watch(
+	watch`Counter:countChanged`(
 		() => vm.count,
 		(v, o) => vm.onCountChanged?.(v, o!)
 	)

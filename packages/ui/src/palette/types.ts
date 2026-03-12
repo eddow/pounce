@@ -147,14 +147,37 @@ export type PaletteContainerRegion = 'top' | 'right' | 'bottom' | 'left'
 
 export type PaletteSurfaceType = 'toolbar' | 'command' | 'settings' | 'status'
 
-export type PaletteContainerSurface = {
+export type PaletteSurfaceBase = {
 	readonly id: string
-	readonly type: PaletteSurfaceType
 	readonly region: PaletteContainerRegion
 	readonly visible: boolean
 	readonly position?: number
 	readonly label?: string
 }
+
+export type PaletteToolbarSurface = PaletteSurfaceBase & {
+	readonly type: 'toolbar'
+	readonly items: readonly PaletteDisplayItem[]
+}
+
+export type PaletteStatusSurface = PaletteSurfaceBase & {
+	readonly type: 'status'
+	readonly items: readonly PaletteDisplayItem[]
+}
+
+export type PaletteCommandSurface = PaletteSurfaceBase & {
+	readonly type: 'command'
+}
+
+export type PaletteSettingsSurface = PaletteSurfaceBase & {
+	readonly type: 'settings'
+}
+
+export type PaletteContainerSurface =
+	| PaletteToolbarSurface
+	| PaletteStatusSurface
+	| PaletteCommandSurface
+	| PaletteSettingsSurface
 
 export type PaletteContainerConfiguration = {
 	readonly surfaces: readonly PaletteContainerSurface[]
@@ -180,14 +203,8 @@ export type PaletteInsertionPoint = {
 // ============================================================================
 
 export type PaletteDisplayConfiguration = {
-	readonly toolbars: readonly PaletteToolbarDefinition[]
 	readonly statusbar?: readonly PaletteDisplayItem[]
 	readonly container?: PaletteContainerConfiguration
-}
-
-export type PaletteToolbarDefinition = {
-	readonly id: PaletteToolbarId
-	readonly items: readonly PaletteDisplayItem[]
 }
 
 export type PaletteDisplayPresenter = string
@@ -270,7 +287,19 @@ export type PaletteResolvedDisplayItem =
 			readonly resolvedItems: readonly PaletteResolvedIntent[]
 	  })
 
-export type PaletteMatch = PaletteResolvedIntent | PaletteResolvedEntry
+export type PaletteMatch = PaletteResolvedIntent | PaletteResolvedEntry | PaletteGroupedProposition
+
+/**
+ * A grouped proposition that combines multiple intents or enum values
+ */
+export interface PaletteGroupedProposition {
+	readonly kind: 'grouped-proposition'
+	readonly label: string
+	readonly description?: string
+	readonly intents: readonly PaletteResolvedIntent[]
+	readonly entries: readonly PaletteResolvedEntry[]
+	readonly type: 'enum-subset' | 'intent-group'
+}
 
 // ============================================================================
 // State and Runtime Types - Reactive data structures
@@ -288,11 +317,7 @@ export type PaletteQuery = {
 	readonly categories?: readonly PaletteCategory[]
 }
 
-export type PaletteSearchModel = {
-	readonly query: PaletteQuery
-	readonly results: readonly PaletteMatch[]
-	search(next: PaletteQuery): void
-}
+export type PaletteSearch = (query: PaletteQuery) => readonly PaletteMatch[]
 
 // ============================================================================
 // Registry and Intent Source Interfaces

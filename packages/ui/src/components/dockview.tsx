@@ -158,7 +158,7 @@ function contentRenderer(
 				panelApi.onDidTitleChange(
 					(e: any) => (internalState.title = typeof e === 'string' ? e : e.title)
 				).dispose,
-				effect(() => panelApi.updateParameters(params)),
+				effect`contentRenderer.updateParameters`(() => panelApi.updateParameters(params)),
 				() => mountedCleanup?.(),
 				panelApi.onDidParametersChange((payload: any) => {
 					Object.assign(params, payload)
@@ -469,7 +469,7 @@ export const Dockview = (
 				)
 			} else {
 				cleanups.push(
-					effect(() => {
+					effect`Dockview.layout.readExternalLayout`(() => {
 						const layout = readLayout()
 						if (!applyingExternalLayout) receiveLayout(layout)
 					})
@@ -487,7 +487,7 @@ export const Dockview = (
 			}
 			const emptyOptions: Record<string, any> = {}
 			cleanups.push(
-				effect(() => {
+				effect`Dockview.syncThemeOptions`(() => {
 					const themeSync = props.themeSync ?? true
 					const mappedTheme =
 						display.theme === 'dark'

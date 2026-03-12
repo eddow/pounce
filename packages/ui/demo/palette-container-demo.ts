@@ -40,59 +40,70 @@ const demoDefinitions: PaletteEntryDefinition[] = [
 const palette = createPaletteModel({
     definitions: demoDefinitions,
     display: {
-        toolbars: [
-            {
-                id: 'main-toolbar',
-                items: [
-                    // Replace manually-authored enum radio cluster with an item-group
-                    {
-                        kind: 'item-group',
-                        group: {
-                            kind: 'enum-options',
-                            entryId: 'ui.theme',
-                            options: ['light', 'dark'],
-                            presenter: 'radio-group',
+        container: {
+            editMode: false,
+            dropTargets: [],
+            surfaces: [
+                {
+                    id: '1',
+                    type: 'toolbar',
+                    region: 'top',
+                    visible: true,
+                    position: 0,
+                    label: 'Main Toolbar',
+                    items: [
+                        {
+                            kind: 'item-group',
+                            group: {
+                                kind: 'enum-options',
+                                entryId: 'ui.theme',
+                                options: ['light', 'dark'],
+                                presenter: 'radio-group',
+                            }
+                        },
+                        {
+                            kind: 'intent',
+                            intentId: 'ui.sidebar:toggle',
+                            presenter: 'toggle',
+                            showText: true
                         }
-                    },
-                    {
-                        kind: 'intent',
-                        intentId: 'ui.sidebar:toggle',
-                        presenter: 'toggle',
-                        showText: true
-                    }
-                ]
-            },
-            {
-                id: 'settings-toolbar',
-                items: [
-                    // Keep atomic items for contrast - show same entry differently
-                    {
-                        kind: 'intent',
-                        intentId: 'ui.theme:set:light',
-                        presenter: 'radio',
-                        showText: true
-                    },
-                    {
-                        kind: 'intent',
-                        intentId: 'ui.theme:set:dark', 
-                        presenter: 'radio',
-                        showText: true
-                    },
-                    {
-                        kind: 'intent',
-                        intentId: 'ui.theme:set:system',
-                        presenter: 'radio',
-                        showText: true
-                    },
-                    // Editor for richer presentation
-                    {
-                        kind: 'editor',
-                        entryId: 'ui.theme',
-                        showText: true
-                    }
-                ]
-            }
-        ]
+                    ]
+                },
+                {
+                    id: '2',
+                    type: 'toolbar',
+                    region: 'left',
+                    visible: true,
+                    position: 0,
+                    label: 'Settings Toolbar',
+                    items: [
+                        {
+                            kind: 'intent',
+                            intentId: 'ui.theme:set:light',
+                            presenter: 'radio',
+                            showText: true
+                        },
+                        {
+                            kind: 'intent',
+                            intentId: 'ui.theme:set:dark',
+                            presenter: 'radio',
+                            showText: true
+                        },
+                        {
+                            kind: 'intent',
+                            intentId: 'ui.theme:set:system',
+                            presenter: 'radio',
+                            showText: true
+                        },
+                        {
+                            kind: 'editor',
+                            entryId: 'ui.theme',
+                            showText: true
+                        }
+                    ]
+                }
+            ]
+        }
     }
 })
 

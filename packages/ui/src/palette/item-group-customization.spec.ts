@@ -1,7 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import { paletteDisplayCustomizationModel } from './display'
 import { createPaletteModel } from './model'
-import type { PaletteDisplayItem } from './types'
+import type { PaletteDisplayItem, PaletteToolbarSurface } from './types'
+
+function toolbarSurface(id: string, items: readonly PaletteDisplayItem[]): PaletteToolbarSurface {
+	return {
+		id,
+		type: 'toolbar',
+		region: 'top',
+		visible: true,
+		items,
+	}
+}
+
+function toolbarAt(
+	palette: ReturnType<typeof createPaletteModel>,
+	index: number
+): PaletteToolbarSurface {
+	return palette.display.container!.surfaces[index] as PaletteToolbarSurface
+}
 
 describe('item-group customization behavior', () => {
 	it('setPresenter updates group.presenter for item-groups', () => {
@@ -14,10 +31,11 @@ describe('item-group customization behavior', () => {
 				},
 			],
 			display: {
-				toolbars: [
-					{
-						id: 'main',
-						items: [
+				container: {
+					editMode: false,
+					dropTargets: [],
+					surfaces: [
+						toolbarSurface('main', [
 							{
 								kind: 'item-group',
 								group: {
@@ -27,20 +45,18 @@ describe('item-group customization behavior', () => {
 									presenter: 'radio-group',
 								},
 							},
-						],
-					},
-				],
+						]),
+					],
+				},
 			},
 		})
 
 		const customization = paletteDisplayCustomizationModel({ palette })
-		const itemId = 'group:ui.theme:enum-options:dark|light'
+		const toolbar = toolbarAt(palette, 0)
+		customization.setPresenter(toolbar, toolbar.items[0], 'segmented')
 
-		// Change presenter from radio-group to segmented
-		customization.setPresenter('main', itemId, 'item-group', 'segmented')
-
-		const toolbar = palette.display.toolbars[0]
-		const itemGroup = toolbar.items[0]
+		const updatedToolbar = toolbarAt(palette, 0)
+		const itemGroup = updatedToolbar.items[0]
 
 		expect(itemGroup.kind).toBe('item-group')
 		if (itemGroup.kind === 'item-group') {
@@ -58,10 +74,11 @@ describe('item-group customization behavior', () => {
 				},
 			],
 			display: {
-				toolbars: [
-					{
-						id: 'main',
-						items: [
+				container: {
+					editMode: false,
+					dropTargets: [],
+					surfaces: [
+						toolbarSurface('main', [
 							{
 								kind: 'item-group',
 								group: {
@@ -71,20 +88,18 @@ describe('item-group customization behavior', () => {
 									presenter: 'radio-group',
 								},
 							},
-						],
-					},
-				],
+						]),
+					],
+				},
 			},
 		})
 
 		const customization = paletteDisplayCustomizationModel({ palette })
-		const itemId = 'group:ui.theme:enum-options:dark|light'
+		const toolbar = toolbarAt(palette, 0)
+		customization.setPresenter(toolbar, toolbar.items[0], undefined)
 
-		// Remove presenter
-		customization.setPresenter('main', itemId, 'item-group', undefined)
-
-		const toolbar = palette.display.toolbars[0]
-		const itemGroup = toolbar.items[0]
+		const updatedToolbar = toolbarAt(palette, 0)
+		const itemGroup = updatedToolbar.items[0]
 
 		expect(itemGroup.kind).toBe('item-group')
 		if (itemGroup.kind === 'item-group') {
@@ -102,12 +117,7 @@ describe('item-group customization behavior', () => {
 				},
 			],
 			display: {
-				toolbars: [
-					{
-						id: 'main',
-						items: [],
-					},
-				],
+				container: { editMode: false, dropTargets: [], surfaces: [toolbarSurface('main', [])] },
 			},
 		})
 
@@ -124,17 +134,16 @@ describe('item-group customization behavior', () => {
 			},
 		}
 
-		customization.addToToolbar('main', itemGroupToAdd)
+		customization.addToToolbar(toolbarAt(palette, 0), itemGroupToAdd)
 
-		let toolbar = palette.display.toolbars[0]
+		let toolbar = toolbarAt(palette, 0)
 		expect(toolbar.items).toHaveLength(1)
 		expect(toolbar.items[0].kind).toBe('item-group')
 
 		// Remove item-group
-		const itemId = 'group:ui.theme:enum-options:dark|light'
-		customization.removeFromToolbar('main', itemId, 'item-group')
+		customization.removeFromToolbar(toolbar, toolbar.items[0])
 
-		toolbar = palette.display.toolbars[0]
+		toolbar = toolbarAt(palette, 0)
 		expect(toolbar.items).toHaveLength(0)
 	})
 
@@ -153,10 +162,11 @@ describe('item-group customization behavior', () => {
 				},
 			],
 			display: {
-				toolbars: [
-					{
-						id: 'main',
-						items: [
+				container: {
+					editMode: false,
+					dropTargets: [],
+					surfaces: [
+						toolbarSurface('main', [
 							{ kind: 'intent', intentId: 'ui.sidebar:toggle' },
 							{
 								kind: 'item-group',
@@ -167,22 +177,20 @@ describe('item-group customization behavior', () => {
 									presenter: 'radio-group',
 								},
 							},
-						],
-					},
-				],
+						]),
+					],
+				},
 			},
 		})
 
 		const customization = paletteDisplayCustomizationModel({ palette })
-		const itemGroupId = 'group:ui.theme:enum-options:dark|light'
+		const toolbar = toolbarAt(palette, 0)
+		customization.moveWithinToolbar(toolbar, toolbar.items[1], 0)
 
-		// Move item-group from index 1 to index 0
-		customization.moveWithinToolbar('main', itemGroupId, 'item-group', 0)
-
-		const toolbar = palette.display.toolbars[0]
-		expect(toolbar.items).toHaveLength(2)
-		expect(toolbar.items[0].kind).toBe('item-group')
-		expect(toolbar.items[1].kind).toBe('intent')
+		const updatedToolbar = toolbarAt(palette, 0)
+		expect(updatedToolbar.items).toHaveLength(2)
+		expect(updatedToolbar.items[0].kind).toBe('item-group')
+		expect(updatedToolbar.items[1].kind).toBe('intent')
 	})
 
 	it('distinguishes different option subsets for same entry', () => {
@@ -195,10 +203,11 @@ describe('item-group customization behavior', () => {
 				},
 			],
 			display: {
-				toolbars: [
-					{
-						id: 'main',
-						items: [
+				container: {
+					editMode: false,
+					dropTargets: [],
+					surfaces: [
+						toolbarSurface('main', [
 							{
 								kind: 'item-group',
 								group: {
@@ -208,9 +217,9 @@ describe('item-group customization behavior', () => {
 									presenter: 'radio-group',
 								},
 							},
-						],
-					},
-				],
+						]),
+					],
+				},
 			},
 		})
 
@@ -227,9 +236,9 @@ describe('item-group customization behavior', () => {
 			},
 		}
 
-		customization.addToToolbar('main', differentSubset)
+		customization.addToToolbar(toolbarAt(palette, 0), differentSubset)
 
-		const toolbar = palette.display.toolbars[0]
+		const toolbar = toolbarAt(palette, 0)
 		expect(toolbar.items).toHaveLength(2)
 
 		// Both should be added since they have different option subsets
