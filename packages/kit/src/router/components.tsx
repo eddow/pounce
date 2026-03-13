@@ -218,7 +218,7 @@ export function Router<Definition extends ClientRouteDefinition>(
 	let activeNavigationFrom: string | undefined
 	let lastRenderedDefinition: RouterRouteDefinition<Definition> | undefined
 	let lastRenderedOutput: Node[] | undefined
-	const routeSpecificationState = untracked(() =>
+	const routeSpecificationState = untracked`router:routeSpecificationState`(() =>
 		reactive({
 			current: null as RouteSpecification<RouterRouteDefinition<Definition>> | null,
 		})
@@ -302,7 +302,7 @@ export function Router<Definition extends ClientRouteDefinition>(
 		if (cached) return cached
 		const existing = getLoadedRouteView(route.path) as RouterRender<Definition> | undefined
 
-		const created = untracked(() =>
+		const created = untracked`router:lazyState`(() =>
 			reactive({
 				status: (existing ? 'ready' : 'loading') as 'loading' | 'ready' | 'error',
 				view: existing,

@@ -1,6 +1,8 @@
 import { lift, reactive } from 'mutts'
 import { executePaletteIntent } from './dispatch'
 import { createPaletteIntentSource } from './intents'
+import type { PaletteKeyBinding, PaletteKeys } from './keys'
+import { createPaletteKeys } from './keys'
 import { createPaletteRegistry } from './registry'
 import type {
 	PaletteDisplayConfiguration,
@@ -21,11 +23,53 @@ import type {
 	PaletteRuntimeState,
 	PaletteSearch,
 	PaletteState,
+	PaletteToolbar,
+	PaletteToolbarSlot,
+	PaletteToolbarTrack,
 } from './types'
+
+function emptyToolbarTrack(): PaletteToolbarTrack {
+	return {
+		slots: [],
+	}
+}
+
+function normalizeTrack(track: PaletteToolbarTrack | undefined): PaletteToolbarTrack {
+	if (!track) return emptyToolbarTrack()
+	if ('slots' in track) {
+		return {
+			slots: track.slots.map((slot) => ({
+				toolbar: slot.toolbar,
+				space: Number.isFinite(slot.space) ? Math.min(1, Math.max(0, slot.space)) : 0,
+			})),
+		}
+	}
+	const legacyTrack = track as PaletteToolbarTrack & {
+		readonly toolbars?: readonly PaletteToolbar[]
+		readonly spaces?: readonly number[]
+	}
+	const toolbars = legacyTrack.toolbars ?? []
+	const fallbackSpaces = Array.from(
+		{ length: toolbars.length },
+		(_, index) => 1 / (toolbars.length + 1 - index)
+	)
+	const spaces =
+		legacyTrack.spaces?.length === toolbars.length
+			? legacyTrack.spaces
+			: legacyTrack.spaces?.length === toolbars.length + 1
+				? legacyTrack.spaces.slice(0, -1)
+				: fallbackSpaces
+	const slots: PaletteToolbarSlot[] = toolbars.map((toolbar, index) => ({
+		toolbar,
+		space: spaces[index] ?? fallbackSpaces[index] ?? 0,
+	}))
+	return { slots }
+}
 
 export interface PaletteModel {
 	readonly registry: PaletteRegistry
 	readonly intents: PaletteIntentSource
+	readonly keys: PaletteKeys
 	readonly state: PaletteState
 	readonly runtime: PaletteRuntimeState
 	readonly display: PaletteDisplayConfiguration
@@ -190,6 +234,7 @@ function resolveItemGroup(
 export function createPaletteModel(options?: {
 	definitions?: readonly PaletteEntryDefinition[]
 	intents?: readonly PaletteIntent[]
+	bindings?: readonly PaletteKeyBinding[]
 	state?: PaletteState
 	display?: PaletteDisplayConfiguration
 	runtime?: PaletteRuntimeState
@@ -200,6 +245,7 @@ export function createPaletteModel(options?: {
 		intents: options?.intents,
 		derive: options?.derive,
 	})
+	const keys = createPaletteKeys(options?.bindings)
 
 	const state = reactive(options?.state ?? {})
 	const runtime = reactive(options?.runtime ?? {})
@@ -263,9 +309,13 @@ export function createPaletteModel(options?: {
 	const display = reactive({
 		...(options?.display ?? {}),
 		container: {
-			surfaces: [],
+			toolbarStack: {
+				top: normalizeTrack(options?.display?.container?.toolbarStack.top),
+				right: normalizeTrack(options?.display?.container?.toolbarStack.right),
+				bottom: normalizeTrack(options?.display?.container?.toolbarStack.bottom),
+				left: normalizeTrack(options?.display?.container?.toolbarStack.left),
+			},
 			editMode: false,
-			dropTargets: [],
 			...(options?.display?.container ?? {}),
 		},
 	})
@@ -304,6 +354,7 @@ export function createPaletteModel(options?: {
 	return {
 		registry,
 		intents,
+		keys,
 		state,
 		runtime,
 		display,

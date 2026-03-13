@@ -21,7 +21,6 @@ import type {
 	PaletteStashIntent,
 	PaletteStepIntent,
 	PaletteToggleIntent,
-	PaletteToolbarId as PaletteToolbarIdType,
 } from '../palette'
 
 const rootExports: Record<string, unknown> = mainUi
@@ -37,7 +36,6 @@ describe('Palette subpath entry point', () => {
 		expect(typeof 'test-entry' as PaletteEntryIdType).toBe('string')
 		expect(typeof 'test-intent' as PaletteIntentIdType).toBe('string')
 		expect(typeof 'test-category' as PaletteCategoryType).toBe('string')
-		expect(typeof 'test-toolbar' as PaletteToolbarIdType).toBe('string')
 	})
 
 	it('maintains separate subpath isolation', () => {
@@ -48,7 +46,6 @@ describe('Palette subpath entry point', () => {
 		expect(rootExports.PaletteEntryId).toBeUndefined()
 		expect(rootExports.PaletteIntentId).toBeUndefined()
 		expect(rootExports.PaletteCategory).toBeUndefined()
-		expect(rootExports.PaletteToolbarId).toBeUndefined()
 		expect(rootExports.PaletteEntryDefinition).toBeUndefined()
 
 		// The fact that this file compiles and imports work proves the types are available
@@ -75,7 +72,6 @@ describe('Palette subpath entry point', () => {
 		expect(typeof 'test-entry' as PaletteEntryIdType).toBe('string')
 		expect(typeof 'test-intent' as PaletteIntentIdType).toBe('string')
 		expect(typeof 'test-category' as PaletteCategoryType).toBe('string')
-		expect(typeof 'test-toolbar' as PaletteToolbarIdType).toBe('string')
 	})
 
 	it('exports comprehensive entry schema types', () => {
@@ -83,7 +79,17 @@ describe('Palette subpath entry point', () => {
 		const mockPalette: PaletteModelLike = {
 			state: {},
 			runtime: {},
-			display: { container: { surfaces: [], editMode: false } },
+			display: {
+				container: {
+					toolbarStack: {
+						top: { slots: [] },
+						right: { slots: [] },
+						bottom: { slots: [] },
+						left: { slots: [] },
+					},
+					editMode: false,
+				},
+			},
 			resolveEntry: () => undefined,
 		}
 

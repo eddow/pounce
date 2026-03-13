@@ -75,7 +75,7 @@ describe('Effect during render bug', () => {
 		})
 
 		const TestComponent = () => {
-			effect(({ reaction }: { reaction: boolean | CleanupReason }) => {
+			effect`test:detect-effect`(({ reaction }: { reaction: boolean | CleanupReason }) => {
 				if (reaction && typeof reaction === 'object' && reaction.type === 'propChange') {
 					for (const trigger of reaction.triggers) {
 						effectsDuringRender.push(`${'prop' in trigger.evolution ? String(trigger.evolution.prop) : trigger.evolution.method}: ${trigger.evolution.type}`)

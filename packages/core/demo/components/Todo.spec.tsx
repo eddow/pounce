@@ -6,7 +6,7 @@ import TodoWebComponent, { type Todo } from './Todo'
 describe('TodoWebComponent', () => {
 	it('morph reacts to second push', () => {
 		const source = reactive([] as { id: number; text: string }[])
-		const result = morph(source, (value) => value.text)
+		const result = morph`todos`(source, (value) => value.text)
 
 		expect(result.length).toBe(0)
 

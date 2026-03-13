@@ -30,7 +30,7 @@ describe('Effect topology and error propagation', () => {
 		const logs: string[] = []
 
 		// Simulate pounce rendering: component in one morph, children in another
-		const m1 = morph([null], () => {
+		const m1 = morph`test:parent`([null], () => {
 			logs.push('parent-start')
 
 			caught((_err) => {
@@ -45,7 +45,7 @@ describe('Effect topology and error propagation', () => {
 		void m1[0] // Trigger evaluation
 
 		// Children rendered separately (sibling effect)
-		const m2 = morph([null], () => {
+		const m2 = morph`test:child`([null], () => {
 			logs.push('child-start')
 			if (state.triggerError) {
 				throw new Error('Child error')
@@ -76,7 +76,7 @@ describe('Effect topology and error propagation', () => {
 		let parentCaught = false
 		const logs: string[] = []
 
-		effect(() => {
+		effect`test:parent`(() => {
 			logs.push('parent-start')
 
 			caught((_err) => {
@@ -85,7 +85,7 @@ describe('Effect topology and error propagation', () => {
 			})
 
 			// Child created INSIDE parent effect
-			effect(() => {
+			effect`test:child`(() => {
 				logs.push('child-start')
 				if (state.triggerError) {
 					throw new Error('Child error')

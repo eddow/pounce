@@ -197,4 +197,17 @@ describe('createPaletteModel', () => {
 		expect(palette.run('file.save:quick')).toBe('saved')
 		expect(run).toHaveBeenCalledTimes(1)
 	})
+
+	it('exposes separate key bindings for intents and entries', () => {
+		const palette = createPaletteModel({
+			definitions,
+			bindings: [
+				{ kind: 'intent', intentId: 'ui.theme:set:dark', keystroke: 'Ctrl+D' },
+				{ kind: 'entry', entryId: 'game.speed', keystroke: 'G' },
+			],
+		})
+
+		expect(palette.keys.getIntentKeystroke('ui.theme:set:dark')).toBe('Ctrl+D')
+		expect(palette.keys.getEntryKeystroke('game.speed')).toBe('G')
+	})
 })

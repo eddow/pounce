@@ -311,7 +311,7 @@ describe('Directives', () => {
 			const addSpy = vi.spyOn(element, 'addEventListener')
 			cleanup = tail(element, true)
 
-			expect(addSpy).toHaveBeenCalledWith('scroll', expect.any(Function))
+			expect(addSpy).toHaveBeenCalledWith('scroll', expect.any(Function), { passive: true })
 			expect(MutationObserver).toHaveBeenCalled()
 		})
 

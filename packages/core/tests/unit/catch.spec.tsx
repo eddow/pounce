@@ -39,7 +39,7 @@ describe('<catch> meta attribute', () => {
 		const state = reactive({ fail: false })
 
 		const ReactiveFailure = () => {
-			effect(() => { if (state.fail) throw new Error('Delayed Blast!') })
+			effect`test:delayed-failure`(() => { if (state.fail) throw new Error('Delayed Blast!') })
 			return <span>Everything is fine</span>
 		}
 

@@ -1,23 +1,33 @@
 import { describe, expect, it } from 'vitest'
 import { paletteDisplayCustomizationModel } from './display'
 import { createPaletteModel } from './model'
-import type { PaletteDisplayItem, PaletteToolbarSurface } from './types'
+import type { PaletteDisplayItem, PaletteToolbar } from './types'
 
-function toolbarSurface(id: string, items: readonly PaletteDisplayItem[]): PaletteToolbarSurface {
+function toolbarFixture(items: readonly PaletteDisplayItem[]): PaletteToolbar {
 	return {
-		id,
-		type: 'toolbar',
-		region: 'top',
-		visible: true,
 		items,
 	}
 }
 
-function toolbarAt(
-	palette: ReturnType<typeof createPaletteModel>,
-	index: number
-): PaletteToolbarSurface {
-	return palette.display.container!.surfaces[index] as PaletteToolbarSurface
+function containerFixture(...toolbars: PaletteToolbar[]) {
+	return {
+		editMode: false,
+		toolbarStack: {
+			top: {
+				slots: toolbars.map((toolbar, index) => ({
+					toolbar,
+					space: 1 / (toolbars.length + 1 - index),
+				})),
+			},
+			right: { slots: [] },
+			bottom: { slots: [] },
+			left: { slots: [] },
+		},
+	}
+}
+
+function toolbarAt(palette: ReturnType<typeof createPaletteModel>, index: number): PaletteToolbar {
+	return palette.display.container!.toolbarStack.top.slots[index].toolbar
 }
 
 describe('item-group customization behavior', () => {
@@ -31,23 +41,19 @@ describe('item-group customization behavior', () => {
 				},
 			],
 			display: {
-				container: {
-					editMode: false,
-					dropTargets: [],
-					surfaces: [
-						toolbarSurface('main', [
-							{
-								kind: 'item-group',
-								group: {
-									kind: 'enum-options',
-									entryId: 'ui.theme',
-									options: ['light', 'dark'],
-									presenter: 'radio-group',
-								},
+				container: containerFixture(
+					toolbarFixture([
+						{
+							kind: 'item-group',
+							group: {
+								kind: 'enum-options',
+								entryId: 'ui.theme',
+								options: ['light', 'dark'],
+								presenter: 'radio-group',
 							},
-						]),
-					],
-				},
+						},
+					])
+				),
 			},
 		})
 
@@ -74,23 +80,19 @@ describe('item-group customization behavior', () => {
 				},
 			],
 			display: {
-				container: {
-					editMode: false,
-					dropTargets: [],
-					surfaces: [
-						toolbarSurface('main', [
-							{
-								kind: 'item-group',
-								group: {
-									kind: 'enum-options',
-									entryId: 'ui.theme',
-									options: ['light', 'dark'],
-									presenter: 'radio-group',
-								},
+				container: containerFixture(
+					toolbarFixture([
+						{
+							kind: 'item-group',
+							group: {
+								kind: 'enum-options',
+								entryId: 'ui.theme',
+								options: ['light', 'dark'],
+								presenter: 'radio-group',
 							},
-						]),
-					],
-				},
+						},
+					])
+				),
 			},
 		})
 
@@ -117,13 +119,11 @@ describe('item-group customization behavior', () => {
 				},
 			],
 			display: {
-				container: { editMode: false, dropTargets: [], surfaces: [toolbarSurface('main', [])] },
+				container: containerFixture(toolbarFixture([])),
 			},
 		})
 
 		const customization = paletteDisplayCustomizationModel({ palette })
-
-		// Add item-group
 		const itemGroupToAdd: PaletteDisplayItem = {
 			kind: 'item-group',
 			group: {
@@ -140,7 +140,6 @@ describe('item-group customization behavior', () => {
 		expect(toolbar.items).toHaveLength(1)
 		expect(toolbar.items[0].kind).toBe('item-group')
 
-		// Remove item-group
 		customization.removeFromToolbar(toolbar, toolbar.items[0])
 
 		toolbar = toolbarAt(palette, 0)
@@ -162,24 +161,20 @@ describe('item-group customization behavior', () => {
 				},
 			],
 			display: {
-				container: {
-					editMode: false,
-					dropTargets: [],
-					surfaces: [
-						toolbarSurface('main', [
-							{ kind: 'intent', intentId: 'ui.sidebar:toggle' },
-							{
-								kind: 'item-group',
-								group: {
-									kind: 'enum-options',
-									entryId: 'ui.theme',
-									options: ['light', 'dark'],
-									presenter: 'radio-group',
-								},
+				container: containerFixture(
+					toolbarFixture([
+						{ kind: 'intent', intentId: 'ui.sidebar:toggle' },
+						{
+							kind: 'item-group',
+							group: {
+								kind: 'enum-options',
+								entryId: 'ui.theme',
+								options: ['light', 'dark'],
+								presenter: 'radio-group',
 							},
-						]),
-					],
-				},
+						},
+					])
+				),
 			},
 		})
 
@@ -203,29 +198,23 @@ describe('item-group customization behavior', () => {
 				},
 			],
 			display: {
-				container: {
-					editMode: false,
-					dropTargets: [],
-					surfaces: [
-						toolbarSurface('main', [
-							{
-								kind: 'item-group',
-								group: {
-									kind: 'enum-options',
-									entryId: 'ui.theme',
-									options: ['light', 'dark'],
-									presenter: 'radio-group',
-								},
+				container: containerFixture(
+					toolbarFixture([
+						{
+							kind: 'item-group',
+							group: {
+								kind: 'enum-options',
+								entryId: 'ui.theme',
+								options: ['light', 'dark'],
+								presenter: 'radio-group',
 							},
-						]),
-					],
-				},
+						},
+					])
+				),
 			},
 		})
 
 		const customization = paletteDisplayCustomizationModel({ palette })
-
-		// Add a different subset of the same entry
 		const differentSubset: PaletteDisplayItem = {
 			kind: 'item-group',
 			group: {
@@ -240,8 +229,6 @@ describe('item-group customization behavior', () => {
 
 		const toolbar = toolbarAt(palette, 0)
 		expect(toolbar.items).toHaveLength(2)
-
-		// Both should be added since they have different option subsets
 		expect(toolbar.items.every((item: PaletteDisplayItem) => item.kind === 'item-group')).toBe(true)
 
 		if (toolbar.items[0].kind === 'item-group' && toolbar.items[1].kind === 'item-group') {

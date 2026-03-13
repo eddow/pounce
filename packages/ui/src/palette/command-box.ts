@@ -157,7 +157,7 @@ function focusAdjacentPaletteCommandChip(target: HTMLButtonElement, offset: numb
 	const chipButtons =
 		target.parentElement?.querySelectorAll<HTMLButtonElement>('[data-command-chip]')
 	if (!chipButtons) return
-	const index = Array.from(chipButtons).findIndex((entry) => entry === target)
+	const index = Array.from(chipButtons).indexOf(target)
 	const next = chipButtons[index + offset]
 	if (next) {
 		next.focus()
@@ -544,173 +544,157 @@ export function paletteCommandBoxModel(options: {
 		return removed
 	}
 
+	const input = {
+		get value() {
+			return inputState.value
+		},
+		set value(value: string) {
+			useLocalQuery()
+			inputState.value = value
+			selection.clear()
+		},
+		get placeholder() {
+			return inputPlaceholder
+		},
+		clear() {
+			input.value = ''
+		},
+	}
+
+	const categories = {
+		get available() {
+			return availableCategories
+		},
+		get active() {
+			return activeCategories
+		},
+		toggle(category: PaletteCategory) {
+			useLocalQuery()
+			if (!removeCategory(category)) {
+				categoryState.manual.push(category)
+			}
+			selection.clear()
+		},
+		removeLast() {
+			useLocalQuery()
+			const active = activeCategories
+			const category = active[active.length - 1]
+			if (!category) return undefined
+			if (!removeCategory(category)) return undefined
+			selection.clear()
+			return category
+		},
+		clear() {
+			if (categoryState.manual.length > 0) {
+				useLocalQuery()
+				categoryState.manual.splice(0, categoryState.manual.length)
+				selection.clear()
+			}
+		},
+	}
+
+	const keywords = {
+		get dictionary() {
+			return keywordDictionary
+		},
+
+		get tokens() {
+			return keywordTokenState.tokens
+		},
+
+		get active() {
+			return activeKeywords
+		},
+
+		addToken(keyword: string): void {
+			const keywordToken = keywordDictionary.getKeyword(keyword)
+			if (!keywordToken) return
+
+			const existing = keywordTokenState.tokens.find(
+				(token) => normalizeKeyword(token.keyword) === normalizeKeyword(keywordToken.keyword)
+			)
+			if (existing) return
+
+			useLocalQuery()
+			keywordTokenState.tokens.push(keywordToken)
+			selection.clear()
+		},
+
+		removeLast(): KeywordToken | undefined {
+			if (keywordTokenState.tokens.length === 0) return undefined
+
+			useLocalQuery()
+			const removed = keywordTokenState.tokens.pop()
+			selection.clear()
+			return removed
+		},
+
+		removeToken(keyword: string): boolean {
+			const normalized = normalizeKeyword(keyword)
+			const tokenIndex = keywordTokenState.tokens.findIndex(
+				(token) => normalizeKeyword(token.keyword) === normalized
+			)
+			if (tokenIndex < 0) return false
+
+			useLocalQuery()
+			keywordTokenState.tokens.splice(tokenIndex, 1)
+			selection.clear()
+			return true
+		},
+
+		clear() {
+			if (keywordTokenState.tokens.length === 0) return
+			useLocalQuery()
+			keywordTokenState.tokens.splice(0, keywordTokenState.tokens.length)
+			selection.clear()
+		},
+	}
+
+	const selection = {
+		get index() {
+			return selectionState.index
+		},
+		get item() {
+			return selectionState.index >= 0 && selectionState.index < model.results.length
+				? model.results[selectionState.index]
+				: undefined
+		},
+		set(index: number) {
+			const validIndex = Math.max(-1, Math.min(index, model.results.length - 1))
+			selectionState.index = validIndex
+		},
+		next() {
+			if (model.results.length === 0) {
+				selection.clear()
+				return
+			}
+			const nextIndex =
+				selectionState.index >= model.results.length - 1 ? 0 : selectionState.index + 1
+			selection.set(nextIndex)
+		},
+		previous() {
+			if (model.results.length === 0) {
+				selection.clear()
+				return
+			}
+			const prevIndex =
+				selectionState.index <= 0 ? model.results.length - 1 : selectionState.index - 1
+			selection.set(prevIndex)
+		},
+		clear() {
+			selectionState.index = -1
+		},
+	}
+
 	// Create the command box model
 	const model: PaletteCommandBoxModel = {
-		get input() {
-			return {
-				get value() {
-					return inputState.value
-				},
-				set value(value: string) {
-					useLocalQuery()
-					inputState.value = value
-					model.selection.clear()
-				},
-				get placeholder() {
-					return inputPlaceholder
-				},
-				clear() {
-					model.input.value = ''
-				},
-			}
-		},
-
-		get query(): PaletteQuery {
-			return query
-		},
-
-		get results(): readonly PaletteMatch[] {
-			return searchResults
-		},
-
-		get suggestions(): readonly PaletteCommandBoxKeywordSuggestion[] {
-			return suggestions
-		},
-
-		get categories() {
-			return {
-				get available() {
-					return availableCategories
-				},
-				get active() {
-					return activeCategories
-				},
-				toggle(category: PaletteCategory) {
-					useLocalQuery()
-					if (!removeCategory(category)) {
-						categoryState.manual.push(category)
-					}
-					model.selection.clear()
-				},
-				removeLast() {
-					useLocalQuery()
-					const active = activeCategories
-					const category = active[active.length - 1]
-					if (!category) return undefined
-					if (!removeCategory(category)) return undefined
-					model.selection.clear()
-					return category
-				},
-				clear() {
-					if (categoryState.manual.length > 0) {
-						useLocalQuery()
-						categoryState.manual.splice(0, categoryState.manual.length)
-						model.selection.clear()
-					}
-				},
-			}
-		},
-
-		get keywords() {
-			return {
-				get dictionary() {
-					return keywordDictionary
-				},
-
-				get tokens() {
-					return keywordTokenState.tokens
-				},
-
-				get active() {
-					return activeKeywords
-				},
-
-				addToken(keyword: string): void {
-					const keywordToken = keywordDictionary.getKeyword(keyword)
-					if (!keywordToken) return
-
-					const existing = keywordTokenState.tokens.find(
-						(token) => normalizeKeyword(token.keyword) === normalizeKeyword(keywordToken.keyword)
-					)
-					if (existing) return
-
-					useLocalQuery()
-					keywordTokenState.tokens.push(keywordToken)
-					model.selection.clear()
-				},
-
-				removeLast(): KeywordToken | undefined {
-					if (keywordTokenState.tokens.length === 0) return undefined
-
-					useLocalQuery()
-					const removed = keywordTokenState.tokens.pop()
-					model.selection.clear()
-					return removed
-				},
-
-				removeToken(keyword: string): boolean {
-					const normalized = normalizeKeyword(keyword)
-					const tokenIndex = keywordTokenState.tokens.findIndex(
-						(token) => normalizeKeyword(token.keyword) === normalized
-					)
-					if (tokenIndex < 0) return false
-
-					useLocalQuery()
-					keywordTokenState.tokens.splice(tokenIndex, 1)
-					model.selection.clear()
-					return true
-				},
-
-				clear() {
-					if (keywordTokenState.tokens.length === 0) return
-					useLocalQuery()
-					keywordTokenState.tokens.splice(0, keywordTokenState.tokens.length)
-					model.selection.clear()
-				},
-			}
-		},
-
-		get selection() {
-			return {
-				get index() {
-					return selectionState.index
-				},
-				get item() {
-					const results = model.results
-					return selectionState.index >= 0 && selectionState.index < results.length
-						? results[selectionState.index]
-						: undefined
-				},
-				set(index: number) {
-					const results = model.results
-					const validIndex = Math.max(-1, Math.min(index, results.length - 1))
-					selectionState.index = validIndex
-				},
-				next() {
-					const results = model.results
-					if (results.length === 0) {
-						model.selection.clear()
-						return
-					}
-					const nextIndex =
-						selectionState.index >= results.length - 1 ? 0 : selectionState.index + 1
-					model.selection.set(nextIndex)
-				},
-				previous() {
-					const results = model.results
-					if (results.length === 0) {
-						model.selection.clear()
-						return
-					}
-					const prevIndex =
-						selectionState.index <= 0 ? results.length - 1 : selectionState.index - 1
-					model.selection.set(prevIndex)
-				},
-				clear() {
-					selectionState.index = -1
-				},
-			}
-		},
+		query,
+		input,
+		results: searchResults,
+		suggestions,
+		categories,
+		keywords,
+		selection,
 
 		execute(intentId?: PaletteIntentId): unknown {
 			const selectedItem = model.selection.item
@@ -766,7 +750,6 @@ export function paletteCommandBoxModel(options: {
 			// Extract the word at cursor position
 			const words = inputValue.split(/\s+/)
 			let currentWord = ''
-			let wordStartPos = 0
 
 			// Find the word at cursor position
 			let charCount = 0
@@ -774,7 +757,6 @@ export function paletteCommandBoxModel(options: {
 				const word = words[i]
 				if (charCount + word.length >= cursorPos) {
 					currentWord = word
-					wordStartPos = charCount
 					break
 				}
 				charCount += word.length + 1 // +1 for space

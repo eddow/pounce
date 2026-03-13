@@ -2,11 +2,12 @@ import { resolveElement } from './shared'
 
 // Internal shared state to hold the payload being dragged
 let activeDragPayload: any
+let activeDragCompleted = false
 
 export interface DragOptions {
 	payload: any | (() => any)
 	onStart?: (payload: any) => void
-	onEnd?: (payload: any) => void
+	onEnd?: (payload: any, didDrop: boolean) => void
 }
 
 export function drag(
@@ -18,14 +19,19 @@ export function drag(
 
 	element.setAttribute('draggable', 'true')
 
-	let options: DragOptions =
+	const options: DragOptions =
 		value && typeof value === 'object' && 'payload' in value
 			? (value as DragOptions)
 			: { payload: value }
 
-	const onDragStart = () => {
+	const onDragStart = (event: DragEvent) => {
 		const payload = typeof options.payload === 'function' ? options.payload() : options.payload
 		activeDragPayload = payload
+		activeDragCompleted = false
+		if (event.dataTransfer) {
+			event.dataTransfer.effectAllowed = 'move'
+			event.dataTransfer.setData('text/plain', '')
+		}
 		if (options.onStart) {
 			options.onStart(payload)
 		}
@@ -33,9 +39,11 @@ export function drag(
 
 	const onDragEnd = () => {
 		const payload = activeDragPayload
+		const didDrop = activeDragCompleted
 		activeDragPayload = undefined
+		activeDragCompleted = false
 		if (options.onEnd) {
-			options.onEnd(payload)
+			options.onEnd(payload, didDrop)
 		}
 	}
 
@@ -51,7 +59,7 @@ export function drag(
 
 export function drop(
 	target: Node | Node[],
-	value: (payload: any) => void
+	value: (payload: any, event: DragEvent) => void
 ): (() => void) | undefined {
 	const element = resolveElement(target)
 	if (!element) return
@@ -66,7 +74,8 @@ export function drop(
 		if (activeDragPayload !== undefined) {
 			e.preventDefault()
 			e.stopPropagation()
-			value(activeDragPayload)
+			activeDragCompleted = true
+			value(activeDragPayload, e)
 		}
 	}
 

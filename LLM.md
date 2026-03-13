@@ -58,9 +58,10 @@ A package may import from its own `src/` directory (e.g., `@pounce/core` importi
    - **`defaults()` proxy**: `const p = defaults(props, { gap: 'md' })` — zero-cost proxy, `p.gap` is `props.gap ?? 'md'` with `undefined` stripped from the type. Use `p.xxx` for defaulted keys, `props.xxx` for the rest.
    - **Getter object**: `const state = { get variant() { return props.variant } }` — deferred until evaluated.
    - **Callback/effect**: reads inside `effect()`, `attend()`, event handlers, or `<for each>` callbacks are fine.
-2. **Adapter architecture**: `@pounce/ui` is headless (models + types only). Import components from the adapter: `import { Button } from '@pounce/adapter-pico'`. No `setAdapter`, no `FrameworkAdapter`, no registry. `DisplayProvider` is DOM-only — import from `@pounce/kit/dom`.
-3. **Dockview lives on a subpath**: `Dockview` and `DockviewRouter` are exported from `@pounce/ui/dockview`, not from the root `@pounce/ui` entry. This keeps `dockview-core` optional/tree-shakeable for consumers that do not use Dockview.
-4. **Conditional rendering**: Never use the boolean AND operator for conditional rendering (e.g. `{props.qty && <span />}`). The expression inside `{...}` is wrapped dynamically, but it is an anti-pattern that can lead to bugs or poor performance. ALWAYS use the `if` directive directly on the element: `<span if={props.qty} />`.
+2. **Read reactive layout state at the narrowest fence**: if a value only drives one spacer/handle/style, do not read it in a broad `render...()` helper that also renders siblings. Move that read into a dedicated component/effect for that node, often via a small `computed = { get ...() { ... } }` object so the subscription lands where the style is actually applied.
+3. **Adapter architecture**: `@pounce/ui` is headless (models + types only). Import components from the adapter: `import { Button } from '@pounce/adapter-pico'`. No `setAdapter`, no `FrameworkAdapter`, no registry. `DisplayProvider` is DOM-only — import from `@pounce/kit/dom`.
+4. **Dockview lives on a subpath**: `Dockview` and `DockviewRouter` are exported from `@pounce/ui/dockview`, not from the root `@pounce/ui` entry. This keeps `dockview-core` optional/tree-shakeable for consumers that do not use Dockview.
+5. **Conditional rendering**: Never use the boolean AND operator for conditional rendering (e.g. `{props.qty && <span />}`). The expression inside `{...}` is wrapped dynamically, but it is an anti-pattern that can lead to bugs or poor performance. ALWAYS use the `if` directive directly on the element: `<span if={props.qty} />`.
 
 ## Babel Plugin Binding Rules
 1. **Two-way** (`r(getter, setter)`): member expressions (`state.name`, `props.count`, `arr[index]`) and mutable bare identifiers (`let`/`var`).

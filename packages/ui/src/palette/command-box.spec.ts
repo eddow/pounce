@@ -137,7 +137,7 @@ describe('paletteCommandBoxModel', () => {
 			expect(commandBox.results.length).toBeGreaterThan(0) // Should show all intents and entries initially
 			expect(commandBox.selection.index).toBe(-1)
 			expect(commandBox.selection.item).toBeUndefined()
-			expect(commandBox.categories.available).toEqual([
+			expect([...commandBox.categories.available]).toEqual([
 				'action',
 				'appearance',
 				'editor',
@@ -151,7 +151,7 @@ describe('paletteCommandBoxModel', () => {
 				'text',
 				'ui',
 			])
-			expect(commandBox.categories.active).toEqual([])
+			expect([...commandBox.categories.active]).toEqual([])
 		})
 
 		it('should populate initial search results', () => {
@@ -166,7 +166,7 @@ describe('paletteCommandBoxModel', () => {
 
 			expect(commandBox.input.value).toBe('test')
 			expect(commandBox.query.text).toBe('')
-			expect(commandBox.query.categories).toEqual(['test'])
+			expect([...(commandBox.query.categories ?? [])]).toEqual(['test'])
 			expect(commandBox.selection.index).toBe(-1) // Should reset selection
 		})
 
@@ -183,8 +183,8 @@ describe('paletteCommandBoxModel', () => {
 		it('should toggle category filter', () => {
 			commandBox.categories.toggle('test')
 
-			expect(commandBox.categories.active).toEqual(['test'])
-			expect(commandBox.query.categories).toEqual(['test'])
+			expect([...commandBox.categories.active]).toEqual(['test'])
+			expect([...(commandBox.query.categories ?? [])]).toEqual(['test'])
 			expect(commandBox.selection.index).toBe(-1) // Should reset selection
 		})
 
@@ -192,8 +192,8 @@ describe('paletteCommandBoxModel', () => {
 			commandBox.categories.toggle('test')
 			commandBox.categories.toggle('test')
 
-			expect(commandBox.categories.active).toEqual([])
-			expect(commandBox.query.categories).toEqual([])
+			expect([...commandBox.categories.active]).toEqual([])
+			expect([...(commandBox.query.categories ?? [])]).toEqual([])
 		})
 
 		it('should clear all categories', () => {
@@ -201,15 +201,15 @@ describe('paletteCommandBoxModel', () => {
 			commandBox.categories.toggle('action')
 			commandBox.categories.clear()
 
-			expect(commandBox.categories.active).toEqual([])
-			expect(commandBox.query.categories).toEqual([])
+			expect([...commandBox.categories.active]).toEqual([])
+			expect([...(commandBox.query.categories ?? [])]).toEqual([])
 		})
 
 		it('should not clear when no active categories', () => {
 			const initialResults = commandBox.results.length
 			commandBox.categories.clear()
 
-			expect(commandBox.categories.active).toEqual([])
+			expect([...commandBox.categories.active]).toEqual([])
 			expect(commandBox.results.length).toBe(initialResults) // Should not trigger search
 		})
 
@@ -219,7 +219,7 @@ describe('paletteCommandBoxModel', () => {
 			const removed = commandBox.categories.removeLast()
 
 			expect(removed).toBe('test')
-			expect(commandBox.categories.active).toEqual([])
+			expect([...commandBox.categories.active]).toEqual([])
 			expect(commandBox.query.text).toBe('boolean')
 		})
 
@@ -229,9 +229,9 @@ describe('paletteCommandBoxModel', () => {
 			commandBox.categories.toggle('test')
 
 			expect(commandBox.input.value).toBe('boolean')
-			expect(commandBox.categories.active).toEqual([])
+			expect([...commandBox.categories.active]).toEqual([])
 			expect(commandBox.query.text).toBe('boolean')
-			expect(commandBox.query.categories).toEqual([])
+			expect([...commandBox.query.categories]).toEqual([])
 		})
 	})
 
@@ -356,7 +356,7 @@ describe('paletteCommandBoxModel', () => {
 		it('should filter by categories', () => {
 			commandBox.search({ categories: ['test'] })
 
-			expect(commandBox.query.categories).toEqual(['test'])
+			expect([...(commandBox.query.categories ?? [])]).toEqual(['test'])
 			// Results should include test category
 			expect(commandBox.results.length).toBeGreaterThan(0)
 		})
@@ -365,7 +365,7 @@ describe('paletteCommandBoxModel', () => {
 			commandBox.search({ text: 'test', categories: ['action'] })
 
 			expect(commandBox.query.text).toBe('test')
-			expect(commandBox.query.categories).toEqual(['action'])
+			expect([...(commandBox.query.categories ?? [])]).toEqual(['action'])
 		})
 	})
 
@@ -385,7 +385,7 @@ describe('paletteCommandBoxModel', () => {
 		it('should sort categories alphabetically', () => {
 			const categories = commandBox.categories.available
 			const sorted = [...categories].sort()
-			expect(categories).toEqual(sorted)
+			expect([...categories]).toEqual(sorted)
 		})
 	})
 
@@ -395,7 +395,7 @@ describe('paletteCommandBoxModel', () => {
 			commandBox.categories.toggle('action')
 
 			expect(commandBox.query.text).toBe('')
-			expect(commandBox.query.categories).toEqual(['action', 'test'])
+			expect([...(commandBox.query.categories ?? [])]).toEqual(['action', 'test'])
 		})
 
 		it('should promote typed category tokens while keeping free text in query text', () => {
@@ -403,7 +403,7 @@ describe('paletteCommandBoxModel', () => {
 
 			expect(commandBox.input.value).toBe('test boolean')
 			expect(commandBox.query.text).toBe('boolean')
-			expect(commandBox.query.categories).toEqual(['test'])
+			expect([...(commandBox.query.categories ?? [])]).toEqual(['test'])
 		})
 
 		it('should keep query in sync with palette search', () => {
@@ -412,8 +412,8 @@ describe('paletteCommandBoxModel', () => {
 			const paletteResults = palette.search(commandBox.query)
 
 			expect(commandBox.query.text).toBe('boolean')
-			expect(commandBox.query.categories).toEqual([])
-			expect(commandBox.results).toEqual(paletteResults)
+			expect([...(commandBox.query.categories ?? [])]).toEqual([])
+			expect([...commandBox.results]).toEqual([...paletteResults])
 		})
 	})
 
@@ -756,7 +756,7 @@ describe('paletteCommandBoxModel', () => {
 				commandBox.keywords.addToken('ui')
 				commandBox.input.value = 'ga'
 
-				expect(commandBox.results).toEqual([])
+				expect([...commandBox.results]).toEqual([])
 				expect(commandBox.suggestions.map((suggestion) => suggestion.keyword)).toEqual([])
 			})
 

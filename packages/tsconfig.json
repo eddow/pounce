@@ -38,12 +38,6 @@
 			],
 			"@pounce/kit/*": [
 				"./kit/src/*"
-			],
-			"mutts": [
-				"../mutts/dist"
-			],
-			"mutts/*": [
-				"../mutts/dist/*"
 			]
 		}
 	},

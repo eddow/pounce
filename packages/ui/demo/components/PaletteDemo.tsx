@@ -1,10 +1,12 @@
-import type { PounceElement } from '@pounce/core'
-import { reactive } from 'mutts'
+import { h, type PounceElement } from '@pounce/core'
+import { componentStyle } from '@pounce/kit'
+import { reactive, reactiveOptions } from 'mutts'
+import { drag, dragging, drop } from '../../src/directives/drag-drop'
 import {
-	paletteAddItemModel,
 	computeCheckedState,
 	computeDisabledState,
 	createPaletteModel,
+	formatKeystroke,
 	getDefaultDisplayPresenter,
 	getDisplayPresenterFamily,
 	handlePaletteCommandBoxInputKeydown,
@@ -13,19 +15,18 @@ import {
 	paletteContainerModel,
 	paletteDisplayCustomizationModel,
 	setPaletteCommandBoxInput,
-	type PaletteAddItemCandidate,
 	type PaletteContainerRegion,
 	type PaletteDisplayItem,
 	type PaletteDisplayPresenterFamily,
 	type PaletteEditorDisplayItem,
 	type PaletteEntryDefinition,
-	type PaletteGroupedProposition,
 	type PaletteIntentDisplayItem,
 	type PaletteItemGroupDisplayItem,
 	type PaletteResolvedDisplayItem,
 	type PaletteResolvedEntry,
 	type PaletteResolvedIntent,
-	type PaletteToolbarSurface,
+	type PaletteKeyBinding,
+	type PaletteToolbar,
 } from '@pounce/ui/palette'
 import { type PaletteMatch } from '@pounce/ui/palette'
 import { starsModel, type StarStatus, type StarsValue } from '../../src/models/stars'
@@ -53,27 +54,53 @@ type DemoPresenterCatalog = {
 type DemoEditorRendererProps = {
 	readonly displayItem: PaletteEditorDisplayItem
 	readonly entry: PaletteEntryDefinition
-	readonly toolbarId: string
+	readonly toolbar: PaletteToolbar
 	readonly selected: boolean
 	readonly label: string
+}
+
+type DemoToolbarPath = {
+	readonly region: PaletteContainerRegion
+	readonly index: number
 }
 
 type DemoEditorRenderer = (props: DemoEditorRendererProps) => PounceElement | undefined
 
 type DemoUiState = {
 	handleExpanded: boolean
-	addRegion: PaletteContainerRegion | undefined
-	addToolbarId: string | undefined
-	addQuery: string
-	movingToolbarId: string | undefined
-	draggingToolbarId: string | undefined
-	draggingItemToolbarId: string | undefined
+	draggingToolbar: DemoToolbarPath | undefined
+	draggingItemToolbar: DemoToolbarPath | undefined
 	draggingItemId: string | undefined
 	draggingItemKind: PaletteDisplayItem['kind'] | undefined
-	configToolbarId: string | undefined
+	configToolbar: DemoToolbarPath | undefined
 	configItemId: string | undefined
 	configItemKind: PaletteDisplayItem['kind'] | undefined
 }
+
+type DemoWarningState = {
+	messages: string[]
+}
+
+type DemoDraggedPaletteItem =
+	| {
+			readonly kind: 'intent'
+			readonly intent: PaletteResolvedIntent
+	  }
+	| {
+			readonly kind: 'editor'
+			readonly entry: PaletteResolvedEntry
+	  }
+	| {
+			readonly kind: 'item-group'
+			readonly group: PaletteItemGroupDisplayItem['group']
+	  }
+
+const DEMO_BINDINGS = [
+	{ kind: 'intent', intentId: 'ui.layout:flip', keystroke: 'Alt+L' },
+	{ kind: 'intent', intentId: 'game.speed:stash:0', keystroke: 'Space' },
+	{ kind: 'entry', entryId: 'ui.theme', keystroke: 'Ctrl+T' },
+	{ kind: 'entry', entryId: 'game.speed', keystroke: 'G' },
+] satisfies readonly PaletteKeyBinding[]
 
 const palette = createPaletteModel({
 	definitions: [
@@ -125,7 +152,6 @@ const palette = createPaletteModel({
 			mode: 'flip',
 			values: ['horizontal', 'vertical'],
 			label: 'Flip Layout',
-			binding: 'Alt+L',
 		},
 		{
 			id: 'game.speed:stash:0',
@@ -133,10 +159,10 @@ const palette = createPaletteModel({
 			mode: 'stash',
 			value: 0,
 			label: 'Pause / Resume',
-			binding: 'Space',
 			fallback: { kind: 'step', step: 0.5 },
 		},
 	],
+	bindings: DEMO_BINDINGS,
 	state: {
 		'ui.notifications': true,
 		'ui.theme': 'light',
@@ -147,73 +173,88 @@ const palette = createPaletteModel({
 	display: {
 		container: {
 			editMode: false,
-			surfaces: [
-				{
-					id: '1',
-					type: 'toolbar',
-					region: 'top',
-					visible: true,
-					position: 0,
-					label: 'Main Toolbar',
-					items: [
-						{ kind: 'intent', intentId: 'ui.notifications:toggle', presenter: 'toggle', showText: false },
-						{ kind: 'intent', intentId: 'ui.theme:set:light', presenter: 'radio', showText: false },
-						{ kind: 'intent', intentId: 'ui.theme:set:dark', presenter: 'radio', showText: false },
-						{ kind: 'intent', intentId: 'ui.layout:flip', presenter: 'flip', showText: false },
-					],
-				},
-				{
-					id: '2',
-					type: 'toolbar',
-					region: 'left',
-					visible: true,
-					position: 0,
-					label: 'Theme Rail',
-					items: [
+			toolbarStack: {
+				top: {
+					slots: [
 						{
-							kind: 'item-group',
-							group: {
-								kind: 'enum-options',
-								entryId: 'ui.theme',
-								options: ['light', 'dark'],
-								presenter: 'radio-group',
+							toolbar: {
+								title: 'Main Toolbar',
+								items: [
+									{ kind: 'intent', intentId: 'ui.notifications:toggle', presenter: 'toggle', showText: false },
+									{ kind: 'intent', intentId: 'ui.theme:set:light', presenter: 'radio', showText: false },
+								],
 							},
-							showText: false,
+							space: .3,
 						},
-						{ kind: 'editor', entryId: 'ui.theme', presenter: 'select', showText: false },
-						{ kind: 'intent', intentId: 'ui.theme:set:system', presenter: 'radio', showText: false },
-						{ kind: 'intent', intentId: 'editor.fontSize:step:up', presenter: 'step', showText: false },
+						{
+							toolbar: {
+								title: 'Secondary Toolbar',
+								items: [
+									{ kind: 'intent', intentId: 'ui.theme:set:dark', presenter: 'radio', showText: false },
+									{ kind: 'intent', intentId: 'ui.layout:flip', presenter: 'flip', showText: false },
+								],
+							},
+							space: .3,
+						},
 					],
 				},
-				{
-					id: 'palette-right',
-					type: 'toolbar',
-					region: 'right',
-					visible: true,
-					position: 0,
-					label: 'Editor Rail',
-					items: [
-						{ kind: 'editor', entryId: 'editor.fontSize', presenter: 'slider', showText: true },
-						{ kind: 'intent', intentId: 'editor.fontSize:step:down', presenter: 'step', showText: true },
-						{ kind: 'intent', intentId: 'editor.fontSize:step:up', presenter: 'step', showText: true },
+				right: {
+					slots: [
+						{
+							toolbar: {
+								title: 'Editor Rail',
+								items: [
+									{ kind: 'editor', entryId: 'editor.fontSize', presenter: 'slider', showText: true },
+									{ kind: 'intent', intentId: 'editor.fontSize:step:down', presenter: 'step', showText: true },
+									{ kind: 'intent', intentId: 'editor.fontSize:step:up', presenter: 'step', showText: true },
+								],
+							},
+							space: 0,
+						},
 					],
 				},
-				{
-					id: 'palette-bottom',
-					type: 'toolbar',
-					region: 'bottom',
-					visible: true,
-					position: 0,
-					label: 'Playback Bar',
-					items: [
-						{ kind: 'intent', intentId: 'game.speed:step:down', presenter: 'step', showText: true },
-						{ kind: 'editor', entryId: 'game.speed', presenter: 'stars', showText: true },
-						{ kind: 'intent', intentId: 'game.speed:step:up', presenter: 'step', showText: true },
-						{ kind: 'intent', intentId: 'game.speed:stash:0', presenter: 'stash', showText: true },
+				bottom: {
+					slots: [
+						{
+							toolbar: {
+								title: 'Playback Bar',
+								items: [
+									{ kind: 'intent', intentId: 'game.speed:step:down', presenter: 'step', showText: true },
+									{ kind: 'editor', entryId: 'game.speed', presenter: 'stars', showText: true },
+									{ kind: 'intent', intentId: 'game.speed:step:up', presenter: 'step', showText: true },
+									{ kind: 'intent', intentId: 'game.speed:stash:0', presenter: 'stash', showText: true },
+								],
+							},
+							space: 0,
+						},
 					],
 				},
-			],
-			dropTargets: [],
+				left: {
+					slots: [
+						{
+							toolbar: {
+								title: 'Theme Rail',
+								items: [
+									{
+										kind: 'item-group',
+										group: {
+											kind: 'enum-options',
+											entryId: 'ui.theme',
+											options: ['light', 'dark'],
+											presenter: 'radio-group',
+										},
+										showText: false,
+									},
+									{ kind: 'editor', entryId: 'ui.theme', presenter: 'select', showText: false },
+									{ kind: 'intent', intentId: 'ui.theme:set:system', presenter: 'radio', showText: false },
+									{ kind: 'intent', intentId: 'editor.fontSize:step:up', presenter: 'step', showText: false },
+								],
+							},
+							space: 0,
+						},
+					],
+				},
+			},
 		},
 	},
 })
@@ -222,34 +263,46 @@ const commandBox = paletteCommandBoxModel({
 	palette,
 	placeholder: 'Search commands and settings, or type categories like ui action…',
 })
-const addItem = paletteAddItemModel({ palette })
 const container = paletteContainerModel({ palette })
-const customization = paletteDisplayCustomizationModel({ palette })
+const customization = paletteDisplayCustomizationModel({ palette, container })
 const demoUi: DemoUiState = reactive({
 	handleExpanded: false,
-	addRegion: undefined,
-	addToolbarId: undefined,
-	addQuery: '',
-	movingToolbarId: undefined,
-	draggingToolbarId: undefined,
-	draggingItemToolbarId: undefined,
+	draggingToolbar: undefined,
+	draggingItemToolbar: undefined,
 	draggingItemId: undefined,
 	draggingItemKind: undefined,
-	configToolbarId: undefined,
+	configToolbar: undefined,
 	configItemId: undefined,
 	configItemKind: undefined,
 })
+const demoRuntime = globalThis as typeof globalThis & {
+	__paletteDemoWarnings__?: DemoWarningState
+	__paletteDemoWarningsInstalled__?: boolean
+	__paletteDemoWarningsOriginalWarn__?: (...args: any[]) => void
+}
+const warningState =
+	demoRuntime.__paletteDemoWarnings__ ??
+	(demoRuntime.__paletteDemoWarnings__ = reactive({
+		messages: [],
+	}))
+if (!demoRuntime.__paletteDemoWarningsInstalled__) {
+	demoRuntime.__paletteDemoWarningsInstalled__ = true
+	demoRuntime.__paletteDemoWarningsOriginalWarn__ = reactiveOptions.warn
+	reactiveOptions.warn = (...args: any[]) => {
+		if (typeof args[0] === 'string' && args[0].startsWith('[pounce] Rebuild fence:')) {
+			warningState.messages.unshift(args[0])
+			if (warningState.messages.length > 5) warningState.messages.splice(5)
+		}
+		demoRuntime.__paletteDemoWarningsOriginalWarn__?.(...args)
+	}
+	reactiveOptions.introspection!.gatherReasons.lineages = 'both'
+}
 const speedStars = starsModel({
 	get value() {
 		const value = palette.state['game.speed']
 		return typeof value === 'number' && value >= 1 ? value : 0
 	},
 	set value(value) {
-		if (typeof value === 'number' && value >= 1 && value <= 5) {
-			palette.state['game.speed'] = value
-		}
-	},
-	onChange(value: StarsValue) {
 		if (typeof value === 'number' && value >= 1 && value <= 5) {
 			palette.state['game.speed'] = value
 		}
@@ -263,20 +316,6 @@ const FAMILY_ORDER: readonly PaletteDisplayPresenterFamily[] = ['action', 'boole
 const DEMO_EDITOR_DEFAULTS: Readonly<Partial<Record<string, string>>> = {
 	'game.speed': 'stars',
 }
-const DEMO_EDITOR_SHORTCUTS: Readonly<Partial<Record<string, string>>> = {
-	'ui.theme': 'Ctrl+T',
-	'game.speed': 'G',
-}
-const DEMO_SHORTCUT_POLICY = {
-	separator: '+',
-	labels: {
-		Ctrl: 'Ctrl',
-		Alt: 'Alt',
-		Shift: 'Shift',
-		Meta: 'Meta',
-		Space: 'Space',
-	},
-} as const
 const DEMO_EDITOR_FAMILY_DEFAULTS: Readonly<Record<PaletteDisplayPresenterFamily, string>> = {
 	action: 'default',
 	boolean: 'default',
@@ -296,21 +335,21 @@ const DEMO_EDITOR_OPTIONS: Readonly<Partial<Record<string, readonly string[]>>> 
 }
 const REGION_LAYOUT = {
 	top: 'grid-column: 1 / 4; min-width: 0; min-height: 0;',
-	left: 'grid-column: 1; grid-row: 2; min-width: 220px; max-width: 260px; min-height: 0;',
-	right: 'grid-column: 3; grid-row: 2; min-width: 240px; max-width: 300px; min-height: 0;',
+	left: 'grid-column: 1; grid-row: 2; align-self: stretch; height: 100%; min-width: 220px; max-width: 260px; min-height: 0;',
+	right: 'grid-column: 3; grid-row: 2; align-self: stretch; height: 100%; min-width: 240px; max-width: 300px; min-height: 0;',
 	bottom: 'grid-column: 1 / 4; grid-row: 3; min-width: 0; min-height: 0;',
 } satisfies Record<PaletteContainerRegion, string>
 const REGION_ORDER: readonly PaletteContainerRegion[] = ['top', 'left', 'right', 'bottom']
 
-function isIntentDisplayItem(displayItem: PaletteToolbarSurface['items'][number]): displayItem is PaletteIntentDisplayItem {
+function isIntentDisplayItem(displayItem: PaletteDisplayItem): displayItem is PaletteIntentDisplayItem {
 	return displayItem.kind === 'intent'
 }
 
-function isEditorDisplayItem(displayItem: PaletteToolbarSurface['items'][number]): displayItem is PaletteEditorDisplayItem {
+function isEditorDisplayItem(displayItem: PaletteDisplayItem): displayItem is PaletteEditorDisplayItem {
 	return displayItem.kind === 'editor'
 }
 
-function isItemGroupDisplayItem(displayItem: PaletteToolbarSurface['items'][number]): displayItem is PaletteItemGroupDisplayItem {
+function isItemGroupDisplayItem(displayItem: PaletteDisplayItem): displayItem is PaletteItemGroupDisplayItem {
 	return displayItem.kind === 'item-group'
 }
 
@@ -320,15 +359,43 @@ function isIntentResolvedDisplayItem(
 	return resolved?.kind === 'intent'
 }
 
-function tone(active: boolean, disabled: boolean) {
-	if (disabled) return 'background: #1f2937; border-color: #334155; color: #64748b;'
-	if (active) return 'background: #1d4ed8; border-color: #60a5fa; color: #eff6ff;'
-	return 'background: #0f172a; border-color: #475569; color: #e2e8f0;'
+const SURFACE_COLOR = '#38bdf8'
+const LINE_COLOR = '#a78bfa'
+const TOOLBAR_COLOR = '#f59e0b'
+const DROP_ZONE_COLOR = '#22d3ee'
+
+function isVerticalRegion(region: PaletteContainerRegion) {
+	return region === 'left' || region === 'right'
 }
 
-function regionShellStyle(region: PaletteContainerRegion) {
-	const vertical = region === 'left' || region === 'right'
-	return `display: flex; flex-direction: ${vertical ? 'column' : 'row'}; flex-wrap: ${vertical ? 'nowrap' : 'wrap'}; gap: 8px; min-height: ${vertical ? '100%' : 'unset'}; padding: 12px; border-radius: 14px; background: #111827; border: 1px solid #1f2937;`
+function regionSpaceStyle(space: number) {
+	const basis = `${Math.max(space, 0) * 100}%`
+	return `display: flex; flex: ${Math.max(space, 0.0001)} 1 0; flex-basis: ${basis}; min-width: 0; min-height: 0; align-items: stretch; justify-content: stretch;`
+}
+
+function actualRegionSpaceAt(
+	toolbarCount: number,
+	index: number,
+	slots: readonly { space: number }[]
+) {
+	let remaining = 1
+	for (let cursor = 0; cursor < toolbarCount; cursor++) {
+		const leading = Math.min(1, Math.max(0, slots[cursor]?.space ?? 0))
+		const actualSpace = remaining * leading
+		if (cursor === index) return actualSpace
+		remaining -= actualSpace
+	}
+	return index === toolbarCount ? Math.max(remaining, 0) : 0
+}
+
+function regionSplitFromEvent(region: PaletteContainerRegion, event: DragEvent, element: HTMLElement) {
+	const rect = element.getBoundingClientRect()
+	if (isVerticalRegion(region)) {
+		if (rect.height <= 0) return 0.5
+		return Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height))
+	}
+	if (rect.width <= 0) return 0.5
+	return Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width))
 }
 
 function labelFor(resolved: DemoResolvedDisplayItem) {
@@ -339,20 +406,46 @@ function iconFor(resolved: DemoResolvedDisplayItem) {
 	return typeof resolved.entry.icon === 'string' ? `${resolved.entry.icon} ` : ''
 }
 
+function IntentIcon(props: { resolved: DemoResolvedDisplayItem }) {
+	const computed = {
+		get value() {
+			return iconFor(props.resolved)
+		},
+	}
+	return <span if={computed.value}>{computed.value}</span>
+}
+
+function IntentLabel(props: { displayItem: PaletteIntentDisplayItem; resolved: DemoResolvedDisplayItem }) {
+	return <span if={props.displayItem.showText !== false}>{labelFor(props.resolved)}</span>
+}
+
+function IntentShortcutText(props: { intentId: string }) {
+	const computed = {
+		get value() {
+			return formatShortcut(palette.keys.getIntentKeystroke(props.intentId))
+		},
+	}
+	return (
+		<span if={computed.value} class="palette-shortcut">
+			{computed.value}
+		</span>
+	)
+}
+
 function buttonMarkup(props: DemoPresenterProps, marker = ''): PounceElement {
 	return (
 		<button
+			class="palette-intent-button"
+			data-active={props.checked ? 'true' : undefined}
+			data-disabled={props.disabled ? 'true' : undefined}
 			data-test={props.resolved.intent.id}
 			disabled={props.disabled}
 			onClick={props.onActivate}
-			style={`padding: 8px 12px; border: 1px solid; border-radius: 8px; cursor: ${props.disabled ? 'not-allowed' : 'pointer'}; ${tone(props.checked, props.disabled)}`}
 		>
 			<span if={marker}>{marker} </span>
-			<span if={iconFor(props.resolved)}>{iconFor(props.resolved)}</span>
-			<span if={props.displayItem.showText !== false}>{labelFor(props.resolved)}</span>
-			<span if={props.resolved.intent.binding} style="margin-left: 8px; color: #94a3b8; font-size: 12px;">
-				{formatShortcut(props.resolved.intent.binding)}
-			</span>
+			<IntentIcon resolved={props.resolved} />
+			<IntentLabel displayItem={props.displayItem} resolved={props.resolved} />
+			<IntentShortcutText intentId={props.resolved.intent.id} />
 		</button>
 	)
 }
@@ -391,50 +484,63 @@ const DEMO_PRESENTERS: DemoPresenterCatalog = {
 	},
 }
 
-function demoToolbar(toolbarId = '1') {
-	const toolbar = container.surfaces.find(
-		(entry): entry is PaletteToolbarSurface => entry.id === toolbarId && entry.type === 'toolbar'
+function allToolbarPaths(): readonly DemoToolbarPath[] {
+	return REGION_ORDER.flatMap((region) =>
+		container.toolbarStack[region].slots.map((_, index) => ({ region, index }))
 	)
+}
+
+function toolbarPathId(path: DemoToolbarPath) {
+	return `${path.region}:${path.index}`
+}
+
+function demoToolbar(path: DemoToolbarPath) {
+	const toolbar = container.toolbarStack[path.region].slots[path.index]?.toolbar
 	if (!toolbar) {
-		throw new Error(`Toolbar '${toolbarId}' not found`)
+		throw new Error(`Toolbar '${toolbarPathId(path)}' not found`)
 	}
 	return toolbar
 }
 
-function toolbarIntentItems(toolbarId: string) {
-	return demoToolbar(toolbarId).items.filter(isIntentDisplayItem)
+function toolbarPath(toolbar: PaletteToolbar): DemoToolbarPath | undefined {
+	for (const region of REGION_ORDER) {
+		const index = container.toolbarStack[region].slots.findIndex((entry) => entry.toolbar === toolbar)
+		if (index >= 0) {
+			return { region, index }
+		}
+	}
+	return undefined
 }
 
-function toolbarDisplayItems(toolbarId: string) {
-	return demoToolbar(toolbarId).items
+function requireToolbarPath(toolbar: PaletteToolbar): DemoToolbarPath {
+	const path = toolbarPath(toolbar)
+	if (!path) {
+		throw new Error('Toolbar not found')
+	}
+	return path
+}
+
+function sameToolbarPath(left: DemoToolbarPath | undefined, right: DemoToolbarPath | undefined) {
+	return left?.region === right?.region && left?.index === right?.index
+}
+
+function toolbarPathFromId(toolbarId: string): DemoToolbarPath {
+	const [region, rawIndex] = toolbarId.split(':')
+	return { region: region as PaletteContainerRegion, index: Number(rawIndex) }
+}
+
+function toolbarIntentItems(toolbar: PaletteToolbar) {
+	return toolbar.items.filter(isIntentDisplayItem)
+}
+
+function toolbarDisplayItems(toolbar: PaletteToolbar) {
+	return toolbar.items
 }
 
 function itemIdentity(displayItem: PaletteDisplayItem) {
-	if (displayItem.kind === 'intent') {
-		return { id: displayItem.intentId, kind: displayItem.kind }
-	}
-	if (displayItem.kind === 'item-group') {
-		// For item-groups, include entryId, group.kind, and options hash for unique identity
-		const optionsHash = [...displayItem.group.options].sort().join('|')
-		return { id: `group:${displayItem.group.entryId}:${displayItem.group.kind}:${optionsHash}`, kind: displayItem.kind }
-	}
-	// editor and other kinds
+	if (displayItem.kind === 'intent') return { id: displayItem.intentId, kind: displayItem.kind }
+	if (displayItem.kind === 'item-group') return { id: displayItem.group.entryId, kind: displayItem.kind }
 	return { id: displayItem.entryId, kind: displayItem.kind }
-}
-
-function toolbarSurfacePosition(toolbarId: string) {
-	const surface = container.surfaces.find((entry) => entry.id === toolbarId && entry.type === 'toolbar')
-	if (!surface) return undefined
-	return {
-		region: surface.region,
-		index: surface.position ?? 0,
-	}
-}
-
-function toolbarContainsItem(toolbarId: string, candidate: PaletteAddItemCandidate) {
-	return toolbarDisplayItems(toolbarId).some((displayItem) => {
-		return addItem.matchesDisplayItem(displayItem, candidate)
-	})
 }
 
 function resolvePresenter(displayItem: PaletteIntentDisplayItem, resolved: DemoResolvedDisplayItem): DemoPresenter {
@@ -451,6 +557,10 @@ function resolvePresenter(displayItem: PaletteIntentDisplayItem, resolved: DemoR
 
 function presenterNames(family: PaletteDisplayPresenterFamily) {
 	return Object.keys(DEMO_PRESENTERS[family]).join(', ')
+}
+
+function PresenterNamesText(props: { family: PaletteDisplayPresenterFamily }) {
+	return <>{presenterNames(props.family)}</>
 }
 
 function entryPresenterFamily(entry: PaletteEntryDefinition): PaletteDisplayPresenterFamily {
@@ -479,41 +589,17 @@ function editorPresenterOptions(entry: PaletteEntryDefinition) {
 }
 
 function editorShortcut(entryId: string) {
-	return DEMO_EDITOR_SHORTCUTS[entryId]
+	return palette.keys.getEntryKeystroke(entryId)
 }
 
 function formatShortcut(shortcut: string | undefined) {
-	if (!shortcut) return undefined
-	return shortcut
-		.split(DEMO_SHORTCUT_POLICY.separator)
-		.map((part) => DEMO_SHORTCUT_POLICY.labels[part as keyof typeof DEMO_SHORTCUT_POLICY.labels] ?? part)
-		.join(DEMO_SHORTCUT_POLICY.separator)
-}
-
-function normalizedShortcutParts(shortcut: string) {
-	return shortcut
-		.split(DEMO_SHORTCUT_POLICY.separator)
-		.map((part) => part.trim().toLowerCase())
-		.filter(Boolean)
-}
-
-function shortcutMatchesEvent(shortcut: string, event: KeyboardEvent) {
-	const parts = normalizedShortcutParts(shortcut)
-	if (parts.length === 0) return false
-	const key = event.key === ' ' ? 'space' : event.key.toLowerCase()
-	const baseKey = parts[parts.length - 1]
-	const modifiers = new Set(parts.slice(0, -1))
-	return (
-		baseKey === key &&
-		event.ctrlKey === modifiers.has('ctrl') &&
-		event.altKey === modifiers.has('alt') &&
-		event.shiftKey === modifiers.has('shift') &&
-		event.metaKey === modifiers.has('meta')
-	)
+	return formatKeystroke(shortcut)
 }
 
 function shortcutIntent(event: KeyboardEvent) {
-	return palette.intents.intents.find((intent) => intent.binding && shortcutMatchesEvent(intent.binding, event))
+	return palette.keys
+		.resolve(event)
+		.find((binding) => binding.kind === 'intent')
 }
 
 function isEditableTarget(target: EventTarget | null) {
@@ -543,15 +629,17 @@ function handleDemoShortcut(event: KeyboardEvent) {
 	}
 	
 	if (container.editMode || isEditableTarget(event.target)) return
-	const intent = shortcutIntent(event)
-	if (intent) {
+	const intentBinding = shortcutIntent(event)
+	if (intentBinding?.kind === 'intent') {
 		event.preventDefault()
-		palette.run(intent.id)
+		palette.run(intentBinding.intentId)
 		return
 	}
-	const entryId = Object.entries(DEMO_EDITOR_SHORTCUTS).find(([, shortcut]) => shortcut && shortcutMatchesEvent(shortcut, event))?.[0]
-	if (!entryId) return
-	if (focusEditorShortcut(entryId)) {
+	const entryBinding = palette.keys
+		.resolve(event)
+		.find((binding) => binding.kind === 'entry')
+	if (!entryBinding || entryBinding.kind !== 'entry') return
+	if (focusEditorShortcut(entryBinding.entryId)) {
 		event.preventDefault()
 	}
 }
@@ -563,17 +651,19 @@ function bindDemoShortcuts(root: HTMLElement) {
 }
 
 const DEMO_EDITOR_RENDERERS: Readonly<Record<string, DemoEditorRenderer>> = {
-	select: ({ entry, toolbarId, selected, label, displayItem }) => {
+	select: ({ entry, toolbar, selected, label, displayItem }) => {
 		if (entry.schema.type !== 'enum') return undefined
 		const options = entry.schema.options.map((option) =>
 			typeof option === 'string' ? { value: option, label: option } : option
 		)
 		return (
 			<label
-				style={`display: grid; gap: 6px; min-width: 180px; padding: 8px 10px; border: 1px solid; border-radius: 10px; ${tone(selected, false)}`}
+				class="palette-editor-shell"
+				data-selected={selected ? 'true' : undefined}
 			>
 				<span>{label}</span>
 				<select
+					class="palette-editor-select"
 					data-palette-entry-id={entry.id}
 					value={String(palette.state[entry.id] ?? '')}
 					disabled={container.editMode}
@@ -581,9 +671,8 @@ const DEMO_EDITOR_RENDERERS: Readonly<Record<string, DemoEditorRenderer>> = {
 						palette.state[entry.id] = value
 					}}
 					onClick={() => {
-						if (container.editMode) openItemConfig(toolbarId, displayItem.entryId, 'editor')
+						if (container.editMode) openItemConfig(toolbar, displayItem.entryId, 'editor')
 					}}
-					style="padding: 6px 8px; border-radius: 8px; border: 1px solid #475569; background: #0b1220; color: #e2e8f0;"
 				>
 					<for each={options}>
 						{(option) => <option value={String(option.value)}>{option.label ?? String(option.value)}</option>}
@@ -592,23 +681,24 @@ const DEMO_EDITOR_RENDERERS: Readonly<Record<string, DemoEditorRenderer>> = {
 			</label>
 		)
 	},
-	stars: ({ entry, toolbarId, selected, label, displayItem }) => {
+	stars: ({ entry, toolbar, selected, label, displayItem }) => {
 		if (entry.schema.type !== 'number') return undefined
 		return (
 			<div
+				class="palette-editor-shell"
+				data-selected={selected ? 'true' : undefined}
 				data-palette-entry-id={entry.id}
 				tabIndex={-1}
 				onClick={() => {
-					if (container.editMode) openItemConfig(toolbarId, displayItem.entryId, 'editor')
+					if (container.editMode) openItemConfig(toolbar, displayItem.entryId, 'editor')
 				}}
-				style={`display: grid; gap: 6px; padding: 8px 10px; border: 1px solid; border-radius: 10px; ${tone(selected, false)}`}
 			>
-				<span style="text-align: left;">{label}</span>
-				<span {...speedStars.container} style="display: flex; gap: 4px; font-size: 1.1rem; color: #facc15;">
+				<span class="palette-editor-label">{label}</span>
+				<span class="palette-inline-stars" {...speedStars.container}>
 					<for each={speedStars.starItems}>
 						{(item) => (
 							<span data-test={`palette-inline-speed-star-${item.index + 1}`} {...item.el}>
-								{starGlyph(item.status)}
+								<StarGlyphText status={item.status} />
 							</span>
 						)}
 					</for>
@@ -616,14 +706,15 @@ const DEMO_EDITOR_RENDERERS: Readonly<Record<string, DemoEditorRenderer>> = {
 			</div>
 		)
 	},
-	slider: ({ entry, toolbarId, selected, label, displayItem }) => {
+	slider: ({ entry, toolbar, selected, label, displayItem }) => {
 		if (entry.schema.type !== 'number') return undefined
 		const min = entry.schema.min ?? 0
 		const max = entry.schema.max ?? 100
 		const step = entry.schema.step ?? 1
 		return (
 			<label
-				style={`display: grid; gap: 6px; min-width: 180px; padding: 8px 10px; border: 1px solid; border-radius: 10px; ${tone(selected, false)}`}
+				class="palette-editor-shell"
+				data-selected={selected ? 'true' : undefined}
 			>
 				<span>{label}</span>
 				<input
@@ -640,110 +731,150 @@ const DEMO_EDITOR_RENDERERS: Readonly<Record<string, DemoEditorRenderer>> = {
 						}
 					}}
 					onClick={() => {
-						if (container.editMode) openItemConfig(toolbarId, displayItem.entryId, 'editor')
+						if (container.editMode) openItemConfig(toolbar, displayItem.entryId, 'editor')
 					}}
 				/>
 			</label>
 		)
 	},
-	default: ({ toolbarId, selected, label, displayItem }) => (
+	default: ({ toolbar, selected, label, displayItem }) => (
 		<button
+			class="palette-editor-button"
+			data-selected={selected ? 'true' : undefined}
 			type="button"
 			data-palette-entry-id={displayItem.entryId}
-			onClick={() => openItemConfig(toolbarId, displayItem.entryId, 'editor')}
-			style={`padding: 8px 12px; border: 1px solid; border-radius: 8px; ${tone(selected, false)}`}
+			onClick={() => openItemConfig(toolbar, displayItem.entryId, 'editor')}
 		>
 			{label}
 		</button>
 	),
 }
 
-function renderEditorItem(displayItem: PaletteEditorDisplayItem, toolbarId: string) {
-	const resolved = palette.resolveDisplayItem(displayItem)
+function EditorItem(props: { displayItem: PaletteEditorDisplayItem; toolbar: PaletteToolbar }) {
+	const resolved = palette.resolveDisplayItem(props.displayItem)
 	if (!resolved || resolved.kind !== 'editor') return undefined
 
+	const currentPath = requireToolbarPath(props.toolbar)
 	const selected =
-		demoUi.configToolbarId === toolbarId &&
-		demoUi.configItemId === displayItem.entryId &&
+		sameToolbarPath(demoUi.configToolbar, currentPath) &&
+		demoUi.configItemId === props.displayItem.entryId &&
 		demoUi.configItemKind === 'editor'
-	const label = displayItem.showText === false ? displayItem.entryId : resolved.entry.label
+	const label = props.displayItem.showText === false ? props.displayItem.entryId : resolved.entry.label
 	const shortcut = formatShortcut(editorShortcut(resolved.entry.id))
-	const renderer = DEMO_EDITOR_RENDERERS[displayItem.presenter ?? defaultEditorPresenter(resolved.entry)] ?? DEMO_EDITOR_RENDERERS.default
+	const renderer =
+		DEMO_EDITOR_RENDERERS[props.displayItem.presenter ?? defaultEditorPresenter(resolved.entry)] ??
+		DEMO_EDITOR_RENDERERS.default
 	return (
 		renderer({
-			displayItem,
+			displayItem: props.displayItem,
 			entry: resolved.entry,
-			toolbarId,
+			toolbar: props.toolbar,
 			selected,
 			label: shortcut ? `${label} (${shortcut})` : label,
 		}) ?? DEMO_EDITOR_RENDERERS.default({
-			displayItem,
+			displayItem: props.displayItem,
 			entry: resolved.entry,
-			toolbarId,
+			toolbar: props.toolbar,
 			selected,
 			label: shortcut ? `${label} (${shortcut})` : label,
 		})
 	)
 }
 
-function renderItemGroup(displayItem: PaletteItemGroupDisplayItem, toolbarId: string) {
-	const resolved = palette.resolveDisplayItem(displayItem)
+function itemGroupOptionLabel(
+	entry: PaletteEntryDefinition,
+	index: number,
+	option: string
+) {
+	if (entry.schema.type !== 'enum') return option
+	const schemaOption = entry.schema.options[index]
+	if (typeof schemaOption === 'string') return schemaOption
+	return schemaOption.label ?? option
+}
+
+function itemGroupOptionIcon(entryId: string, option: string) {
+	if (entryId === 'ui.theme') {
+		switch (option) {
+			case 'light':
+				return '☀️'
+			case 'dark':
+				return '🌙'
+			case 'system':
+				return '💻'
+			default:
+				return '⚙️'
+		}
+	}
+	return '⚙️'
+}
+
+function ItemGroupOptionIcon(props: { entryId: string; option: string }) {
+	return <span>{itemGroupOptionIcon(props.entryId, props.option)}</span>
+}
+
+function ItemGroupOptionLabel(props: {
+	displayItem: PaletteItemGroupDisplayItem
+	entry: PaletteEntryDefinition
+	index: number
+	option: string
+}) {
+	return (
+		<span if={props.displayItem.showText !== false}>
+			{itemGroupOptionLabel(props.entry, props.index, props.option)}
+		</span>
+	)
+}
+
+function ItemGroupControl(props: {
+	displayItem: PaletteItemGroupDisplayItem
+	toolbar: PaletteToolbar
+}) {
+	const resolved = palette.resolveDisplayItem(props.displayItem)
 	if (!resolved || resolved.kind !== 'item-group') return undefined
 
-	const identity = itemIdentity(displayItem)
+	const identity = itemIdentity(props.displayItem)
+	const currentPath = requireToolbarPath(props.toolbar)
 	const selected =
-		demoUi.configToolbarId === toolbarId &&
+		sameToolbarPath(demoUi.configToolbar, currentPath) &&
 		demoUi.configItemId === identity.id &&
 		demoUi.configItemKind === identity.kind
-	
+
 	const entry = resolved.entry
-	const currentOption = palette.state[displayItem.group.entryId] as string | undefined
-	
+	const currentOption = palette.state[props.displayItem.group.entryId] as string | undefined
+
 	// Render as a radio-button-group with individual option buttons
 	return (
 		<div
-			style={`display: inline-flex; align-items: center; gap: 2px; padding: 2px; border: 1px solid #475569; border-radius: 6px; background: #0f172a; ${selected ? 'border-color: #60a5fa; background: #1d4ed8;' : ''}`}
+			class="palette-item-group"
+			data-selected={selected ? 'true' : undefined}
 			onClick={() => {
 				if (container.editMode) {
-					const identity = itemIdentity(displayItem)
-					openItemConfig(toolbarId, identity.id, identity.kind)
+					openItemConfig(props.toolbar, identity.id, identity.kind)
 					return
 				}
 			}}
 		>
-			{displayItem.group.options.map((option, index) => {
+			{props.displayItem.group.options.map((option, index) => {
 				const isSelected = currentOption === option
-				const optionLabel = entry.schema.type === 'enum' 
-					? (typeof entry.schema.options[index] === 'string' 
-						? entry.schema.options[index]
-						: (entry.schema.options[index] as any).label || option)
-					: option
-				
-				// Theme icons for visual presentation
-				const getIcon = (opt: string) => {
-					if (displayItem.group.entryId === 'ui.theme') {
-						switch (opt) {
-							case 'light': return '☀️'
-							case 'dark': return '🌙'
-							case 'system': return '💻'
-							default: return '⚙️'
-						}
-					}
-					return '⚙️'
-				}
-				
+
 				return (
 					<button
-						style={`padding: 4px 6px; border: 1px solid #64748b; border-radius: 4px; background: ${isSelected ? '#3b82f6' : '#1e293b'}; color: #e2e8f0; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 4px; ${!isSelected ? 'opacity: 0.7' : ''}`}
+						class="palette-item-group-option"
+						data-selected={isSelected ? 'true' : undefined}
 						onClick={(e) => {
 							e.stopPropagation()
 							if (!container.editMode) {
-								palette.run(`${displayItem.group.entryId}:set:${option}`)
+								palette.run(`${props.displayItem.group.entryId}:set:${option}`)
 							}
 						}}
 					>
-						<span>{getIcon(option)}</span>
-						<span if={displayItem.showText !== false}>{optionLabel}</span>
+						<ItemGroupOptionIcon entryId={props.displayItem.group.entryId} option={option} />
+						<ItemGroupOptionLabel
+							displayItem={props.displayItem}
+							entry={entry}
+							index={index}
+							option={option}
+						/>
 					</button>
 				)
 			})}
@@ -753,6 +884,10 @@ function renderItemGroup(displayItem: PaletteItemGroupDisplayItem, toolbarId: st
 
 function starGlyph(status: StarStatus) {
 	return status === 'after' || status === 'zero' ? '▷' : '▶'
+}
+
+function StarGlyphText(props: { status: StarStatus }) {
+	return <>{starGlyph(props.status)}</>
 }
 
 function isDemoDisabled(displayItem: PaletteIntentDisplayItem, resolved: DemoResolvedDisplayItem) {
@@ -776,9 +911,8 @@ function commandLabel(match: PaletteMatch) {
 
 function commandMeta(match: PaletteMatch) {
 	if (match.kind === 'intent') {
-		return `${match.intent.mode} • ${match.intent.id}${
-			match.intent.binding ? ` • ${formatShortcut(match.intent.binding)}` : ''
-		}`
+		const shortcut = palette.keys.getIntentKeystroke(match.intent.id)
+		return `${match.intent.mode} • ${match.intent.id}${shortcut ? ` • ${formatShortcut(shortcut)}` : ''}`
 	} else if (match.kind === 'grouped-proposition') {
 		return `${match.type} • ${match.intents.length} intents${match.description ? ` • ${match.description}` : ''}`
 	} else {
@@ -798,24 +932,6 @@ function commandKey(match: PaletteMatch) {
 	return `entry:${match.entry.id}`
 }
 
-function addCandidateLabel(candidate: PaletteAddItemCandidate) {
-	if (candidate.kind === 'intent') {
-		return candidate.intent.label ?? candidate.entry.label
-	}
-	return `${candidate.entry.label} editor`
-}
-
-function addCandidateMeta(candidate: PaletteAddItemCandidate) {
-	if (candidate.kind === 'intent') {
-		return candidate.intent.binding
-			? `${candidate.intent.id} • ${formatShortcut(candidate.intent.binding)}`
-			: candidate.intent.id
-	}
-	return `entry • ${candidate.entry.id} • ${defaultEditorPresenter(candidate.entry)}${
-		editorShortcut(candidate.entry.id) ? ` • ${formatShortcut(editorShortcut(candidate.entry.id))}` : ''
-	}`
-}
-
 function runMatch(match: PaletteMatch) {
 	if (match.kind === 'intent') {
 		commandBox.execute(match.intent.id)
@@ -831,136 +947,127 @@ function runMatch(match: PaletteMatch) {
 	commandBox.input.value = match.entry.label
 }
 
-function setAddQuery(event: Event) {
-	if (event.currentTarget instanceof HTMLInputElement) {
-		demoUi.addQuery = event.currentTarget.value
-	}
-}
-
-function openAddPopup(region: PaletteContainerRegion, toolbarId?: string) {
-	let targetToolbarId = toolbarId
-	if (!targetToolbarId) {
-		const createdSurface = container.createSurface(region, 'toolbar', `${region} toolbar`)
-		targetToolbarId = createdSurface.id
-	}
-	demoUi.addRegion = region
-	demoUi.addToolbarId = targetToolbarId
-	demoUi.addQuery = ''
-}
-
-function createToolbarAt(region: PaletteContainerRegion, index: number) {
-	const createdSurface = container.createSurface(region, 'toolbar', `${region} toolbar`)
-	container.moveSurface(createdSurface.id, region, index)
-}
-
-function startToolbarMove(toolbarId: string) {
-	demoUi.movingToolbarId = toolbarId
-	closeAddPopup()
-}
-
-function stopToolbarMove() {
-	demoUi.movingToolbarId = undefined
-}
-
-function startToolbarDrag(toolbarId: string) {
-	demoUi.draggingToolbarId = toolbarId
+function startToolbarDrag(toolbar: PaletteToolbar) {
+	demoUi.draggingToolbar = requireToolbarPath(toolbar)
 }
 
 function stopToolbarDrag() {
-	demoUi.draggingToolbarId = undefined
+	demoUi.draggingToolbar = undefined
 }
 
-function startItemDrag(toolbarId: string, itemId: string, itemKind: PaletteDisplayItem['kind']) {
-	demoUi.draggingItemToolbarId = toolbarId
+function regionSpaceElement(region: PaletteContainerRegion, index: number) {
+	return document.querySelector<HTMLElement>(`[data-role="region-space"][data-region="${region}"][data-index="${index}"]`)
+}
+
+function resizeToolbarFromPointer(path: DemoToolbarPath, clientX: number, clientY: number) {
+	const beforeSpace = regionSpaceElement(path.region, path.index)
+	const afterSpace = regionSpaceElement(path.region, path.index + 1)
+	if (!beforeSpace || !afterSpace) return
+	if (isVerticalRegion(path.region)) {
+		const start = beforeSpace.getBoundingClientRect().top
+		const end = afterSpace.getBoundingClientRect().bottom
+		if (end <= start) return
+		container.resizeToolbar(path.region, path.index, Math.min(1, Math.max(0, (clientY - start) / (end - start))))
+		return
+	}
+	const start = beforeSpace.getBoundingClientRect().left
+	const end = afterSpace.getBoundingClientRect().right
+	if (end <= start) return
+	container.resizeToolbar(path.region, path.index, Math.min(1, Math.max(0, (clientX - start) / (end - start))))
+}
+
+function beginToolbarResize(toolbar: PaletteToolbar, event: MouseEvent) {
+	if (!container.editMode) return
+	if (isEditableTarget(event.target)) return
+	event.preventDefault()
+	startToolbarDrag(toolbar)
+	const path = requireToolbarPath(toolbar)
+	const onMousemove = (moveEvent: MouseEvent) => {
+		moveEvent.preventDefault()
+		resizeToolbarFromPointer(path, moveEvent.clientX, moveEvent.clientY)
+	}
+	const onMouseup = () => {
+		document.removeEventListener('mousemove', onMousemove)
+		document.removeEventListener('mouseup', onMouseup)
+		stopToolbarDrag()
+	}
+	document.addEventListener('mousemove', onMousemove)
+	document.addEventListener('mouseup', onMouseup)
+}
+
+function startItemDrag(toolbar: PaletteToolbar, itemId: string, itemKind: PaletteDisplayItem['kind']) {
+	demoUi.draggingItemToolbar = requireToolbarPath(toolbar)
 	demoUi.draggingItemId = itemId
 	demoUi.draggingItemKind = itemKind
 }
 
 function stopItemDrag() {
-	demoUi.draggingItemToolbarId = undefined
+	demoUi.draggingItemToolbar = undefined
 	demoUi.draggingItemId = undefined
 	demoUi.draggingItemKind = undefined
 }
 
-function placeToolbarAt(region: PaletteContainerRegion, index: number) {
-	if (demoUi.draggingToolbarId) {
-		moveToolbarSurface(demoUi.draggingToolbarId, region, index)
+function removeDemoToolbar(toolbar: PaletteToolbar) {
+	container.removeToolbar(toolbar)
+	if (sameToolbarPath(demoUi.configToolbar, toolbarPath(toolbar))) {
+		closeItemConfig()
+	}
+}
+
+function displayItemFromDraggedCandidate(candidate: DemoDraggedPaletteItem): PaletteDisplayItem {
+	if (candidate.kind === 'intent') {
+		return { kind: 'intent', intentId: candidate.intent.intent.id }
+	}
+	if (candidate.kind === 'editor') {
+		return { kind: 'editor', entryId: candidate.entry.entry.id }
+	}
+	return { kind: 'item-group', group: candidate.group }
+}
+
+function placeToolbarAt(region: PaletteContainerRegion, index: number, split = 0.5) {
+	if (demoUi.draggingToolbar) {
+		const draggedToolbar = demoToolbar(demoUi.draggingToolbar)
+		const sourcePath = requireToolbarPath(draggedToolbar)
+		const isAdjacentResizeTarget =
+			sourcePath.region === region && (index === sourcePath.index || index === sourcePath.index + 1)
+		if (isAdjacentResizeTarget) {
+			container.resizeToolbar(sourcePath.region, sourcePath.index, index === sourcePath.index ? split : 1 - split)
+		} else {
+			moveDemoToolbar(draggedToolbar, region, index, split)
+		}
 		stopToolbarDrag()
-		return
 	}
-	if (demoUi.movingToolbarId) {
-		moveToolbarSurface(demoUi.movingToolbarId, region, index)
-		stopToolbarMove()
-		return
-	}
-	createToolbarAt(region, index)
 }
 
-function closeAddPopup() {
-	demoUi.addRegion = undefined
-	demoUi.addToolbarId = undefined
-	demoUi.addQuery = ''
+function placeDraggedCandidateInRegion(
+	candidate: DemoDraggedPaletteItem,
+	region: PaletteContainerRegion,
+	index: number,
+	split = 0.5
+) {
+	const displayItem = displayItemFromDraggedCandidate(candidate)
+	const toolbar = container.createToolbar(region)
+	container.moveToolbar(toolbar, region, index, split)
+	customization.addToToolbar(toolbar, displayItem)
 }
 
-function openItemConfig(toolbarId: string, itemId: string, itemKind: PaletteDisplayItem['kind']) {
+function openItemConfig(toolbar: PaletteToolbar, itemId: string, itemKind: PaletteDisplayItem['kind']) {
 	stopItemDrag()
-	demoUi.configToolbarId = toolbarId
+	demoUi.configToolbar = requireToolbarPath(toolbar)
 	demoUi.configItemId = itemId
 	demoUi.configItemKind = itemKind
 }
 
 function closeItemConfig() {
 	stopItemDrag()
-	demoUi.configToolbarId = undefined
+	demoUi.configToolbar = undefined
 	demoUi.configItemId = undefined
 	demoUi.configItemKind = undefined
 }
 
-function addCandidateToToolbar(candidate: PaletteAddItemCandidate) {
-	if (!demoUi.addToolbarId || toolbarContainsItem(demoUi.addToolbarId, candidate)) return
-	const toolbar = demoToolbar(demoUi.addToolbarId)
-	if (!toolbar) return
-	if (candidate.kind === 'intent') {
-		customization.addToToolbar(toolbar, {
-			kind: 'intent',
-			intentId: candidate.intent.id,
-			presenter: getDefaultDisplayPresenter(candidate.intent, candidate.entry),
-			showText: true,
-		})
-		closeAddPopup()
-		return
-	}
-
-	if (candidate.kind === 'item-group') {
-		customization.addToToolbar(toolbar, {
-			kind: 'item-group',
-			group: candidate.group,
-		})
-		closeAddPopup()
-		return
-	}
-
-	customization.addToToolbar(toolbar, {
-		kind: 'editor',
-		entryId: candidate.entry.id,
-		presenter: defaultEditorPresenter(candidate.entry),
-		showText: true,
-	})
-	closeAddPopup()
-}
-
-function filteredAddCandidates() {
-	const toolbarId = demoUi.addToolbarId
-	return addItem.search(demoUi.addQuery, {
-		exclude: toolbarId ? toolbarDisplayItems(toolbarId) : [],
-	})
-}
-
-function moveToolbarItem(toolbarId: string, itemId: string, itemKind: PaletteDisplayItem['kind'], offset: number) {
-	const toolbar = demoToolbar(toolbarId)
-	if (!toolbar) return
-	const items = toolbarDisplayItems(toolbarId)
-	const currentIndex = items.findIndex((displayItem) => {
+function moveToolbarItem(toolbar: PaletteToolbar, itemId: string, itemKind: PaletteDisplayItem['kind'], offset: number) {
+	const items = toolbarDisplayItems(toolbar)
+	const currentIndex = items.findIndex((displayItem: PaletteDisplayItem) => {
 		const identity = itemIdentity(displayItem)
 		return identity.id === itemId && identity.kind === itemKind
 	})
@@ -969,18 +1076,18 @@ function moveToolbarItem(toolbarId: string, itemId: string, itemKind: PaletteDis
 	customization.moveWithinToolbar(toolbar, items[currentIndex], nextIndex)
 }
 
-function placeDraggedItem(toolbarId: string, index: number) {
-	if (!demoUi.draggingItemToolbarId || !demoUi.draggingItemId || !demoUi.draggingItemKind) return
-	const targetToolbar = demoToolbar(toolbarId)
-	if (!targetToolbar) return
-	const sourceToolbar = demoToolbar(demoUi.draggingItemToolbarId)
-	if (!sourceToolbar) return
-	const draggedItem = toolbarDisplayItems(demoUi.draggingItemToolbarId).find((displayItem) => {
+function placeDraggedItem(targetPath: DemoToolbarPath, index: number) {
+	if (!demoUi.draggingItemToolbar || !demoUi.draggingItemId || !demoUi.draggingItemKind) return
+	const targetToolbar = demoToolbar(targetPath)
+	const sourceToolbar = demoToolbar(demoUi.draggingItemToolbar)
+	const draggedItem = toolbarDisplayItems(sourceToolbar).find(
+		(displayItem: PaletteDisplayItem) => {
 		const identity = itemIdentity(displayItem)
 		return identity.id === demoUi.draggingItemId && identity.kind === demoUi.draggingItemKind
-	})
+		}
+	)
 	if (!draggedItem) return
-	if (demoUi.draggingItemToolbarId === toolbarId) {
+	if (sourceToolbar === targetToolbar) {
 		customization.moveWithinToolbar(targetToolbar, draggedItem, index)
 		stopItemDrag()
 		return
@@ -989,10 +1096,70 @@ function placeDraggedItem(toolbarId: string, index: number) {
 	stopItemDrag()
 }
 
-function cycleToolbarPresenter(toolbarId: string, itemId: string, itemKind: PaletteDisplayItem['kind']) {
-	const toolbar = demoToolbar(toolbarId)
-	if (!toolbar) return
-	const item = toolbarDisplayItems(toolbarId).find((displayItem) => {
+function acceptsRegionStakePayload(payload: unknown): payload is { type: 'toolbar'; toolbarPath: DemoToolbarPath } | { type: 'item'; candidate: DemoDraggedPaletteItem } {
+	if (!payload || typeof payload !== 'object') return false
+	const candidate = payload as { type?: string; toolbarPath?: DemoToolbarPath; candidate?: DemoDraggedPaletteItem }
+	if (candidate.type === 'toolbar') return candidate.toolbarPath !== undefined
+	if (candidate.type === 'item') return candidate.candidate !== undefined
+	return false
+}
+
+function acceptsToolbarItemPayload(
+	payload: unknown
+): payload is
+	| { type: 'item'; sourceToolbarPath: DemoToolbarPath; sourceItemId: string; sourceItemKind: PaletteDisplayItem['kind'] }
+	| { type: 'item'; candidate: DemoDraggedPaletteItem } {
+	if (!payload || typeof payload !== 'object') return false
+	const candidate = payload as {
+		type?: string
+		sourceToolbarPath?: DemoToolbarPath
+		sourceItemId?: string
+		sourceItemKind?: PaletteDisplayItem['kind']
+		candidate?: DemoDraggedPaletteItem
+	}
+	if (candidate.type !== 'item') return false
+	return (
+		candidate.candidate !== undefined ||
+		(candidate.sourceToolbarPath !== undefined &&
+			typeof candidate.sourceItemId === 'string' &&
+			candidate.sourceItemKind !== undefined)
+	)
+}
+
+function placeItemPayload(
+	toolbarId: string,
+	index: number,
+	payload:
+		| { type: 'item'; candidate: DemoDraggedPaletteItem }
+		| { type: 'item'; sourceToolbarPath: DemoToolbarPath; sourceItemId: string; sourceItemKind: PaletteDisplayItem['kind'] }
+) {
+	const targetPath = toolbarPathFromId(toolbarId)
+	if ('candidate' in payload) {
+		const toolbar = demoToolbar(targetPath)
+		customization.addToToolbar(toolbar, displayItemFromDraggedCandidate(payload.candidate), index)
+		return
+	}
+	demoUi.draggingItemToolbar = payload.sourceToolbarPath
+	demoUi.draggingItemId = payload.sourceItemId
+	demoUi.draggingItemKind = payload.sourceItemKind
+	placeDraggedItem(targetPath, index)
+}
+
+function spliceToolbarIntoToolbar(sourcePath: DemoToolbarPath, targetPath: DemoToolbarPath, index: number) {
+	if (sameToolbarPath(sourcePath, targetPath)) return
+	const sourceItems = [...demoToolbar(sourcePath).items]
+	let insertionIndex = index
+	for (const item of sourceItems) {
+		const sourceToolbar = demoToolbar(sourcePath)
+		const targetToolbar = demoToolbar(targetPath)
+		customization.moveToToolbar(sourceToolbar, item, targetToolbar, insertionIndex)
+		insertionIndex += 1
+	}
+	stopToolbarDrag()
+}
+
+function cycleToolbarPresenter(toolbar: PaletteToolbar, itemId: string, itemKind: PaletteDisplayItem['kind']) {
+	const item = toolbarDisplayItems(toolbar).find((displayItem) => {
 		const identity = itemIdentity(displayItem)
 		return identity.id === itemId && identity.kind === itemKind
 	})
@@ -1021,17 +1188,15 @@ function cycleToolbarPresenter(toolbarId: string, itemId: string, itemKind: Pale
 	customization.setPresenter(toolbar, item, next)
 }
 
-function removeToolbarItem(toolbarId: string, itemId: string, itemKind: PaletteDisplayItem['kind']) {
-	const toolbar = demoToolbar(toolbarId)
-	if (!toolbar) return
-	const item = toolbarDisplayItems(toolbarId).find((displayItem) => {
+function removeToolbarItem(toolbar: PaletteToolbar, itemId: string, itemKind: PaletteDisplayItem['kind']) {
+	const item = toolbarDisplayItems(toolbar).find((displayItem) => {
 		const identity = itemIdentity(displayItem)
 		return identity.id === itemId && identity.kind === itemKind
 	})
 	if (!item) return
 	customization.removeFromToolbar(toolbar, item)
 	if (
-		demoUi.configToolbarId === toolbarId &&
+		sameToolbarPath(demoUi.configToolbar, toolbarPath(toolbar)) &&
 		demoUi.configItemId === itemId &&
 		demoUi.configItemKind === itemKind
 	) {
@@ -1039,210 +1204,252 @@ function removeToolbarItem(toolbarId: string, itemId: string, itemKind: PaletteD
 	}
 }
 
-function toolbarMoveTargets(toolbarId: string) {
-	return container.surfaces
-		.filter((surface) => surface.type === 'toolbar' && surface.id !== toolbarId && surface.visible)
-		.map((surface) => ({
-			id: surface.id,
-			label: `${surface.label ?? surface.id} • ${surface.region}`,
+function toolbarMoveTargets(toolbar: PaletteToolbar) {
+	return allToolbarPaths()
+		.map((path) => ({ path, toolbar: demoToolbar(path) }))
+		.filter((entry) => entry.toolbar !== toolbar)
+		.map(({ path, toolbar: targetToolbar }) => ({
+			id: toolbarPathId(path),
+			label: `${targetToolbar.title ?? toolbarPathId(path)} • ${path.region}`,
 		}))
 }
 
 function moveToolbarItemToToolbar(
-	toolbarId: string,
+	toolbar: PaletteToolbar,
 	itemId: string,
 	itemKind: PaletteDisplayItem['kind'],
 	targetToolbarId: string
 ) {
-	const sourceToolbar = demoToolbar(toolbarId)
-	const targetToolbar = demoToolbar(targetToolbarId)
-	if (!sourceToolbar || !targetToolbar) return
-	const item = toolbarDisplayItems(toolbarId).find((displayItem) => {
+	const sourceToolbar = toolbar
+	const targetToolbar = demoToolbar(toolbarPathFromId(targetToolbarId))
+	const item = toolbarDisplayItems(toolbar).find((displayItem) => {
 		const identity = itemIdentity(displayItem)
 		return identity.id === itemId && identity.kind === itemKind
 	})
 	if (!item) return
 	customization.moveToToolbar(sourceToolbar, item, targetToolbar)
 	if (
-		demoUi.configToolbarId === toolbarId &&
+		sameToolbarPath(demoUi.configToolbar, toolbarPath(toolbar)) &&
 		demoUi.configItemId === itemId &&
 		demoUi.configItemKind === itemKind
 	) {
-		demoUi.configToolbarId = targetToolbarId
+		demoUi.configToolbar = requireToolbarPath(targetToolbar)
 	}
 }
 
-function moveToolbarSurface(toolbarId: string, targetRegion: PaletteContainerRegion, targetIndex?: number) {
-	container.moveSurface(toolbarId, targetRegion, targetIndex)
-	if (demoUi.addToolbarId === toolbarId) {
-		demoUi.addRegion = targetRegion
-	}
-	if (demoUi.movingToolbarId === toolbarId) {
-		demoUi.movingToolbarId = undefined
-	}
-	if (demoUi.draggingToolbarId === toolbarId) {
-		demoUi.draggingToolbarId = undefined
+function moveDemoToolbar(
+	toolbar: PaletteToolbar,
+	targetRegion: PaletteContainerRegion,
+	targetIndex?: number,
+	targetSplit?: number
+) {
+	container.moveToolbar(toolbar, targetRegion, targetIndex, targetSplit)
+	if (demoUi.draggingToolbar && demoToolbar(demoUi.draggingToolbar) === toolbar) {
+		demoUi.draggingToolbar = undefined
 	}
 }
 
-function moveToolbarSurfaceWithinRegion(toolbarId: string, offset: number) {
-	const position = toolbarSurfacePosition(toolbarId)
-	if (!position) return
-	const surfaces = container.getSurfacesInRegion(position.region).filter((surface) => surface.type === 'toolbar')
-	const nextIndex = position.index + offset
-	if (nextIndex < 0 || nextIndex >= surfaces.length) return
-	moveToolbarSurface(toolbarId, position.region, nextIndex)
-}
-
-function renderToolbarSurface(toolbarId: string) {
-	const toolbar = demoToolbar(toolbarId)
-	const position = toolbarSurfacePosition(toolbarId)
-	const moving = demoUi.movingToolbarId === toolbarId
-	const dragging = demoUi.draggingToolbarId === toolbarId
-	const isFirst = !position || position.index <= 0
-	const regionToolbars = position
-		? container.getSurfacesInRegion(position.region).filter((surface) => surface.type === 'toolbar')
-		: []
-	const isLast = !position || position.index >= regionToolbars.length - 1
+function ToolbarStrip(props: { toolbar: PaletteToolbar }) {
+	const position = toolbarPath(props.toolbar)
+	const computed = {
+		get toolbarId() { return position ? toolbarPathId(position) : 'missing' },
+		get dragging() { return sameToolbarPath(demoUi.draggingToolbar, position) }
+	}
+	if (!position) return undefined
 
 	return (
 		<div
-			onMousedown={() => {
-				if (container.editMode) startToolbarDrag(toolbarId)
-			}}
-			style={`display: grid; gap: 8px; min-width: 0; flex: 1 1 auto; opacity: ${moving || dragging ? '0.6' : '1'};`}
+			class="palette-toolbar-line"
+			data-role="toolbar"
+			data-region={position.region}
+			data-axis={regionAxis(position.region)}
+			data-toolbar-id={computed.toolbarId}
+			data-test={`palette-toolbar-${computed.toolbarId}`}
+			data-dragging={computed.dragging ? 'true' : undefined}
+			onMousedown={(event: MouseEvent) => beginToolbarResize(props.toolbar, event)}
 		>
-			<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
-				<strong>{container.surfaces.find((surface) => surface.id === toolbarId)?.label ?? toolbarId}</strong>
-				<div style="display: flex; gap: 6px; flex-wrap: wrap;">
-					<button if={container.editMode} onClick={() => (moving ? stopToolbarMove() : startToolbarMove(toolbarId))}>
-						{moving ? 'Cancel move' : 'Move'}
-					</button>
-					<button if={container.editMode} onClick={() => moveToolbarSurfaceWithinRegion(toolbarId, -1)} disabled={isFirst}>←</button>
-					<button if={container.editMode} onClick={() => moveToolbarSurfaceWithinRegion(toolbarId, 1)} disabled={isLast}>→</button>
-					<button if={container.editMode && position?.region !== 'top'} onClick={() => moveToolbarSurface(toolbarId, 'top')}>Top</button>
-					<button if={container.editMode && position?.region !== 'left'} onClick={() => moveToolbarSurface(toolbarId, 'left')}>Left</button>
-					<button if={container.editMode && position?.region !== 'right'} onClick={() => moveToolbarSurface(toolbarId, 'right')}>Right</button>
-					<button if={container.editMode && position?.region !== 'bottom'} onClick={() => moveToolbarSurface(toolbarId, 'bottom')}>Bottom</button>
-				</div>
-			</div>
-			<div style="display: flex; flex-wrap: wrap; gap: 8px;">
-				{renderToolbarItemInsertionPoint(toolbarId, 0)}
-				<for each={toolbar.items}>
-					{(displayItem) => {
-						const identity = itemIdentity(displayItem)
-						const currentIndex = toolbar.items.findIndex((entry) => {
-							const entryIdentity = itemIdentity(entry)
-							return entryIdentity.id === identity.id && entryIdentity.kind === identity.kind
-						})
-						let content: PounceElement | undefined
-						if (isEditorDisplayItem(displayItem)) {
-							content = renderEditorItem(displayItem, toolbarId)
-						} else if (isIntentDisplayItem(displayItem)) {
-							const resolved = palette.resolveDisplayItem(displayItem)
-							if (isIntentResolvedDisplayItem(resolved)) {
-								const checked = computeCheckedState(displayItem, resolved.intent, resolved.entry, palette.state)
-								const disabled = isDemoDisabled(displayItem, resolved)
-								const presenter = resolvePresenter(displayItem, resolved)
-								content = presenter({
-									displayItem,
-									resolved,
-									checked,
-									disabled,
-									onActivate: () => {
-										if (container.editMode) {
-											openItemConfig(toolbarId, displayItem.intentId, 'intent')
-											return
-										}
-										palette.run(resolved.intent.id)
-									},
-								})
-							}
-						} else if (isItemGroupDisplayItem(displayItem)) {
-							content = renderItemGroup(displayItem, toolbarId)
+			<ToolbarItemInsertionPoint toolbarId={computed.toolbarId} index={0} />
+			<for each={props.toolbar.items}>
+				{(displayItem) => {
+					const identity = itemIdentity(displayItem)
+					const currentIndex = props.toolbar.items.findIndex((entry) => {
+						const entryIdentity = itemIdentity(entry)
+						return entryIdentity.id === identity.id && entryIdentity.kind === identity.kind
+					})
+					let content: PounceElement | undefined
+					if (isEditorDisplayItem(displayItem)) {
+						content = <EditorItem displayItem={displayItem} toolbar={props.toolbar} />
+					} else if (isIntentDisplayItem(displayItem)) {
+						const resolved = palette.resolveDisplayItem(displayItem)
+						if (isIntentResolvedDisplayItem(resolved)) {
+							const checked = computeCheckedState(displayItem, resolved.intent, resolved.entry, palette.state)
+							const disabled = isDemoDisabled(displayItem, resolved)
+							const presenter = resolvePresenter(displayItem, resolved)
+							content = presenter({
+								displayItem,
+								resolved,
+								checked,
+								disabled,
+								onActivate: () => {
+									if (container.editMode) {
+										openItemConfig(props.toolbar, displayItem.intentId, 'intent')
+										return
+									}
+									palette.run(resolved.intent.id)
+								},
+							})
 						}
-						if (!content) return undefined
-						return (
-							<>
-								<div
-									onMousedown={() => {
-										if (container.editMode) startItemDrag(toolbarId, identity.id, identity.kind)
-									}}
-									style={`display: contents; opacity: ${
-										demoUi.draggingItemToolbarId === toolbarId &&
-										demoUi.draggingItemId === identity.id &&
-										demoUi.draggingItemKind === identity.kind
-											? '0.6'
-											: '1'
-									};`}
-								>
-									{content}
-								</div>
-								{renderToolbarItemInsertionPoint(toolbarId, currentIndex + 1)}
-							</>
-						)
-					}}
-				</for>
-			</div>
-		</div>
-	)
-}
-
-function renderToolbarInsertionPoints(region: PaletteContainerRegion) {
-	if (!container.editMode) return undefined
-	const insertionPoints = container.getInsertionPointsInRegion(region)
-	const vertical = region === 'left' || region === 'right'
-	const label = demoUi.draggingToolbarId || demoUi.movingToolbarId ? 'Place toolbar' : '+ toolbar'
-	return (
-		<div
-			style={`display: flex; flex-direction: ${vertical ? 'column' : 'row'}; flex-wrap: ${
-				vertical ? 'nowrap' : 'wrap'
-			}; gap: 8px; align-items: stretch;`}
-		>
-			<for each={insertionPoints}>
-				{(point) => (
-					<button
-						onMouseup={() => {
-							placeToolbarAt(region, point.index)
-						}}
-						onClick={() => {
-							if (demoUi.draggingToolbarId || demoUi.movingToolbarId) return
-							placeToolbarAt(region, point.index)
-						}}
-						style={`padding: ${vertical ? '10px 8px' : '8px 12px'}; border: 1px dashed #475569; border-radius: 10px; background: #0b1220; color: #94a3b8;`}
-					>
-						{label}
-					</button>
-				)}
+					} else if (isItemGroupDisplayItem(displayItem)) {
+						content = <ItemGroupControl displayItem={displayItem} toolbar={props.toolbar} />
+					}
+					if (!content) return undefined
+					return (
+						<>
+							<div
+								class="palette-toolbar-item-shell"
+								data-role="toolbar-item-drag-wrapper"
+								data-toolbar-id={computed.toolbarId}
+								data-item-id={identity.id}
+								data-item-kind={identity.kind}
+								data-dragging={
+									sameToolbarPath(demoUi.draggingItemToolbar, position) &&
+									demoUi.draggingItemId === identity.id &&
+									demoUi.draggingItemKind === identity.kind
+										? 'true'
+										: undefined
+								}
+								data-test={`palette-toolbar-item-${computed.toolbarId}-${identity.kind}-${identity.id}`}
+								use:drag={{
+									payload: () => ({
+										type: 'item' as const,
+										sourceToolbarPath: position,
+										sourceItemId: identity.id,
+										sourceItemKind: identity.kind,
+									}),
+									onStart: () => {
+										if (container.editMode) startItemDrag(props.toolbar, identity.id, identity.kind)
+									},
+									onEnd: (_payload: unknown, didDrop: boolean) => {
+										if (!container.editMode) return
+										if (!didDrop) {
+											removeToolbarItem(props.toolbar, identity.id, identity.kind)
+										}
+										stopItemDrag()
+									},
+								}}
+							>
+								{content}
+							</div>
+							<ToolbarItemInsertionPoint toolbarId={computed.toolbarId} index={currentIndex + 1} />
+						</>
+					)
+				}}
 			</for>
 		</div>
 	)
 }
 
-function renderToolbarItemInsertionPoint(toolbarId: string, index: number) {
-	if (!container.editMode || !demoUi.draggingItemToolbarId || !demoUi.draggingItemId || !demoUi.draggingItemKind) {
-		return undefined
+function RegionSpace(props: {
+	region: PaletteContainerRegion
+	index: number
+	toolbarCount: number
+}) {
+	const computed = {
+		get region() {
+			return props.region
+		},
+		get index() {
+			return props.index
+		},
+		get toolbarCount() {
+			return props.toolbarCount
+		},
+		get space() {
+			return actualRegionSpaceAt(
+				props.toolbarCount,
+				props.index,
+				container.toolbarStack[props.region].slots
+			)
+		},
 	}
 	return (
-		<button
-			onMouseup={() => placeDraggedItem(toolbarId, index)}
-			onClick={() => {
-				if (!demoUi.draggingItemToolbarId || !demoUi.draggingItemId || !demoUi.draggingItemKind) return
-				placeDraggedItem(toolbarId, index)
+		<div
+			class="palette-region-space"
+			data-role="region-space"
+			data-region={computed.region}
+			data-axis={regionAxis(computed.region)}
+			data-index={String(computed.index)}
+			data-test={`palette-region-space-${computed.region}-${computed.index}`}
+			style={regionSpaceStyle(computed.space)}
+			use:drop={(payload: unknown, event: DragEvent) => {
+				if (!container.editMode || !acceptsRegionStakePayload(payload)) return
+				const split = regionSplitFromEvent(computed.region, event, event.currentTarget as HTMLElement)
+				if (payload.type === 'toolbar') {
+					placeToolbarAt(computed.region, computed.index, split)
+					return
+				}
+				placeDraggedCandidateInRegion(payload.candidate, computed.region, computed.index, split)
 			}}
-			style="padding: 8px 12px; border: 1px dashed #60a5fa; border-radius: 10px; background: #0b1220; color: #bfdbfe;"
-		>
-			Place item
-		</button>
+			use:dragging={(payload: unknown, isEnter: boolean, el: HTMLElement) => {
+				if (!container.editMode) return false
+				if (!acceptsRegionStakePayload(payload)) return false
+				if (isEnter) {
+					el.dataset.active = 'true'
+					return () => {
+						delete el.dataset.active
+					}
+				}
+			}}
+			title={container.editMode ? 'Toolbar space' : undefined}
+		/>
+	)
+}
+
+function ToolbarItemInsertionPoint(props: { toolbarId: string; index: number }) {
+	const targetPath = toolbarPathFromId(props.toolbarId)
+	const resolvedRegion = targetPath.region
+	return (
+		<button
+			if={container.editMode}
+			class="palette-drop-zone palette-item-drop-zone"
+			data-role="item-drop-zone"
+			data-toolbar-id={props.toolbarId}
+			data-region={resolvedRegion}
+			data-axis={regionAxis(resolvedRegion)}
+			data-index={String(props.index)}
+			data-test={`palette-item-drop-zone-${props.toolbarId}-${props.index}`}
+			use:drop={(payload: unknown) => {
+				if (acceptsToolbarItemPayload(payload)) {
+					placeItemPayload(props.toolbarId, props.index, payload)
+				}
+				if (payload && typeof payload === 'object' && 'type' in payload) {
+					const toolbarPayload = payload as { type?: string; toolbarPath?: DemoToolbarPath }
+					if (toolbarPayload.type === 'toolbar' && toolbarPayload.toolbarPath !== undefined) {
+						spliceToolbarIntoToolbar(toolbarPayload.toolbarPath, targetPath, props.index)
+					}
+				}
+			}}
+			use:dragging={(payload: unknown, isEnter: boolean, el: HTMLElement) => {
+				const accepts =
+					acceptsToolbarItemPayload(payload) ||
+					(payload && typeof payload === 'object' && 'type' in payload && (payload as { type?: string }).type === 'toolbar')
+				if (!accepts) return false
+				if (isEnter) {
+					el.dataset.active = 'true'
+					return () => {
+						delete el.dataset.active
+					}
+				}
+			}}
+			title="Drop item here"
+		/>
 	)
 }
 
 function toggleEditMode() {
 	if (container.editMode) {
 		container.exitEditMode()
-		closeAddPopup()
 		closeItemConfig()
-		stopToolbarMove()
 		stopToolbarDrag()
 		demoUi.handleExpanded = false
 		return
@@ -1254,29 +1461,95 @@ function commandSurfaceLabel(region: PaletteContainerRegion) {
 	return region === 'top' ? 'Top region' : region === 'bottom' ? 'Bottom region' : `${region} rail`
 }
 
-function renderRegionShell(region: PaletteContainerRegion) {
-	const surfaces = container.getSurfacesInRegion(region)
-	const visible = region === 'top' || container.editMode || surfaces.length > 0
-	if (!visible) return undefined
+function CommandSurfaceLabelText(props: { region: PaletteContainerRegion }) {
+	return <>{commandSurfaceLabel(props.region)}</>
+}
+
+function regionAxis(region: PaletteContainerRegion) {
+	return isVerticalRegion(region) ? 'vertical' : 'horizontal'
+}
+
+function RegionShell(props: { region: PaletteContainerRegion }) {
+	const computed = {
+		get region() {
+			return props.region
+		},
+		get toolbars() {
+			return container.getToolbarsInRegion(props.region)
+		},
+		get insertionPoints() {
+			return container.getInsertionPointsInRegion(props.region)
+		},
+		get visible() {
+			return props.region === 'top' || container.editMode || computed.toolbars.length > 0
+		},
+	}
 	return (
-		<div style={REGION_LAYOUT[region]}>
-			<div style={regionShellStyle(region)}>
-				<strong if={region !== 'top'}>{commandSurfaceLabel(region)}</strong>
-				{renderToolbarInsertionPoints(region)}
-				<for each={surfaces}>
-					{(surface) => {
-						if (!surface.visible || surface.type !== 'toolbar') return undefined
-						return renderToolbarSurface(surface.id)
-					}}
+		<div
+			if={computed.visible}
+			class={`palette-region-layout palette-axis-${regionAxis(computed.region)}`}
+			data-role="region-layout"
+			data-region={computed.region}
+			data-axis={regionAxis(computed.region)}
+			data-test={`palette-region-layout-${computed.region}`}
+			style={REGION_LAYOUT[computed.region]}
+		>
+			<div
+				class={`palette-region-shell palette-axis-${regionAxis(computed.region)}`}
+				data-role="region-shell"
+				data-region={computed.region}
+				data-axis={regionAxis(computed.region)}
+				data-test={`palette-region-shell-${computed.region}`}
+			>
+				<strong
+					if={container.editMode && computed.region !== 'top'}
+					class="palette-region-label"
+					data-role="region-label"
+					data-region={computed.region}
+				>
+					<CommandSurfaceLabelText region={computed.region} />
+				</strong>
+				<for each={computed.insertionPoints}>
+					{(point) => (
+						<>
+							<RegionSpace region={computed.region} index={point.index} toolbarCount={computed.toolbars.length} />
+							{point.index < computed.toolbars.length
+								? <ToolbarStrip toolbar={computed.toolbars[point.index]} />
+								: undefined}
+						</>
+					)}
 				</for>
+			</div>
+			<div
+				if={warningState.messages.length > 0}
+				class="palette-warning-panel"
+				data-role="warning-panel"
+				data-test="palette-warning-panel"
+			>
+				<div class="palette-config-header" data-role="warning-panel-header">
+					<strong>Rebuild fence warnings</strong>
+					<button onClick={() => warningState.messages.splice(0, warningState.messages.length)}>
+						Clear
+					</button>
+				</div>
+				<div class="palette-warning-body">
+					<for each={warningState.messages}>
+						{(message) => (
+							<div class="palette-warning-entry">
+								<strong class="palette-warning-title">Rebuild fence</strong>
+								<pre class="palette-warning-pre">{message}</pre>
+							</div>
+						)}
+					</for>
+				</div>
 			</div>
 		</div>
 	)
 }
 
 function configuredToolbarItem() {
-	if (!demoUi.configToolbarId || !demoUi.configItemId || !demoUi.configItemKind) return undefined
-	const item = toolbarDisplayItems(demoUi.configToolbarId).find((displayItem) => {
+	if (!demoUi.configToolbar || !demoUi.configItemId || !demoUi.configItemKind) return undefined
+	const item = toolbarDisplayItems(demoToolbar(demoUi.configToolbar)).find((displayItem) => {
 		const identity = itemIdentity(displayItem)
 		return identity.id === demoUi.configItemId && identity.kind === demoUi.configItemKind
 	})
@@ -1297,17 +1570,361 @@ function configuredItemLabel() {
 
 function configuredItemMeta() {
 	const configured = configuredToolbarItem()
-	if (!configured || !demoUi.configItemId || !demoUi.configItemKind || !demoUi.configToolbarId) return undefined
-	const summary = presenterSummary(demoUi.configToolbarId, demoUi.configItemId, demoUi.configItemKind)
-	if (configured.resolved.kind === 'intent' && configured.resolved.intent.binding) {
-		const binding = formatShortcut(configured.resolved.intent.binding)
+	if (!configured || !demoUi.configItemId || !demoUi.configItemKind || !demoUi.configToolbar) return undefined
+	const summary = presenterSummary(demoToolbar(demoUi.configToolbar), demoUi.configItemId, demoUi.configItemKind)
+	if (configured.resolved.kind === 'intent') {
+		const binding = formatShortcut(palette.keys.getIntentKeystroke(configured.resolved.intent.id))
+		if (!binding) return summary ?? `${demoUi.configItemKind} • ${demoUi.configItemId}`
 		return summary ? `${summary} • ${binding}` : binding
 	}
 	return summary ?? `${demoUi.configItemKind} • ${demoUi.configItemId}`
 }
 
-function presenterSummary(toolbarId: string, itemId: string, itemKind: PaletteDisplayItem['kind']) {
-	const displayItem = toolbarDisplayItems(toolbarId).find((entry) => {
+function ConfiguredItemLabelText() {
+	return <>{configuredItemLabel()}</>
+}
+
+function ConfiguredItemMetaText() {
+	return <>{configuredItemMeta()}</>
+}
+
+function CommandResultLabel(props: { match: PaletteMatch }) {
+	return <>{commandLabel(props.match)}</>
+}
+
+function CommandResultMeta(props: { match: PaletteMatch }) {
+	return <>{commandMeta(props.match)}</>
+}
+
+function CommandResultRow(props: { match: PaletteMatch }) {
+	const key = commandKey(props.match)
+	const resultIndex = commandBox.results.findIndex((entry) => commandKey(entry) === key)
+	const selected =
+		commandBox.selection.item !== undefined &&
+		commandKey(commandBox.selection.item) === key
+
+	return (
+		<div
+			class="palette-command-row"
+			data-role="command-result-row"
+			data-result-kind={props.match.kind}
+			data-test={`palette-command-row-${resultIndex}`}
+		>
+			<button
+				data-test={`palette-command-result-${resultIndex}`}
+				class="palette-command-result"
+				data-role="command-result"
+				data-result-kind={props.match.kind}
+				data-selected={selected ? 'true' : undefined}
+				onClick={() => runMatch(props.match)}
+			>
+				<div><CommandResultLabel match={props.match} /></div>
+				<div class="palette-command-result-meta"><CommandResultMeta match={props.match} /></div>
+			</button>
+			<button
+				class="palette-command-drag"
+				data-role="command-drag"
+				data-result-kind={props.match.kind}
+				data-test={`palette-command-drag-${resultIndex}`}
+				data-selected={selected ? 'true' : undefined}
+				use:drag={() => {
+					let candidate
+					if (props.match.kind === 'intent') {
+						candidate = { kind: 'intent' as const, intent: props.match }
+					} else if (props.match.kind === 'grouped-proposition') {
+						if (props.match.type === 'enum-subset' && props.match.entries.length > 0) {
+							candidate = {
+								kind: 'item-group' as const,
+								group: {
+									kind: 'enum-options' as const,
+									entryId: props.match.entries[0].entry.id,
+									options: props.match.intents.map((intent: PaletteResolvedIntent) => {
+										const parts = intent.intent.id.split(':')
+										return parts[parts.length - 1]
+									}),
+									presenter: 'radio-group' as const,
+								},
+							}
+						}
+					} else {
+						candidate = { kind: 'editor' as const, entry: props.match }
+					}
+					return { type: 'item', candidate }
+				}}
+				title="Drag to add to toolbar"
+			>
+				⋮⋮
+			</button>
+		</div>
+	)
+}
+
+function ConfigPanel() {
+	const computed = {
+		get toolbar() {
+			return demoUi.configToolbar ? demoToolbar(demoUi.configToolbar) : undefined
+		},
+		get items() {
+			return computed.toolbar ? toolbarDisplayItems(computed.toolbar) : []
+		},
+		get index() {
+			if (!demoUi.configItemId || !demoUi.configItemKind) return -1
+			return computed.items.findIndex((displayItem) => {
+				const identity = itemIdentity(displayItem)
+				return identity.id === demoUi.configItemId && identity.kind === demoUi.configItemKind
+			})
+		},
+		get moveTargets() {
+			return computed.toolbar ? toolbarMoveTargets(computed.toolbar) : []
+		},
+		get isFirst() {
+			return computed.index <= 0
+		},
+		get isLast() {
+			return computed.index >= computed.items.length - 1
+		},
+	}
+
+	return (
+		<div if={configuredToolbarItem() !== undefined && computed.toolbar !== undefined} class="palette-config-body" data-role="config-body">
+			<div class="palette-config-header" data-role="config-header">
+				<strong><ConfiguredItemLabelText /></strong>
+				<button onClick={closeItemConfig}>Close</button>
+			</div>
+			<div class="palette-config-meta">{demoUi.configItemId}</div>
+			<div class="palette-config-meta"><ConfiguredItemMetaText /></div>
+			<div class="palette-config-actions" data-role="config-actions">
+				<button onClick={() => moveToolbarItem(computed.toolbar!, demoUi.configItemId!, demoUi.configItemKind!, -1)} disabled={computed.isFirst}>←</button>
+				<button onClick={() => moveToolbarItem(computed.toolbar!, demoUi.configItemId!, demoUi.configItemKind!, 1)} disabled={computed.isLast}>→</button>
+				<button onClick={() => cycleToolbarPresenter(computed.toolbar!, demoUi.configItemId!, demoUi.configItemKind!)}>Presenter</button>
+				<button onClick={() => removeToolbarItem(computed.toolbar!, demoUi.configItemId!, demoUi.configItemKind!)}>Remove</button>
+			</div>
+			<div if={computed.moveTargets.length > 0} class="palette-config-target-section" data-role="config-target-section">
+				<strong class="palette-config-target-title">Move to toolbar</strong>
+				<div class="palette-config-move-targets" data-role="config-move-targets">
+					<for each={computed.moveTargets}>
+						{(target) => (
+							<button
+								onClick={() =>
+									moveToolbarItemToToolbar(
+										computed.toolbar!,
+										demoUi.configItemId!,
+										demoUi.configItemKind!,
+										target.id
+									)
+								}
+							>
+								{target.label}
+							</button>
+						)}
+					</for>
+				</div>
+			</div>
+		</div>
+	)
+}
+
+function CommandPanel() {
+	return (
+		<div class="palette-command-overlay" data-role="command-overlay" data-test="palette-command-overlay">
+			<div class="palette-command-panel" data-role="command-panel" data-test="palette-command-panel">
+				<div class="palette-command-panel-header" data-role="command-panel-header">
+					<div>
+						<strong class="palette-command-title">Magic Mode - Command Box</strong>
+						<div class="palette-command-subtitle">Drag items out or press Enter to execute</div>
+					</div>
+					<button class="palette-command-close" onClick={toggleEditMode}>
+						Close
+					</button>
+				</div>
+
+				<div class="palette-command-box" data-role="command-box" data-test="palette-command-box">
+					<div class="palette-command-input-shell" data-role="command-input-shell">
+						<for each={commandBox.categories.active}>
+							{(category) => (
+								<button
+									class="palette-command-chip palette-command-chip-category"
+									data-command-chip={category}
+									onClick={() => commandBox.categories.toggle(category)}
+									onKeydown={(event) =>
+										handlePaletteCommandChipKeydown({ commandBox, event, token: category, type: 'category' })
+									}
+								>
+									#{category} ×
+								</button>
+							)}
+						</for>
+						<for each={commandBox.keywords.tokens}>
+							{(keywordToken) => (
+								<button
+									class="palette-command-chip palette-command-chip-keyword"
+									data-command-chip={keywordToken.keyword}
+									onClick={() => commandBox.keywords.removeToken(keywordToken.keyword)}
+									onKeydown={(event) =>
+										handlePaletteCommandChipKeydown({
+											commandBox,
+											event,
+											token: keywordToken.keyword,
+											type: 'keyword',
+										})
+									}
+								>
+									{keywordToken.keyword} ×
+								</button>
+							)}
+						</for>
+
+						<input
+							class="palette-command-input"
+							data-test="palette-command-input"
+							value={commandBox.input.value}
+							placeholder={commandBox.input.placeholder}
+							onInput={(event) => setPaletteCommandBoxInput(commandBox, event)}
+							onKeydown={(event) =>
+								handlePaletteCommandBoxInputKeydown({
+									commandBox,
+									event,
+									onMatch: runMatch,
+									onAfterExecute: () => {
+										if (container.editMode) toggleEditMode()
+									},
+								})
+							}
+						/>
+					</div>
+
+					<div if={commandBox.suggestions.length > 0} class="palette-command-suggestions" data-role="command-suggestions">
+						<span class="palette-command-suggestions-label">Available keywords:</span>
+						<for each={commandBox.suggestions}>
+							{(suggestion) => (
+								<button
+									class="palette-command-suggestion"
+									data-active={suggestion.isActive ? 'true' : undefined}
+									onClick={() => {
+										commandBox.keywords.addToken(suggestion.keyword)
+										commandBox.input.value = ''
+									}}
+									title={`Click to add ${suggestion.keyword} as chip`}
+								>
+									{suggestion.keyword}
+								</button>
+							)}
+						</for>
+					</div>
+
+					<div class="palette-command-results" data-role="command-results" data-test="palette-command-results">
+						<for each={commandBox.results.slice(0, 6)}>
+							{(match) => <CommandResultRow match={match} />}
+						</for>
+					</div>
+				</div>
+			</div>
+		</div>
+	)
+}
+
+function DemoContent() {
+	return (
+		<div
+			class="palette-central-content"
+			data-role="central-content"
+			data-test="palette-central-content"
+			data-dimmed={container.editMode ? 'true' : 'false'}
+		>
+			<div>
+				<h2 class="palette-demo-heading">Palette Demo</h2>
+				<p class="palette-demo-copy">
+					The root `palette-demo` node is now the toolbared container. The center content
+					scrolls independently while toolbars live on the shell.
+				</p>
+				<div if={!container.editMode} class="palette-demo-tip">
+					Press <code>`</code> to enter Magic Mode for toolbar customization.
+				</div>
+			</div>
+
+			<div>
+				<h3 class="palette-demo-section-title">Presenter Dictionaries</h3>
+				<div class="palette-demo-card-grid">
+					<for each={FAMILY_ORDER}>
+						{(family) => (
+							<div class="palette-demo-card">
+								<strong>{family}</strong>
+								<div class="palette-demo-meta"><PresenterNamesText family={family} /></div>
+							</div>
+						)}
+					</for>
+				</div>
+			</div>
+
+			<div>
+				<h3 class="palette-demo-section-title">Numeric Control</h3>
+				<div class="palette-demo-panel">
+					<div class="palette-demo-panel-copy">
+						`game.speed` can be paused via stash and edited directly through the headless
+						stars model rendered with play-arrow glyphs.
+					</div>
+					<div data-test="palette-speed-stars" class="palette-demo-speed-stars" {...speedStars.container}>
+						<for each={speedStars.starItems}>
+							{(item) => (
+								<span data-test={`palette-speed-star-${item.index + 1}`} {...item.el}>
+									<StarGlyphText status={item.status} />
+								</span>
+							)}
+						</for>
+					</div>
+					<div class="palette-demo-panel-meta">Selected speed: {String(palette.state['game.speed'])}</div>
+				</div>
+			</div>
+
+			<div>
+				<h3 class="palette-demo-section-title">Live State</h3>
+				<div class="palette-demo-card-grid">
+					<div class="palette-demo-card">
+						<strong>Boolean checkbutton</strong>
+						<div class="palette-demo-meta">ui.notifications = {String(palette.state['ui.notifications'])}</div>
+					</div>
+					<div class="palette-demo-card">
+						<strong>Enum radiobutton group</strong>
+						<div class="palette-demo-meta">ui.theme = {String(palette.state['ui.theme'])}</div>
+					</div>
+					<div class="palette-demo-card">
+						<strong>Enum flip button</strong>
+						<div class="palette-demo-meta">ui.layout = {String(palette.state['ui.layout'])}</div>
+					</div>
+					<div class="palette-demo-card">
+						<strong>Numeric step</strong>
+						<div class="palette-demo-meta">editor.fontSize = {String(palette.state['editor.fontSize'])}</div>
+					</div>
+					<div class="palette-demo-card">
+						<strong>Numeric stash</strong>
+						<div class="palette-demo-meta">game.speed = {String(palette.state['game.speed'])}</div>
+					</div>
+				</div>
+			</div>
+
+			<div>
+				<h3 class="palette-demo-section-title">Reactive Objects</h3>
+				<div class="palette-demo-object-grid">
+					<div class="palette-demo-card">
+						<strong>state</strong>
+						<pre class="palette-demo-pre">{JSON.stringify(palette.state, null, 2)}</pre>
+					</div>
+					<div class="palette-demo-card">
+						<strong>runtime</strong>
+						<pre class="palette-demo-pre">{JSON.stringify(palette.runtime, null, 2)}</pre>
+					</div>
+					<div class="palette-demo-card">
+						<strong>display</strong>
+						<pre class="palette-demo-pre">{JSON.stringify(palette.display, null, 2)}</pre>
+					</div>
+				</div>
+			</div>
+		</div>
+	)
+}
+
+function presenterSummary(toolbar: PaletteToolbar, itemId: string, itemKind: PaletteDisplayItem['kind']) {
+	const displayItem = toolbarDisplayItems(toolbar).find((entry) => {
 		const identity = itemIdentity(entry)
 		return identity.id === itemId && identity.kind === itemKind
 	})
@@ -1323,89 +1940,58 @@ function presenterSummary(toolbarId: string, itemId: string, itemKind: PaletteDi
 	return `${family}.${presenter}`
 }
 
-export default function PaletteDemo() {
+export default function PaletteDemo(_: {}, scope: { drag?: typeof drag; drop?: typeof drop; dragging?: typeof dragging }) {
+	Object.assign(scope, { drag, drop, dragging })
 	return (
 		<div
 			data-test="palette-demo"
+			class={['palette-demo-root', {
+				'is-editing': container.editMode,
+				'is-dragging-toolbar': !!demoUi.draggingToolbar,
+				'is-dragging-item': !!demoUi.draggingItemToolbar
+			}]}
+			data-role="toolbared-container"
 			use={bindDemoShortcuts}
-			style="position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr) auto; gap: 12px; height: calc(100vh - 40px); max-height: calc(100vh - 40px); min-height: 680px; padding: 16px; border-radius: 18px; background: #0f172a; color: #e2e8f0; overflow: hidden; box-sizing: border-box;"
+			style="--palette-handle-size: 10px;"
 		>
-			<style>{`
-				.palette-command-row {
-					display: flex;
-					align-items: center;
-					gap: 8px;
-				}
-				.palette-command-result {
-					flex: 1;
-					padding: 10px 12px;
-					border: 1px solid #475569;
-					border-radius: 8px;
-					text-align: left;
-					background: #0f172a;
-					color: #e2e8f0;
-				}
-				.palette-command-result:hover,
-				.palette-command-result[data-selected='true'] {
-					background: #1d4ed8;
-					border-color: #60a5fa;
-					color: #eff6ff;
-				}
-				.palette-command-drag {
-					padding: 8px;
-					border: 1px solid #475569;
-					border-radius: 6px;
-					background: #1e293b;
-					color: #94a3b8;
-					cursor: grab;
-					font-size: 12px;
-					opacity: 0;
-					pointer-events: none;
-				}
-				.palette-command-row:hover .palette-command-drag,
-				.palette-command-drag[data-selected='true'] {
-					opacity: 1;
-					pointer-events: auto;
-				}
-			`}</style>
 			<button
+				class="palette-edit-toggle"
+				data-expanded={container.editMode || demoUi.handleExpanded ? 'true' : undefined}
+				data-editing={container.editMode ? 'true' : undefined}
 				data-test="palette-edit-toggle"
 				onMouseenter={() => (demoUi.handleExpanded = true)}
 				onMouseleave={() => {
 					if (!container.editMode) demoUi.handleExpanded = false
 				}}
 				onClick={toggleEditMode}
-				style={`position: absolute; top: 10px; left: 10px; z-index: 4; width: ${container.editMode || demoUi.handleExpanded ? '76px' : '18px'}; height: ${container.editMode || demoUi.handleExpanded ? '36px' : '18px'}; border: 1px solid ${container.editMode ? '#60a5fa' : '#334155'}; border-radius: 12px; background: ${container.editMode ? '#1d4ed8' : '#111827'}; color: #e2e8f0; cursor: pointer; overflow: hidden; transition: width 120ms ease, height 120ms ease, background 120ms ease;`}
 			>
 				{container.editMode ? 'Done' : demoUi.handleExpanded ? 'Edit' : '✎'}
 			</button>
 
-			<for each={REGION_ORDER}>
-				{(region) => renderRegionShell(region)}
-			</for>
+			<for each={REGION_ORDER}>{(region) => <RegionShell region={region} />}</for>
 
 			<div 
-				style="grid-column: 2; grid-row: 2; min-width: 0; min-height: 0; overflow: auto; padding: 8px; border-radius: 16px; background: #111827; border: 1px solid #1f2937;"
+				class="palette-central-shell"
+				data-role="central-shell"
+				data-test="palette-central-shell"
+				data-active-delete-zone={undefined}
 				use:drop={(payload: any) => {
 					if (!container.editMode) return
 					if (payload.type === 'item') {
 						// Delete the dragged item
-						if (payload.sourceToolbarId && payload.sourceItemId && payload.sourceItemKind) {
-							const toolbar = demoToolbar(payload.sourceToolbarId)
-							const item = payload.sourceToolbarId
-								? toolbarDisplayItems(payload.sourceToolbarId).find((displayItem) => {
-										const identity = itemIdentity(displayItem)
-										return (
-											identity.id === payload.sourceItemId &&
-											identity.kind === payload.sourceItemKind
-										)
-									})
-								: undefined
+						if (payload.sourceToolbarPath && payload.sourceItemId && payload.sourceItemKind) {
+							const toolbar = demoToolbar(payload.sourceToolbarPath)
+							const item = toolbarDisplayItems(toolbar).find((displayItem) => {
+								const identity = itemIdentity(displayItem)
+								return (
+									identity.id === payload.sourceItemId &&
+									identity.kind === payload.sourceItemKind
+								)
+							})
 							if (toolbar && item) customization.removeFromToolbar(toolbar, item)
 						}
 					} else if (payload.type === 'toolbar') {
-						// Delete the entire toolbar
-						container.removeSurface(payload.toolbarId)
+						removeDemoToolbar(demoToolbar(payload.toolbarPath))
 					}
 				}}
 				use:dragging={(payload: any, isEnter: boolean, el: HTMLElement) => {
@@ -1413,320 +1999,721 @@ export default function PaletteDemo() {
 					const accepts = payload.type === 'item' || payload.type === 'toolbar'
 					if (!accepts) return false
 					if (isEnter) {
-						el.style.background = '#991b1b' // Red for delete zone
-						el.style.borderColor = '#dc2626'
-						el.style.color = '#fef2f2'
+						el.dataset.activeDeleteZone = 'true'
 						return () => {
-							el.style.background = ''
-							el.style.borderColor = ''
-							el.style.color = ''
+							delete el.dataset.activeDeleteZone
 						}
 					}
 				}}
 			>
-				{/* Central dialog overlay for edit mode */}
-				<div if={container.editMode} style="position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; background: rgba(2, 6, 23, 0.72);">
-					<div style="width: min(640px, calc(100% - 32px)); max-height: min(70vh, 640px); overflow: auto; padding: 16px; border-radius: 16px; background: #0f172a; border: 1px solid #334155; box-shadow: 0 16px 60px rgba(0, 0, 0, 0.45);">
-						<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-							<div>
-								<strong style="font-size: 16px;">Magic Mode - Command Box</strong>
-								<div style="color: #94a3b8; font-size: 12px;">Drag items out or press Enter to execute</div>
-							</div>
-							<button onClick={toggleEditMode} style="padding: 4px 8px; border: 1px solid #475569; border-radius: 6px; background: #1e293b; color: #e2e8f0;">
-								Close
-							</button>
-						</div>
-						
-						{/* Command Box */}
-						<div style="margin-top: 16px;">
-							<div style="display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; align-items: center;">
-								{/* Chips */}
-								<for each={commandBox.categories.active}>
-									{(category) => (
-										<button
-											data-command-chip={category}
-											onClick={() => commandBox.categories.toggle(category)}
-											onKeydown={(event) =>
-												handlePaletteCommandChipKeydown({ commandBox, event, token: category, type: 'category' })
-											}
-											style={`padding: 4px 8px; border: 1px solid; border-radius: 999px; ${tone(true, false)}`}
-										>
-											#{category} ×
-										</button>
-									)}
-								</for>
-								<for each={commandBox.keywords.tokens}>
-									{(keywordToken) => (
-										<button
-											data-command-chip={keywordToken.keyword}
-											onClick={() => commandBox.keywords.removeToken(keywordToken.keyword)}
-											onKeydown={(event) =>
-												handlePaletteCommandChipKeydown({
-													commandBox,
-													event,
-													token: keywordToken.keyword,
-													type: 'keyword',
-												})
-											}
-											style={`padding: 4px 8px; border: 1px solid #60a5fa; border-radius: 999px; background: #1e3a8a; color: #bfdbfe;`}
-										>
-											{keywordToken.keyword} ×
-										</button>
-									)}
-								</for>
-								
-								{/* Input */}
-								<input
-									data-test="palette-command-input"
-									value={commandBox.input.value}
-									placeholder={commandBox.input.placeholder}
-									onInput={(event) => setPaletteCommandBoxInput(commandBox, event)}
-									onKeydown={(event) =>
-										handlePaletteCommandBoxInputKeydown({
-											commandBox,
-											event,
-											onMatch: runMatch,
-											onAfterExecute: () => {
-												if (container.editMode) toggleEditMode()
-											},
-										})
-									}
-									style="flex: 1; min-width: 120px; padding: 0; border: 0; background: transparent; color: #e2e8f0;"
-								/>
-							</div>
-							
-							{/* Keyword suggestions */}
-							<div if={commandBox.suggestions.length > 0} style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; padding: 8px 12px; border-radius: 6px; background: #1e293b;">
-								<span style="color: #94a3b8; font-size: 12px;">Available keywords:</span>
-								<for each={commandBox.suggestions}>
-									{(suggestion) => (
-										<button
-											onClick={() => {
-												commandBox.keywords.addToken(suggestion.keyword)
-												// Clear the entire input after adding a keyword
-												commandBox.input.value = ''
-											}}
-											style={`padding: 2px 6px; border: 1px solid #475569; border-radius: 4px; background: ${suggestion.isActive ? '#60a5fa' : '#334155'}; color: ${suggestion.isActive ? '#bfdbfe' : '#94a3b8'}; font-size: 11px; cursor: pointer;`}
-											title={`Click to add ${suggestion.keyword} as chip`}
-										>
-											{suggestion.keyword}
-										</button>
-									)}
-								</for>
-							</div>
-							
-							{/* Command Results */}
-							<div style="display: grid; gap: 8px; margin-top: 12px;">
-								<for each={commandBox.results.slice(0, 6)}>
-									{(match) => {
-										const key = commandKey(match)
-										const resultIndex = commandBox.results.findIndex((entry) => commandKey(entry) === key)
-										const selected = commandBox.selection.item !== undefined && commandKey(commandBox.selection.item) === key
-										return (
-											<div class="palette-command-row">
-												<button
-													data-test={`palette-command-result-${resultIndex}`}
-													class="palette-command-result"
-													data-selected={selected ? 'true' : undefined}
-													onClick={() => runMatch(match)}
-													style="text-align: left;"
-												>
-													<div>{commandLabel(match)}</div>
-													<div style="color: #94a3b8; font-size: 12px;">{commandMeta(match)}</div>
-												</button>
-												<button
-													class="palette-command-drag"
-													data-selected={selected ? 'true' : undefined}
-													use:drag={() => {
-														let candidate
-														if (match.kind === 'intent') {
-															candidate = { kind: 'intent' as const, intent: match.intent, entry: match.entry }
-														} else if (match.kind === 'grouped-proposition') {
-															// Create a true group candidate for grouped propositions
-															if (match.type === 'intent-group') {
-																// For intent groups, create an item-group candidate
-																candidate = { 
-																	kind: 'item-group' as const, 
-																	entryId: match.entries[0].entry.id,
-																	options: match.intents.map((intent: PaletteResolvedIntent) => {
-																		// Extract the mode from intent.id (format: "entryId:mode")
-																		const parts = intent.intent.id.split(':')
-																		return parts[parts.length - 1]
-																	})
-																}
-															} else if (match.type === 'enum-subset') {
-																// For enum subsets, create an item-group candidate
-																candidate = { 
-																	kind: 'item-group' as const, 
-																	entryId: match.entries[0].entry.id,
-																	options: match.intents.map((intent: PaletteResolvedIntent) => {
-																		// Extract the option from intent.id (format: "entryId:set:option")
-																		const parts = intent.intent.id.split(':')
-																		return parts[parts.length - 1]
-																	})
-																}
-															}
-														} else {
-															candidate = { kind: 'editor' as const, entry: match.entry }
-														}
-														return { type: 'item', candidate }
-													}}
-													title="Drag to add to toolbar"
-												>
-													⋮⋮
-												</button>
-											</div>
-										)
-									}}
-								</for>
-							</div>
-						</div>
-					</div>
+				<div if={container.editMode}>
+					<CommandPanel />
 				</div>
 
-				<div style="display: grid; gap: 16px; min-height: max-content;">
-					<div>
-						<h2 style="margin: 0 0 8px;">Palette Demo</h2>
-						<p style="margin: 0; color: #94a3b8;">
-							The root `palette-demo` node is now the toolbared container. The center content
-							scrolls independently while toolbars live on the shell.
-						</p>
-						<div if={!container.editMode} style="margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: #172554; color: #bfdbfe;">
-							Press <code>`</code> to enter Magic Mode for toolbar customization.
-						</div>
-					</div>
-
-					<div>
-						<h3 style="margin: 0 0 10px;">Presenter Dictionaries</h3>
-						<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px;">
-							<for each={FAMILY_ORDER}>
-								{(family) => (
-									<div style="padding: 10px 12px; border-radius: 8px; background: #334155;">
-										<strong>{family}</strong>
-										<div style="color: #94a3b8;">{presenterNames(family)}</div>
-									</div>
-								)}
-							</for>
-						</div>
-					</div>
-
-					<div>
-						<h3 style="margin: 0 0 10px;">Numeric Control</h3>
-						<div style="padding: 14px; border-radius: 10px; background: #334155;">
-							<div style="margin-bottom: 8px; color: #94a3b8;">
-								`game.speed` can be paused via stash and edited directly through the headless
-								stars model rendered with play-arrow glyphs.
-							</div>
-							<div data-test="palette-speed-stars" {...speedStars.container} style="display: flex; gap: 6px; font-size: 2rem; color: #facc15;">
-								<for each={speedStars.starItems}>
-									{(item) => (
-										<span data-test={`palette-speed-star-${item.index + 1}`} {...item.el}>
-											{starGlyph(item.status)}
-										</span>
-									)}
-								</for>
-							</div>
-							<div style="margin-top: 8px; color: #94a3b8;">Selected speed: {String(palette.state['game.speed'])}</div>
-						</div>
-					</div>
-
-					<div>
-						<h3 style="margin: 0 0 10px;">Live State</h3>
-						<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px;">
-							<div style="padding: 10px 12px; border-radius: 8px; background: #334155;">
-								<strong>Boolean checkbutton</strong>
-								<div style="color: #94a3b8;">ui.notifications = {String(palette.state['ui.notifications'])}</div>
-							</div>
-							<div style="padding: 10px 12px; border-radius: 8px; background: #334155;">
-								<strong>Enum radiobutton group</strong>
-								<div style="color: #94a3b8;">ui.theme = {String(palette.state['ui.theme'])}</div>
-							</div>
-							<div style="padding: 10px 12px; border-radius: 8px; background: #334155;">
-								<strong>Enum flip button</strong>
-								<div style="color: #94a3b8;">ui.layout = {String(palette.state['ui.layout'])}</div>
-							</div>
-							<div style="padding: 10px 12px; border-radius: 8px; background: #334155;">
-								<strong>Numeric step</strong>
-								<div style="color: #94a3b8;">editor.fontSize = {String(palette.state['editor.fontSize'])}</div>
-							</div>
-							<div style="padding: 10px 12px; border-radius: 8px; background: #334155;">
-								<strong>Numeric stash</strong>
-								<div style="color: #94a3b8;">game.speed = {String(palette.state['game.speed'])}</div>
-							</div>
-						</div>
-					</div>
-
-					<div>
-						<h3 style="margin: 0 0 10px;">Reactive Objects</h3>
-						<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px;">
-							<div style="padding: 10px 12px; border-radius: 8px; background: #334155;">
-								<strong>state</strong>
-								<pre style="margin: 8px 0 0; color: #cbd5e1; white-space: pre-wrap;">{JSON.stringify(palette.state, null, 2)}</pre>
-							</div>
-							<div style="padding: 10px 12px; border-radius: 8px; background: #334155;">
-								<strong>runtime</strong>
-								<pre style="margin: 8px 0 0; color: #cbd5e1; white-space: pre-wrap;">{JSON.stringify(palette.runtime, null, 2)}</pre>
-							</div>
-							<div style="padding: 10px 12px; border-radius: 8px; background: #334155;">
-								<strong>display</strong>
-								<pre style="margin: 8px 0 0; color: #cbd5e1; white-space: pre-wrap;">{JSON.stringify(palette.display, null, 2)}</pre>
-							</div>
-						</div>
-					</div>
-				</div>
+				<DemoContent />
 			</div>
 
-			<div if={configuredToolbarItem() !== undefined} style="position: absolute; right: 16px; bottom: 16px; z-index: 5; width: min(320px, calc(100% - 32px)); padding: 14px; border-radius: 14px; background: #0f172a; border: 1px solid #475569; box-shadow: 0 16px 60px rgba(0, 0, 0, 0.45);">
-				{(() => {
-					const configured = configuredToolbarItem()
-					if (!configured || !demoUi.configToolbarId || !demoUi.configItemId || !demoUi.configItemKind) return undefined
-					const items = toolbarDisplayItems(demoUi.configToolbarId)
-					const index = items.findIndex((displayItem) => {
-						const identity = itemIdentity(displayItem)
-						return identity.id === demoUi.configItemId && identity.kind === demoUi.configItemKind
-					})
-					const moveTargets = toolbarMoveTargets(demoUi.configToolbarId)
-					const isFirst = index <= 0
-					const isLast = index >= items.length - 1
-					return (
-						<div style="display: grid; gap: 10px;">
-							<div style="display: flex; justify-content: space-between; gap: 12px; align-items: center;">
-								<strong>{configuredItemLabel()}</strong>
-								<button onClick={closeItemConfig}>Close</button>
-							</div>
-							<div style="color: #94a3b8; font-size: 12px;">{demoUi.configItemId}</div>
-							<div style="color: #94a3b8; font-size: 12px;">{configuredItemMeta()}</div>
-							<div style="display: flex; gap: 8px; flex-wrap: wrap;">
-								<button onClick={() => moveToolbarItem(demoUi.configToolbarId!, demoUi.configItemId!, demoUi.configItemKind!, -1)} disabled={isFirst}>←</button>
-								<button onClick={() => moveToolbarItem(demoUi.configToolbarId!, demoUi.configItemId!, demoUi.configItemKind!, 1)} disabled={isLast}>→</button>
-								<button onClick={() => cycleToolbarPresenter(demoUi.configToolbarId!, demoUi.configItemId!, demoUi.configItemKind!)}>Presenter</button>
-								<button onClick={() => removeToolbarItem(demoUi.configToolbarId!, demoUi.configItemId!, demoUi.configItemKind!)}>Remove</button>
-							</div>
-							<div if={moveTargets.length > 0} style="display: grid; gap: 6px;">
-								<strong style="font-size: 12px; color: #cbd5e1;">Move to toolbar</strong>
-								<div style="display: flex; gap: 8px; flex-wrap: wrap;">
-									<for each={moveTargets}>
-										{(target) => (
-											<button
-												onClick={() =>
-													moveToolbarItemToToolbar(
-														demoUi.configToolbarId!,
-														demoUi.configItemId!,
-														demoUi.configItemKind!,
-														target.id
-													)
-												}
-											>
-												{target.label}
-											</button>
-										)}
-									</for>
-								</div>
-							</div>
-						</div>
-					)
-				})()}
+			<div
+				if={configuredToolbarItem() !== undefined}
+				class="palette-config-panel"
+				data-role="config-panel"
+				data-test="palette-config-panel"
+			>
+				<ConfigPanel />
 			</div>
 		</div>
 	)
 }
+
+componentStyle.css`
+	.palette-demo-root {
+		position: relative;
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-rows: auto minmax(0, 1fr) auto;
+		gap: 12px;
+		height: calc(100vh - 40px);
+		max-height: calc(100vh - 40px);
+		min-height: 680px;
+		padding: 16px;
+		border-radius: 18px;
+		background: #0f172a;
+		color: #e2e8f0;
+		overflow: hidden;
+		box-sizing: border-box;
+	}
+
+	.palette-central-shell {
+		grid-column: 2;
+		grid-row: 2;
+		position: relative;
+		min-width: 0;
+		min-height: 0;
+		overflow: auto;
+		padding: 8px;
+		border-radius: 16px;
+		background: #111827;
+		border: 1px solid #1f2937;
+	}
+
+	.palette-central-shell[data-active-delete-zone='true'] {
+		background: #991b1b;
+		border-color: #dc2626;
+		color: #fef2f2;
+	}
+
+	.palette-central-content {
+		display: grid;
+		gap: 16px;
+		min-height: max-content;
+		transition: opacity 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+	}
+
+	.palette-central-content[data-dimmed='true'] {
+		opacity: 0.45;
+		filter: saturate(0.7);
+		box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+	}
+
+	.palette-command-overlay {
+		position: absolute;
+		inset: 0;
+		z-index: 5;
+		display: grid;
+		place-items: center;
+		background: rgba(2, 6, 23, 0.18);
+	}
+
+	.palette-command-panel {
+		width: min(640px, calc(100% - 32px));
+		max-height: min(70vh, 640px);
+		overflow: auto;
+		padding: 16px;
+		border-radius: 16px;
+		background: #0f172a;
+		border: 1px solid #334155;
+		box-shadow: 0 16px 60px rgba(0, 0, 0, 0.45);
+	}
+
+	.palette-command-panel-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.palette-command-title {
+		font-size: 16px;
+	}
+
+	.palette-command-subtitle {
+		color: #94a3b8;
+		font-size: 12px;
+	}
+
+	.palette-command-close {
+		padding: 4px 8px;
+		border: 1px solid #475569;
+		border-radius: 6px;
+		background: #1e293b;
+		color: #e2e8f0;
+	}
+
+	.palette-command-box {
+		margin-top: 16px;
+	}
+
+	.palette-command-input-shell {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		padding: 10px 12px;
+		border-radius: 8px;
+		border: 1px solid #475569;
+		background: #0f172a;
+		align-items: center;
+	}
+
+	.palette-command-chip {
+		padding: 4px 8px;
+		border-radius: 999px;
+	}
+
+	.palette-command-chip-category {
+		border: 1px solid #60a5fa;
+		background: #1d4ed8;
+		color: #eff6ff;
+	}
+
+	.palette-command-chip-keyword {
+		border: 1px solid #60a5fa;
+		background: #1e3a8a;
+		color: #bfdbfe;
+	}
+
+	.palette-command-input {
+		flex: 1;
+		min-width: 120px;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		color: #e2e8f0;
+	}
+
+	.palette-command-suggestions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin-top: 8px;
+		padding: 8px 12px;
+		border-radius: 6px;
+		background: #1e293b;
+	}
+
+	.palette-command-suggestions-label,
+	.palette-command-result-meta {
+		color: #94a3b8;
+		font-size: 12px;
+	}
+
+	.palette-command-suggestion {
+		padding: 2px 6px;
+		border: 1px solid #475569;
+		border-radius: 4px;
+		background: #334155;
+		color: #94a3b8;
+		font-size: 11px;
+		cursor: pointer;
+	}
+
+	.palette-command-suggestion[data-active='true'] {
+		background: #60a5fa;
+		color: #bfdbfe;
+	}
+
+	.palette-command-results {
+		display: grid;
+		gap: 8px;
+		margin-top: 12px;
+	}
+
+	.palette-command-row {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.palette-command-result {
+		flex: 1;
+		padding: 10px 12px;
+		border: 1px solid #475569;
+		border-radius: 8px;
+		text-align: left;
+		background: #0f172a;
+		color: #e2e8f0;
+	}
+
+	.palette-command-result:hover,
+	.palette-command-result[data-selected='true'] {
+		background: #1d4ed8;
+		border-color: #60a5fa;
+		color: #eff6ff;
+	}
+
+	.palette-command-drag {
+		padding: 8px;
+		border: 1px solid #475569;
+		border-radius: 6px;
+		background: #1e293b;
+		color: #94a3b8;
+		cursor: grab;
+		font-size: 12px;
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.palette-command-row:hover .palette-command-drag,
+	.palette-command-drag[data-selected='true'] {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	.palette-intent-button,
+	.palette-editor-button {
+		padding: 8px 12px;
+		border: 1px solid #475569;
+		border-radius: 8px;
+		background: #0f172a;
+		color: #e2e8f0;
+		cursor: pointer;
+	}
+
+	.palette-intent-button[data-active='true'],
+	.palette-editor-button[data-selected='true'],
+	.palette-editor-shell[data-selected='true'] {
+		background: #1d4ed8;
+		border-color: #60a5fa;
+		color: #eff6ff;
+	}
+
+	.palette-intent-button[data-disabled='true'] {
+		background: #1f2937;
+		border-color: #334155;
+		color: #64748b;
+		cursor: not-allowed;
+	}
+
+	.palette-shortcut {
+		margin-left: 8px;
+		color: #94a3b8;
+		font-size: 12px;
+	}
+
+	.palette-editor-shell {
+		display: grid;
+		gap: 6px;
+		min-width: 180px;
+		padding: 8px 10px;
+		border: 1px solid #475569;
+		border-radius: 10px;
+		background: #0f172a;
+		color: #e2e8f0;
+	}
+
+	.palette-editor-select {
+		padding: 6px 8px;
+		border-radius: 8px;
+		border: 1px solid #475569;
+		background: #0b1220;
+		color: #e2e8f0;
+	}
+
+	.palette-editor-label {
+		text-align: left;
+	}
+
+	.palette-inline-stars {
+		display: flex;
+		gap: 4px;
+		font-size: 1.1rem;
+		color: #facc15;
+	}
+
+	.palette-item-group {
+		display: inline-flex;
+		align-items: center;
+		gap: 2px;
+		padding: 2px;
+		border: 1px solid #475569;
+		border-radius: 6px;
+		background: #0f172a;
+	}
+
+	.palette-item-group[data-selected='true'] {
+		border-color: #60a5fa;
+		background: #1d4ed8;
+	}
+
+	.palette-item-group-option {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		padding: 4px 6px;
+		border: 1px solid #64748b;
+		border-radius: 4px;
+		background: #1e293b;
+		color: #e2e8f0;
+		cursor: pointer;
+		font-size: 12px;
+		opacity: 0.7;
+	}
+
+	.palette-item-group-option[data-selected='true'] {
+		background: #3b82f6;
+		opacity: 1;
+	}
+
+	.palette-config-panel {
+		position: absolute;
+		right: 16px;
+		bottom: 16px;
+		z-index: 5;
+		width: min(320px, calc(100% - 32px));
+		padding: 14px;
+		border-radius: 14px;
+		background: #0f172a;
+		border: 1px solid #475569;
+		box-shadow: 0 16px 60px rgba(0, 0, 0, 0.45);
+	}
+
+	.palette-warning-panel {
+		position: absolute;
+		left: 16px;
+		bottom: 16px;
+		z-index: 5;
+		width: min(560px, calc(100% - 32px));
+		max-height: min(40vh, 420px);
+		overflow: auto;
+		padding: 14px;
+		border-radius: 14px;
+		background: #0f172a;
+		border: 1px solid #7c3aed;
+		box-shadow: 0 16px 60px rgba(0, 0, 0, 0.45);
+	}
+
+	.palette-config-body {
+		display: grid;
+		gap: 10px;
+	}
+
+	.palette-warning-body {
+		display: grid;
+		gap: 10px;
+		margin-top: 10px;
+	}
+
+	.palette-warning-entry {
+		display: grid;
+		gap: 6px;
+		padding: 10px 12px;
+		border-radius: 10px;
+		background: #111827;
+		border: 1px solid #374151;
+	}
+
+	.palette-warning-title {
+		color: #ddd6fe;
+	}
+
+	.palette-warning-pre {
+		margin: 0;
+		white-space: pre-wrap;
+		word-break: break-word;
+		color: #e5e7eb;
+		font-size: 12px;
+		line-height: 1.45;
+	}
+
+	.palette-config-header {
+		display: flex;
+		justify-content: space-between;
+		gap: 12px;
+		align-items: center;
+	}
+
+	.palette-config-actions,
+	.palette-config-move-targets {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
+	}
+
+	.palette-config-target-section {
+		display: grid;
+		gap: 6px;
+	}
+
+	.palette-config-meta {
+		color: #94a3b8;
+		font-size: 12px;
+	}
+
+	.palette-config-target-title {
+		font-size: 12px;
+		color: #cbd5e1;
+	}
+
+	.palette-region-label {
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: ${SURFACE_COLOR};
+	}
+
+	.palette-demo-heading,
+	.palette-demo-section-title {
+		margin: 0 0 10px;
+	}
+
+	.palette-demo-heading {
+		margin-bottom: 8px;
+	}
+
+	.palette-demo-copy,
+	.palette-demo-meta,
+	.palette-demo-panel-copy,
+	.palette-demo-panel-meta {
+		color: #94a3b8;
+	}
+
+	.palette-demo-copy {
+		margin: 0;
+	}
+
+	.palette-demo-tip {
+		margin-top: 10px;
+		padding: 10px 12px;
+		border-radius: 10px;
+		background: #172554;
+		color: #bfdbfe;
+	}
+
+	.palette-demo-card-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+		gap: 8px;
+	}
+
+	.palette-demo-object-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+		gap: 8px;
+	}
+
+	.palette-demo-card,
+	.palette-demo-panel {
+		padding: 10px 12px;
+		border-radius: 8px;
+		background: #334155;
+	}
+
+	.palette-demo-panel {
+		padding: 14px;
+		border-radius: 10px;
+	}
+
+	.palette-demo-panel-copy {
+		margin-bottom: 8px;
+	}
+
+	.palette-demo-speed-stars {
+		display: flex;
+		gap: 6px;
+		font-size: 2rem;
+		color: #facc15;
+	}
+
+	.palette-demo-panel-meta {
+		margin-top: 8px;
+	}
+
+	.palette-demo-pre {
+		margin: 8px 0 0;
+		color: #cbd5e1;
+		white-space: pre-wrap;
+	}
+
+	.palette-region-shell {
+		display: flex;
+		gap: 8px;
+		min-height: 0;
+		padding: 12px;
+		border-radius: 14px;
+		background: #111827;
+		border: 1px solid #1f2937;
+		box-shadow: inset 0 0 0 1px transparent;
+		transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+	}
+
+	.palette-demo-root.is-editing .palette-region-shell {
+		background: ${SURFACE_COLOR}14;
+		border-color: ${SURFACE_COLOR}88;
+		box-shadow: inset 0 0 0 1px ${SURFACE_COLOR}33;
+	}
+
+	.palette-region-shell.palette-axis-horizontal {
+		flex-direction: row;
+		flex-wrap: nowrap;
+		align-items: stretch;
+	}
+
+	.palette-region-layout.palette-axis-vertical {
+		display: flex;
+		align-self: stretch;
+		height: 100%;
+		min-height: 0;
+	}
+
+	.palette-region-shell.palette-axis-vertical {
+		flex: 1 1 auto;
+		height: 100%;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		min-height: 100%;
+		align-items: stretch;
+	}
+
+	.palette-region-space {
+		min-width: 0;
+		min-height: 0;
+		display: flex;
+		align-items: stretch;
+		justify-content: stretch;
+		border-radius: 999px;
+		border: 1px dashed transparent;
+		box-sizing: border-box;
+		transition: background 120ms ease, box-shadow 120ms ease, opacity 120ms ease, border-color 120ms ease;
+	}
+
+	.palette-demo-root.is-editing .palette-region-space {
+		background: rgba(34, 211, 238, 0.08);
+		border-color: rgba(34, 211, 238, 0.32);
+		box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.16);
+		cursor: copy;
+	}
+
+	.palette-demo-root.is-editing.is-dragging-toolbar .palette-region-space {
+		background: rgba(34, 211, 238, 0.16);
+		border-color: rgba(34, 211, 238, 0.48);
+		box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.38);
+	}
+
+	.palette-demo-root.is-editing.is-dragging-item .palette-region-space {
+		background: rgba(167, 139, 250, 0.12);
+		border-color: rgba(167, 139, 250, 0.38);
+		box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.26);
+	}
+
+	.palette-demo-root.is-editing .palette-region-space[data-active='true'] {
+		background: rgba(34, 211, 238, 0.22);
+		border-color: ${DROP_ZONE_COLOR};
+		box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.42);
+	}
+
+	.palette-region-shell.palette-axis-horizontal .palette-region-space {
+		flex-direction: row;
+		min-width: var(--palette-handle-size);
+	}
+
+	.palette-region-shell.palette-axis-vertical .palette-region-space {
+		flex-direction: column;
+		min-height: var(--palette-handle-size);
+	}
+
+	.palette-demo-root.is-editing .palette-region-shell.palette-axis-horizontal .palette-toolbar-line {
+		cursor: ew-resize;
+		user-select: none;
+	}
+
+	.palette-demo-root.is-editing .palette-region-shell.palette-axis-vertical .palette-toolbar-line {
+		cursor: ns-resize;
+		user-select: none;
+	}
+
+	.palette-region-shell.palette-axis-horizontal .palette-toolbar-line {
+		flex-direction: row;
+		align-items: center;
+		flex-wrap: nowrap;
+	}
+
+	.palette-region-shell.palette-axis-vertical .palette-toolbar-line {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.palette-toolbar-line {
+		display: flex;
+		gap: 8px;
+		min-width: 0;
+		max-width: 100%;
+		padding: 0;
+		border-radius: 0;
+		border: 1px solid transparent;
+		background: transparent;
+		box-shadow: none;
+		opacity: 1;
+		transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+		box-sizing: border-box;
+		overflow: hidden;
+		flex: 0 0 auto;
+		align-self: stretch;
+	}
+
+	.palette-demo-root.is-editing .palette-toolbar-line {
+		padding: 8px;
+		border-radius: 12px;
+		border-color: ${TOOLBAR_COLOR}66;
+		background: ${TOOLBAR_COLOR}12;
+		box-shadow: inset 0 0 0 1px ${TOOLBAR_COLOR}22;
+	}
+
+	.palette-toolbar-line[data-dragging='true'] {
+		opacity: 0.6;
+	}
+
+	.palette-region-shell.palette-axis-horizontal .palette-toolbar-item-shell {
+		display: inline-flex;
+		align-items: stretch;
+		min-width: 0;
+		max-width: 100%;
+	}
+
+	.palette-region-shell.palette-axis-vertical .palette-toolbar-item-shell {
+		display: flex;
+		align-items: stretch;
+		min-width: 0;
+		max-width: 100%;
+	}
+
+	.palette-toolbar-item-shell[data-dragging='true'] {
+		opacity: 0.6;
+	}
+
+	.palette-edit-toggle {
+		position: absolute;
+		top: 10px;
+		left: 10px;
+		z-index: 4;
+		width: 18px;
+		height: 18px;
+		border: 1px solid #334155;
+		border-radius: 12px;
+		background: #111827;
+		color: #e2e8f0;
+		cursor: pointer;
+		overflow: hidden;
+		transition: width 120ms ease, height 120ms ease, background 120ms ease, border-color 120ms ease;
+	}
+
+	.palette-edit-toggle[data-expanded='true'] {
+		width: 76px;
+		height: 36px;
+	}
+
+	.palette-edit-toggle[data-editing='true'] {
+		border-color: #60a5fa;
+		background: #1d4ed8;
+	}
+
+	.palette-item-drop-zone {
+		flex: 0 0 auto;
+		align-self: stretch;
+		border: 1px dashed ${DROP_ZONE_COLOR}77;
+		border-radius: 999px;
+		background: ${DROP_ZONE_COLOR}12;
+		cursor: copy;
+		opacity: 1;
+		box-shadow: inset 0 0 0 1px transparent;
+		transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+	}
+
+	.palette-item-drop-zone[data-active='true'] {
+		border-color: ${DROP_ZONE_COLOR};
+		background: ${DROP_ZONE_COLOR}22;
+		box-shadow: inset 0 0 0 1px ${DROP_ZONE_COLOR}44;
+	}
+
+	.palette-region-shell.palette-axis-horizontal .palette-item-drop-zone {
+		width: var(--palette-handle-size);
+		min-width: var(--palette-handle-size);
+		height: 100%;
+		min-height: var(--palette-handle-size);
+	}
+
+	.palette-region-shell.palette-axis-vertical .palette-item-drop-zone {
+		width: 100%;
+		min-width: 100%;
+		height: var(--palette-handle-size);
+		min-height: var(--palette-handle-size);
+	}
+`

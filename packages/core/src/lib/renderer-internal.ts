@@ -33,7 +33,7 @@ export function listen(
 	options?: boolean | AddEventListenerOptions
 ) {
 	// events listener are run in the root zone, no effect can run them, only user's interaction can trigger them
-	const rooted = (evt: Event) => root(() => listener(evt))
+	const rooted = (evt: Event) => root`event:${type}`(() => listener(evt))
 	testing.renderingEvent?.('add event listener', target, type, rooted, options)
 	target.addEventListener(type, rooted, options)
 	return () => {
@@ -241,7 +241,7 @@ export function attachAttributes(
 		// 2. Child effects being destroyed when a parent effect re-runs
 		// The entire key enumeration + per-key setup runs inside root() because
 		// attributes.keys collapses function layers which may read reactive state.
-		root(() => {
+		root`attachAttributes`(() => {
 			const ensureKey = (key: string) => {
 				if (key in cleanups) return
 				let value = attributes.get(key)

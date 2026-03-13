@@ -71,7 +71,7 @@ export function routerModel<Definition extends ClientRouteDefinition>(
 	}>({ active: null, opened: [] })
 
 	function setActive(value: OpenedRoute<Definition> | null) {
-		untracked(() => {
+		untracked`router:setActive`(() => {
 			raw.active = value
 			state.active = value
 		})

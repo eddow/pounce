@@ -18,7 +18,6 @@ export interface PaletteModelLike {
 export type PaletteEntryId = string
 export type PaletteIntentId = string
 export type PaletteCategory = string
-export type PaletteToolbarId = string
 
 // ============================================================================
 // Entry Schema Types - What exists in the registry
@@ -85,7 +84,6 @@ export type PaletteIntentBase = {
 	readonly description?: string
 	readonly icon?: string | PounceElement
 	readonly categories?: readonly PaletteCategory[]
-	readonly binding?: string
 	readonly showText?: boolean
 }
 
@@ -145,57 +143,43 @@ export type PaletteIntent =
 
 export type PaletteContainerRegion = 'top' | 'right' | 'bottom' | 'left'
 
-export type PaletteSurfaceType = 'toolbar' | 'command' | 'settings' | 'status'
-
-export type PaletteSurfaceBase = {
-	readonly id: string
-	readonly region: PaletteContainerRegion
-	readonly visible: boolean
-	readonly position?: number
-	readonly label?: string
-}
-
-export type PaletteToolbarSurface = PaletteSurfaceBase & {
-	readonly type: 'toolbar'
+export type PaletteToolbar = {
+	readonly title?: string
 	readonly items: readonly PaletteDisplayItem[]
 }
 
-export type PaletteStatusSurface = PaletteSurfaceBase & {
-	readonly type: 'status'
-	readonly items: readonly PaletteDisplayItem[]
+// TODO: PaletteToolbarTrack = `{ space, toolbar }[]` instead of `{ space[], toolbar[] }`
+export type PaletteToolbarSlot = {
+	readonly toolbar: PaletteToolbar
+	readonly space: number
 }
 
-export type PaletteCommandSurface = PaletteSurfaceBase & {
-	readonly type: 'command'
+export type PaletteToolbarTrack = {
+	readonly slots: readonly PaletteToolbarSlot[]
 }
 
-export type PaletteSettingsSurface = PaletteSurfaceBase & {
-	readonly type: 'settings'
+export type PaletteContainerToolbarStack = {
+	readonly top: PaletteToolbarTrack
+	readonly right: PaletteToolbarTrack
+	readonly bottom: PaletteToolbarTrack
+	readonly left: PaletteToolbarTrack
 }
-
-export type PaletteContainerSurface =
-	| PaletteToolbarSurface
-	| PaletteStatusSurface
-	| PaletteCommandSurface
-	| PaletteSettingsSurface
 
 export type PaletteContainerConfiguration = {
-	readonly surfaces: readonly PaletteContainerSurface[]
+	readonly toolbarStack: PaletteContainerToolbarStack
 	readonly editMode: boolean
-	readonly dropTargets?: readonly PaletteContainerDropTarget[]
 }
 
 export type PaletteContainerDropTarget = {
 	readonly region: PaletteContainerRegion
 	readonly position?: number
-	readonly surfaceId?: string
 }
 
 export type PaletteInsertionPoint = {
 	readonly region: PaletteContainerRegion
 	readonly index: number
-	readonly before?: PaletteContainerSurface
-	readonly after?: PaletteContainerSurface
+	readonly before?: PaletteToolbar
+	readonly after?: PaletteToolbar
 }
 
 // ============================================================================
@@ -203,7 +187,6 @@ export type PaletteInsertionPoint = {
 // ============================================================================
 
 export type PaletteDisplayConfiguration = {
-	readonly statusbar?: readonly PaletteDisplayItem[]
 	readonly container?: PaletteContainerConfiguration
 }
 

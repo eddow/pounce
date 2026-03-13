@@ -1,53 +1,179 @@
-import { lift } from 'mutts'
 import type { PaletteModel } from './model'
+import { getToolbarIdentity } from './toolbar-identity'
 import type {
-	PaletteContainerDropTarget,
 	PaletteContainerRegion,
-	PaletteContainerSurface,
+	PaletteContainerToolbarStack,
 	PaletteInsertionPoint,
-	PaletteSurfaceType,
-	PaletteToolbarSurface,
+	PaletteToolbar,
+	PaletteToolbarSlot,
+	PaletteToolbarTrack,
 } from './types'
 
-// Internal mutable version of container configuration for reactive updates
+type MutablePaletteContainerToolbarStack = {
+	-readonly [Region in keyof PaletteContainerToolbarStack]: PaletteContainerToolbarStack[Region]
+}
+
+type MutablePaletteToolbarTrack = {
+	-readonly [Key in keyof PaletteToolbarTrack]: PaletteToolbarTrack[Key]
+}
+
+type MutablePaletteToolbarSlot = {
+	-readonly [Key in keyof PaletteToolbarSlot]: PaletteToolbarSlot[Key]
+}
+
 interface MutablePaletteContainerConfiguration {
-	surfaces: PaletteContainerSurface[]
+	toolbarStack: {
+		[Region in keyof MutablePaletteContainerToolbarStack]: MutablePaletteToolbarTrack
+	}
 	editMode: boolean
-	dropTargets?: PaletteContainerDropTarget[]
 }
 
 export interface PaletteContainerModel {
 	readonly editMode: boolean
-	readonly surfaces: readonly PaletteContainerSurface[]
-	readonly dropTargets: readonly PaletteContainerDropTarget[]
+	readonly toolbarStack: PaletteContainerToolbarStack
 	readonly insertionPoints: readonly PaletteInsertionPoint[]
 
 	enterEditMode(): void
 	exitEditMode(): void
-	createSurface(
-		region: PaletteContainerRegion,
-		type: PaletteSurfaceType,
-		label?: string
-	): PaletteContainerSurface
-	removeSurface(surfaceId: string): void
-	moveSurface(surfaceId: string, targetRegion: PaletteContainerRegion, targetIndex?: number): void
-	renameSurface(surfaceId: string, label: string): void
-	showSurface(surfaceId: string): void
-	hideSurface(surfaceId: string): void
-	getSurfacesInRegion(region: PaletteContainerRegion): readonly PaletteContainerSurface[]
+	createToolbar(region: PaletteContainerRegion, title?: string): PaletteToolbar
+	removeToolbar(toolbar: PaletteToolbar): void
+	resizeToolbar(region: PaletteContainerRegion, index: number, split: number): void
+	moveToolbar(
+		toolbar: PaletteToolbar,
+		targetRegion: PaletteContainerRegion,
+		targetIndex?: number,
+		targetSplit?: number
+	): void
+	renameToolbar(toolbar: PaletteToolbar, title: string): void
+	getToolbarsInRegion(region: PaletteContainerRegion): readonly PaletteToolbar[]
 	getInsertionPointsInRegion(region: PaletteContainerRegion): readonly PaletteInsertionPoint[]
+}
+
+function regions(): readonly PaletteContainerRegion[] {
+	return ['top', 'right', 'bottom', 'left']
+}
+
+function clampUnit(value: number): number {
+	return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0
+}
+
+function defaultActualSpaces(toolbarCount: number): readonly number[] {
+	return Array.from({ length: toolbarCount + 1 }, () => 1 / (toolbarCount + 1))
+}
+
+function toolbarsInTrack(track: PaletteToolbarTrack): readonly PaletteToolbar[] {
+	return track.slots.map((slot) => slot.toolbar)
+}
+
+function spacesInTrack(track: PaletteToolbarTrack): readonly number[] {
+	return track.slots.map((slot) => slot.space)
+}
+
+function createTrack(
+	toolbars: readonly PaletteToolbar[],
+	spaces: readonly number[]
+): PaletteToolbarTrack {
+	const normalizedSpaces = normalizeSpaces(toolbars.length, spaces)
+	return {
+		slots: toolbars.map((toolbar, index) => ({
+			toolbar,
+			space: normalizedSpaces[index] ?? 0,
+		})),
+	}
+}
+
+function actualSpacesFromLeading(
+	toolbarCount: number,
+	spaces: readonly number[]
+): readonly number[] {
+	const actualSpaces: number[] = []
+	let remaining = 1
+	for (let index = 0; index < toolbarCount; index++) {
+		const actualSpace = remaining * clampUnit(spaces[index] ?? 0)
+		actualSpaces.push(actualSpace)
+		remaining -= actualSpace
+	}
+	actualSpaces.push(Math.max(remaining, 0))
+	return actualSpaces
+}
+
+function leadingSpacesFromActual(
+	toolbarCount: number,
+	actualSpaces: readonly number[]
+): readonly number[] {
+	if (toolbarCount <= 0) return []
+	const total = actualSpaces.reduce((sum, value) => sum + Math.max(value, 0), 0)
+	const normalizedActualSpaces =
+		total > 0
+			? actualSpaces.map((value) => Math.max(value, 0) / total)
+			: defaultActualSpaces(toolbarCount)
+	const spaces: number[] = []
+	let remaining = 1
+	for (let index = 0; index < toolbarCount; index++) {
+		const actualSpace = normalizedActualSpaces[index] ?? 0
+		spaces.push(remaining > 0 ? clampUnit(actualSpace / remaining) : 0)
+		remaining -= actualSpace
+	}
+	return spaces
+}
+
+function normalizeSpaces(toolbarCount: number, spaces?: readonly number[]): readonly number[] {
+	if (toolbarCount <= 0) return []
+	if (spaces?.length === toolbarCount) {
+		return spaces.map(clampUnit)
+	}
+	if (spaces?.length === toolbarCount + 1) {
+		return leadingSpacesFromActual(toolbarCount, spaces)
+	}
+	return leadingSpacesFromActual(toolbarCount, defaultActualSpaces(toolbarCount))
+}
+
+function cloneTrack(track: PaletteToolbarTrack): PaletteToolbarTrack {
+	return {
+		slots: track.slots.map((slot) => ({ toolbar: slot.toolbar, space: slot.space })),
+	}
+}
+
+function normalizeRegionTrackSpaces(track: PaletteToolbarTrack): PaletteToolbarTrack {
+	return createTrack(toolbarsInTrack(track), spacesInTrack(track))
 }
 
 export function paletteContainerModel(props: { palette: PaletteModel }): PaletteContainerModel {
 	const { palette } = props
+	const container = palette.display.container as unknown as MutablePaletteContainerConfiguration
 
-	// Container configuration should already be initialized by createPaletteModel
-	const container = palette.display.container as MutablePaletteContainerConfiguration
-	let nextSurfaceId =
-		container.surfaces.reduce((maxId, surface) => {
-			const numericId = Number.parseInt(surface.id, 10)
-			return Number.isNaN(numericId) ? maxId : Math.max(maxId, numericId)
-		}, 0) + 1
+	function getRegionTrack(region: PaletteContainerRegion): MutablePaletteToolbarTrack {
+		return container.toolbarStack[region]
+	}
+
+	function setRegionTrack(region: PaletteContainerRegion, track: PaletteToolbarTrack): void {
+		container.toolbarStack[region] = normalizeRegionTrackSpaces(track)
+	}
+
+	function setRegionSpaces(region: PaletteContainerRegion, spaces: readonly number[]): void {
+		const track = getRegionTrack(region)
+		const normalizedSpaces = normalizeSpaces(track.slots.length, spaces)
+		for (let index = 0; index < track.slots.length; index += 1) {
+			const slot = track.slots[index] as MutablePaletteToolbarSlot | undefined
+			if (!slot) continue
+			slot.space = normalizedSpaces[index] ?? 0
+		}
+	}
+
+	function findToolbarLocation(
+		toolbar: PaletteToolbar
+	): { region: PaletteContainerRegion; index: number } | undefined {
+		const identity = getToolbarIdentity(toolbar)
+		for (const region of regions()) {
+			const index = toolbarsInTrack(container.toolbarStack[region]).findIndex(
+				(entry) => getToolbarIdentity(entry) === identity
+			)
+			if (index >= 0) {
+				return { region, index }
+			}
+		}
+		return undefined
+	}
 
 	function enterEditMode(): void {
 		container.editMode = true
@@ -57,211 +183,141 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 		container.editMode = false
 	}
 
-	const dropTargets = lift`paletteContainerModel.dropTargets`(() => {
-		if (!container.editMode) {
-			return []
+	function createToolbar(region: PaletteContainerRegion, title?: string): PaletteToolbar {
+		const toolbar: PaletteToolbar = {
+			title,
+			items: [],
 		}
-
-		const targets: PaletteContainerDropTarget[] = []
-		const regions: PaletteContainerRegion[] = ['top', 'right', 'bottom', 'left']
-
-		for (const region of regions) {
-			const regionSurfaces = getSurfacesInRegion(region)
-
-			// Add drop target at the beginning of region
-			targets.push({ region, position: 0 })
-
-			// Add drop targets between surfaces
-			for (let i = 0; i < regionSurfaces.length; i++) {
-				targets.push({
-					region,
-					position: i + 1,
-					surfaceId: regionSurfaces[i].id,
-				})
-			}
-		}
-
-		return targets
-	})
-
-	function createSurface(
-		region: PaletteContainerRegion,
-		type: PaletteSurfaceType,
-		label?: string
-	): PaletteContainerSurface {
-		const id = generateSurfaceId(type)
-		if (type === 'toolbar') {
-			const surface: PaletteToolbarSurface = {
-				id,
-				type: 'toolbar',
-				region,
-				visible: true,
-				position: getSurfacesInRegion(region).length,
-				label: label ?? generateDefaultLabel(id, type),
-				items: [],
-			}
-			container.surfaces = [...container.surfaces, surface]
-			return surface
-		}
-
-		if (type === 'status') {
-			const surface: PaletteContainerSurface = {
-				id,
-				type: 'status',
-				region,
-				visible: true,
-				position: getSurfacesInRegion(region).length,
-				label: label ?? generateDefaultLabel(id, type),
-				items: [],
-			}
-			container.surfaces = [...container.surfaces, surface]
-			return surface
-		}
-
-		const surface: PaletteContainerSurface = {
-			id,
-			type,
+		const track = cloneTrack(getRegionTrack(region))
+		const toolbars = [...toolbarsInTrack(track), toolbar]
+		const nextActualSpaces = [...actualSpacesFromLeading(track.slots.length, spacesInTrack(track))]
+		nextActualSpaces.push(nextActualSpaces.pop() ?? 1)
+		setRegionTrack(
 			region,
-			visible: true,
-			position: getSurfacesInRegion(region).length,
-			label: label ?? generateDefaultLabel(id, type),
-		}
-		container.surfaces = [...container.surfaces, surface]
-		return surface
+			createTrack(toolbars, leadingSpacesFromActual(toolbars.length, nextActualSpaces))
+		)
+		return toolbar
 	}
 
-	function removeSurface(surfaceId: string): void {
-		const surface = container.surfaces.find((s) => s.id === surfaceId)
-		if (!surface) {
-			throw new Error(`Surface '${surfaceId}' not found`)
-		}
-
-		container.surfaces = container.surfaces.filter((s) => s.id !== surfaceId)
+	function removeToolbar(toolbar: PaletteToolbar): void {
+		const location = findToolbarLocation(toolbar)
+		if (!location) throw new Error('Toolbar not found')
+		const track = cloneTrack(getRegionTrack(location.region))
+		const toolbars = toolbarsInTrack(track).filter((entry) => entry !== toolbar)
+		const actualSpaces = [...actualSpacesFromLeading(track.slots.length, spacesInTrack(track))]
+		const mergedSpace =
+			(actualSpaces[location.index] ?? 0) + (actualSpaces[location.index + 1] ?? 0)
+		actualSpaces.splice(location.index, 2, mergedSpace)
+		setRegionTrack(
+			location.region,
+			createTrack(toolbars, leadingSpacesFromActual(toolbars.length, actualSpaces))
+		)
 	}
 
-	function moveSurface(
-		surfaceId: string,
+	function resizeToolbar(region: PaletteContainerRegion, index: number, split: number): void {
+		const track = cloneTrack(getRegionTrack(region))
+		if (index < 0 || index >= track.slots.length) throw new Error('Toolbar not found')
+		const actualSpaces = [...actualSpacesFromLeading(track.slots.length, spacesInTrack(track))]
+		const mergedSpace = (actualSpaces[index] ?? 0) + (actualSpaces[index + 1] ?? 0)
+		const beforeSpace = mergedSpace * clampUnit(split)
+		const afterSpace = mergedSpace - beforeSpace
+		actualSpaces.splice(index, 2, beforeSpace, afterSpace)
+		setRegionSpaces(region, leadingSpacesFromActual(track.slots.length, actualSpaces))
+	}
+
+	function moveToolbar(
+		toolbar: PaletteToolbar,
 		targetRegion: PaletteContainerRegion,
-		targetIndex?: number
+		targetIndex?: number,
+		targetSplit = 0.5
 	): void {
-		const surface = container.surfaces.find((s) => s.id === surfaceId)
-		if (!surface) {
-			throw new Error(`Surface '${surfaceId}' not found`)
-		}
+		const location = findToolbarLocation(toolbar)
+		if (!location) throw new Error('Toolbar not found')
 
-		// Remove surface from current position
-		const otherSurfaces = container.surfaces.filter((s) => s.id !== surfaceId)
-
-		// Normalize positions: remove gap from removed surface
-		const normalizedSurfaces = otherSurfaces.map((s) => {
-			if (s.region === surface.region && (s.position ?? 0) > (surface.position ?? 0)) {
-				return { ...s, position: (s.position ?? 0) - 1 }
-			}
-			return s
-		})
-
-		// Insert surface at new position and normalize target region
-		const targetRegionSurfaces = normalizedSurfaces.filter((s) => s.region === targetRegion)
-		const finalIndex = Math.min(
-			targetIndex ?? targetRegionSurfaces.length,
-			targetRegionSurfaces.length
+		const sourceTrack = cloneTrack(getRegionTrack(location.region))
+		const sourceToolbars = toolbarsInTrack(sourceTrack).filter((entry) => entry !== toolbar)
+		const sourceActualSpaces = [
+			...actualSpacesFromLeading(sourceTrack.slots.length, spacesInTrack(sourceTrack)),
+		]
+		const mergedSourceSpace =
+			(sourceActualSpaces[location.index] ?? 0) + (sourceActualSpaces[location.index + 1] ?? 0)
+		sourceActualSpaces.splice(location.index, 2, mergedSourceSpace)
+		setRegionTrack(
+			location.region,
+			createTrack(
+				sourceToolbars,
+				leadingSpacesFromActual(sourceToolbars.length, sourceActualSpaces)
+			)
 		)
 
-		// Shift surfaces in target region to make room
-		const shiftedSurfaces = normalizedSurfaces.map((s) => {
-			if (s.region === targetRegion && (s.position ?? 0) >= finalIndex) {
-				return { ...s, position: (s.position ?? 0) + 1 }
-			}
-			return s
-		})
-
-		// Insert the moved surface
-		const updatedSurface = { ...surface, region: targetRegion, position: finalIndex }
-		const newSurfaces = [...shiftedSurfaces, updatedSurface]
-
-		// Sort by region and position for consistent ordering
-		newSurfaces.sort((a, b) => {
-			const regionOrder = ['top', 'right', 'bottom', 'left']
-			const aRegionIndex = regionOrder.indexOf(a.region)
-			const bRegionIndex = regionOrder.indexOf(b.region)
-
-			if (aRegionIndex !== bRegionIndex) {
-				return aRegionIndex - bRegionIndex
-			}
-
-			return (a.position ?? 0) - (b.position ?? 0)
-		})
-
-		container.surfaces = newSurfaces
-	}
-
-	function renameSurface(surfaceId: string, label: string): void {
-		const surface = container.surfaces.find((s) => s.id === surfaceId)
-		if (!surface) {
-			throw new Error(`Surface '${surfaceId}' not found`)
-		}
-
-		container.surfaces = container.surfaces.map((s) => (s.id === surfaceId ? { ...s, label } : s))
-	}
-
-	function showSurface(surfaceId: string): void {
-		const surface = container.surfaces.find((s) => s.id === surfaceId)
-		if (!surface) {
-			throw new Error(`Surface '${surfaceId}' not found`)
-		}
-
-		container.surfaces = container.surfaces.map((s) =>
-			s.id === surfaceId ? { ...s, visible: true } : s
+		const targetTrack = cloneTrack(
+			location.region === targetRegion
+				? createTrack(
+						sourceToolbars,
+						leadingSpacesFromActual(sourceToolbars.length, sourceActualSpaces)
+					)
+				: getRegionTrack(targetRegion)
+		)
+		const insertionIndex = Math.min(
+			Math.max(targetIndex ?? targetTrack.slots.length, 0),
+			targetTrack.slots.length
+		)
+		const toolbars = [...toolbarsInTrack(targetTrack)]
+		toolbars.splice(insertionIndex, 0, toolbar)
+		const targetActualSpaces = [
+			...actualSpacesFromLeading(targetTrack.slots.length, spacesInTrack(targetTrack)),
+		]
+		const splitSpace = targetActualSpaces[insertionIndex] ?? 0
+		const beforeSpace = splitSpace * clampUnit(targetSplit)
+		const afterSpace = splitSpace - beforeSpace
+		targetActualSpaces.splice(insertionIndex, 1, beforeSpace, afterSpace)
+		setRegionTrack(
+			targetRegion,
+			createTrack(toolbars, leadingSpacesFromActual(toolbars.length, targetActualSpaces))
 		)
 	}
 
-	function hideSurface(surfaceId: string): void {
-		const surface = container.surfaces.find((s) => s.id === surfaceId)
-		if (!surface) {
-			throw new Error(`Surface '${surfaceId}' not found`)
-		}
-
-		container.surfaces = container.surfaces.map((s) =>
-			s.id === surfaceId ? { ...s, visible: false } : s
+	function renameToolbar(toolbar: PaletteToolbar, title: string): void {
+		const location = findToolbarLocation(toolbar)
+		if (!location) throw new Error('Toolbar not found')
+		const track = cloneTrack(getRegionTrack(location.region))
+		const toolbars = toolbarsInTrack(track).map((entry) =>
+			entry === toolbar ? { ...entry, title } : entry
 		)
+		setRegionTrack(location.region, createTrack(toolbars, spacesInTrack(track)))
 	}
 
-	function getSurfacesInRegion(region: PaletteContainerRegion): readonly PaletteContainerSurface[] {
-		return container.surfaces
-			.filter((s) => s.region === region)
-			.sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+	function getToolbarsInRegion(region: PaletteContainerRegion): readonly PaletteToolbar[] {
+		return toolbarsInTrack(getRegionTrack(region))
 	}
 
 	function getInsertionPointsInRegion(
 		region: PaletteContainerRegion
 	): readonly PaletteInsertionPoint[] {
-		const regionSurfaces = getSurfacesInRegion(region)
-		const points: PaletteInsertionPoint[] = []
+		const toolbars = getToolbarsInRegion(region)
+		const points: PaletteInsertionPoint[] = [
+			{
+				region,
+				index: 0,
+				after: undefined,
+				before: toolbars[0],
+			},
+		]
 
-		// Add insertion point at the beginning
-		points.push({
-			region,
-			index: 0,
-			after: undefined,
-			before: regionSurfaces[0],
-		})
-
-		// Add insertion points between surfaces
-		for (let i = 0; i < regionSurfaces.length - 1; i++) {
+		for (let index = 0; index < toolbars.length - 1; index++) {
 			points.push({
 				region,
-				index: i + 1,
-				after: regionSurfaces[i],
-				before: regionSurfaces[i + 1],
+				index: index + 1,
+				after: toolbars[index],
+				before: toolbars[index + 1],
 			})
 		}
 
-		// Add insertion point at the end
-		if (regionSurfaces.length > 0) {
+		if (toolbars.length > 0) {
 			points.push({
 				region,
-				index: regionSurfaces.length,
-				after: regionSurfaces[regionSurfaces.length - 1],
+				index: toolbars.length,
+				after: toolbars[toolbars.length - 1],
 				before: undefined,
 			})
 		}
@@ -269,59 +325,28 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 		return points
 	}
 
-	function generateSurfaceId(type: PaletteSurfaceType): string {
-		void type
-		return String(nextSurfaceId++)
-	}
-
-	function generateDefaultLabel(id: string, type: PaletteSurfaceType): string {
-		switch (type) {
-			case 'toolbar':
-				return `Toolbar ${id}`
-			case 'command':
-				return 'Command Palette'
-			case 'settings':
-				return 'Settings'
-			default:
-				return id
-		}
-	}
-
-	// Reactive insertion points computed on demand
 	function getInsertionPoints(): readonly PaletteInsertionPoint[] {
-		const points: PaletteInsertionPoint[] = []
-		const regions: PaletteContainerRegion[] = ['top', 'right', 'bottom', 'left']
-
-		for (const region of regions) {
-			points.push(...getInsertionPointsInRegion(region))
-		}
-
-		return points
+		return regions().flatMap((region) => getInsertionPointsInRegion(region))
 	}
 
 	return {
 		get editMode() {
 			return container.editMode
 		},
-		get surfaces() {
-			return container.surfaces
-		},
-		get dropTargets() {
-			return dropTargets
+		get toolbarStack() {
+			return container.toolbarStack
 		},
 		get insertionPoints() {
-			return getInsertionPoints()
+			return [...getInsertionPoints()]
 		},
-
 		enterEditMode,
 		exitEditMode,
-		createSurface,
-		removeSurface,
-		moveSurface,
-		renameSurface,
-		showSurface,
-		hideSurface,
-		getSurfacesInRegion,
+		createToolbar,
+		removeToolbar,
+		resizeToolbar,
+		moveToolbar,
+		renameToolbar,
+		getToolbarsInRegion,
 		getInsertionPointsInRegion,
 	}
 }

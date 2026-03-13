@@ -415,7 +415,7 @@ export const Dockview = (
 		// effect chain so reactive prop reads don't tear down initDockview.
 		// Panel renderers use `spawn` to create child effects under this root,
 		// so `caught()` error boundaries bubble up through the dockview's tree.
-		const stopBindings = root((): (() => void) => {
+		const stopBindings = root`Dockview.bindings`((): (() => void) => {
 			const ctx = effectContext()
 			spawn = (fn) => withEffectContext(ctx, () => effect(fn))
 			const cleanups: (() => void)[] = []
@@ -534,7 +534,7 @@ export const Dockview = (
 			}
 		})
 		try {
-			root(() => onReadyCb?.(api))
+			root`Dockview.onReady`(() => onReadyCb?.(api))
 		} catch (e) {
 			console.error('[Dockview] onReady error:', e)
 		}

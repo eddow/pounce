@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { paletteContainerModel } from './container'
 import { createPaletteModel } from './model'
+import type { PaletteToolbar } from './types'
 
 describe('paletteContainerModel', () => {
 	let palette: ReturnType<typeof createPaletteModel>
@@ -28,9 +29,11 @@ describe('paletteContainerModel', () => {
 		const container = paletteContainerModel({ palette })
 
 		expect(container.editMode).toBe(false)
-		expect(container.surfaces).toEqual([])
-		expect(container.dropTargets).toEqual([])
-		expect(container.insertionPoints).toHaveLength(4) // One for each region
+		expect(container.getToolbarsInRegion('top')).toEqual([])
+		expect(container.getToolbarsInRegion('right')).toEqual([])
+		expect(container.getToolbarsInRegion('bottom')).toEqual([])
+		expect(container.getToolbarsInRegion('left')).toEqual([])
+		expect(container.insertionPoints).toHaveLength(4)
 	})
 
 	it('should enter and exit edit mode', () => {
@@ -38,163 +41,126 @@ describe('paletteContainerModel', () => {
 
 		container.enterEditMode()
 		expect(container.editMode).toBe(true)
-		expect(container.dropTargets.length).toBeGreaterThan(0)
 
 		container.exitEditMode()
 		expect(container.editMode).toBe(false)
-		expect(container.dropTargets).toEqual([])
 	})
 
-	it('should create surfaces in different regions', () => {
+	it('should create toolbars in different regions', () => {
 		const container = paletteContainerModel({ palette })
 
-		const toolbar = container.createSurface('top', 'toolbar', 'Main Toolbar')
-		const command = container.createSurface('right', 'command')
-		const settings = container.createSurface('bottom', 'settings', 'App Settings')
+		const toolbar = container.createToolbar('top', 'Main Toolbar')
 
 		expect(toolbar).toEqual({
-			id: '1',
-			type: 'toolbar',
-			region: 'top',
-			visible: true,
-			position: 0,
-			label: 'Main Toolbar',
+			title: 'Main Toolbar',
 			items: [],
 		})
-
-		expect(command).toEqual({
-			id: '2',
-			type: 'command',
-			region: 'right',
-			visible: true,
-			position: 0,
-			label: 'Command Palette',
-		})
-
-		expect(settings).toEqual({
-			id: '3',
-			type: 'settings',
-			region: 'bottom',
-			visible: true,
-			position: 0,
-			label: 'App Settings',
-		})
-
-		expect(container.surfaces).toHaveLength(3)
+		expect(container.getToolbarsInRegion('top')).toHaveLength(1)
 	})
 
-	it('should remove surfaces', () => {
+	it('should remove toolbars', () => {
 		const container = paletteContainerModel({ palette })
 
-		const surface = container.createSurface('top', 'toolbar')
-		expect(container.surfaces).toHaveLength(1)
+		container.createToolbar('top')
+		const toolbar = container.getToolbarsInRegion('top')[0]
+		expect(container.getToolbarsInRegion('top')).toHaveLength(1)
 
-		container.removeSurface(surface.id)
-		expect(container.surfaces).toHaveLength(0)
+		container.removeToolbar(toolbar)
+		expect(container.getToolbarsInRegion('top')).toHaveLength(0)
 	})
 
-	it('should move surfaces within the same region', () => {
+	it('should move toolbars within the same region', () => {
 		const container = paletteContainerModel({ palette })
 
-		const surface1 = container.createSurface('top', 'toolbar', 'Toolbar 1')
-		const surface2 = container.createSurface('top', 'toolbar', 'Toolbar 2')
-		const surface3 = container.createSurface('top', 'toolbar', 'Toolbar 3')
+		container.createToolbar('top', 'Toolbar 1')
+		container.createToolbar('top', 'Toolbar 2')
+		container.createToolbar('top', 'Toolbar 3')
+		const toolbar3 = container.getToolbarsInRegion('top')[2]
 
-		// Move surface3 to position 0 (beginning)
-		container.moveSurface(surface3.id, 'top', 0)
+		container.moveToolbar(toolbar3, 'top', 0)
 
-		const topSurfaces = container.getSurfacesInRegion('top')
-		expect(topSurfaces.map((s) => s.id)).toEqual([surface3.id, surface1.id, surface2.id])
+		const topToolbars = container.getToolbarsInRegion('top')
+		expect(topToolbars.map((toolbar) => toolbar.title)).toEqual([
+			'Toolbar 3',
+			'Toolbar 1',
+			'Toolbar 2',
+		])
 	})
 
-	it('should move surfaces between regions', () => {
+	it('should move toolbars between regions', () => {
 		const container = paletteContainerModel({ palette })
 
-		const surface = container.createSurface('top', 'toolbar')
-		expect(container.getSurfacesInRegion('top')).toHaveLength(1)
-		expect(container.getSurfacesInRegion('right')).toHaveLength(0)
+		container.createToolbar('top')
+		const toolbar = container.getToolbarsInRegion('top')[0]
+		expect(container.getToolbarsInRegion('top')).toHaveLength(1)
+		expect(container.getToolbarsInRegion('right')).toHaveLength(0)
 
-		container.moveSurface(surface.id, 'right')
+		container.moveToolbar(toolbar, 'right')
 
-		expect(container.getSurfacesInRegion('top')).toHaveLength(0)
-		expect(container.getSurfacesInRegion('right')).toHaveLength(1)
+		expect(container.getToolbarsInRegion('top')).toHaveLength(0)
+		expect(container.getToolbarsInRegion('right')).toHaveLength(1)
 
-		const movedSurface = container.getSurfacesInRegion('right')[0]
-		expect(movedSurface.id).toBe(surface.id)
-		expect(movedSurface.region).toBe('right')
+		const movedToolbar = container.getToolbarsInRegion('right')[0]
+		expect(movedToolbar).toEqual(toolbar)
 	})
 
-	it('should rename surfaces', () => {
+	it('should rename toolbars', () => {
 		const container = paletteContainerModel({ palette })
 
-		const surface = container.createSurface('top', 'toolbar', 'Original Name')
-		expect(surface.label).toBe('Original Name')
+		container.createToolbar('top', 'Original Name')
+		const toolbar = container.getToolbarsInRegion('top')[0]
+		expect(toolbar.title).toBe('Original Name')
 
-		container.renameSurface(surface.id, 'New Name')
+		container.renameToolbar(toolbar, 'New Name')
 
-		const renamedSurface = container.surfaces.find((s) => s.id === surface.id)
-		expect(renamedSurface?.label).toBe('New Name')
+		const renamedToolbar = container.getToolbarsInRegion('top')[0]
+		expect(renamedToolbar?.title).toBe('New Name')
 	})
 
-	it('should show and hide surfaces', () => {
+	it('should get toolbars in region with correct ordering', () => {
 		const container = paletteContainerModel({ palette })
 
-		const surface = container.createSurface('top', 'toolbar')
-		expect(surface.visible).toBe(true)
+		container.createToolbar('top')
+		container.createToolbar('top')
+		container.createToolbar('right')
 
-		container.hideSurface(surface.id)
-		let hiddenSurface = container.surfaces.find((s) => s.id === surface.id)
-		expect(hiddenSurface?.visible).toBe(false)
+		const topToolbars = container.getToolbarsInRegion('top')
+		expect(topToolbars).toHaveLength(2)
+		expect(topToolbars[0]).toEqual({ title: undefined, items: [] })
+		expect(topToolbars[1]).toEqual({ title: undefined, items: [] })
 
-		container.showSurface(surface.id)
-		let shownSurface = container.surfaces.find((s) => s.id === surface.id)
-		expect(shownSurface?.visible).toBe(true)
-	})
-
-	it('should get surfaces in region with correct ordering', () => {
-		const container = paletteContainerModel({ palette })
-
-		const surface1 = container.createSurface('top', 'toolbar')
-		const surface2 = container.createSurface('top', 'toolbar')
-		const surface3 = container.createSurface('right', 'toolbar')
-
-		const topSurfaces = container.getSurfacesInRegion('top')
-		expect(topSurfaces).toHaveLength(2)
-		expect(topSurfaces[0].id).toBe(surface1.id)
-		expect(topSurfaces[1].id).toBe(surface2.id)
-
-		const rightSurfaces = container.getSurfacesInRegion('right')
-		expect(rightSurfaces).toHaveLength(1)
-		expect(rightSurfaces[0].id).toBe(surface3.id)
+		const rightToolbars = container.getToolbarsInRegion('right')
+		expect(rightToolbars).toHaveLength(1)
+		expect(rightToolbars[0]).toEqual({ title: undefined, items: [] })
 	})
 
 	it('should generate insertion points correctly', () => {
 		const container = paletteContainerModel({ palette })
 
-		const surface1 = container.createSurface('top', 'toolbar')
-		const surface2 = container.createSurface('top', 'toolbar')
+		const toolbar1 = container.createToolbar('top')
+		const toolbar2 = container.createToolbar('top')
 
 		const insertionPoints = container.getInsertionPointsInRegion('top')
-		expect(insertionPoints).toHaveLength(3) // Before first, between, after last
+		expect(insertionPoints).toHaveLength(3)
 
 		expect(insertionPoints[0]).toEqual({
 			region: 'top',
 			index: 0,
 			after: undefined,
-			before: surface1,
+			before: toolbar1,
 		})
 
 		expect(insertionPoints[1]).toEqual({
 			region: 'top',
 			index: 1,
-			after: surface1,
-			before: surface2,
+			after: toolbar1,
+			before: toolbar2,
 		})
 
 		expect(insertionPoints[2]).toEqual({
 			region: 'top',
 			index: 2,
-			after: surface2,
+			after: toolbar2,
 			before: undefined,
 		})
 	})
@@ -202,85 +168,56 @@ describe('paletteContainerModel', () => {
 	it('should keep insertion points reactive after mutations', () => {
 		const container = paletteContainerModel({ palette })
 
-		// Initial state
 		const initialInsertionPoints = container.insertionPoints
-		expect(initialInsertionPoints).toHaveLength(4) // One per region
+		expect(initialInsertionPoints).toHaveLength(4)
 
-		// Create surfaces
-		const surface1 = container.createSurface('top', 'toolbar')
-		const surface2 = container.createSurface('top', 'toolbar')
+		container.createToolbar('top')
+		container.createToolbar('top')
 
-		// Insertion points should update
 		const updatedInsertionPoints = container.insertionPoints
-		expect(updatedInsertionPoints).toHaveLength(6) // More insertion points with surfaces
+		expect(updatedInsertionPoints).toHaveLength(6)
 
-		// Remove a surface
-		container.removeSurface(surface1.id)
+		container.removeToolbar(container.getToolbarsInRegion('top')[0])
 
-		// Insertion points should update again
 		const finalInsertionPoints = container.insertionPoints
-		expect(finalInsertionPoints).toHaveLength(5) // Back to fewer insertion points
+		expect(finalInsertionPoints).toHaveLength(5)
 	})
 
-	it('should create toolbar surfaces with embedded items', () => {
+	it('should create toolbars with embedded items', () => {
 		const container = paletteContainerModel({ palette })
 
-		const surface = container.createSurface('top', 'toolbar', 'Test Toolbar')
+		container.createToolbar('top', 'Test Toolbar')
+		const toolbar = container.getToolbarsInRegion('top')[0]
 
-		expect(surface.type).toBe('toolbar')
-		if (surface.type !== 'toolbar') {
-			throw new Error('Expected toolbar surface')
-		}
-		expect(surface.items).toEqual([])
-		expect(container.surfaces).toEqual(expect.arrayContaining([surface]))
+		expect(toolbar.items).toEqual([])
+		expect(container.getToolbarsInRegion('top')).toEqual(expect.arrayContaining([toolbar]))
 
-		container.removeSurface(surface.id)
-		expect(container.surfaces).toEqual([])
+		container.removeToolbar(toolbar)
+		expect(container.getToolbarsInRegion('top')).toEqual([])
 	})
 
 	it('should handle cross-region moves with populated destinations', () => {
 		const container = paletteContainerModel({ palette })
 
-		// Create surfaces in multiple regions
-		const surface1 = container.createSurface('top', 'toolbar')
-		const surface2 = container.createSurface('right', 'toolbar')
-		const surface3 = container.createSurface('right', 'toolbar')
+		container.createToolbar('top')
+		container.createToolbar('right')
+		container.createToolbar('right')
+		const toolbar1 = container.getToolbarsInRegion('top')[0]
 
-		// Move surface1 to right region at position 1 (between surface2 and surface3)
-		container.moveSurface(surface1.id, 'right', 1)
+		container.moveToolbar(toolbar1, 'right', 1)
 
-		const rightSurfaces = container.getSurfacesInRegion('right')
-		expect(rightSurfaces.map((s) => s.id)).toEqual([surface2.id, surface1.id, surface3.id])
-
-		// Verify position normalization
-		expect(rightSurfaces[0].position).toBe(0)
-		expect(rightSurfaces[1].position).toBe(1)
-		expect(rightSurfaces[2].position).toBe(2)
-	})
-
-	it('should support status surface type', () => {
-		const container = paletteContainerModel({ palette })
-
-		const statusSurface = container.createSurface('bottom', 'status', 'Status Bar')
-
-		expect(statusSurface.type).toBe('status')
-		expect(statusSurface.label).toBe('Status Bar')
-		expect(container.surfaces).toEqual(expect.arrayContaining([statusSurface]))
+		const rightToolbars = container.getToolbarsInRegion('right')
+		expect(rightToolbars).toHaveLength(3)
+		expect(container.toolbarStack.right.slots.map((slot) => slot.toolbar)).toEqual(rightToolbars)
+		expect(container.toolbarStack.right.slots).toHaveLength(3)
 	})
 
 	it('should handle errors for invalid operations', () => {
 		const container = paletteContainerModel({ palette })
+		const missingToolbar = { items: [] } as PaletteToolbar
 
-		expect(() => container.removeSurface('non-existent')).toThrow(
-			"Surface 'non-existent' not found"
-		)
-		expect(() => container.moveSurface('non-existent', 'right')).toThrow(
-			"Surface 'non-existent' not found"
-		)
-		expect(() => container.renameSurface('non-existent', 'New Name')).toThrow(
-			"Surface 'non-existent' not found"
-		)
-		expect(() => container.hideSurface('non-existent')).toThrow("Surface 'non-existent' not found")
-		expect(() => container.showSurface('non-existent')).toThrow("Surface 'non-existent' not found")
+		expect(() => container.removeToolbar(missingToolbar)).toThrow('Toolbar not found')
+		expect(() => container.moveToolbar(missingToolbar, 'right')).toThrow('Toolbar not found')
+		expect(() => container.renameToolbar(missingToolbar, 'New Name')).toThrow('Toolbar not found')
 	})
 })

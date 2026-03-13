@@ -2,7 +2,7 @@
  * Test directive re-rendering behavior
  */
 import { describe, it, expect, beforeEach } from 'vitest'
-import { reactive, unreactive } from 'mutts'
+import { reactive, reactiveOptions, unreactive } from 'mutts'
 import { c, h, latch, document, pounceOptions } from '@pounce/core'
 
 describe('Directive Re-rendering', () => {
@@ -73,6 +73,7 @@ describe('Directive Re-rendering', () => {
 
 	it('should NOT re-render component on bare reactive read (rebuild fence)', () => {
 		let callCount = 0
+		const warnings: string[] = []
 		const state = reactive({ trigger: 0 })
 
 		const myDir = (el: HTMLElement) => {
@@ -95,13 +96,21 @@ describe('Directive Re-rendering', () => {
 		// Rebuild fence prevents re-rendering: directive is NOT re-called
 		// checkRebuild='warn' means it logs but does not throw on rebuild-fence violations
 		const original = pounceOptions.checkRebuild
+		const originalWarn = reactiveOptions.warn
 		pounceOptions.checkRebuild = 'warn'
+		reactiveOptions.warn = (...args: any[]) => {
+			if (typeof args[0] === 'string') warnings.push(args[0])
+		}
 		try {
 			state.trigger++
 			expect(callCount).toBe(1)
 		} finally {
+			reactiveOptions.warn = originalWarn
 			pounceOptions.checkRebuild = original
 		}
+		expect(warnings[0]).toContain('Detailed trace:')
+		expect(warnings[0]).toContain('touch:')
+		expect(warnings[0]).toContain('trigger')
 	})
 
 	it('isolates reactive directive extraction from render effect dependencies', () => {

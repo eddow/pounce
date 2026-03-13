@@ -72,7 +72,7 @@ function createDefaultLayout(): SerializedDockview {
 }
 
 const CounterWidget: DockviewWidget<CounterParams, DemoContext> = (props) => {
-	const state = reactive({ value: untracked(() => props.params.initial) })
+	const state = reactive({ value: untracked`DockviewDemo.CounterWidget.initial`(() => props.params.initial) })
 
 	effect`DockviewDemo.CounterWidget.syncContext`(() => {
 		props.context.badge = String(state.value)
@@ -119,7 +119,7 @@ const CounterWidget: DockviewWidget<CounterParams, DemoContext> = (props) => {
 }
 
 const NotesWidget: DockviewWidget<NotesParams, DemoContext> = (props) => {
-	const state = reactive({ text: untracked(() => props.params.initial) })
+	const state = reactive({ text: untracked`DockviewDemo.NotesWidget.initial`(() => props.params.initial) })
 
 	effect`DockviewDemo.NotesWidget.syncContext`(() => {
 		props.context.badge = String(state.text.length)

@@ -1,10 +1,12 @@
 import {
 	addUnreactiveProps,
 	attend,
+	type CleanupReason,
 	CompareSymbol,
 	effect,
 	formatCleanupReason,
 	link,
+	type PropTrigger,
 	reactiveOptions,
 	root,
 	unreactive,
@@ -39,6 +41,85 @@ export type Children = Child | readonly Children[] | ReactiveProp<Children>
 function arrayed<T>(v: T | readonly T[]): readonly T[] {
 	return Array.isArray(v) ? v : [v as T]
 }
+//#region Fence warning presentation: TODO, move where it belongs
+function stringifyDiagnosticValue(value: unknown): string {
+	if (typeof value === 'string') return value
+	if (typeof value === 'number' || typeof value === 'boolean' || value == null) return String(value)
+	if (typeof value === 'function') return value.name || 'anonymous'
+	if (typeof value === 'object') {
+		const text = String(value)
+		if (text && text !== '[object Object]') return text
+		return value.constructor?.name || 'object'
+	}
+	return String(value)
+}
+
+function detailForTrigger(trigger: PropTrigger): string {
+	return trigger.evolution.type === 'bunch'
+		? `${trigger.evolution.type} ${String(trigger.evolution.method)}`
+		: `${trigger.evolution.type} ${String(trigger.evolution.prop)}`
+}
+
+function appendIndented(lines: string[], value: unknown, indent: string): void {
+	const text = stringifyDiagnosticValue(value)
+	for (const line of text.split('\n')) {
+		if (!line) continue
+		lines.push(`${indent}${line}`)
+	}
+}
+
+function appendReasonDiagnostics(lines: string[], reason: CleanupReason, indent = ''): void {
+	switch (reason.type) {
+		case 'propChange':
+			for (const trigger of reason.triggers) {
+				lines.push(`${indent}- ${detailForTrigger(trigger)}`)
+				if (trigger.touch) {
+					lines.push(`${indent}  touch:`)
+					appendIndented(lines, trigger.touch, `${indent}    `)
+				}
+				if (trigger.dependency) {
+					lines.push(`${indent}  dependency:`)
+					appendIndented(lines, trigger.dependency, `${indent}    `)
+				}
+			}
+			break
+		case 'invalidate':
+			lines.push(`${indent}- invalidate`)
+			appendReasonDiagnostics(lines, reason.cause, `${indent}  `)
+			break
+		case 'external':
+			lines.push(`${indent}- external: ${reason.detail}`)
+			break
+		case 'stopped':
+			lines.push(`${indent}- stopped${reason.detail ? ` (${reason.detail})` : ''}`)
+			break
+		case 'gc':
+			lines.push(`${indent}- gc`)
+			break
+		case 'lineage':
+			lines.push(`${indent}- lineage`)
+			appendReasonDiagnostics(lines, reason.parent, `${indent}  `)
+			break
+		case 'error':
+			lines.push(`${indent}- error: ${stringifyDiagnosticValue(reason.error)}`)
+			break
+		case 'multiple':
+			for (const nested of reason.reasons) appendReasonDiagnostics(lines, nested, indent)
+			break
+	}
+	if (reason.chain) {
+		lines.push(`${indent}caused by:`)
+		appendReasonDiagnostics(lines, reason.chain, `${indent}  `)
+	}
+}
+
+function formatReasonText(reason: CleanupReason): string[] {
+	const summary = formatCleanupReason(reason).map(stringifyDiagnosticValue).join(' ')
+	const details: string[] = []
+	appendReasonDiagnostics(details, reason)
+	return details.length > 0 ? [summary, '', 'Detailed trace:', ...details] : [summary]
+}
+//#endregion
 export type Env<T = any> = Record<PropertyKey, T>
 /**
  * PounceElement class - encapsulates JSX element creation and rendering
@@ -129,7 +210,7 @@ Note: "à la morph" means it can be attended - if it uses array-diff
 */
 	applyDirectives(target: Node | readonly Node[], env: Env) {
 		if (!this.meta) return
-		const stopThis = root(() =>
+		const stopThis = root`attr:this`(() =>
 			effect`attr:this`(() => {
 				const these = this.meta!.directives().this
 				for (const usage of these) {
@@ -142,7 +223,7 @@ Note: "à la morph" means it can be attended - if it uses array-diff
 				}
 			})
 		)
-		const stopUse = root(() =>
+		const stopUse = root`attr:use`(() =>
 			attend`attr:use`(
 				() => this.meta!.directives().use,
 				(usage, access) => {
@@ -154,7 +235,7 @@ Note: "à la morph" means it can be attended - if it uses array-diff
 				}
 			)
 		)
-		const stopNamed = root(() =>
+		const stopNamed = root`attr:named`(() =>
 			attend`attr:named`(
 				() => Object.keys(this.meta!.directives().named || {}),
 				(key, access) => {
@@ -193,7 +274,7 @@ Note: "à la morph" means it can be attended - if it uses array-diff
 			if (reaction) {
 				if (!pounceOptions.checkRebuild) return
 				const reasons =
-					reaction === true ? ['(no dependency chain available)'] : formatCleanupReason(reaction)
+					reaction === true ? ['(no dependency chain available)'] : formatReasonText(reaction)
 				const msg = [
 					`[pounce] Rebuild fence: <${tagName}> has reactive dependencies that changed, but re-running the component body is forbidden (would destroy local state and risk infinite loops).`,
 					'Triggered by:',

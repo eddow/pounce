@@ -46,7 +46,7 @@ export type SelectModel = {
  * ```
  */
 export function selectModel(props: SelectProps): SelectModel {
-	const initValue = untracked(() => props.value)
+	const initValue = untracked`selectModel:initValue`(() => props.value)
 	const model: SelectModel = {
 		get select() {
 			const { options: _, fullWidth: __, variant: ___, onInput: userOnInput, ...rest } = props

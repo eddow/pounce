@@ -83,7 +83,7 @@ export function reconcile(parent: Node, newChildren: Node | readonly Node[]): Sc
 		const rid = ++reconcileCount
 		perf?.mark(`reconcile:${rid}:start`)
 		const items = Array.isArray(newChildren) ? newChildren : newChildren ? [newChildren] : []
-		const connecting = untracked(() => parent.isConnected)
+		const connecting = untracked`reconcile:isConnected`(() => parent.isConnected)
 		if (parent instanceof Element && (items.length === 0 || parent.childNodes.length === 0)) {
 			for (const node of parent.childNodes) {
 				syncRegistry(node, 'delete', connecting)
@@ -199,7 +199,7 @@ export function latch(
 		stop?.()
 		if (element) {
 			const mountedRoot = element
-			const connecting = untracked(() => mountedRoot.isConnected)
+			const connecting = untracked`latch:isConnected`(() => mountedRoot.isConnected)
 			latchOwners.delete(mountedRoot)
 			while (mountedRoot.firstChild) {
 				const node = mountedRoot.firstChild

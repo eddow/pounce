@@ -20,6 +20,7 @@ import PaletteDemo from './components/PaletteDemo'
 import ProgressDemo from './components/ProgressDemo'
 import SizeableDemo from './components/SizeableDemo'
 import StarsDemo from './components/StarsDemo'
+import 'mutts/debug'
 
 function AppLink(props: LinkProps) {
 	const model = linkModel(props)

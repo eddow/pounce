@@ -1,14 +1,27 @@
 import { describe, expect, it } from 'vitest'
 import { createPaletteModel } from './model'
-import type { PaletteDisplayItem, PaletteToolbarSurface } from './types'
+import type { PaletteDisplayItem, PaletteToolbar } from './types'
 
-function toolbarSurface(id: string, items: readonly PaletteDisplayItem[]): PaletteToolbarSurface {
+function toolbarFixture(items: readonly PaletteDisplayItem[]): PaletteToolbar {
 	return {
-		id,
-		type: 'toolbar',
-		region: 'top',
-		visible: true,
 		items,
+	}
+}
+
+function containerFixture(...toolbars: PaletteToolbar[]) {
+	return {
+		editMode: false,
+		toolbarStack: {
+			top: {
+				slots: toolbars.map((toolbar, index) => ({
+					toolbar,
+					space: 1 / (toolbars.length + 1 - index),
+				})),
+			},
+			right: { slots: [] },
+			bottom: { slots: [] },
+			left: { slots: [] },
+		},
 	}
 }
 
@@ -31,36 +44,31 @@ describe('editor-style display items', () => {
 				},
 			],
 			display: {
-				container: {
-					editMode: false,
-					dropTargets: [],
-					surfaces: [
-						toolbarSurface('1', [
-							{
-								kind: 'intent',
-								intentId: 'game.speed:step:up',
-								presenter: 'step',
-							},
-							{
-								kind: 'editor',
-								entryId: 'game.speed',
-								presenter: 'slider',
-							},
-							{
-								kind: 'editor',
-								entryId: 'ui.theme',
-								presenter: 'select',
-							},
-						] as PaletteDisplayItem[]),
-					],
-				},
+				container: containerFixture(
+					toolbarFixture([
+						{
+							kind: 'intent',
+							intentId: 'game.speed:step:up',
+							presenter: 'step',
+						},
+						{
+							kind: 'editor',
+							entryId: 'game.speed',
+							presenter: 'slider',
+						},
+						{
+							kind: 'editor',
+							entryId: 'ui.theme',
+							presenter: 'select',
+						},
+					] as PaletteDisplayItem[])
+				),
 			},
 		})
 
-		const toolbar = palette.display.container!.surfaces[0] as PaletteToolbarSurface
+		const toolbar = palette.display.container!.toolbarStack.top.slots[0].toolbar
 		expect(toolbar.items).toHaveLength(3)
 
-		// Resolve intent display item
 		const intentItem = palette.resolveDisplayItem(toolbar.items[0])
 		expect(intentItem?.kind).toBe('intent')
 		if (intentItem?.kind === 'intent') {
@@ -68,7 +76,6 @@ describe('editor-style display items', () => {
 			expect(intentItem.entry.id).toBe('game.speed')
 		}
 
-		// Resolve editor display items
 		const editorItem1 = palette.resolveDisplayItem(toolbar.items[1])
 		expect(editorItem1?.kind).toBe('editor')
 		if (editorItem1?.kind === 'editor') {

@@ -588,7 +588,7 @@ This model manages palette-capable regions around arbitrary content using **surf
 const container = paletteContainerModel({ palette })
 ```
 
-It exposes:
+It exposes: (TODO: refactor completely)
 
 - `editMode`
 - `surfaces` - the container surfaces (toolbar, command, settings, status)

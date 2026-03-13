@@ -37,7 +37,7 @@ describe('bind() runtime', () => {
 		const bv = reactive({ x: 0 })
 		let count = 0
 		bind(rp(() => bv.x, (v) => { bv.x = v }), rp(() => a.x, (v) => { a.x = v }))
-		effect(() => { void a.x; void bv.x; count++ })
+		effect`bind:test`(() => { void a.x; void bv.x; count++ })
 		const before = count
 		a.x = 1
 		expect(count - before).toBeLessThanOrEqual(2)

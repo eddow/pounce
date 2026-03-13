@@ -73,7 +73,7 @@ describe('Dockview renderer internals', () => {
 		}
 
 		const content = dockviewInternals.contentRenderer(Widget, props, vi.fn(), scope, (fn) =>
-			effect(fn)
+			effect`dockview.spec.content`(fn)
 		)
 		document.body.appendChild(content.element)
 		content.init({
@@ -84,7 +84,7 @@ describe('Dockview renderer internals', () => {
 		} satisfies GroupPanelPartInitParameters)
 
 		const tab = dockviewInternals.tabRenderer(Tab, props as DockviewWidgetProps, scope, (fn) =>
-			effect(fn)
+			effect`dockview.spec.tab`(fn)
 		)
 		document.body.appendChild(tab.element)
 		tab.init({
@@ -123,7 +123,7 @@ describe('Dockview renderer internals', () => {
 			props,
 			vi.fn(),
 			scope,
-			(fn) => effect(fn)
+			(fn) => effect`dockview.spec.title`(fn)
 		)
 		document.body.appendChild(content.element)
 		content.init({
@@ -169,7 +169,7 @@ describe('Dockview renderer internals', () => {
 			props,
 			vi.fn(),
 			scope,
-			(fn) => effect(fn),
+			(fn) => effect`dockview.spec.error`(fn),
 			onPanelError
 		)
 		document.body.appendChild(content.element)

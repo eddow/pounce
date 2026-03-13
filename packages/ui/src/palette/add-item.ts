@@ -97,7 +97,6 @@ function candidateSearchText(candidate: PaletteAddItemCandidate): string {
 			candidate.intent.label ?? candidate.entry.label,
 			candidate.intent.id,
 			candidate.intent.description,
-			candidate.intent.binding,
 			candidate.entry.label,
 			candidate.entry.id,
 			candidate.entry.description,
