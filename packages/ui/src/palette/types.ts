@@ -5,7 +5,7 @@ import type { PounceElement } from '@pounce/core'
 // ============================================================================
 
 export interface PaletteModelLike {
-	readonly state: PaletteState
+	readonly state: PaletteState // TODO: get rid of `state`, bool/num/... should have their pair set/get as "run" has its callback
 	readonly runtime: PaletteRuntimeState
 	readonly display: PaletteDisplayConfiguration
 	resolveEntry(entryId: PaletteEntryId): PaletteEntryDefinition | undefined
@@ -159,15 +159,16 @@ export type PaletteToolbarTrack = {
 }
 
 export type PaletteContainerToolbarStack = {
-	readonly top: PaletteToolbarTrack
-	readonly right: PaletteToolbarTrack
-	readonly bottom: PaletteToolbarTrack
-	readonly left: PaletteToolbarTrack
+	readonly top: readonly PaletteToolbarTrack[]
+	readonly right: readonly PaletteToolbarTrack[]
+	readonly bottom: readonly PaletteToolbarTrack[]
+	readonly left: readonly PaletteToolbarTrack[]
 }
 
 export type PaletteContainerConfiguration = {
 	readonly toolbarStack: PaletteContainerToolbarStack
 	readonly editMode: boolean
+	readonly parkedToolbars?: readonly PaletteToolbar[]
 }
 
 export type PaletteContainerDropTarget = {
@@ -177,6 +178,7 @@ export type PaletteContainerDropTarget = {
 
 export type PaletteInsertionPoint = {
 	readonly region: PaletteContainerRegion
+	readonly track: number
 	readonly index: number
 	readonly before?: PaletteToolbar
 	readonly after?: PaletteToolbar

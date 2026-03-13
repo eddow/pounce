@@ -103,6 +103,103 @@
   margin-top: -0.5rem
   margin-bottom: 1.5rem
 
+.docs-eyebrow
+  display: inline-flex
+  align-items: center
+  gap: 0.5rem
+  margin-bottom: 1rem
+  padding: 0.35rem 0.75rem
+  border: 1px solid color-mix(in srgb, var(--pico-primary, #3b82f6) 28%, transparent)
+  border-radius: 999px
+  color: var(--pico-primary, #3b82f6)
+  background: color-mix(in srgb, var(--pico-primary, #3b82f6) 8%, transparent)
+  font-size: 0.85rem
+  font-weight: 700
+
+.docs-hero
+  display: grid
+  grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.95fr)
+  gap: 1.5rem
+  align-items: stretch
+  margin-bottom: 2.5rem
+
+  h1
+    margin-bottom: 1rem
+    font-size: clamp(2.3rem, 4vw, 4.25rem)
+    line-height: 1.02
+    letter-spacing: -0.04em
+
+.docs-hero-copy
+  display: grid
+  align-content: start
+
+.docs-hero-actions
+  display: flex
+  flex-wrap: wrap
+  gap: 0.75rem
+  margin-top: 1rem
+
+  a[role='button']
+    margin: 0
+
+.docs-hero-panel
+  display: grid
+  align-content: start
+  gap: 0.9rem
+  padding: 1.25rem
+  border: 1px solid var(--pico-muted-border-color, #d8dee4)
+  border-radius: 1rem
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pico-primary, #3b82f6) 7%, transparent), var(--pico-card-background-color, rgba(255, 255, 255, 0.82)))
+  box-shadow: 0 14px 45px rgba(15, 23, 42, 0.08)
+
+  pre
+    margin: 0
+
+.docs-hero-panel-title
+  font-weight: 700
+  font-size: 1rem
+
+.docs-card-grid
+  display: grid
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr))
+  gap: 1rem
+
+.docs-home-card
+  padding: 1rem 1.1rem
+  border: 1px solid var(--pico-muted-border-color, #d8dee4)
+  border-radius: 0.9rem
+  background: var(--pico-card-background-color, rgba(255, 255, 255, 0.82))
+
+  h3
+    margin-bottom: 0.5rem
+    font-size: 1.05rem
+
+  p
+    margin: 0
+
+.docs-home-split
+  display: grid
+  grid-template-columns: minmax(0, 1.2fr) minmax(16rem, 0.8fr)
+  gap: 1.25rem
+  margin-bottom: 1rem
+
+.docs-home-command-stack
+  display: grid
+  gap: 1rem
+
+  > div
+    padding: 1rem
+    border: 1px solid var(--pico-muted-border-color, #d8dee4)
+    border-radius: 0.9rem
+    background: color-mix(in srgb, var(--pico-primary, #3b82f6) 4%, var(--pico-card-background-color, rgba(255, 255, 255, 0.82)))
+
+    strong
+      display: block
+      margin-bottom: 0.6rem
+
+    pre
+      margin: 0
+
 .docs-map
   display: grid
   gap: 1rem
@@ -231,6 +328,12 @@
 @media (max-width: 900px)
   .docs-layout
     display: block
+
+  .docs-hero
+    grid-template-columns: 1fr
+
+  .docs-home-split
+    grid-template-columns: 1fr
 
   .docs-map-row
     align-items: stretch

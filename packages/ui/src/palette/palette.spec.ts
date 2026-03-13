@@ -82,10 +82,10 @@ describe('Palette subpath entry point', () => {
 			display: {
 				container: {
 					toolbarStack: {
-						top: { slots: [] },
-						right: { slots: [] },
-						bottom: { slots: [] },
-						left: { slots: [] },
+						top: [{ slots: [] }],
+						right: [{ slots: [] }],
+						bottom: [{ slots: [] }],
+						left: [{ slots: [] }],
 					},
 					editMode: false,
 				},

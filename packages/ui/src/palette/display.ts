@@ -6,6 +6,7 @@ import type {
 	PaletteContainerToolbarStack,
 	PaletteDisplayConfiguration,
 	PaletteDisplayItem,
+	PaletteDisplayItemKind,
 	PaletteDisplayPresenterFamily,
 	PaletteEntryDefinition,
 	PaletteIntent,
@@ -17,6 +18,7 @@ import type {
 interface MutablePaletteContainerConfiguration {
 	toolbarStack: PaletteContainerToolbarStack
 	editMode: boolean
+	parkedToolbars?: readonly PaletteToolbar[]
 }
 
 interface MutablePaletteDisplayConfiguration {
@@ -27,10 +29,10 @@ function flattenToolbarStack(
 	toolbarStack: PaletteContainerConfiguration['toolbarStack']
 ): PaletteToolbar[] {
 	return [
-		...toolbarStack.top.slots.map((slot) => slot.toolbar),
-		...toolbarStack.right.slots.map((slot) => slot.toolbar),
-		...toolbarStack.bottom.slots.map((slot) => slot.toolbar),
-		...toolbarStack.left.slots.map((slot) => slot.toolbar),
+		...toolbarStack.top.flatMap((track) => track.slots.map((slot) => slot.toolbar)),
+		...toolbarStack.right.flatMap((track) => track.slots.map((slot) => slot.toolbar)),
+		...toolbarStack.bottom.flatMap((track) => track.slots.map((slot) => slot.toolbar)),
+		...toolbarStack.left.flatMap((track) => track.slots.map((slot) => slot.toolbar)),
 	]
 }
 
@@ -48,30 +50,32 @@ function updateToolbarInStack(
 ): PaletteContainerConfiguration['toolbarStack'] {
 	const regions: PaletteContainerRegion[] = ['top', 'right', 'bottom', 'left']
 	const nextStack = {
-		top: {
-			slots: toolbarStack.top.slots.map((slot) => ({ toolbar: slot.toolbar, space: slot.space })),
-		},
-		right: {
-			slots: toolbarStack.right.slots.map((slot) => ({ toolbar: slot.toolbar, space: slot.space })),
-		},
-		bottom: {
-			slots: toolbarStack.bottom.slots.map((slot) => ({
+		top: toolbarStack.top.map((track) => ({
+			slots: track.slots.map((slot) => ({ toolbar: slot.toolbar, space: slot.space })),
+		})),
+		right: toolbarStack.right.map((track) => ({
+			slots: track.slots.map((slot) => ({ toolbar: slot.toolbar, space: slot.space })),
+		})),
+		bottom: toolbarStack.bottom.map((track) => ({
+			slots: track.slots.map((slot) => ({
 				toolbar: slot.toolbar,
 				space: slot.space,
 			})),
-		},
-		left: {
-			slots: toolbarStack.left.slots.map((slot) => ({ toolbar: slot.toolbar, space: slot.space })),
-		},
+		})),
+		left: toolbarStack.left.map((track) => ({
+			slots: track.slots.map((slot) => ({ toolbar: slot.toolbar, space: slot.space })),
+		})),
 	}
 	for (const region of regions) {
-		const index = nextStack[region].slots.findIndex((slot) => slot.toolbar === toolbar)
-		if (index < 0) continue
-		nextStack[region].slots[index] = {
-			toolbar: updatedToolbar,
-			space: nextStack[region].slots[index].space,
+		for (let track = 0; track < nextStack[region].length; track += 1) {
+			const index = nextStack[region][track].slots.findIndex((slot) => slot.toolbar === toolbar)
+			if (index < 0) continue
+			nextStack[region][track].slots[index] = {
+				toolbar: updatedToolbar,
+				space: nextStack[region][track].slots[index].space,
+			}
+			return nextStack
 		}
-		return nextStack
 	}
 	return nextStack
 }
@@ -84,17 +88,28 @@ function emptyToolbarTrack(): PaletteToolbarTrack {
 
 function emptyToolbarStack(): PaletteContainerToolbarStack {
 	return {
-		top: emptyToolbarTrack(),
-		right: emptyToolbarTrack(),
-		bottom: emptyToolbarTrack(),
-		left: emptyToolbarTrack(),
+		top: [emptyToolbarTrack()],
+		right: [emptyToolbarTrack()],
+		bottom: [emptyToolbarTrack()],
+		left: [emptyToolbarTrack()],
 	}
 }
 
 function findToolbar(palette: PaletteModel, toolbar: PaletteToolbar): PaletteToolbar {
 	const toolbarStack = palette.display.container?.toolbarStack
+	const parkedToolbars = palette.display.container?.parkedToolbars ?? []
 	const currentToolbar = toolbarStack ? findToolbarInStack(toolbarStack, toolbar) : undefined
+	const parkedToolbar = parkedToolbars.find((entry) => entry === toolbar)
+	if (parkedToolbar) return parkedToolbar
 	return currentToolbar ?? toolbar
+}
+
+function updateToolbarInParkedToolbars(
+	parkedToolbars: readonly PaletteToolbar[],
+	toolbar: PaletteToolbar,
+	updatedToolbar: PaletteToolbar
+): readonly PaletteToolbar[] {
+	return parkedToolbars.map((entry) => (entry === toolbar ? updatedToolbar : entry))
 }
 
 export interface PaletteToolbarModel {
@@ -112,6 +127,238 @@ export interface PaletteDisplayCustomizationModel {
 		targetIndex?: number
 	): void
 	setPresenter(toolbar: PaletteToolbar, item: PaletteDisplayItem, presenter?: string): void
+}
+
+export type PaletteSurfaceAxis = 'horizontal' | 'vertical'
+
+export type PaletteSurfaceContext = {
+	readonly axis: PaletteSurfaceAxis
+	readonly region?: PaletteContainerRegion
+}
+
+export type PaletteDisplayItemIdentity = {
+	readonly id: string
+	readonly kind: PaletteDisplayItemKind
+}
+
+export type PaletteConfiguredItemTarget = {
+	readonly toolbar: PaletteToolbar
+	readonly item: PaletteDisplayItem
+	readonly identity: PaletteDisplayItemIdentity
+}
+
+export type PaletteConfiguratorPresenterChoice = {
+	readonly id: string
+	readonly label: string
+	readonly selected: boolean
+}
+
+export type PaletteConfiguratorMoveTarget = {
+	readonly toolbar: PaletteToolbar
+	readonly label: string
+}
+
+export type PaletteItemConfiguratorDescriptor = {
+	readonly target: PaletteConfiguredItemTarget
+	readonly resolved: PaletteResolvedDisplayItem
+	readonly surface: PaletteSurfaceContext
+	readonly title: string
+	readonly subtitle?: string
+	readonly preferredRenderMode?: 'anchored' | 'panel' | 'host-choice'
+	readonly presenterChoices: readonly PaletteConfiguratorPresenterChoice[]
+	readonly moveTargets: readonly PaletteConfiguratorMoveTarget[]
+	readonly canMoveBackward: boolean
+	readonly canMoveForward: boolean
+	readonly removable: boolean
+}
+
+export interface PaletteItemConfiguratorModel {
+	readonly current: PaletteItemConfiguratorDescriptor | undefined
+	open(target: PaletteConfiguredItemTarget, surface: PaletteSurfaceContext): void
+	close(): void
+	clear(): void
+	setPresenter(presenter: string | undefined): void
+	moveBackward(): void
+	moveForward(): void
+	moveToToolbar(toolbar: PaletteToolbar): void
+	remove(): void
+}
+
+type PaletteItemConfiguratorState = {
+	target: PaletteConfiguredItemTarget | undefined
+	surface: PaletteSurfaceContext | undefined
+}
+
+type PaletteItemConfiguratorDescriptorResolverProps = {
+	readonly palette: PaletteModel
+	readonly target: PaletteConfiguredItemTarget
+	readonly resolved: PaletteResolvedDisplayItem
+	readonly surface: PaletteSurfaceContext
+}
+
+export type PaletteItemConfiguratorDescriptorResolvers = {
+	readonly getTitle: (props: PaletteItemConfiguratorDescriptorResolverProps) => string
+	readonly getSubtitle?: (
+		props: PaletteItemConfiguratorDescriptorResolverProps
+	) => string | undefined
+	readonly getPresenterChoices: (
+		props: PaletteItemConfiguratorDescriptorResolverProps
+	) => readonly PaletteConfiguratorPresenterChoice[]
+	readonly getMoveTargets?: (
+		props: PaletteItemConfiguratorDescriptorResolverProps
+	) => readonly PaletteConfiguratorMoveTarget[]
+	readonly getPreferredRenderMode?: (
+		props: PaletteItemConfiguratorDescriptorResolverProps
+	) => 'anchored' | 'panel' | 'host-choice' | undefined
+}
+
+export function getPaletteDisplayItemIdentity(
+	item: PaletteDisplayItem
+): PaletteDisplayItemIdentity {
+	switch (item.kind) {
+		case 'intent':
+			return { id: item.intentId, kind: 'intent' }
+		case 'editor':
+			return { id: item.entryId, kind: 'editor' }
+		case 'item-group': {
+			const optionsHash =
+				item.group.kind === 'enum-options' ? [...item.group.options].sort().join('|') : ''
+			return {
+				id: `group:${item.group.entryId}:${item.group.kind}:${optionsHash}`,
+				kind: 'item-group',
+			}
+		}
+	}
+}
+
+export function paletteItemConfiguratorModel(props: {
+	palette: PaletteModel
+	customization: PaletteDisplayCustomizationModel
+	resolvers: PaletteItemConfiguratorDescriptorResolvers
+}): PaletteItemConfiguratorModel {
+	const { palette, customization, resolvers } = props
+	const state = reactive<PaletteItemConfiguratorState>({
+		target: undefined,
+		surface: undefined,
+	})
+
+	function findCurrentToolbar(target: PaletteConfiguredItemTarget): PaletteToolbar {
+		return findToolbar(palette, target.toolbar)
+	}
+
+	function findCurrentItem(target: PaletteConfiguredItemTarget): PaletteDisplayItem | undefined {
+		const toolbar = findCurrentToolbar(target)
+		return toolbar.items.find((item) => {
+			const identity = getPaletteDisplayItemIdentity(item)
+			return identity.id === target.identity.id && identity.kind === target.identity.kind
+		})
+	}
+
+	function currentDescriptor(): PaletteItemConfiguratorDescriptor | undefined {
+		const target = state.target
+		const surface = state.surface
+		if (!target || !surface) return undefined
+		const toolbar = findCurrentToolbar(target)
+		const item = findCurrentItem(target)
+		if (!item) return undefined
+		const resolved = palette.resolveDisplayItem(item)
+		if (!resolved) return undefined
+		const nextTarget: PaletteConfiguredItemTarget = {
+			toolbar,
+			item,
+			identity: getPaletteDisplayItemIdentity(item),
+		}
+		const resolverProps: PaletteItemConfiguratorDescriptorResolverProps = {
+			palette,
+			target: nextTarget,
+			resolved,
+			surface,
+		}
+		const items = toolbar.items
+		const index = items.findIndex((entry) => {
+			const identity = getPaletteDisplayItemIdentity(entry)
+			return identity.id === nextTarget.identity.id && identity.kind === nextTarget.identity.kind
+		})
+		return {
+			target: nextTarget,
+			resolved,
+			surface,
+			title: resolvers.getTitle(resolverProps),
+			subtitle: resolvers.getSubtitle?.(resolverProps),
+			preferredRenderMode: resolvers.getPreferredRenderMode?.(resolverProps),
+			presenterChoices: resolvers.getPresenterChoices(resolverProps),
+			moveTargets: resolvers.getMoveTargets?.(resolverProps) ?? [],
+			canMoveBackward: index > 0,
+			canMoveForward: index >= 0 && index < items.length - 1,
+			removable: true,
+		}
+	}
+
+	function requireCurrent(): PaletteItemConfiguratorDescriptor {
+		const current = currentDescriptor()
+		if (!current) {
+			throw new Error('No configured palette item')
+		}
+		return current
+	}
+
+	function currentIndex(current: PaletteItemConfiguratorDescriptor): number {
+		return current.target.toolbar.items.findIndex((entry) => {
+			const identity = getPaletteDisplayItemIdentity(entry)
+			return (
+				identity.id === current.target.identity.id && identity.kind === current.target.identity.kind
+			)
+		})
+	}
+
+	return {
+		get current() {
+			return currentDescriptor()
+		},
+		open(target: PaletteConfiguredItemTarget, surface: PaletteSurfaceContext) {
+			state.target = target
+			state.surface = surface
+		},
+		close() {
+			state.target = undefined
+			state.surface = undefined
+		},
+		clear() {
+			state.target = undefined
+			state.surface = undefined
+		},
+		setPresenter(presenter: string | undefined) {
+			const current = requireCurrent()
+			customization.setPresenter(current.target.toolbar, current.target.item, presenter)
+		},
+		moveBackward() {
+			const current = requireCurrent()
+			const index = currentIndex(current)
+			if (index <= 0) return
+			customization.moveWithinToolbar(current.target.toolbar, current.target.item, index - 1)
+		},
+		moveForward() {
+			const current = requireCurrent()
+			const index = currentIndex(current)
+			if (index < 0 || index >= current.target.toolbar.items.length - 1) return
+			customization.moveWithinToolbar(current.target.toolbar, current.target.item, index + 1)
+		},
+		moveToToolbar(toolbar: PaletteToolbar) {
+			const current = requireCurrent()
+			customization.moveToToolbar(current.target.toolbar, current.target.item, toolbar)
+			state.target = {
+				toolbar,
+				item: current.target.item,
+				identity: current.target.identity,
+			}
+		},
+		remove() {
+			const current = requireCurrent()
+			customization.removeFromToolbar(current.target.toolbar, current.target.item)
+			state.target = undefined
+			state.surface = undefined
+		},
+	}
 }
 
 export function paletteToolbarModel(props: {
@@ -337,14 +584,17 @@ export function paletteDisplayCustomizationModel(props: {
 
 	function updateToolbar(toolbar: PaletteToolbar, updatedToolbar: PaletteToolbar): void {
 		const toolbarStack = palette.display.container?.toolbarStack ?? emptyToolbarStack()
+		const parkedToolbars = palette.display.container?.parkedToolbars ?? []
 		updateDisplay({
 			...palette.display,
 			container: {
 				...(palette.display.container ?? {
 					toolbarStack,
 					editMode: false,
+					parkedToolbars: [],
 				}),
 				toolbarStack: updateToolbarInStack(toolbarStack, toolbar, updatedToolbar),
+				parkedToolbars: updateToolbarInParkedToolbars(parkedToolbars, toolbar, updatedToolbar),
 			},
 		})
 	}
@@ -355,31 +605,32 @@ export function paletteDisplayCustomizationModel(props: {
 			mutableDisplay.container = {
 				...updatedDisplay.container,
 				toolbarStack: {
-					top: {
-						slots: updatedDisplay.container.toolbarStack.top.slots.map((slot) => ({
+					top: updatedDisplay.container.toolbarStack.top.map((track) => ({
+						slots: track.slots.map((slot) => ({
 							toolbar: slot.toolbar,
 							space: slot.space,
 						})),
-					},
-					right: {
-						slots: updatedDisplay.container.toolbarStack.right.slots.map((slot) => ({
+					})),
+					right: updatedDisplay.container.toolbarStack.right.map((track) => ({
+						slots: track.slots.map((slot) => ({
 							toolbar: slot.toolbar,
 							space: slot.space,
 						})),
-					},
-					bottom: {
-						slots: updatedDisplay.container.toolbarStack.bottom.slots.map((slot) => ({
+					})),
+					bottom: updatedDisplay.container.toolbarStack.bottom.map((track) => ({
+						slots: track.slots.map((slot) => ({
 							toolbar: slot.toolbar,
 							space: slot.space,
 						})),
-					},
-					left: {
-						slots: updatedDisplay.container.toolbarStack.left.slots.map((slot) => ({
+					})),
+					left: updatedDisplay.container.toolbarStack.left.map((track) => ({
+						slots: track.slots.map((slot) => ({
 							toolbar: slot.toolbar,
 							space: slot.space,
 						})),
-					},
+					})),
 				},
+				parkedToolbars: [...(updatedDisplay.container.parkedToolbars ?? [])],
 			}
 		}
 	}
@@ -393,6 +644,7 @@ export function paletteDisplayCustomizationModel(props: {
 	}
 }
 
+// TODO: Please....
 export function getDisplayPresenterFamily(
 	intent: PaletteIntent,
 	entry: PaletteEntryDefinition

@@ -3,29 +3,49 @@ import { componentStyle } from '@pounce/kit'
 import { reactive, reactiveOptions } from 'mutts'
 import { drag, dragging, drop } from '../../src/directives/drag-drop'
 import {
+	startLocalDragSession,
+	type LocalDragAxis,
+	type LocalDragPoint,
+} from '../../src/directives'
+import {
+	activatePaletteToolbarDropTarget,
+	clearPaletteToolbarDropTarget,
 	computeCheckedState,
 	computeDisabledState,
 	createPaletteModel,
 	formatKeystroke,
 	getDefaultDisplayPresenter,
 	getDisplayPresenterFamily,
+	getPaletteDisplayItemIdentity,
 	handlePaletteCommandBoxInputKeydown,
 	handlePaletteCommandChipKeydown,
+	isVerticalPaletteRegion,
+	measurePaletteToolbarDropTargets,
 	paletteCommandBoxModel,
 	paletteContainerModel,
 	paletteDisplayCustomizationModel,
+	paletteItemConfiguratorModel,
+	paletteRegionAxis,
+	resolvePaletteToolbarDropTarget,
+	resolvePaletteToolbarSpaceDropTarget,
+	samePaletteToolbarDropTarget,
 	setPaletteCommandBoxInput,
 	type PaletteContainerRegion,
 	type PaletteDisplayItem,
+	type PaletteDisplayItemIdentity,
 	type PaletteDisplayPresenterFamily,
 	type PaletteEditorDisplayItem,
 	type PaletteEntryDefinition,
 	type PaletteIntentDisplayItem,
 	type PaletteItemGroupDisplayItem,
+	type PaletteItemConfiguratorDescriptor,
 	type PaletteResolvedDisplayItem,
 	type PaletteResolvedEntry,
 	type PaletteResolvedIntent,
 	type PaletteKeyBinding,
+	type PaletteConfiguredItemTarget,
+	type PaletteSurfaceContext,
+	type PaletteToolbarDropTarget,
 	type PaletteToolbar,
 } from '@pounce/ui/palette'
 import { type PaletteMatch } from '@pounce/ui/palette'
@@ -61,6 +81,7 @@ type DemoEditorRendererProps = {
 
 type DemoToolbarPath = {
 	readonly region: PaletteContainerRegion
+	readonly track: number
 	readonly index: number
 }
 
@@ -69,12 +90,11 @@ type DemoEditorRenderer = (props: DemoEditorRendererProps) => PounceElement | un
 type DemoUiState = {
 	handleExpanded: boolean
 	draggingToolbar: DemoToolbarPath | undefined
+	draggingToolbarGrabOffset: number | undefined
+	draggingToolbarSpan: number | undefined
 	draggingItemToolbar: DemoToolbarPath | undefined
 	draggingItemId: string | undefined
 	draggingItemKind: PaletteDisplayItem['kind'] | undefined
-	configToolbar: DemoToolbarPath | undefined
-	configItemId: string | undefined
-	configItemKind: PaletteDisplayItem['kind'] | undefined
 }
 
 type DemoWarningState = {
@@ -95,12 +115,59 @@ type DemoDraggedPaletteItem =
 			readonly group: PaletteItemGroupDisplayItem['group']
 	  }
 
+type DemoToolbarPreset = {
+	readonly id: string
+	readonly label: string
+	readonly toolbar: PaletteToolbar
+}
+
 const DEMO_BINDINGS = [
 	{ kind: 'intent', intentId: 'ui.layout:flip', keystroke: 'Alt+L' },
 	{ kind: 'intent', intentId: 'game.speed:stash:0', keystroke: 'Space' },
 	{ kind: 'entry', entryId: 'ui.theme', keystroke: 'Ctrl+T' },
 	{ kind: 'entry', entryId: 'game.speed', keystroke: 'G' },
 ] satisfies readonly PaletteKeyBinding[]
+
+const PARKING_PRESETS: readonly DemoToolbarPreset[] = [
+	{
+		id: 'preset:inspect',
+		label: 'Inspect',
+		toolbar: {
+			title: 'Inspect',
+			items: [
+				{ kind: 'intent', intentId: 'ui.notifications:toggle', presenter: 'toggle', showText: false },
+				{ kind: 'editor', entryId: 'ui.theme', presenter: 'select', showText: false },
+			],
+		},
+	},
+	{
+		id: 'preset:theme',
+		label: 'Theme',
+		toolbar: {
+			title: 'Theme',
+			items: [
+				{
+					kind: 'item-group',
+					group: { kind: 'enum-options', entryId: 'ui.theme', options: ['light', 'dark'], presenter: 'radio-group' },
+					showText: false,
+				},
+				{ kind: 'intent', intentId: 'ui.theme:set:system', presenter: 'radio', showText: false },
+			],
+		},
+	},
+	{
+		id: 'preset:playback',
+		label: 'Playback',
+		toolbar: {
+			title: 'Playback',
+			items: [
+				{ kind: 'intent', intentId: 'game.speed:step:down', presenter: 'step', showText: true },
+				{ kind: 'editor', entryId: 'game.speed', presenter: 'stars', showText: true },
+				{ kind: 'intent', intentId: 'game.speed:step:up', presenter: 'step', showText: true },
+			],
+		},
+	},
+]
 
 const palette = createPaletteModel({
 	definitions: [
@@ -174,7 +241,7 @@ const palette = createPaletteModel({
 		container: {
 			editMode: false,
 			toolbarStack: {
-				top: {
+				top: [{
 					slots: [
 						{
 							toolbar: {
@@ -197,8 +264,8 @@ const palette = createPaletteModel({
 							space: .3,
 						},
 					],
-				},
-				right: {
+				}],
+				right: [{
 					slots: [
 						{
 							toolbar: {
@@ -212,8 +279,8 @@ const palette = createPaletteModel({
 							space: 0,
 						},
 					],
-				},
-				bottom: {
+				}],
+				bottom: [{
 					slots: [
 						{
 							toolbar: {
@@ -228,8 +295,8 @@ const palette = createPaletteModel({
 							space: 0,
 						},
 					],
-				},
-				left: {
+				}],
+				left: [{
 					slots: [
 						{
 							toolbar: {
@@ -253,7 +320,7 @@ const palette = createPaletteModel({
 							space: 0,
 						},
 					],
-				},
+				}],
 			},
 		},
 	},
@@ -265,15 +332,60 @@ const commandBox = paletteCommandBoxModel({
 })
 const container = paletteContainerModel({ palette })
 const customization = paletteDisplayCustomizationModel({ palette, container })
+const itemConfigurator = paletteItemConfiguratorModel({
+	palette,
+	customization,
+	resolvers: {
+		getTitle({ resolved }) {
+			if (resolved.kind === 'intent') {
+				return resolved.intent.label ?? resolved.intent.id
+			}
+			return resolved.entry.label
+		},
+		getSubtitle({ target, resolved }) {
+			const summary = presenterSummary(target.toolbar, target.identity.id, target.identity.kind)
+			if (resolved.kind === 'intent') {
+				const binding = formatShortcut(palette.keys.getIntentKeystroke(resolved.intent.id))
+				if (!binding) return summary ?? `${target.identity.kind} • ${target.identity.id}`
+				return summary ? `${summary} • ${binding}` : binding
+			}
+			return summary ?? `${target.identity.kind} • ${target.identity.id}`
+		},
+		getPresenterChoices({ target, resolved }) {
+			let options: readonly string[] = []
+			let current = ''
+			if (resolved.kind === 'intent') {
+				const family = getDisplayPresenterFamily(resolved.intent, resolved.entry)
+				options = Object.keys(DEMO_PRESENTERS[family]).filter((key) => key !== 'default')
+				current = target.item.presenter ?? getDefaultDisplayPresenter(resolved.intent, resolved.entry)
+			} else if (resolved.kind === 'editor') {
+				options = editorPresenterOptions(resolved.entry)
+				current = target.item.presenter ?? defaultEditorPresenter(resolved.entry)
+			} else {
+				options = Object.keys(DEMO_PRESENTERS.enum).filter((key) => key !== 'default')
+				current = resolved.presenter ?? 'radio-group'
+			}
+			return options.map((id) => ({ id, label: id, selected: id === current }))
+		},
+		getMoveTargets({ target }) {
+			return toolbarMoveTargets(target.toolbar).map((entry) => ({
+				toolbar: demoToolbar(toolbarPathFromId(entry.id)),
+				label: entry.label,
+			}))
+		},
+		getPreferredRenderMode() {
+			return 'anchored'
+		},
+	},
+})
 const demoUi: DemoUiState = reactive({
 	handleExpanded: false,
 	draggingToolbar: undefined,
+	draggingToolbarGrabOffset: undefined,
+	draggingToolbarSpan: undefined,
 	draggingItemToolbar: undefined,
 	draggingItemId: undefined,
 	draggingItemKind: undefined,
-	configToolbar: undefined,
-	configItemId: undefined,
-	configItemKind: undefined,
 })
 const demoRuntime = globalThis as typeof globalThis & {
 	__paletteDemoWarnings__?: DemoWarningState
@@ -295,7 +407,7 @@ if (!demoRuntime.__paletteDemoWarningsInstalled__) {
 		}
 		demoRuntime.__paletteDemoWarningsOriginalWarn__?.(...args)
 	}
-	reactiveOptions.introspection!.gatherReasons.lineages = 'both'
+	//reactiveOptions.introspection!.gatherReasons.lineages = 'both'
 }
 const speedStars = starsModel({
 	get value() {
@@ -365,7 +477,7 @@ const TOOLBAR_COLOR = '#f59e0b'
 const DROP_ZONE_COLOR = '#22d3ee'
 
 function isVerticalRegion(region: PaletteContainerRegion) {
-	return region === 'left' || region === 'right'
+	return isVerticalPaletteRegion(region)
 }
 
 function regionSpaceStyle(space: number) {
@@ -396,6 +508,53 @@ function regionSplitFromEvent(region: PaletteContainerRegion, event: DragEvent, 
 	}
 	if (rect.width <= 0) return 0.5
 	return Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width))
+}
+
+function toolbarMoveAxis(region: PaletteContainerRegion): LocalDragAxis {
+	return paletteRegionAxis(region)
+}
+
+function toolbarDropTargets() {
+	return measurePaletteToolbarDropTargets({
+		spaceElements: document.querySelectorAll<HTMLElement>('[data-role="region-space"]'),
+		parkElements: document.querySelectorAll<HTMLElement>('[data-role="central-shell"]'),
+	})
+}
+
+function resolveToolbarDropTarget(point: LocalDragPoint): PaletteToolbarDropTarget | undefined {
+	return resolvePaletteToolbarDropTarget(toolbarDropTargets(), point)
+}
+
+function resolveToolbarSpaceDropTarget(point: LocalDragPoint): PaletteToolbarDropTarget | undefined {
+	return resolvePaletteToolbarSpaceDropTarget(toolbarDropTargets(), point)
+}
+
+function sameToolbarDropTarget(
+	left: PaletteToolbarDropTarget | undefined,
+	right: PaletteToolbarDropTarget | undefined
+) {
+	return samePaletteToolbarDropTarget(left, right)
+}
+
+function activateToolbarDropTarget(target: PaletteToolbarDropTarget | undefined) {
+	activatePaletteToolbarDropTarget(target)
+}
+
+function clearToolbarDropTarget(target: PaletteToolbarDropTarget | undefined) {
+	clearPaletteToolbarDropTarget(target)
+}
+
+function shouldIgnoreToolbarMoveTarget(target: EventTarget | null): boolean {
+	const element =
+		target instanceof HTMLElement
+			? target
+			: target instanceof Node
+				? target.parentElement
+				: undefined
+	if (!element) return false
+	return !!element.closest(
+		'[data-role="toolbar-item-drag-wrapper"], [data-role="item-drop-zone"], [data-role="toolbar-resize-handle"]'
+	)
 }
 
 function labelFor(resolved: DemoResolvedDisplayItem) {
@@ -432,6 +591,18 @@ function IntentShortcutText(props: { intentId: string }) {
 	)
 }
 
+function editorTooltip(entry: PaletteEntryDefinition): string | undefined {
+	const label = entry.label
+	const shortcut = formatShortcut(editorShortcut(entry.id))
+	return shortcut ? `${label} (${shortcut})` : label
+}
+
+function intentTooltip(props: { resolved: DemoResolvedDisplayItem }): string | undefined {
+	const label = labelFor(props.resolved)
+	const shortcut = formatShortcut(palette.keys.getIntentKeystroke(props.resolved.intent.id))
+	return shortcut ? `${label} (${shortcut})` : label
+}
+
 function buttonMarkup(props: DemoPresenterProps, marker = ''): PounceElement {
 	return (
 		<button
@@ -441,11 +612,10 @@ function buttonMarkup(props: DemoPresenterProps, marker = ''): PounceElement {
 			data-test={props.resolved.intent.id}
 			disabled={props.disabled}
 			onClick={props.onActivate}
+			title={intentTooltip({ resolved: props.resolved })}
 		>
 			<span if={marker}>{marker} </span>
 			<IntentIcon resolved={props.resolved} />
-			<IntentLabel displayItem={props.displayItem} resolved={props.resolved} />
-			<IntentShortcutText intentId={props.resolved.intent.id} />
 		</button>
 	)
 }
@@ -486,16 +656,18 @@ const DEMO_PRESENTERS: DemoPresenterCatalog = {
 
 function allToolbarPaths(): readonly DemoToolbarPath[] {
 	return REGION_ORDER.flatMap((region) =>
-		container.toolbarStack[region].slots.map((_, index) => ({ region, index }))
+		container.toolbarStack[region].flatMap((track, trackIndex) =>
+			track.slots.map((_, index) => ({ region, track: trackIndex, index }))
+		)
 	)
 }
 
 function toolbarPathId(path: DemoToolbarPath) {
-	return `${path.region}:${path.index}`
+	return `${path.region}:${path.track}:${path.index}`
 }
 
 function demoToolbar(path: DemoToolbarPath) {
-	const toolbar = container.toolbarStack[path.region].slots[path.index]?.toolbar
+	const toolbar = container.toolbarStack[path.region][path.track]?.slots[path.index]?.toolbar
 	if (!toolbar) {
 		throw new Error(`Toolbar '${toolbarPathId(path)}' not found`)
 	}
@@ -504,9 +676,11 @@ function demoToolbar(path: DemoToolbarPath) {
 
 function toolbarPath(toolbar: PaletteToolbar): DemoToolbarPath | undefined {
 	for (const region of REGION_ORDER) {
-		const index = container.toolbarStack[region].slots.findIndex((entry) => entry.toolbar === toolbar)
-		if (index >= 0) {
-			return { region, index }
+		for (let track = 0; track < container.toolbarStack[region].length; track += 1) {
+			const index = container.toolbarStack[region][track].slots.findIndex((entry) => entry.toolbar === toolbar)
+			if (index >= 0) {
+				return { region, track, index }
+			}
 		}
 	}
 	return undefined
@@ -521,12 +695,12 @@ function requireToolbarPath(toolbar: PaletteToolbar): DemoToolbarPath {
 }
 
 function sameToolbarPath(left: DemoToolbarPath | undefined, right: DemoToolbarPath | undefined) {
-	return left?.region === right?.region && left?.index === right?.index
+	return left?.region === right?.region && left?.track === right?.track && left?.index === right?.index
 }
 
 function toolbarPathFromId(toolbarId: string): DemoToolbarPath {
-	const [region, rawIndex] = toolbarId.split(':')
-	return { region: region as PaletteContainerRegion, index: Number(rawIndex) }
+	const [region, rawTrack, rawIndex] = toolbarId.split(':')
+	return { region: region as PaletteContainerRegion, track: Number(rawTrack), index: Number(rawIndex) }
 }
 
 function toolbarIntentItems(toolbar: PaletteToolbar) {
@@ -656,12 +830,13 @@ const DEMO_EDITOR_RENDERERS: Readonly<Record<string, DemoEditorRenderer>> = {
 		const options = entry.schema.options.map((option) =>
 			typeof option === 'string' ? { value: option, label: option } : option
 		)
+		void label
 		return (
 			<label
-				class="palette-editor-shell"
+				class="palette-editor-shell palette-editor-shell-compact"
 				data-selected={selected ? 'true' : undefined}
+				title={editorTooltip(entry)}
 			>
-				<span>{label}</span>
 				<select
 					class="palette-editor-select"
 					data-palette-entry-id={entry.id}
@@ -683,17 +858,18 @@ const DEMO_EDITOR_RENDERERS: Readonly<Record<string, DemoEditorRenderer>> = {
 	},
 	stars: ({ entry, toolbar, selected, label, displayItem }) => {
 		if (entry.schema.type !== 'number') return undefined
+		void label
 		return (
 			<div
-				class="palette-editor-shell"
+				class="palette-editor-shell palette-editor-shell-compact"
 				data-selected={selected ? 'true' : undefined}
 				data-palette-entry-id={entry.id}
 				tabIndex={-1}
+				title={editorTooltip(entry)}
 				onClick={() => {
 					if (container.editMode) openItemConfig(toolbar, displayItem.entryId, 'editor')
 				}}
 			>
-				<span class="palette-editor-label">{label}</span>
 				<span class="palette-inline-stars" {...speedStars.container}>
 					<for each={speedStars.starItems}>
 						{(item) => (
@@ -711,13 +887,15 @@ const DEMO_EDITOR_RENDERERS: Readonly<Record<string, DemoEditorRenderer>> = {
 		const min = entry.schema.min ?? 0
 		const max = entry.schema.max ?? 100
 		const step = entry.schema.step ?? 1
+		void label
 		return (
 			<label
-				class="palette-editor-shell"
+				class="palette-editor-shell palette-editor-shell-compact"
 				data-selected={selected ? 'true' : undefined}
+				title={editorTooltip(entry)}
 			>
-				<span>{label}</span>
 				<input
+					class="palette-editor-slider"
 					data-palette-entry-id={entry.id}
 					type="range"
 					min={String(min)}
@@ -751,33 +929,64 @@ const DEMO_EDITOR_RENDERERS: Readonly<Record<string, DemoEditorRenderer>> = {
 }
 
 function EditorItem(props: { displayItem: PaletteEditorDisplayItem; toolbar: PaletteToolbar }) {
-	const resolved = palette.resolveDisplayItem(props.displayItem)
-	if (!resolved || resolved.kind !== 'editor') return undefined
-
-	const currentPath = requireToolbarPath(props.toolbar)
-	const selected =
-		sameToolbarPath(demoUi.configToolbar, currentPath) &&
-		demoUi.configItemId === props.displayItem.entryId &&
-		demoUi.configItemKind === 'editor'
-	const label = props.displayItem.showText === false ? props.displayItem.entryId : resolved.entry.label
-	const shortcut = formatShortcut(editorShortcut(resolved.entry.id))
-	const renderer =
-		DEMO_EDITOR_RENDERERS[props.displayItem.presenter ?? defaultEditorPresenter(resolved.entry)] ??
-		DEMO_EDITOR_RENDERERS.default
+	// TODO: refactor a bit, it seems quite over-complicated
+	const computed = {
+		get resolved() {
+			return palette.resolveDisplayItem(props.displayItem)
+		},
+		get entry() {
+			return computed.resolved?.kind === 'editor' ? computed.resolved.entry : undefined
+		},
+		get currentPath() {
+			return requireToolbarPath(props.toolbar)
+		},
+		get selected() {
+			const current = itemConfigurator.current
+			return (
+				current !== undefined &&
+				current.target.toolbar === props.toolbar &&
+				current.target.identity.id === props.displayItem.entryId &&
+				current.target.identity.kind === 'editor'
+			)
+		},
+		get label() {
+			return props.displayItem.showText === false
+				? props.displayItem.entryId
+				: computed.entry?.label
+		},
+		get shortcut() {
+			return computed.entry ? formatShortcut(editorShortcut(computed.entry.id)) : undefined
+		},
+		get renderer() {
+			return computed.entry
+				? (DEMO_EDITOR_RENDERERS[props.displayItem.presenter ?? defaultEditorPresenter(computed.entry)] ??
+					DEMO_EDITOR_RENDERERS.default)
+				: undefined
+		},
+		get content() {
+			if (!computed.entry || !computed.renderer || !computed.label) return undefined
+			const label = computed.shortcut ? `${computed.label} (${computed.shortcut})` : computed.label
+			return (
+				computed.renderer({
+					displayItem: props.displayItem,
+					entry: computed.entry,
+					toolbar: props.toolbar,
+					selected: computed.selected,
+					label,
+				}) ?? DEMO_EDITOR_RENDERERS.default({
+					displayItem: props.displayItem,
+					entry: computed.entry,
+					toolbar: props.toolbar,
+					selected: computed.selected,
+					label,
+				})
+			)
+		},
+	}
 	return (
-		renderer({
-			displayItem: props.displayItem,
-			entry: resolved.entry,
-			toolbar: props.toolbar,
-			selected,
-			label: shortcut ? `${label} (${shortcut})` : label,
-		}) ?? DEMO_EDITOR_RENDERERS.default({
-			displayItem: props.displayItem,
-			entry: resolved.entry,
-			toolbar: props.toolbar,
-			selected,
-			label: shortcut ? `${label} (${shortcut})` : label,
-		})
+		<fragment if={computed.entry}>
+			{computed.content}
+		</fragment>
 	)
 }
 
@@ -829,55 +1038,74 @@ function ItemGroupControl(props: {
 	displayItem: PaletteItemGroupDisplayItem
 	toolbar: PaletteToolbar
 }) {
-	const resolved = palette.resolveDisplayItem(props.displayItem)
-	if (!resolved || resolved.kind !== 'item-group') return undefined
-
-	const identity = itemIdentity(props.displayItem)
-	const currentPath = requireToolbarPath(props.toolbar)
-	const selected =
-		sameToolbarPath(demoUi.configToolbar, currentPath) &&
-		demoUi.configItemId === identity.id &&
-		demoUi.configItemKind === identity.kind
-
-	const entry = resolved.entry
-	const currentOption = palette.state[props.displayItem.group.entryId] as string | undefined
+	const computed = {
+		get resolved() {
+			return palette.resolveDisplayItem(props.displayItem)
+		},
+		get identity() {
+			return itemIdentity(props.displayItem)
+		},
+		get currentPath() {
+			return requireToolbarPath(props.toolbar)
+		},
+		get selected() {
+			const current = itemConfigurator.current
+			return (
+				current !== undefined &&
+				current.target.toolbar === props.toolbar &&
+				current.target.identity.id === computed.identity.id &&
+				current.target.identity.kind === computed.identity.kind
+			)
+		},
+		get entry() {
+			return computed.resolved?.kind === 'item-group' ? computed.resolved.entry : undefined
+		},
+		get currentOption() {
+			return palette.state[props.displayItem.group.entryId] as string | undefined
+		},
+	}
 
 	// Render as a radio-button-group with individual option buttons
 	return (
 		<div
+			if={computed.entry}
 			class="palette-item-group"
-			data-selected={selected ? 'true' : undefined}
+			data-axis={regionAxis(computed.currentPath.region)}
+			data-selected={computed.selected ? 'true' : undefined}
 			onClick={() => {
 				if (container.editMode) {
-					openItemConfig(props.toolbar, identity.id, identity.kind)
+					openItemConfig(props.toolbar, computed.identity.id, computed.identity.kind)
 					return
 				}
 			}}
 		>
-			{props.displayItem.group.options.map((option, index) => {
-				const isSelected = currentOption === option
+			<for each={props.displayItem.group.options}>
+				{(option) => {
+					const index = props.displayItem.group.options.indexOf(option)
+					const isSelected = computed.currentOption === option
 
-				return (
-					<button
-						class="palette-item-group-option"
-						data-selected={isSelected ? 'true' : undefined}
-						onClick={(e) => {
-							e.stopPropagation()
-							if (!container.editMode) {
-								palette.run(`${props.displayItem.group.entryId}:set:${option}`)
-							}
-						}}
-					>
-						<ItemGroupOptionIcon entryId={props.displayItem.group.entryId} option={option} />
-						<ItemGroupOptionLabel
-							displayItem={props.displayItem}
-							entry={entry}
-							index={index}
-							option={option}
-						/>
-					</button>
-				)
-			})}
+					return (
+						<button
+							class="palette-item-group-option"
+							data-selected={isSelected ? 'true' : undefined}
+							onClick={(e) => {
+								e.stopPropagation()
+								if (!container.editMode) {
+									palette.run(`${props.displayItem.group.entryId}:set:${option}`)
+								}
+							}}
+						>
+							<ItemGroupOptionIcon entryId={props.displayItem.group.entryId} option={option} />
+							<ItemGroupOptionLabel
+								displayItem={props.displayItem}
+								entry={computed.entry!}
+								index={index}
+								option={option}
+							/>
+						</button>
+					)
+				}}
+			</for>
 		</div>
 	)
 }
@@ -947,19 +1175,29 @@ function runMatch(match: PaletteMatch) {
 	commandBox.input.value = match.entry.label
 }
 
-function startToolbarDrag(toolbar: PaletteToolbar) {
+function startToolbarDrag(toolbar: PaletteToolbar, grabOffset: number, span: number) {
 	demoUi.draggingToolbar = requireToolbarPath(toolbar)
+	demoUi.draggingToolbarGrabOffset = grabOffset
+	demoUi.draggingToolbarSpan = span
 }
 
 function stopToolbarDrag() {
 	demoUi.draggingToolbar = undefined
+	demoUi.draggingToolbarGrabOffset = undefined
+	demoUi.draggingToolbarSpan = undefined
 }
 
 function regionSpaceElement(region: PaletteContainerRegion, index: number) {
 	return document.querySelector<HTMLElement>(`[data-role="region-space"][data-region="${region}"][data-index="${index}"]`)
 }
 
-function resizeToolbarFromPointer(path: DemoToolbarPath, clientX: number, clientY: number) {
+function resizeToolbarFromPointer(
+	path: DemoToolbarPath,
+	clientX: number,
+	clientY: number,
+	grabOffset: number,
+	toolbarSpan: number
+) {
 	const beforeSpace = regionSpaceElement(path.region, path.index)
 	const afterSpace = regionSpaceElement(path.region, path.index + 1)
 	if (!beforeSpace || !afterSpace) return
@@ -967,32 +1205,120 @@ function resizeToolbarFromPointer(path: DemoToolbarPath, clientX: number, client
 		const start = beforeSpace.getBoundingClientRect().top
 		const end = afterSpace.getBoundingClientRect().bottom
 		if (end <= start) return
-		container.resizeToolbar(path.region, path.index, Math.min(1, Math.max(0, (clientY - start) / (end - start))))
+		const available = end - start - toolbarSpan
+		if (available <= 0) return
+		const toolbarStart = Math.min(Math.max(clientY - grabOffset, start), end - toolbarSpan)
+		container.resizeToolbar(path.region, path.track, path.index, Math.min(1, Math.max(0, (toolbarStart - start) / available)))
 		return
 	}
 	const start = beforeSpace.getBoundingClientRect().left
 	const end = afterSpace.getBoundingClientRect().right
 	if (end <= start) return
-	container.resizeToolbar(path.region, path.index, Math.min(1, Math.max(0, (clientX - start) / (end - start))))
+	const available = end - start - toolbarSpan
+	if (available <= 0) return
+	const toolbarStart = Math.min(Math.max(clientX - grabOffset, start), end - toolbarSpan)
+	container.resizeToolbar(path.region, path.track, path.index, Math.min(1, Math.max(0, (toolbarStart - start) / available)))
 }
 
 function beginToolbarResize(toolbar: PaletteToolbar, event: MouseEvent) {
 	if (!container.editMode) return
 	if (isEditableTarget(event.target)) return
 	event.preventDefault()
-	startToolbarDrag(toolbar)
+	event.stopPropagation()
+	const handle = event.currentTarget as HTMLElement | null
+	const toolbarElement = handle?.closest<HTMLElement>('[data-role="toolbar"]')
+	if (!toolbarElement) return
+	const toolbarRect = toolbarElement.getBoundingClientRect()
 	const path = requireToolbarPath(toolbar)
+	const vertical = isVerticalRegion(path.region)
+	const grabOffset = vertical ? event.clientY - toolbarRect.top : event.clientX - toolbarRect.left
+	const toolbarSpan = vertical ? toolbarRect.height : toolbarRect.width
 	const onMousemove = (moveEvent: MouseEvent) => {
 		moveEvent.preventDefault()
-		resizeToolbarFromPointer(path, moveEvent.clientX, moveEvent.clientY)
+		resizeToolbarFromPointer(path, moveEvent.clientX, moveEvent.clientY, grabOffset, toolbarSpan)
 	}
 	const onMouseup = () => {
 		document.removeEventListener('mousemove', onMousemove)
 		document.removeEventListener('mouseup', onMouseup)
-		stopToolbarDrag()
 	}
 	document.addEventListener('mousemove', onMousemove)
 	document.addEventListener('mouseup', onMouseup)
+}
+
+function beginToolbarMove(toolbar: PaletteToolbar, event: MouseEvent) {
+	if (!container.editMode) return
+	if (isEditableTarget(event.target)) return
+	if (shouldIgnoreToolbarMoveTarget(event.target)) return
+	event.preventDefault()
+	event.stopPropagation()
+	const handle = event.currentTarget as HTMLElement | null
+	const toolbarElement = handle?.closest<HTMLElement>('[data-role="toolbar"]')
+	if (!toolbarElement) return
+	let path = requireToolbarPath(toolbar)
+	const axis = toolbarMoveAxis(path.region)
+	const toolbarRect = toolbarElement.getBoundingClientRect()
+	const grabOffset = axis === 'vertical'
+		? event.clientY - toolbarRect.top
+		: event.clientX - toolbarRect.left
+	const span = axis === 'vertical' ? toolbarRect.height : toolbarRect.width
+	let activeTarget: PaletteToolbarDropTarget | undefined
+	let mode: 'resize' | 'move' = 'resize'
+	let lastCommittedSpaceKey: string | undefined
+	const syncTarget = (
+		point: LocalDragPoint,
+		resolver: (point: LocalDragPoint) => PaletteToolbarDropTarget | undefined
+	): PaletteToolbarDropTarget | undefined => {
+		const nextTarget = resolver(point)
+		if (!sameToolbarDropTarget(activeTarget, nextTarget)) {
+			clearToolbarDropTarget(activeTarget)
+			activateToolbarDropTarget(nextTarget)
+			activeTarget = nextTarget
+		}
+		return activeTarget
+	}
+	startLocalDragSession({
+		event,
+		axis,
+		grabOffset,
+		onMove(snapshot) {
+			const target = syncTarget(snapshot.current, resolveToolbarDropTarget)
+			if (target?.kind === 'park') {
+				if (mode !== 'move') {
+					mode = 'move'
+					startToolbarDrag(toolbar, grabOffset, span)
+				}
+				lastCommittedSpaceKey = undefined
+				return
+			}
+			if (mode === 'move') {
+				stopToolbarDrag()
+				mode = 'resize'
+			}
+			if (target?.kind === 'space') {
+				const key = `${target.region}:${target.track}:${target.index}`
+				if (lastCommittedSpaceKey !== key) {
+					placeSpecificToolbar(toolbar, target.region, target.track, target.index, target.split)
+					path = requireToolbarPath(toolbar)
+					lastCommittedSpaceKey = key
+				}
+				resizeToolbarFromPointer(path, snapshot.current.x, snapshot.current.y, grabOffset, span)
+				return
+			}
+			lastCommittedSpaceKey = undefined
+			resizeToolbarFromPointer(path, snapshot.current.x, snapshot.current.y, grabOffset, span)
+		},
+		onStop(snapshot) {
+			const target = mode === 'move' ? syncTarget(snapshot.current, resolveToolbarDropTarget) : undefined
+			clearToolbarDropTarget(activeTarget)
+			activeTarget = undefined
+			if (snapshot.reason === 'up' || snapshot.reason === 'buttons') {
+				if (target?.kind === 'park') {
+					container.parkToolbar(toolbar)
+				}
+			}
+			stopToolbarDrag()
+		},
+	})
 }
 
 function startItemDrag(toolbar: PaletteToolbar, itemId: string, itemKind: PaletteDisplayItem['kind']) {
@@ -1009,9 +1335,90 @@ function stopItemDrag() {
 
 function removeDemoToolbar(toolbar: PaletteToolbar) {
 	container.removeToolbar(toolbar)
-	if (sameToolbarPath(demoUi.configToolbar, toolbarPath(toolbar))) {
+	if (itemConfigurator.current?.target.toolbar === toolbar) {
 		closeItemConfig()
 	}
+}
+
+function cloneDisplayItem(item: PaletteDisplayItem): PaletteDisplayItem {
+	if (item.kind === 'item-group') {
+		return {
+			...item,
+			group: {
+				...item.group,
+				options: [...item.group.options],
+			},
+		}
+	}
+	return { ...item }
+}
+
+function cloneToolbarPreset(toolbar: PaletteToolbar): PaletteToolbar {
+	return {
+		title: toolbar.title,
+		items: toolbar.items.map((item) => cloneDisplayItem(item)),
+	}
+}
+
+function createParkedPreset(preset: DemoToolbarPreset) {
+	return container.addParkedToolbar(cloneToolbarPreset(preset.toolbar))
+}
+
+function placeParkedToolbar(toolbar: PaletteToolbar, region: PaletteContainerRegion) {
+	container.moveToolbar(toolbar, {
+		region,
+		track: 0,
+		index: container.getToolbarsInTrack(region, 0).length,
+	})
+}
+
+function ParkingToolbarCard(props: { toolbar: PaletteToolbar }) {
+	return (
+		<div class="palette-parked-toolbar" data-role="parked-toolbar">
+			<div class="palette-parked-toolbar-header">
+				<strong>{props.toolbar.title ?? 'Untitled toolbar'}</strong>
+				<div class="palette-parked-toolbar-actions">
+					<button type="button" onClick={() => placeParkedToolbar(props.toolbar, 'top')}>Top</button>
+					<button type="button" onClick={() => placeParkedToolbar(props.toolbar, 'right')}>Right</button>
+					<button type="button" onClick={() => placeParkedToolbar(props.toolbar, 'bottom')}>Bottom</button>
+					<button type="button" onClick={() => placeParkedToolbar(props.toolbar, 'left')}>Left</button>
+					<button type="button" onClick={() => removeDemoToolbar(props.toolbar)}>Delete</button>
+				</div>
+			</div>
+			<div class="palette-parked-toolbar-meta">
+				{props.toolbar.items.length} item{props.toolbar.items.length === 1 ? '' : 's'}
+			</div>
+		</div>
+	)
+}
+
+function ParkingPanel() {
+	return (
+		<div class="palette-parking-panel" data-role="parking-panel">
+			<div class="palette-parking-header">
+				<strong>Toolbar Parking</strong>
+				<span>Drop toolbars here to store, reorder, preset, or delete them explicitly.</span>
+			</div>
+			<div class="palette-parking-presets">
+				<for each={PARKING_PRESETS}>
+					{(preset) => (
+						<button
+							type="button"
+							class="palette-parking-preset"
+							onClick={() => createParkedPreset(preset)}
+						>
+							{preset.label}
+						</button>
+					)}
+				</for>
+			</div>
+			<div class="palette-parking-list">
+				<for each={container.parkedToolbars}>
+					{(toolbar) => <ParkingToolbarCard toolbar={toolbar} />}
+				</for>
+			</div>
+		</div>
+	)
 }
 
 function displayItemFromDraggedCandidate(candidate: DemoDraggedPaletteItem): PaletteDisplayItem {
@@ -1024,45 +1431,72 @@ function displayItemFromDraggedCandidate(candidate: DemoDraggedPaletteItem): Pal
 	return { kind: 'item-group', group: candidate.group }
 }
 
-function placeToolbarAt(region: PaletteContainerRegion, index: number, split = 0.5) {
+function placeToolbarAt(region: PaletteContainerRegion, track: number, index: number, split = 0.5) {
 	if (demoUi.draggingToolbar) {
 		const draggedToolbar = demoToolbar(demoUi.draggingToolbar)
-		const sourcePath = requireToolbarPath(draggedToolbar)
-		const isAdjacentResizeTarget =
-			sourcePath.region === region && (index === sourcePath.index || index === sourcePath.index + 1)
-		if (isAdjacentResizeTarget) {
-			container.resizeToolbar(sourcePath.region, sourcePath.index, index === sourcePath.index ? split : 1 - split)
-		} else {
-			moveDemoToolbar(draggedToolbar, region, index, split)
-		}
+		placeSpecificToolbar(draggedToolbar, region, track, index, split)
 		stopToolbarDrag()
 	}
+}
+
+function placeSpecificToolbar(
+	toolbar: PaletteToolbar,
+	region: PaletteContainerRegion,
+	track: number,
+	index: number,
+	split = 0.5
+) {
+	const sourcePath = requireToolbarPath(toolbar)
+	const isAdjacentResizeTarget =
+		sourcePath.region === region &&
+		sourcePath.track === track &&
+		(index === sourcePath.index || index === sourcePath.index + 1)
+	if (isAdjacentResizeTarget) {
+		container.resizeToolbar(
+			sourcePath.region,
+			sourcePath.track,
+			sourcePath.index,
+			index === sourcePath.index ? split : 1 - split
+		)
+		return
+	}
+	moveDemoToolbar(toolbar, region, track, index, split)
 }
 
 function placeDraggedCandidateInRegion(
 	candidate: DemoDraggedPaletteItem,
 	region: PaletteContainerRegion,
+	track: number,
 	index: number,
 	split = 0.5
 ) {
 	const displayItem = displayItemFromDraggedCandidate(candidate)
-	const toolbar = container.createToolbar(region)
-	container.moveToolbar(toolbar, region, index, split)
+	const toolbar = container.createToolbar(region, track)
+	container.moveToolbar(toolbar, { region, track, index, split })
 	customization.addToToolbar(toolbar, displayItem)
 }
 
 function openItemConfig(toolbar: PaletteToolbar, itemId: string, itemKind: PaletteDisplayItem['kind']) {
 	stopItemDrag()
-	demoUi.configToolbar = requireToolbarPath(toolbar)
-	demoUi.configItemId = itemId
-	demoUi.configItemKind = itemKind
+	const item = toolbarDisplayItems(toolbar).find((displayItem) => {
+		const identity = itemIdentity(displayItem)
+		return identity.id === itemId && identity.kind === itemKind
+	})
+	if (!item) return
+	const path = requireToolbarPath(toolbar)
+	itemConfigurator.open(
+		{
+			toolbar,
+			item,
+			identity: getPaletteDisplayItemIdentity(item),
+		},
+		{ axis: regionAxis(path.region), region: path.region }
+	)
 }
 
 function closeItemConfig() {
 	stopItemDrag()
-	demoUi.configToolbar = undefined
-	demoUi.configItemId = undefined
-	demoUi.configItemKind = undefined
+	itemConfigurator.close()
 }
 
 function moveToolbarItem(toolbar: PaletteToolbar, itemId: string, itemKind: PaletteDisplayItem['kind'], offset: number) {
@@ -1195,10 +1629,12 @@ function removeToolbarItem(toolbar: PaletteToolbar, itemId: string, itemKind: Pa
 	})
 	if (!item) return
 	customization.removeFromToolbar(toolbar, item)
+	const current = itemConfigurator.current
 	if (
-		sameToolbarPath(demoUi.configToolbar, toolbarPath(toolbar)) &&
-		demoUi.configItemId === itemId &&
-		demoUi.configItemKind === itemKind
+		current &&
+		current.target.identity.id === itemId &&
+		current.target.identity.kind === itemKind &&
+		current.target.toolbar === toolbar
 	) {
 		closeItemConfig()
 	}
@@ -1228,45 +1664,52 @@ function moveToolbarItemToToolbar(
 	})
 	if (!item) return
 	customization.moveToToolbar(sourceToolbar, item, targetToolbar)
+	const current = itemConfigurator.current
 	if (
-		sameToolbarPath(demoUi.configToolbar, toolbarPath(toolbar)) &&
-		demoUi.configItemId === itemId &&
-		demoUi.configItemKind === itemKind
+		current &&
+		current.target.identity.id === itemId &&
+		current.target.identity.kind === itemKind &&
+		current.target.toolbar === toolbar
 	) {
-		demoUi.configToolbar = requireToolbarPath(targetToolbar)
+		itemConfigurator.moveToToolbar(targetToolbar)
 	}
 }
 
 function moveDemoToolbar(
 	toolbar: PaletteToolbar,
 	targetRegion: PaletteContainerRegion,
+	targetTrack: number,
 	targetIndex?: number,
 	targetSplit?: number
 ) {
-	container.moveToolbar(toolbar, targetRegion, targetIndex, targetSplit)
+	container.moveToolbar(toolbar, {
+		region: targetRegion,
+		track: targetTrack,
+		index: targetIndex ?? container.getToolbarsInTrack(targetRegion, targetTrack).length,
+		split: targetSplit,
+	})
 	if (demoUi.draggingToolbar && demoToolbar(demoUi.draggingToolbar) === toolbar) {
 		demoUi.draggingToolbar = undefined
 	}
 }
 
 function ToolbarStrip(props: { toolbar: PaletteToolbar }) {
-	const position = toolbarPath(props.toolbar)
 	const computed = {
-		get toolbarId() { return position ? toolbarPathId(position) : 'missing' },
-		get dragging() { return sameToolbarPath(demoUi.draggingToolbar, position) }
+		get position() { return toolbarPath(props.toolbar) },
+		get toolbarId() { return this.position ? toolbarPathId(this.position) : 'missing' },
+		get dragging() { return sameToolbarPath(demoUi.draggingToolbar, this.position) }
 	}
-	if (!position) return undefined
 
 	return (
-		<div
+		<div if={computed.position}
 			class="palette-toolbar-line"
 			data-role="toolbar"
-			data-region={position.region}
-			data-axis={regionAxis(position.region)}
+			data-region={computed.position!.region}
+			data-axis={regionAxis(computed.position!.region)}
 			data-toolbar-id={computed.toolbarId}
 			data-test={`palette-toolbar-${computed.toolbarId}`}
 			data-dragging={computed.dragging ? 'true' : undefined}
-			onMousedown={(event: MouseEvent) => beginToolbarResize(props.toolbar, event)}
+			onMousedown={(event: MouseEvent) => beginToolbarMove(props.toolbar, event)}
 		>
 			<ToolbarItemInsertionPoint toolbarId={computed.toolbarId} index={0} />
 			<for each={props.toolbar.items}>
@@ -1312,7 +1755,7 @@ function ToolbarStrip(props: { toolbar: PaletteToolbar }) {
 								data-item-id={identity.id}
 								data-item-kind={identity.kind}
 								data-dragging={
-									sameToolbarPath(demoUi.draggingItemToolbar, position) &&
+									sameToolbarPath(demoUi.draggingItemToolbar, computed.position) &&
 									demoUi.draggingItemId === identity.id &&
 									demoUi.draggingItemKind === identity.kind
 										? 'true'
@@ -1322,7 +1765,7 @@ function ToolbarStrip(props: { toolbar: PaletteToolbar }) {
 								use:drag={{
 									payload: () => ({
 										type: 'item' as const,
-										sourceToolbarPath: position,
+										sourceToolbarPath: computed.position,
 										sourceItemId: identity.id,
 										sourceItemKind: identity.kind,
 									}),
@@ -1339,6 +1782,19 @@ function ToolbarStrip(props: { toolbar: PaletteToolbar }) {
 								}}
 							>
 								{content}
+								<div
+									if={
+										itemConfigurator.current !== undefined &&
+										itemConfigurator.current.target.toolbar === props.toolbar &&
+										itemConfigurator.current.target.identity.id === identity.id &&
+										itemConfigurator.current.target.identity.kind === identity.kind
+									}
+									class="palette-config-popup"
+									data-role="config-panel"
+									data-test="palette-config-panel"
+								>
+									<ConfigPanel />
+								</div>
 							</div>
 							<ToolbarItemInsertionPoint toolbarId={computed.toolbarId} index={currentIndex + 1} />
 						</>
@@ -1351,6 +1807,7 @@ function ToolbarStrip(props: { toolbar: PaletteToolbar }) {
 
 function RegionSpace(props: {
 	region: PaletteContainerRegion
+	track: number
 	index: number
 	toolbarCount: number
 }) {
@@ -1361,6 +1818,9 @@ function RegionSpace(props: {
 		get index() {
 			return props.index
 		},
+		get track() {
+			return props.track
+		},
 		get toolbarCount() {
 			return props.toolbarCount
 		},
@@ -1368,7 +1828,7 @@ function RegionSpace(props: {
 			return actualRegionSpaceAt(
 				props.toolbarCount,
 				props.index,
-				container.toolbarStack[props.region].slots
+				container.toolbarStack[props.region][props.track]?.slots ?? []
 			)
 		},
 	}
@@ -1378,17 +1838,18 @@ function RegionSpace(props: {
 			data-role="region-space"
 			data-region={computed.region}
 			data-axis={regionAxis(computed.region)}
+			data-track={String(computed.track)}
 			data-index={String(computed.index)}
-			data-test={`palette-region-space-${computed.region}-${computed.index}`}
+			data-test={`palette-region-space-${computed.region}-${computed.track}-${computed.index}`}
 			style={regionSpaceStyle(computed.space)}
 			use:drop={(payload: unknown, event: DragEvent) => {
 				if (!container.editMode || !acceptsRegionStakePayload(payload)) return
 				const split = regionSplitFromEvent(computed.region, event, event.currentTarget as HTMLElement)
 				if (payload.type === 'toolbar') {
-					placeToolbarAt(computed.region, computed.index, split)
+					placeToolbarAt(computed.region, computed.track, computed.index, split)
 					return
 				}
-				placeDraggedCandidateInRegion(payload.candidate, computed.region, computed.index, split)
+				placeDraggedCandidateInRegion(payload.candidate, computed.region, computed.track, computed.index, split)
 			}}
 			use:dragging={(payload: unknown, isEnter: boolean, el: HTMLElement) => {
 				if (!container.editMode) return false
@@ -1406,16 +1867,18 @@ function RegionSpace(props: {
 }
 
 function ToolbarItemInsertionPoint(props: { toolbarId: string; index: number }) {
-	const targetPath = toolbarPathFromId(props.toolbarId)
-	const resolvedRegion = targetPath.region
+	const computed = {
+		get targetPath() { return toolbarPathFromId(props.toolbarId) },
+		get region() { return this.targetPath.region }
+	}
 	return (
 		<button
 			if={container.editMode}
 			class="palette-drop-zone palette-item-drop-zone"
 			data-role="item-drop-zone"
 			data-toolbar-id={props.toolbarId}
-			data-region={resolvedRegion}
-			data-axis={regionAxis(resolvedRegion)}
+			data-region={computed.region}
+			data-axis={regionAxis(computed.region)}
 			data-index={String(props.index)}
 			data-test={`palette-item-drop-zone-${props.toolbarId}-${props.index}`}
 			use:drop={(payload: unknown) => {
@@ -1425,7 +1888,7 @@ function ToolbarItemInsertionPoint(props: { toolbarId: string; index: number }) 
 				if (payload && typeof payload === 'object' && 'type' in payload) {
 					const toolbarPayload = payload as { type?: string; toolbarPath?: DemoToolbarPath }
 					if (toolbarPayload.type === 'toolbar' && toolbarPayload.toolbarPath !== undefined) {
-						spliceToolbarIntoToolbar(toolbarPayload.toolbarPath, targetPath, props.index)
+						spliceToolbarIntoToolbar(toolbarPayload.toolbarPath, computed.targetPath, props.index)
 					}
 				}
 			}}
@@ -1466,7 +1929,7 @@ function CommandSurfaceLabelText(props: { region: PaletteContainerRegion }) {
 }
 
 function regionAxis(region: PaletteContainerRegion) {
-	return isVerticalRegion(region) ? 'vertical' : 'horizontal'
+	return paletteRegionAxis(region)
 }
 
 function RegionShell(props: { region: PaletteContainerRegion }) {
@@ -1474,14 +1937,17 @@ function RegionShell(props: { region: PaletteContainerRegion }) {
 		get region() {
 			return props.region
 		},
-		get toolbars() {
-			return container.getToolbarsInRegion(props.region)
+		get tracks() {
+			return container.toolbarStack[props.region]
+		},
+		get trackEntries() {
+			return computed.tracks.map((track, index) => ({ track, index }))
 		},
 		get insertionPoints() {
 			return container.getInsertionPointsInRegion(props.region)
 		},
 		get visible() {
-			return props.region === 'top' || container.editMode || computed.toolbars.length > 0
+			return props.region === 'top' || container.editMode || computed.tracks.some((track) => track.slots.length > 0)
 		},
 	}
 	return (
@@ -1495,7 +1961,7 @@ function RegionShell(props: { region: PaletteContainerRegion }) {
 			style={REGION_LAYOUT[computed.region]}
 		>
 			<div
-				class={`palette-region-shell palette-axis-${regionAxis(computed.region)}`}
+				class="palette-region-shell"
 				data-role="region-shell"
 				data-region={computed.region}
 				data-axis={regionAxis(computed.region)}
@@ -1509,14 +1975,25 @@ function RegionShell(props: { region: PaletteContainerRegion }) {
 				>
 					<CommandSurfaceLabelText region={computed.region} />
 				</strong>
-				<for each={computed.insertionPoints}>
-					{(point) => (
-						<>
-							<RegionSpace region={computed.region} index={point.index} toolbarCount={computed.toolbars.length} />
-							{point.index < computed.toolbars.length
-								? <ToolbarStrip toolbar={computed.toolbars[point.index]} />
-								: undefined}
-						</>
+				<for each={computed.trackEntries}>
+					{(entry) => (
+						<div class="palette-track-shell">
+							<for each={container.getInsertionPointsInTrack(computed.region, entry.index)}>
+								{(point) => (
+									<>
+										<RegionSpace
+											region={computed.region}
+											track={entry.index}
+											index={point.index}
+											toolbarCount={entry.track.slots.length}
+										/>
+										{point.index < entry.track.slots.length
+											? <ToolbarStrip toolbar={entry.track.slots[point.index].toolbar} />
+											: undefined}
+									</>
+								)}
+							</for>
+						</div>
 					)}
 				</for>
 			</div>
@@ -1548,15 +2025,9 @@ function RegionShell(props: { region: PaletteContainerRegion }) {
 }
 
 function configuredToolbarItem() {
-	if (!demoUi.configToolbar || !demoUi.configItemId || !demoUi.configItemKind) return undefined
-	const item = toolbarDisplayItems(demoToolbar(demoUi.configToolbar)).find((displayItem) => {
-		const identity = itemIdentity(displayItem)
-		return identity.id === demoUi.configItemId && identity.kind === demoUi.configItemKind
-	})
-	if (!item) return undefined
-	const resolved = palette.resolveDisplayItem(item)
-	if (!resolved) return undefined
-	return { item, resolved }
+	const current = itemConfigurator.current
+	if (!current) return undefined
+	return { item: current.target.item, resolved: current.resolved }
 }
 
 function configuredItemLabel() {
@@ -1569,15 +2040,7 @@ function configuredItemLabel() {
 }
 
 function configuredItemMeta() {
-	const configured = configuredToolbarItem()
-	if (!configured || !demoUi.configItemId || !demoUi.configItemKind || !demoUi.configToolbar) return undefined
-	const summary = presenterSummary(demoToolbar(demoUi.configToolbar), demoUi.configItemId, demoUi.configItemKind)
-	if (configured.resolved.kind === 'intent') {
-		const binding = formatShortcut(palette.keys.getIntentKeystroke(configured.resolved.intent.id))
-		if (!binding) return summary ?? `${demoUi.configItemKind} • ${demoUi.configItemId}`
-		return summary ? `${summary} • ${binding}` : binding
-	}
-	return summary ?? `${demoUi.configItemKind} • ${demoUi.configItemId}`
+	return itemConfigurator.current?.subtitle
 }
 
 function ConfiguredItemLabelText() {
@@ -1597,25 +2060,34 @@ function CommandResultMeta(props: { match: PaletteMatch }) {
 }
 
 function CommandResultRow(props: { match: PaletteMatch }) {
-	const key = commandKey(props.match)
-	const resultIndex = commandBox.results.findIndex((entry) => commandKey(entry) === key)
-	const selected =
-		commandBox.selection.item !== undefined &&
-		commandKey(commandBox.selection.item) === key
+	const computed = {
+		get key() {
+			return commandKey(props.match)
+		},
+		get resultIndex() {
+			return commandBox.results.findIndex((entry) => commandKey(entry) === computed.key)
+		},
+		get selected() {
+			return (
+				commandBox.selection.item !== undefined &&
+				commandKey(commandBox.selection.item) === computed.key
+			)
+		},
+	}
 
 	return (
 		<div
 			class="palette-command-row"
 			data-role="command-result-row"
 			data-result-kind={props.match.kind}
-			data-test={`palette-command-row-${resultIndex}`}
+			data-test={`palette-command-row-${computed.resultIndex}`}
 		>
 			<button
-				data-test={`palette-command-result-${resultIndex}`}
+				data-test={`palette-command-result-${computed.resultIndex}`}
 				class="palette-command-result"
 				data-role="command-result"
 				data-result-kind={props.match.kind}
-				data-selected={selected ? 'true' : undefined}
+				data-selected={computed.selected ? 'true' : undefined}
 				onClick={() => runMatch(props.match)}
 			>
 				<div><CommandResultLabel match={props.match} /></div>
@@ -1625,8 +2097,8 @@ function CommandResultRow(props: { match: PaletteMatch }) {
 				class="palette-command-drag"
 				data-role="command-drag"
 				data-result-kind={props.match.kind}
-				data-test={`palette-command-drag-${resultIndex}`}
-				data-selected={selected ? 'true' : undefined}
+				data-test={`palette-command-drag-${computed.resultIndex}`}
+				data-selected={computed.selected ? 'true' : undefined}
 				use:drag={() => {
 					let candidate
 					if (props.match.kind === 'intent') {
@@ -1661,59 +2133,40 @@ function CommandResultRow(props: { match: PaletteMatch }) {
 
 function ConfigPanel() {
 	const computed = {
-		get toolbar() {
-			return demoUi.configToolbar ? demoToolbar(demoUi.configToolbar) : undefined
-		},
-		get items() {
-			return computed.toolbar ? toolbarDisplayItems(computed.toolbar) : []
-		},
-		get index() {
-			if (!demoUi.configItemId || !demoUi.configItemKind) return -1
-			return computed.items.findIndex((displayItem) => {
-				const identity = itemIdentity(displayItem)
-				return identity.id === demoUi.configItemId && identity.kind === demoUi.configItemKind
-			})
-		},
-		get moveTargets() {
-			return computed.toolbar ? toolbarMoveTargets(computed.toolbar) : []
-		},
-		get isFirst() {
-			return computed.index <= 0
-		},
-		get isLast() {
-			return computed.index >= computed.items.length - 1
+		get descriptor() {
+			return itemConfigurator.current
 		},
 	}
 
 	return (
-		<div if={configuredToolbarItem() !== undefined && computed.toolbar !== undefined} class="palette-config-body" data-role="config-body">
+		<div if={computed.descriptor} class="palette-config-body" data-role="config-body">
 			<div class="palette-config-header" data-role="config-header">
 				<strong><ConfiguredItemLabelText /></strong>
 				<button onClick={closeItemConfig}>Close</button>
 			</div>
-			<div class="palette-config-meta">{demoUi.configItemId}</div>
+			<div class="palette-config-meta">{computed.descriptor!.target.identity.id}</div>
 			<div class="palette-config-meta"><ConfiguredItemMetaText /></div>
 			<div class="palette-config-actions" data-role="config-actions">
-				<button onClick={() => moveToolbarItem(computed.toolbar!, demoUi.configItemId!, demoUi.configItemKind!, -1)} disabled={computed.isFirst}>←</button>
-				<button onClick={() => moveToolbarItem(computed.toolbar!, demoUi.configItemId!, demoUi.configItemKind!, 1)} disabled={computed.isLast}>→</button>
-				<button onClick={() => cycleToolbarPresenter(computed.toolbar!, demoUi.configItemId!, demoUi.configItemKind!)}>Presenter</button>
-				<button onClick={() => removeToolbarItem(computed.toolbar!, demoUi.configItemId!, demoUi.configItemKind!)}>Remove</button>
+				<button onClick={() => itemConfigurator.moveBackward()} disabled={!computed.descriptor!.canMoveBackward}>←</button>
+				<button onClick={() => itemConfigurator.moveForward()} disabled={!computed.descriptor!.canMoveForward}>→</button>
+				<for each={computed.descriptor!.presenterChoices}>
+					{(choice) => (
+						<button
+							data-selected={choice.selected ? 'true' : undefined}
+							onClick={() => itemConfigurator.setPresenter(choice.id)}
+						>
+							{choice.label}
+						</button>
+					)}
+				</for>
+				<button onClick={() => itemConfigurator.remove()} disabled={!computed.descriptor!.removable}>Remove</button>
 			</div>
-			<div if={computed.moveTargets.length > 0} class="palette-config-target-section" data-role="config-target-section">
+			<div if={computed.descriptor!.moveTargets.length > 0} class="palette-config-target-section" data-role="config-target-section">
 				<strong class="palette-config-target-title">Move to toolbar</strong>
 				<div class="palette-config-move-targets" data-role="config-move-targets">
-					<for each={computed.moveTargets}>
+					<for each={computed.descriptor!.moveTargets}>
 						{(target) => (
-							<button
-								onClick={() =>
-									moveToolbarItemToToolbar(
-										computed.toolbar!,
-										demoUi.configItemId!,
-										demoUi.configItemKind!,
-										target.id
-									)
-								}
-							>
+							<button onClick={() => itemConfigurator.moveToToolbar(target.toolbar)}>
 								{target.label}
 							</button>
 						)}
@@ -1737,6 +2190,8 @@ function CommandPanel() {
 						Close
 					</button>
 				</div>
+
+				<ParkingPanel />
 
 				<div class="palette-command-box" data-role="command-box" data-test="palette-command-box">
 					<div class="palette-command-input-shell" data-role="command-input-shell">
@@ -1974,34 +2429,20 @@ export default function PaletteDemo(_: {}, scope: { drag?: typeof drag; drop?: t
 				class="palette-central-shell"
 				data-role="central-shell"
 				data-test="palette-central-shell"
-				data-active-delete-zone={undefined}
+				data-active-park-zone={undefined}
 				use:drop={(payload: any) => {
 					if (!container.editMode) return
-					if (payload.type === 'item') {
-						// Delete the dragged item
-						if (payload.sourceToolbarPath && payload.sourceItemId && payload.sourceItemKind) {
-							const toolbar = demoToolbar(payload.sourceToolbarPath)
-							const item = toolbarDisplayItems(toolbar).find((displayItem) => {
-								const identity = itemIdentity(displayItem)
-								return (
-									identity.id === payload.sourceItemId &&
-									identity.kind === payload.sourceItemKind
-								)
-							})
-							if (toolbar && item) customization.removeFromToolbar(toolbar, item)
-						}
-					} else if (payload.type === 'toolbar') {
-						removeDemoToolbar(demoToolbar(payload.toolbarPath))
-					}
+					if (payload.type !== 'toolbar') return
+					container.parkToolbar(demoToolbar(payload.toolbarPath))
 				}}
 				use:dragging={(payload: any, isEnter: boolean, el: HTMLElement) => {
 					if (!container.editMode || !payload) return false
-					const accepts = payload.type === 'item' || payload.type === 'toolbar'
+					const accepts = payload.type === 'toolbar'
 					if (!accepts) return false
 					if (isEnter) {
-						el.dataset.activeDeleteZone = 'true'
+						el.dataset.activeParkZone = 'true'
 						return () => {
-							delete el.dataset.activeDeleteZone
+							delete el.dataset.activeParkZone
 						}
 					}
 				}}
@@ -2013,14 +2454,6 @@ export default function PaletteDemo(_: {}, scope: { drag?: typeof drag; drop?: t
 				<DemoContent />
 			</div>
 
-			<div
-				if={configuredToolbarItem() !== undefined}
-				class="palette-config-panel"
-				data-role="config-panel"
-				data-test="palette-config-panel"
-			>
-				<ConfigPanel />
-			</div>
 		</div>
 	)
 }
@@ -2056,10 +2489,81 @@ componentStyle.css`
 		border: 1px solid #1f2937;
 	}
 
-	.palette-central-shell[data-active-delete-zone='true'] {
-		background: #991b1b;
-		border-color: #dc2626;
-		color: #fef2f2;
+	.palette-central-shell[data-active-park-zone='true'] {
+		background: rgba(14, 165, 233, 0.12);
+		border-color: #38bdf8;
+		color: #e0f2fe;
+	}
+
+	.palette-parking-panel {
+		display: grid;
+		gap: 12px;
+		padding: 12px;
+		margin-bottom: 12px;
+		border-radius: 14px;
+		border: 1px solid rgba(56, 189, 248, 0.24);
+		background: rgba(15, 23, 42, 0.7);
+	}
+
+	.palette-parking-header {
+		display: grid;
+		gap: 4px;
+	}
+
+	.palette-parking-presets {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	.palette-parking-preset {
+		border: 1px solid #334155;
+		border-radius: 999px;
+		padding: 6px 10px;
+		background: #0f172a;
+		color: #cbd5e1;
+		cursor: pointer;
+	}
+
+	.palette-parking-list {
+		display: grid;
+		gap: 10px;
+	}
+
+	.palette-parked-toolbar {
+		display: grid;
+		gap: 8px;
+		padding: 10px 12px;
+		border-radius: 12px;
+		border: 1px solid #334155;
+		background: rgba(30, 41, 59, 0.72);
+	}
+
+	.palette-parked-toolbar-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+	.palette-parked-toolbar-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+
+	.palette-parked-toolbar-actions button {
+		border: 1px solid #475569;
+		border-radius: 999px;
+		padding: 4px 8px;
+		background: #111827;
+		color: #cbd5e1;
+		cursor: pointer;
+	}
+
+	.palette-parked-toolbar-meta {
+		color: #94a3b8;
+		font-size: 12px;
 	}
 
 	.palette-central-content {
@@ -2077,22 +2581,29 @@ componentStyle.css`
 
 	.palette-command-overlay {
 		position: absolute;
-		inset: 0;
+		left: 16px;
+		right: 16px;
+		bottom: 16px;
 		z-index: 5;
-		display: grid;
-		place-items: center;
-		background: rgba(2, 6, 23, 0.18);
+		display: flex;
+		justify-content: center;
+		align-items: flex-end;
+		pointer-events: none;
 	}
 
 	.palette-command-panel {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
 		width: min(640px, calc(100% - 32px));
-		max-height: min(70vh, 640px);
+		max-height: min(50vh, 640px);
 		overflow: auto;
 		padding: 16px;
 		border-radius: 16px;
 		background: #0f172a;
 		border: 1px solid #334155;
 		box-shadow: 0 16px 60px rgba(0, 0, 0, 0.45);
+		pointer-events: auto;
 	}
 
 	.palette-command-panel-header {
@@ -2280,6 +2791,11 @@ componentStyle.css`
 		color: #e2e8f0;
 	}
 
+	.palette-editor-shell-compact {
+		min-width: 0;
+		padding: 6px 8px;
+	}
+
 	.palette-editor-select {
 		padding: 6px 8px;
 		border-radius: 8px;
@@ -2288,8 +2804,17 @@ componentStyle.css`
 		color: #e2e8f0;
 	}
 
+	.palette-editor-shell-compact .palette-editor-select {
+		min-width: 0;
+		width: 112px;
+	}
+
 	.palette-editor-label {
 		text-align: left;
+	}
+
+	.palette-editor-slider {
+		width: 112px;
 	}
 
 	.palette-inline-stars {
@@ -2304,9 +2829,15 @@ componentStyle.css`
 		align-items: center;
 		gap: 2px;
 		padding: 2px;
-		border: 1px solid #475569;
-		border-radius: 6px;
+		border: 1px solid #64748b;
+		border-radius: 999px;
 		background: #0f172a;
+	}
+
+	.palette-item-group[data-axis='vertical'] {
+		flex-direction: column;
+		align-items: stretch;
+		border-radius: 16px;
 	}
 
 	.palette-item-group[data-selected='true'] {
@@ -2328,22 +2859,13 @@ componentStyle.css`
 		opacity: 0.7;
 	}
 
+	.palette-item-group[data-axis='vertical'] .palette-item-group-option {
+		justify-content: flex-start;
+	}
+
 	.palette-item-group-option[data-selected='true'] {
 		background: #3b82f6;
 		opacity: 1;
-	}
-
-	.palette-config-panel {
-		position: absolute;
-		right: 16px;
-		bottom: 16px;
-		z-index: 5;
-		width: min(320px, calc(100% - 32px));
-		padding: 14px;
-		border-radius: 14px;
-		background: #0f172a;
-		border: 1px solid #475569;
-		box-shadow: 0 16px 60px rgba(0, 0, 0, 0.45);
 	}
 
 	.palette-warning-panel {
@@ -2364,6 +2886,19 @@ componentStyle.css`
 	.palette-config-body {
 		display: grid;
 		gap: 10px;
+	}
+
+	.palette-config-popup {
+		position: absolute;
+		top: calc(100% + 8px);
+		left: 0;
+		z-index: 8;
+		width: min(320px, 80vw);
+		padding: 14px;
+		border-radius: 14px;
+		background: #0f172a;
+		border: 1px solid #475569;
+		box-shadow: 0 16px 60px rgba(0, 0, 0, 0.45);
 	}
 
 	.palette-warning-body {
@@ -2507,6 +3042,7 @@ componentStyle.css`
 		display: flex;
 		gap: 8px;
 		min-height: 0;
+		min-width: 0;
 		padding: 12px;
 		border-radius: 14px;
 		background: #111827;
@@ -2521,10 +3057,16 @@ componentStyle.css`
 		box-shadow: inset 0 0 0 1px ${SURFACE_COLOR}33;
 	}
 
-	.palette-region-shell.palette-axis-horizontal {
+	.palette-region-layout.palette-axis-horizontal .palette-region-shell {
 		flex-direction: row;
 		flex-wrap: nowrap;
 		align-items: stretch;
+	}
+
+	.palette-track-shell {
+		display: flex;
+		min-width: 0;
+		min-height: 0;
 	}
 
 	.palette-region-layout.palette-axis-vertical {
@@ -2534,13 +3076,20 @@ componentStyle.css`
 		min-height: 0;
 	}
 
-	.palette-region-shell.palette-axis-vertical {
+	.palette-region-layout.palette-axis-vertical .palette-region-shell {
 		flex: 1 1 auto;
 		height: 100%;
 		flex-direction: column;
-		flex-wrap: nowrap;
-		min-height: 100%;
 		align-items: stretch;
+	}
+
+	.palette-region-layout.palette-axis-horizontal .palette-track-shell {
+		flex: 1 1 auto;
+	}
+
+	.palette-region-layout.palette-axis-vertical .palette-track-shell {
+		flex: 1 1 auto;
+		flex-direction: column;
 	}
 
 	.palette-region-space {
@@ -2580,33 +3129,33 @@ componentStyle.css`
 		box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.42);
 	}
 
-	.palette-region-shell.palette-axis-horizontal .palette-region-space {
+	.palette-region-layout.palette-axis-horizontal .palette-region-space {
 		flex-direction: row;
 		min-width: var(--palette-handle-size);
 	}
 
-	.palette-region-shell.palette-axis-vertical .palette-region-space {
+	.palette-region-layout.palette-axis-vertical .palette-region-space {
 		flex-direction: column;
 		min-height: var(--palette-handle-size);
 	}
 
-	.palette-demo-root.is-editing .palette-region-shell.palette-axis-horizontal .palette-toolbar-line {
-		cursor: ew-resize;
+	.palette-demo-root.is-editing .palette-region-layout.palette-axis-horizontal .palette-toolbar-line {
+		cursor: grab;
 		user-select: none;
 	}
 
-	.palette-demo-root.is-editing .palette-region-shell.palette-axis-vertical .palette-toolbar-line {
-		cursor: ns-resize;
+	.palette-demo-root.is-editing .palette-region-layout.palette-axis-vertical .palette-toolbar-line {
+		cursor: grab;
 		user-select: none;
 	}
 
-	.palette-region-shell.palette-axis-horizontal .palette-toolbar-line {
+	.palette-region-layout.palette-axis-horizontal .palette-toolbar-line {
 		flex-direction: row;
 		align-items: center;
 		flex-wrap: nowrap;
 	}
 
-	.palette-region-shell.palette-axis-vertical .palette-toolbar-line {
+	.palette-region-layout.palette-axis-vertical .palette-toolbar-line {
 		flex-direction: column;
 		align-items: stretch;
 	}
@@ -2641,16 +3190,47 @@ componentStyle.css`
 		opacity: 0.6;
 	}
 
-	.palette-region-shell.palette-axis-horizontal .palette-toolbar-item-shell {
+	.palette-toolbar-resize-handle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 6px;
+		border: 1px solid #475569;
+		border-radius: 8px;
+		background: #1e293b;
+		color: #94a3b8;
+		cursor: grab;
+		flex: 0 0 auto;
+	}
+
+	.palette-region-layout.palette-axis-horizontal .palette-toolbar-resize-handle {
+		cursor: ew-resize;
+	}
+
+	.palette-region-layout.palette-axis-vertical .palette-toolbar-resize-handle {
+		cursor: ns-resize;
+	}
+
+	.palette-toolbar-line:active {
+		cursor: grabbing;
+	}
+
+	.palette-toolbar-resize-handle:active {
+		cursor: inherit;
+	}
+
+	.palette-region-layout.palette-axis-horizontal .palette-toolbar-item-shell {
 		display: inline-flex;
 		align-items: stretch;
+		position: relative;
 		min-width: 0;
 		max-width: 100%;
 	}
 
-	.palette-region-shell.palette-axis-vertical .palette-toolbar-item-shell {
+	.palette-region-layout.palette-axis-vertical .palette-toolbar-item-shell {
 		display: flex;
 		align-items: stretch;
+		position: relative;
 		min-width: 0;
 		max-width: 100%;
 	}
@@ -2703,14 +3283,14 @@ componentStyle.css`
 		box-shadow: inset 0 0 0 1px ${DROP_ZONE_COLOR}44;
 	}
 
-	.palette-region-shell.palette-axis-horizontal .palette-item-drop-zone {
+	.palette-region-layout.palette-axis-horizontal .palette-item-drop-zone {
 		width: var(--palette-handle-size);
 		min-width: var(--palette-handle-size);
 		height: 100%;
 		min-height: var(--palette-handle-size);
 	}
 
-	.palette-region-shell.palette-axis-vertical .palette-item-drop-zone {
+	.palette-region-layout.palette-axis-vertical .palette-item-drop-zone {
 		width: 100%;
 		min-width: 100%;
 		height: var(--palette-handle-size);

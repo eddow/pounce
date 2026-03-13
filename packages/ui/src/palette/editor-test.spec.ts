@@ -12,15 +12,17 @@ function containerFixture(...toolbars: PaletteToolbar[]) {
 	return {
 		editMode: false,
 		toolbarStack: {
-			top: {
-				slots: toolbars.map((toolbar, index) => ({
-					toolbar,
-					space: 1 / (toolbars.length + 1 - index),
-				})),
-			},
-			right: { slots: [] },
-			bottom: { slots: [] },
-			left: { slots: [] },
+			top: [
+				{
+					slots: toolbars.map((toolbar, index) => ({
+						toolbar,
+						space: 1 / (toolbars.length + 1 - index),
+					})),
+				},
+			],
+			right: [{ slots: [] }],
+			bottom: [{ slots: [] }],
+			left: [{ slots: [] }],
 		},
 	}
 }
@@ -66,7 +68,7 @@ describe('editor-style display items', () => {
 			},
 		})
 
-		const toolbar = palette.display.container!.toolbarStack.top.slots[0].toolbar
+		const toolbar = palette.display.container!.toolbarStack.top[0].slots[0].toolbar
 		expect(toolbar.items).toHaveLength(3)
 
 		const intentItem = palette.resolveDisplayItem(toolbar.items[0])

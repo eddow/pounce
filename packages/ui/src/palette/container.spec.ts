@@ -49,7 +49,7 @@ describe('paletteContainerModel', () => {
 	it('should create toolbars in different regions', () => {
 		const container = paletteContainerModel({ palette })
 
-		const toolbar = container.createToolbar('top', 'Main Toolbar')
+		const toolbar = container.createToolbar('top', 0, 'Main Toolbar')
 
 		expect(toolbar).toEqual({
 			title: 'Main Toolbar',
@@ -69,15 +69,45 @@ describe('paletteContainerModel', () => {
 		expect(container.getToolbarsInRegion('top')).toHaveLength(0)
 	})
 
+	it('should park toolbars', () => {
+		const container = paletteContainerModel({ palette })
+		container.createToolbar('top', 0, 'Park Me')
+		const toolbar = container.getToolbarsInRegion('top')[0]
+
+		container.parkToolbar(toolbar)
+
+		expect(container.getToolbarsInRegion('top')).toHaveLength(0)
+		expect(container.parkedToolbars).toEqual([toolbar])
+	})
+
+	it('should restore parked toolbars via moveToolbar', () => {
+		const container = paletteContainerModel({ palette })
+		const parked = container.addParkedToolbar({ title: 'Parked', items: [] })
+
+		container.moveToolbar(parked, { region: 'left', track: 0, index: 0 })
+
+		expect(container.parkedToolbars).toEqual([])
+		expect(container.getToolbarsInRegion('left')).toEqual([parked])
+	})
+
+	it('should remove parked toolbars', () => {
+		const container = paletteContainerModel({ palette })
+		const parked = container.addParkedToolbar({ title: 'Parked', items: [] })
+
+		container.removeToolbar(parked)
+
+		expect(container.parkedToolbars).toEqual([])
+	})
+
 	it('should move toolbars within the same region', () => {
 		const container = paletteContainerModel({ palette })
 
-		container.createToolbar('top', 'Toolbar 1')
-		container.createToolbar('top', 'Toolbar 2')
-		container.createToolbar('top', 'Toolbar 3')
+		container.createToolbar('top', 0, 'Toolbar 1')
+		container.createToolbar('top', 0, 'Toolbar 2')
+		container.createToolbar('top', 0, 'Toolbar 3')
 		const toolbar3 = container.getToolbarsInRegion('top')[2]
 
-		container.moveToolbar(toolbar3, 'top', 0)
+		container.moveToolbar(toolbar3, { region: 'top', track: 0, index: 0 })
 
 		const topToolbars = container.getToolbarsInRegion('top')
 		expect(topToolbars.map((toolbar) => toolbar.title)).toEqual([
@@ -95,7 +125,7 @@ describe('paletteContainerModel', () => {
 		expect(container.getToolbarsInRegion('top')).toHaveLength(1)
 		expect(container.getToolbarsInRegion('right')).toHaveLength(0)
 
-		container.moveToolbar(toolbar, 'right')
+		container.moveToolbar(toolbar, { region: 'right', track: 0, index: 0 })
 
 		expect(container.getToolbarsInRegion('top')).toHaveLength(0)
 		expect(container.getToolbarsInRegion('right')).toHaveLength(1)
@@ -107,7 +137,7 @@ describe('paletteContainerModel', () => {
 	it('should rename toolbars', () => {
 		const container = paletteContainerModel({ palette })
 
-		container.createToolbar('top', 'Original Name')
+		container.createToolbar('top', 0, 'Original Name')
 		const toolbar = container.getToolbarsInRegion('top')[0]
 		expect(toolbar.title).toBe('Original Name')
 
@@ -145,6 +175,7 @@ describe('paletteContainerModel', () => {
 
 		expect(insertionPoints[0]).toEqual({
 			region: 'top',
+			track: 0,
 			index: 0,
 			after: undefined,
 			before: toolbar1,
@@ -152,6 +183,7 @@ describe('paletteContainerModel', () => {
 
 		expect(insertionPoints[1]).toEqual({
 			region: 'top',
+			track: 0,
 			index: 1,
 			after: toolbar1,
 			before: toolbar2,
@@ -159,6 +191,7 @@ describe('paletteContainerModel', () => {
 
 		expect(insertionPoints[2]).toEqual({
 			region: 'top',
+			track: 0,
 			index: 2,
 			after: toolbar2,
 			before: undefined,
@@ -186,7 +219,7 @@ describe('paletteContainerModel', () => {
 	it('should create toolbars with embedded items', () => {
 		const container = paletteContainerModel({ palette })
 
-		container.createToolbar('top', 'Test Toolbar')
+		container.createToolbar('top', 0, 'Test Toolbar')
 		const toolbar = container.getToolbarsInRegion('top')[0]
 
 		expect(toolbar.items).toEqual([])
@@ -204,12 +237,12 @@ describe('paletteContainerModel', () => {
 		container.createToolbar('right')
 		const toolbar1 = container.getToolbarsInRegion('top')[0]
 
-		container.moveToolbar(toolbar1, 'right', 1)
+		container.moveToolbar(toolbar1, { region: 'right', track: 0, index: 1 })
 
 		const rightToolbars = container.getToolbarsInRegion('right')
 		expect(rightToolbars).toHaveLength(3)
-		expect(container.toolbarStack.right.slots.map((slot) => slot.toolbar)).toEqual(rightToolbars)
-		expect(container.toolbarStack.right.slots).toHaveLength(3)
+		expect(container.toolbarStack.right[0].slots.map((slot) => slot.toolbar)).toEqual(rightToolbars)
+		expect(container.toolbarStack.right[0].slots).toHaveLength(3)
 	})
 
 	it('should handle errors for invalid operations', () => {
@@ -217,7 +250,9 @@ describe('paletteContainerModel', () => {
 		const missingToolbar = { items: [] } as PaletteToolbar
 
 		expect(() => container.removeToolbar(missingToolbar)).toThrow('Toolbar not found')
-		expect(() => container.moveToolbar(missingToolbar, 'right')).toThrow('Toolbar not found')
+		expect(() =>
+			container.moveToolbar(missingToolbar, { region: 'right', track: 0, index: 0 })
+		).toThrow('Toolbar not found')
 		expect(() => container.renameToolbar(missingToolbar, 'New Name')).toThrow('Toolbar not found')
 	})
 })

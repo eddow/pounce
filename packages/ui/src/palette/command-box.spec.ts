@@ -231,7 +231,7 @@ describe('paletteCommandBoxModel', () => {
 			expect(commandBox.input.value).toBe('boolean')
 			expect([...commandBox.categories.active]).toEqual([])
 			expect(commandBox.query.text).toBe('boolean')
-			expect([...commandBox.query.categories]).toEqual([])
+			expect([...(commandBox.query.categories ?? [])]).toEqual([])
 		})
 	})
 

@@ -1,4 +1,5 @@
 import {
+	A,
 	Container,
 	client,
 	DisplayProvider,
@@ -19,6 +20,7 @@ import Search from './components/search'
 import routes from './routes'
 
 const DEFAULT_WIDTH = 300
+const mainContainerEl = { style: 'padding: 2rem 0 3rem;' }
 
 const envSettings = reactive<{ theme: ThemeValue }>({ theme: 'auto' })
 const uiState = reactive({ mobileOpen: false })
@@ -65,27 +67,46 @@ export function DocsApp(_props: {}, _env: Env) {
 				style={{ '--sizeable-width': `${sidebarState.width}px` }}
 			>
 				<aside class="docs-sidebar" use={sizeableSidebar}>
-					<h5>Pounce</h5>
+					<div class="docs-sidebar-brand">
+						<A href="/" class="docs-brand-mark" onClick={closeMobileNav}>
+							<div class="docs-brand-pill">Pounce</div>
+							<div class="docs-brand-title">Affirmative UI</div>
+							<div class="docs-brand-copy">
+								Direct DOM reactivity, explicit layers, and a web stack shaped around what should
+								hold.
+							</div>
+						</A>
+					</div>
 					<Search onNavigate={closeMobileNav} />
 					<PageNav onNavigate={closeMobileNav} />
+					<div class="docs-sidebar-footer">
+						<a href="https://www.npmjs.com/package/mutts">mutts</a>
+						<a href="https://github.com/eddow/pounce">GitHub</a>
+					</div>
 				</aside>
 				<div class="docs-main">
 					<header class="docs-header">
 						<Container>
-							<Toolbar>
+							<Toolbar el={{ class: 'docs-topbar' }}>
 								<button
 									class="mobile-toggle"
 									onClick={() => (uiState.mobileOpen = !uiState.mobileOpen)}
 								>
 									☰
 								</button>
-								<Heading level={5}>Pounce Docs</Heading>
+								<div class="docs-topbar-copy">
+									<Heading level={5}>Pounce Docs</Heading>
+									<Text class="docs-topbar-subtitle">Affirmative UI for the web</Text>
+								</div>
 								<Toolbar.Spacer />
+								<A href="/getting-started" class="docs-topbar-link">
+									Start here
+								</A>
 								<ThemeToggle settings={envSettings} simple />
 							</Toolbar>
 						</Container>
 					</header>
-					<Container tag="main" el={{ style: 'padding: 2rem 0;' }}>
+					<Container tag="main" el={mainContainerEl}>
 						<Router
 							routes={routes}
 							onRouteEnd={() => {

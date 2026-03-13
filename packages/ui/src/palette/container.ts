@@ -9,10 +9,6 @@ import type {
 	PaletteToolbarTrack,
 } from './types'
 
-type MutablePaletteContainerToolbarStack = {
-	-readonly [Region in keyof PaletteContainerToolbarStack]: PaletteContainerToolbarStack[Region]
-}
-
 type MutablePaletteToolbarTrack = {
 	-readonly [Key in keyof PaletteToolbarTrack]: PaletteToolbarTrack[Key]
 }
@@ -21,31 +17,46 @@ type MutablePaletteToolbarSlot = {
 	-readonly [Key in keyof PaletteToolbarSlot]: PaletteToolbarSlot[Key]
 }
 
+type MutablePaletteContainerToolbarStack = {
+	-readonly [Region in keyof PaletteContainerToolbarStack]: MutablePaletteToolbarTrack[]
+}
+
 interface MutablePaletteContainerConfiguration {
-	toolbarStack: {
-		[Region in keyof MutablePaletteContainerToolbarStack]: MutablePaletteToolbarTrack
-	}
+	toolbarStack: MutablePaletteContainerToolbarStack
 	editMode: boolean
+	parkedToolbars?: PaletteToolbar[]
+}
+
+type PaletteToolbarPath = {
+	region: PaletteContainerRegion
+	track: number
+	index: number
 }
 
 export interface PaletteContainerModel {
 	readonly editMode: boolean
 	readonly toolbarStack: PaletteContainerToolbarStack
+	readonly parkedToolbars: readonly PaletteToolbar[]
 	readonly insertionPoints: readonly PaletteInsertionPoint[]
 
 	enterEditMode(): void
 	exitEditMode(): void
-	createToolbar(region: PaletteContainerRegion, title?: string): PaletteToolbar
+	createToolbar(region: PaletteContainerRegion, track?: number, title?: string): PaletteToolbar
+	addParkedToolbar(toolbar: PaletteToolbar, index?: number): PaletteToolbar
+	parkToolbar(toolbar: PaletteToolbar, index?: number): void
 	removeToolbar(toolbar: PaletteToolbar): void
-	resizeToolbar(region: PaletteContainerRegion, index: number, split: number): void
+	resizeToolbar(region: PaletteContainerRegion, track: number, index: number, split: number): void
 	moveToolbar(
 		toolbar: PaletteToolbar,
-		targetRegion: PaletteContainerRegion,
-		targetIndex?: number,
-		targetSplit?: number
+		target: { region: PaletteContainerRegion; track: number; index: number; split?: number }
 	): void
 	renameToolbar(toolbar: PaletteToolbar, title: string): void
+	getToolbarsInTrack(region: PaletteContainerRegion, track: number): readonly PaletteToolbar[]
 	getToolbarsInRegion(region: PaletteContainerRegion): readonly PaletteToolbar[]
+	getInsertionPointsInTrack(
+		region: PaletteContainerRegion,
+		track: number
+	): readonly PaletteInsertionPoint[]
 	getInsertionPointsInRegion(region: PaletteContainerRegion): readonly PaletteInsertionPoint[]
 }
 
@@ -59,6 +70,10 @@ function clampUnit(value: number): number {
 
 function defaultActualSpaces(toolbarCount: number): readonly number[] {
 	return Array.from({ length: toolbarCount + 1 }, () => 1 / (toolbarCount + 1))
+}
+
+function emptyTrack(): PaletteToolbarTrack {
+	return { slots: [] }
 }
 
 function toolbarsInTrack(track: PaletteToolbarTrack): readonly PaletteToolbar[] {
@@ -119,12 +134,8 @@ function leadingSpacesFromActual(
 
 function normalizeSpaces(toolbarCount: number, spaces?: readonly number[]): readonly number[] {
 	if (toolbarCount <= 0) return []
-	if (spaces?.length === toolbarCount) {
-		return spaces.map(clampUnit)
-	}
-	if (spaces?.length === toolbarCount + 1) {
-		return leadingSpacesFromActual(toolbarCount, spaces)
-	}
+	if (spaces?.length === toolbarCount) return spaces.map(clampUnit)
+	if (spaces?.length === toolbarCount + 1) return leadingSpacesFromActual(toolbarCount, spaces)
 	return leadingSpacesFromActual(toolbarCount, defaultActualSpaces(toolbarCount))
 }
 
@@ -141,38 +152,71 @@ function normalizeRegionTrackSpaces(track: PaletteToolbarTrack): PaletteToolbarT
 export function paletteContainerModel(props: { palette: PaletteModel }): PaletteContainerModel {
 	const { palette } = props
 	const container = palette.display.container as unknown as MutablePaletteContainerConfiguration
+	container.parkedToolbars ??= []
 
-	function getRegionTrack(region: PaletteContainerRegion): MutablePaletteToolbarTrack {
+	function getRegionTracks(region: PaletteContainerRegion): MutablePaletteToolbarTrack[] {
 		return container.toolbarStack[region]
 	}
 
-	function setRegionTrack(region: PaletteContainerRegion, track: PaletteToolbarTrack): void {
-		container.toolbarStack[region] = normalizeRegionTrackSpaces(track)
+	function getRegionTrack(
+		region: PaletteContainerRegion,
+		track: number
+	): MutablePaletteToolbarTrack {
+		const regionTrack = getRegionTracks(region)[track]
+		if (!regionTrack) throw new Error(`Track ${track} not found in region '${region}'`)
+		return regionTrack
 	}
 
-	function setRegionSpaces(region: PaletteContainerRegion, spaces: readonly number[]): void {
-		const track = getRegionTrack(region)
-		const normalizedSpaces = normalizeSpaces(track.slots.length, spaces)
-		for (let index = 0; index < track.slots.length; index += 1) {
-			const slot = track.slots[index] as MutablePaletteToolbarSlot | undefined
+	function setRegionTracks(
+		region: PaletteContainerRegion,
+		tracks: readonly PaletteToolbarTrack[]
+	): void {
+		container.toolbarStack[region] =
+			tracks.length > 0 ? tracks.map((track) => normalizeRegionTrackSpaces(track)) : [emptyTrack()]
+	}
+
+	function setRegionTrack(
+		region: PaletteContainerRegion,
+		track: number,
+		nextTrack: PaletteToolbarTrack
+	): void {
+		const regionTracks = getRegionTracks(region).map((entry) => cloneTrack(entry))
+		regionTracks[track] = normalizeRegionTrackSpaces(nextTrack)
+		setRegionTracks(region, regionTracks)
+	}
+
+	function setRegionSpaces(
+		region: PaletteContainerRegion,
+		track: number,
+		spaces: readonly number[]
+	): void {
+		const regionTrack = getRegionTrack(region, track)
+		const normalizedSpaces = normalizeSpaces(regionTrack.slots.length, spaces)
+		for (let index = 0; index < regionTrack.slots.length; index += 1) {
+			const slot = regionTrack.slots[index] as MutablePaletteToolbarSlot | undefined
 			if (!slot) continue
 			slot.space = normalizedSpaces[index] ?? 0
 		}
 	}
 
-	function findToolbarLocation(
-		toolbar: PaletteToolbar
-	): { region: PaletteContainerRegion; index: number } | undefined {
+	function findToolbarLocation(toolbar: PaletteToolbar): PaletteToolbarPath | undefined {
 		const identity = getToolbarIdentity(toolbar)
 		for (const region of regions()) {
-			const index = toolbarsInTrack(container.toolbarStack[region]).findIndex(
-				(entry) => getToolbarIdentity(entry) === identity
-			)
-			if (index >= 0) {
-				return { region, index }
+			for (let track = 0; track < getRegionTracks(region).length; track += 1) {
+				const index = toolbarsInTrack(getRegionTrack(region, track)).findIndex(
+					(entry) => getToolbarIdentity(entry) === identity
+				)
+				if (index >= 0) return { region, track, index }
 			}
 		}
 		return undefined
+	}
+
+	function findParkedToolbarIndex(toolbar: PaletteToolbar): number {
+		const identity = getToolbarIdentity(toolbar)
+		return (
+			container.parkedToolbars?.findIndex((entry) => getToolbarIdentity(entry) === identity) ?? -1
+		)
 	}
 
 	function enterEditMode(): void {
@@ -183,26 +227,41 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 		container.editMode = false
 	}
 
-	function createToolbar(region: PaletteContainerRegion, title?: string): PaletteToolbar {
-		const toolbar: PaletteToolbar = {
-			title,
-			items: [],
-		}
-		const track = cloneTrack(getRegionTrack(region))
-		const toolbars = [...toolbarsInTrack(track), toolbar]
-		const nextActualSpaces = [...actualSpacesFromLeading(track.slots.length, spacesInTrack(track))]
+	function createToolbar(
+		region: PaletteContainerRegion,
+		track = 0,
+		title?: string
+	): PaletteToolbar {
+		const toolbar: PaletteToolbar = { title, items: [] }
+		const currentTrack = cloneTrack(getRegionTrack(region, track))
+		const toolbars = [...toolbarsInTrack(currentTrack), toolbar]
+		const nextActualSpaces = [
+			...actualSpacesFromLeading(currentTrack.slots.length, spacesInTrack(currentTrack)),
+		]
 		nextActualSpaces.push(nextActualSpaces.pop() ?? 1)
 		setRegionTrack(
 			region,
+			track,
 			createTrack(toolbars, leadingSpacesFromActual(toolbars.length, nextActualSpaces))
 		)
 		return toolbar
 	}
 
-	function removeToolbar(toolbar: PaletteToolbar): void {
+	function addParkedToolbar(
+		toolbar: PaletteToolbar,
+		index = container.parkedToolbars?.length ?? 0
+	): PaletteToolbar {
+		const parkedToolbars = [...(container.parkedToolbars ?? [])]
+		const insertionIndex = Math.min(Math.max(index, 0), parkedToolbars.length)
+		parkedToolbars.splice(insertionIndex, 0, toolbar)
+		container.parkedToolbars = parkedToolbars
+		return (container.parkedToolbars ?? [])[insertionIndex] ?? toolbar
+	}
+
+	function parkToolbar(toolbar: PaletteToolbar, index?: number): void {
 		const location = findToolbarLocation(toolbar)
 		if (!location) throw new Error('Toolbar not found')
-		const track = cloneTrack(getRegionTrack(location.region))
+		const track = cloneTrack(getRegionTrack(location.region, location.track))
 		const toolbars = toolbarsInTrack(track).filter((entry) => entry !== toolbar)
 		const actualSpaces = [...actualSpacesFromLeading(track.slots.length, spacesInTrack(track))]
 		const mergedSpace =
@@ -210,58 +269,87 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 		actualSpaces.splice(location.index, 2, mergedSpace)
 		setRegionTrack(
 			location.region,
+			location.track,
+			createTrack(toolbars, leadingSpacesFromActual(toolbars.length, actualSpaces))
+		)
+		addParkedToolbar(toolbar, index)
+	}
+
+	function removeToolbar(toolbar: PaletteToolbar): void {
+		const parkedIndex = findParkedToolbarIndex(toolbar)
+		if (parkedIndex >= 0) {
+			const parkedToolbars = [...(container.parkedToolbars ?? [])]
+			parkedToolbars.splice(parkedIndex, 1)
+			container.parkedToolbars = parkedToolbars
+			return
+		}
+		const location = findToolbarLocation(toolbar)
+		if (!location) throw new Error('Toolbar not found')
+		const track = cloneTrack(getRegionTrack(location.region, location.track))
+		const toolbars = toolbarsInTrack(track).filter((entry) => entry !== toolbar)
+		const actualSpaces = [...actualSpacesFromLeading(track.slots.length, spacesInTrack(track))]
+		const mergedSpace =
+			(actualSpaces[location.index] ?? 0) + (actualSpaces[location.index + 1] ?? 0)
+		actualSpaces.splice(location.index, 2, mergedSpace)
+		setRegionTrack(
+			location.region,
+			location.track,
 			createTrack(toolbars, leadingSpacesFromActual(toolbars.length, actualSpaces))
 		)
 	}
 
-	function resizeToolbar(region: PaletteContainerRegion, index: number, split: number): void {
-		const track = cloneTrack(getRegionTrack(region))
-		if (index < 0 || index >= track.slots.length) throw new Error('Toolbar not found')
-		const actualSpaces = [...actualSpacesFromLeading(track.slots.length, spacesInTrack(track))]
+	function resizeToolbar(
+		region: PaletteContainerRegion,
+		track: number,
+		index: number,
+		split: number
+	): void {
+		const regionTrack = cloneTrack(getRegionTrack(region, track))
+		if (index < 0 || index >= regionTrack.slots.length) throw new Error('Toolbar not found')
+		const actualSpaces = [
+			...actualSpacesFromLeading(regionTrack.slots.length, spacesInTrack(regionTrack)),
+		]
 		const mergedSpace = (actualSpaces[index] ?? 0) + (actualSpaces[index + 1] ?? 0)
 		const beforeSpace = mergedSpace * clampUnit(split)
 		const afterSpace = mergedSpace - beforeSpace
 		actualSpaces.splice(index, 2, beforeSpace, afterSpace)
-		setRegionSpaces(region, leadingSpacesFromActual(track.slots.length, actualSpaces))
+		setRegionSpaces(region, track, leadingSpacesFromActual(regionTrack.slots.length, actualSpaces))
 	}
 
 	function moveToolbar(
 		toolbar: PaletteToolbar,
-		targetRegion: PaletteContainerRegion,
-		targetIndex?: number,
-		targetSplit = 0.5
+		target: { region: PaletteContainerRegion; track: number; index: number; split?: number }
 	): void {
 		const location = findToolbarLocation(toolbar)
-		if (!location) throw new Error('Toolbar not found')
-
-		const sourceTrack = cloneTrack(getRegionTrack(location.region))
-		const sourceToolbars = toolbarsInTrack(sourceTrack).filter((entry) => entry !== toolbar)
-		const sourceActualSpaces = [
-			...actualSpacesFromLeading(sourceTrack.slots.length, spacesInTrack(sourceTrack)),
-		]
-		const mergedSourceSpace =
-			(sourceActualSpaces[location.index] ?? 0) + (sourceActualSpaces[location.index + 1] ?? 0)
-		sourceActualSpaces.splice(location.index, 2, mergedSourceSpace)
-		setRegionTrack(
-			location.region,
-			createTrack(
+		const parkedIndex = findParkedToolbarIndex(toolbar)
+		if (!location && parkedIndex < 0) throw new Error('Toolbar not found')
+		const targetSplit = target.split ?? 0.5
+		let sameTrack = false
+		let nextSourceTrack = getRegionTrack(target.region, target.track)
+		if (location) {
+			const sourceTrack = cloneTrack(getRegionTrack(location.region, location.track))
+			const sourceToolbars = toolbarsInTrack(sourceTrack).filter((entry) => entry !== toolbar)
+			const sourceActualSpaces = [
+				...actualSpacesFromLeading(sourceTrack.slots.length, spacesInTrack(sourceTrack)),
+			]
+			const mergedSourceSpace =
+				(sourceActualSpaces[location.index] ?? 0) + (sourceActualSpaces[location.index + 1] ?? 0)
+			sourceActualSpaces.splice(location.index, 2, mergedSourceSpace)
+			nextSourceTrack = createTrack(
 				sourceToolbars,
 				leadingSpacesFromActual(sourceToolbars.length, sourceActualSpaces)
 			)
-		)
-
+			setRegionTrack(location.region, location.track, nextSourceTrack)
+			sameTrack = location.region === target.region && location.track === target.track
+		} else {
+			const parkedToolbars = [...(container.parkedToolbars ?? [])]
+			parkedToolbars.splice(parkedIndex, 1)
+			container.parkedToolbars = parkedToolbars
+		}
 		const targetTrack = cloneTrack(
-			location.region === targetRegion
-				? createTrack(
-						sourceToolbars,
-						leadingSpacesFromActual(sourceToolbars.length, sourceActualSpaces)
-					)
-				: getRegionTrack(targetRegion)
+			sameTrack ? nextSourceTrack : getRegionTrack(target.region, target.track)
 		)
-		const insertionIndex = Math.min(
-			Math.max(targetIndex ?? targetTrack.slots.length, 0),
-			targetTrack.slots.length
-		)
+		const insertionIndex = Math.min(Math.max(target.index, 0), targetTrack.slots.length)
 		const toolbars = [...toolbarsInTrack(targetTrack)]
 		toolbars.splice(insertionIndex, 0, toolbar)
 		const targetActualSpaces = [
@@ -272,32 +360,49 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 		const afterSpace = splitSpace - beforeSpace
 		targetActualSpaces.splice(insertionIndex, 1, beforeSpace, afterSpace)
 		setRegionTrack(
-			targetRegion,
+			target.region,
+			target.track,
 			createTrack(toolbars, leadingSpacesFromActual(toolbars.length, targetActualSpaces))
 		)
 	}
 
 	function renameToolbar(toolbar: PaletteToolbar, title: string): void {
+		const parkedIndex = findParkedToolbarIndex(toolbar)
+		if (parkedIndex >= 0) {
+			const parkedToolbars = [...(container.parkedToolbars ?? [])]
+			parkedToolbars[parkedIndex] = { ...parkedToolbars[parkedIndex], title }
+			container.parkedToolbars = parkedToolbars
+			return
+		}
 		const location = findToolbarLocation(toolbar)
 		if (!location) throw new Error('Toolbar not found')
-		const track = cloneTrack(getRegionTrack(location.region))
+		const track = cloneTrack(getRegionTrack(location.region, location.track))
 		const toolbars = toolbarsInTrack(track).map((entry) =>
 			entry === toolbar ? { ...entry, title } : entry
 		)
-		setRegionTrack(location.region, createTrack(toolbars, spacesInTrack(track)))
+		setRegionTrack(location.region, location.track, createTrack(toolbars, spacesInTrack(track)))
+	}
+
+	function getToolbarsInTrack(
+		region: PaletteContainerRegion,
+		track: number
+	): readonly PaletteToolbar[] {
+		return toolbarsInTrack(getRegionTrack(region, track))
 	}
 
 	function getToolbarsInRegion(region: PaletteContainerRegion): readonly PaletteToolbar[] {
-		return toolbarsInTrack(getRegionTrack(region))
+		return getRegionTracks(region).flatMap((track) => toolbarsInTrack(track))
 	}
 
-	function getInsertionPointsInRegion(
-		region: PaletteContainerRegion
+	function getInsertionPointsInTrack(
+		region: PaletteContainerRegion,
+		track: number
 	): readonly PaletteInsertionPoint[] {
-		const toolbars = getToolbarsInRegion(region)
+		const toolbars = getToolbarsInTrack(region, track)
 		const points: PaletteInsertionPoint[] = [
 			{
 				region,
+				track,
 				index: 0,
 				after: undefined,
 				before: toolbars[0],
@@ -307,6 +412,7 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 		for (let index = 0; index < toolbars.length - 1; index++) {
 			points.push({
 				region,
+				track,
 				index: index + 1,
 				after: toolbars[index],
 				before: toolbars[index + 1],
@@ -316,6 +422,7 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 		if (toolbars.length > 0) {
 			points.push({
 				region,
+				track,
 				index: toolbars.length,
 				after: toolbars[toolbars.length - 1],
 				before: undefined,
@@ -323,6 +430,12 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 		}
 
 		return points
+	}
+
+	function getInsertionPointsInRegion(
+		region: PaletteContainerRegion
+	): readonly PaletteInsertionPoint[] {
+		return getRegionTracks(region).flatMap((_, track) => getInsertionPointsInTrack(region, track))
 	}
 
 	function getInsertionPoints(): readonly PaletteInsertionPoint[] {
@@ -336,17 +449,24 @@ export function paletteContainerModel(props: { palette: PaletteModel }): Palette
 		get toolbarStack() {
 			return container.toolbarStack
 		},
+		get parkedToolbars() {
+			return [...(container.parkedToolbars ?? [])]
+		},
 		get insertionPoints() {
 			return [...getInsertionPoints()]
 		},
 		enterEditMode,
 		exitEditMode,
 		createToolbar,
+		addParkedToolbar,
+		parkToolbar,
 		removeToolbar,
 		resizeToolbar,
 		moveToolbar,
 		renameToolbar,
+		getToolbarsInTrack,
 		getToolbarsInRegion,
+		getInsertionPointsInTrack,
 		getInsertionPointsInRegion,
 	}
 }

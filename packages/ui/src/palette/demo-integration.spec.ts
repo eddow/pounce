@@ -12,21 +12,23 @@ function containerFixture(...toolbars: PaletteToolbar[]) {
 	return {
 		editMode: false,
 		toolbarStack: {
-			top: {
-				slots: toolbars.map((toolbar, index) => ({
-					toolbar,
-					space: 1 / (toolbars.length + 1 - index),
-				})),
-			},
-			right: { slots: [] },
-			bottom: { slots: [] },
-			left: { slots: [] },
+			top: [
+				{
+					slots: toolbars.map((toolbar, index) => ({
+						toolbar,
+						space: 1 / (toolbars.length + 1 - index),
+					})),
+				},
+			],
+			right: [{ slots: [] }],
+			bottom: [{ slots: [] }],
+			left: [{ slots: [] }],
 		},
 	}
 }
 
 function toolbarAt(palette: ReturnType<typeof createPaletteModel>, index: number): PaletteToolbar {
-	return palette.display.container!.toolbarStack.top.slots[index].toolbar
+	return palette.display.container!.toolbarStack.top[0].slots[index].toolbar
 }
 
 describe('Phase 7: Demo integration', () => {

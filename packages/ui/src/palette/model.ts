@@ -66,6 +66,21 @@ function normalizeTrack(track: PaletteToolbarTrack | undefined): PaletteToolbarT
 	return { slots }
 }
 
+function isToolbarTrack(
+	value: readonly PaletteToolbarTrack[] | PaletteToolbarTrack
+): value is PaletteToolbarTrack {
+	return 'slots' in value
+}
+
+function normalizeTracks(
+	tracks: readonly PaletteToolbarTrack[] | PaletteToolbarTrack | undefined
+): readonly PaletteToolbarTrack[] {
+	if (!tracks) return [emptyToolbarTrack()]
+	if (!isToolbarTrack(tracks))
+		return tracks.length > 0 ? tracks.map((track) => normalizeTrack(track)) : [emptyToolbarTrack()]
+	return [normalizeTrack(tracks)]
+}
+
 export interface PaletteModel {
 	readonly registry: PaletteRegistry
 	readonly intents: PaletteIntentSource
@@ -310,12 +325,13 @@ export function createPaletteModel(options?: {
 		...(options?.display ?? {}),
 		container: {
 			toolbarStack: {
-				top: normalizeTrack(options?.display?.container?.toolbarStack.top),
-				right: normalizeTrack(options?.display?.container?.toolbarStack.right),
-				bottom: normalizeTrack(options?.display?.container?.toolbarStack.bottom),
-				left: normalizeTrack(options?.display?.container?.toolbarStack.left),
+				top: normalizeTracks(options?.display?.container?.toolbarStack.top),
+				right: normalizeTracks(options?.display?.container?.toolbarStack.right),
+				bottom: normalizeTracks(options?.display?.container?.toolbarStack.bottom),
+				left: normalizeTracks(options?.display?.container?.toolbarStack.left),
 			},
 			editMode: false,
+			parkedToolbars: [...(options?.display?.container?.parkedToolbars ?? [])],
 			...(options?.display?.container ?? {}),
 		},
 	})
