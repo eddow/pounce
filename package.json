@@ -4,7 +4,7 @@
 	"license": "MIT",
 	"scripts": {
 		"build": "turbo run build",
-		"build:docs": "pnpm --dir packages/docs build",
+		"build:docs": "pnpm --dir packages/core build && pnpm --dir packages/kit build && pnpm --dir packages/ui build && pnpm --dir packages/adapters/pico build && pnpm --dir packages/docs build",
 		"deploy:docs": "pnpm run build:docs && wrangler pages deploy packages/docs/dist --project-name pounce-docs",
 		"build:watch": "pnpm --dir ../mutts build:watch & turbo watch build & wait",
 		"build:watch:pounce": "turbo watch build",

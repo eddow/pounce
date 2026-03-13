@@ -15,7 +15,7 @@
     "@pounce/kit": "workspace:*",
     "@pounce/ui": "workspace:*",
     "highlight.js": "^11",
-    "mutts": "1.0.12",
+    "mutts": "1.0.13",
     "pure-glyf": "workspace:*"
   },
   "devDependencies": {
