@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { pounceCorePackage } from './src/plugin/index'
+import { sursautCorePackage } from './src/plugin/index'
 
 const projectRootDir = dirname(fileURLToPath(import.meta.url))
 const isWatch = process.argv.includes('--watch')
@@ -51,13 +51,13 @@ export default defineConfig({
 	resolve: {
 		conditions: ['browser', 'default', 'import'],
 		alias: {
-			// for demo purpose - no '@pounce/core' in lib
-			'@pounce/core': resolvePath(projectRootDir, 'src/dom/index.ts'),
+			// for demo purpose - no '@sursaut/core' in lib
+			'@sursaut/core': resolvePath(projectRootDir, 'src/dom/index.ts'),
 		},
 	},
 	plugins: [
 		...(isWatch ? [ensureStableTypeEntrypoints()] : []),
-		...pounceCorePackage({
+		...sursautCorePackage({
 			core: {
 				projectRoot: projectRootDir,
 			},
@@ -69,8 +69,8 @@ export default defineConfig({
 					const jsxSource = readFileSync(join(projectRootDir, 'src/types/jsx.d.ts'), 'utf8')
 					const jsxDist = jsxSource
 						.replace(
-							/import type \{ Children as SourceChildren, PounceElement, Env \} from '\.\.\/lib\/pounce-element'/g,
-							"import type { Children as SourceChildren, PounceElement, Env } from './dom'"
+							/import type \{ Children as SourceChildren, SursautElement, Env \} from '\.\.\/lib\/sursaut-element'/g,
+							"import type { Children as SourceChildren, SursautElement, Env } from './dom'"
 						)
 						.replace(/from\s+['"]\.\.\/lib(?:\/\w+)?['"]/g, "from '.'")
 						.replace(/from\s+['"]\.['"](?=\n|\r|;)/g, "from './dom'")

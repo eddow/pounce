@@ -3,45 +3,48 @@ import path from 'node:path'
 
 export type BarrelSkeleton = 'kit' | 'front-end' | 'back-end' | 'full-stack'
 
-export interface PounceBarrelPluginOptions {
-	/** Virtual module name. Default: `"@pounce"` */
+export interface SursautBarrelPluginOptions {
+	/** Virtual module name. Default: `"@sursaut"` */
 	name?: string
 	/** Which packages to barrel. Default: `"full-stack"` */
 	skeleton?: BarrelSkeleton
 	/**
-	 * UI adapter package to re-export (e.g. `"@pounce/adapter-pico"`).
+	 * UI adapter package to re-export (e.g. `"@sursaut/adapter-pico"`).
 	 * Required when skeleton includes UI (`front-end` or `full-stack`).
 	 */
 	adapter?: string
 	/**
 	 * Path to write the ambient `declare module` `.d.ts` file for IDE support.
-	 * Defaults to `.generated-types/<name>.d.ts` (e.g. `.generated-types/@pounce.d.ts`) in the project root.
+	 * Defaults to `.generated-types/<name>.d.ts` (e.g. `.generated-types/@sursaut.d.ts`) in the project root.
 	 * Set to `false` to disable generation.
 	 */
 	dts?: string | false
 }
 
-function buildBarrelLines(options: Required<Omit<PounceBarrelPluginOptions, 'dts'>>): string[] {
+function buildBarrelLines(options: Required<Omit<SursautBarrelPluginOptions, 'dts'>>): string[] {
 	const { skeleton, adapter } = options
 	const hasUI = ['front-end', 'full-stack'].includes(skeleton)
 	const hasBoard = ['back-end', 'full-stack'].includes(skeleton)
 
 	const lines: string[] = []
-	lines.push(hasUI ? `export * from '@pounce/core/dom'` : `export * from '@pounce/core'`)
-	lines.push(hasUI ? `export * from '@pounce/kit/dom'` : `export * from '@pounce/kit'`)
+	lines.push(hasUI ? `export * from '@sursaut/core/dom'` : `export * from '@sursaut/core'`)
+	lines.push(hasUI ? `export * from '@sursaut/kit/dom'` : `export * from '@sursaut/kit'`)
 	if (hasUI) {
-		lines.push(`export * from '@pounce/ui'`)
+		lines.push(`export * from '@sursaut/ui'`)
 		if (adapter) lines.push(`export * from '${adapter}'`)
 	}
-	if (hasBoard) lines.push(`export * from '@pounce/board'`)
+	if (hasBoard) lines.push(`export * from '@sursaut/board'`)
 	return lines
 }
 
-function buildBarrelSource(options: Required<Omit<PounceBarrelPluginOptions, 'dts'>>): string {
+function buildBarrelSource(options: Required<Omit<SursautBarrelPluginOptions, 'dts'>>): string {
 	return `${buildBarrelLines(options).join('\n')}\n`
 }
 
-function buildDts(name: string, options: Required<Omit<PounceBarrelPluginOptions, 'dts'>>): string {
+function buildDts(
+	name: string,
+	options: Required<Omit<SursautBarrelPluginOptions, 'dts'>>
+): string {
 	const inner = buildBarrelLines(options)
 		.map((l) => `\t${l}`)
 		.join('\n')
@@ -49,19 +52,19 @@ function buildDts(name: string, options: Required<Omit<PounceBarrelPluginOptions
 }
 
 /**
- * Vite plugin that creates a virtual barrel module aggregating Pounce packages.
+ * Vite plugin that creates a virtual barrel module aggregating Sursaut packages.
  * Also writes an ambient `declare module` `.d.ts` file for IDE type support.
  *
  * @example
  * ```ts
  * // vite.config.ts
- * import { pounceBarrelPlugin } from '@pounce/core/plugin'
+ * import { sursautBarrelPlugin } from '@sursaut/core/plugin'
  *
  * export default defineConfig({
  *   plugins: [
- *     pounceBarrelPlugin({
+ *     sursautBarrelPlugin({
  *       skeleton: 'front-end',
- *       adapter: '@pounce/adapter-pico',
+ *       adapter: '@sursaut/adapter-pico',
  *     }),
  *   ],
  * })
@@ -69,21 +72,21 @@ function buildDts(name: string, options: Required<Omit<PounceBarrelPluginOptions
  *
  * Then in your app:
  * ```ts
- * import { reactive, Button, A } from '@pounce'
+ * import { reactive, Button, A } from '@sursaut'
  * ```
  */
-export function pounceBarrelPlugin(options: PounceBarrelPluginOptions = {}) {
-	const name = options.name ?? '@pounce'
+export function sursautBarrelPlugin(options: SursautBarrelPluginOptions = {}) {
+	const name = options.name ?? '@sursaut'
 	const resolved = {
 		name,
 		skeleton: options.skeleton ?? 'full-stack',
 		adapter: options.adapter ?? '',
-	} satisfies Required<Omit<PounceBarrelPluginOptions, 'dts'>>
+	} satisfies Required<Omit<SursautBarrelPluginOptions, 'dts'>>
 
 	const dtsPath = options.dts === false ? false : (options.dts ?? `.generated-types/${name}.d.ts`)
 
 	return {
-		name: 'pounce-barrel',
+		name: 'sursaut-barrel',
 		buildStart() {
 			if (dtsPath) {
 				const abs = path.resolve(process.cwd(), dtsPath)

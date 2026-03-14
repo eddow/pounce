@@ -1,7 +1,7 @@
-import type { DisplayContext } from '@pounce/kit'
+import type { DisplayContext } from '@sursaut/kit'
 
 /**
- * Icon factory receives the `DisplayContext` from `@pounce/kit` (injected into `env.dc`
+ * Icon factory receives the `DisplayContext` from `@sursaut/kit` (injected into `env.dc`
  * by `DisplayProvider`). Carries direction (RTL/LTR), theme, locale, and timezone.
  */
 
@@ -13,12 +13,12 @@ export type IconFactory = (
 ) => JSX.Element
 
 /**
- * Global configuration for `@pounce/ui`.
+ * Global configuration for `@sursaut/ui`.
  * Mutate properties directly — same pattern as `reactiveOptions` in mutts.
  *
  * @example
  * ```ts
- * import { options } from '@pounce/ui'
+ * import { options } from '@sursaut/ui'
  * options.iconFactory = (name, size, el, dc) => <i class={`icon-${name}`} {...el} />
  * ```
  */

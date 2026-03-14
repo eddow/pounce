@@ -1,4 +1,4 @@
-import { type ProgressProps, progressModel } from '@pounce/ui/models'
+import { type ProgressProps, progressModel } from '@sursaut/ui/models'
 
 export function Progress(props: ProgressProps) {
 	const model = progressModel(props)

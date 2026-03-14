@@ -3,7 +3,7 @@
  */
 import { describe, test, expect } from 'vitest'
 import { reactive } from 'mutts'
-import { getComponentInstance, getComponentHierarchy, rootComponents, h } from '@pounce/core'
+import { getComponentInstance, getComponentHierarchy, rootComponents, h } from '@sursaut/core'
 
 describe('Component association debug tools', () => {
 	// ... (tests 1 and 2 unchanged)

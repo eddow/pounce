@@ -39,7 +39,7 @@ bind: b.x = a.x ??= 7
 // becomes:
 bind(r(() => b.x, _v => b.x = _v), r(() => a.x, _v => a.x = _v), 7)`
 
-const manualExample = `import { bind, ReactiveProp } from '@pounce/core'
+const manualExample = `import { bind, ReactiveProp } from '@sursaut/core'
 
 // Call bind() directly to capture the cleanup handle
 const stop = bind(
@@ -97,7 +97,7 @@ export default function BindPage() {
 					The Babel plugin transforms <code>bind:</code> labeled statements into <code>bind()</code>{' '}
 					calls with two-way <code>r()</code> reactive props. The <code>bind</code> and{' '}
 					<code>r</code> identifiers are <strong>auto-imported</strong> from{' '}
-					<code>@pounce/core</code> — do not import them manually in files using the label syntax.
+					<code>@sursaut/core</code> — do not import them manually in files using the label syntax.
 				</p>
 				<Code code={transformExample} lang="ts" />
 				<p>

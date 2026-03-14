@@ -1,7 +1,7 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const customAdapter = `import { uiComponent, gather } from '@pounce/ui'
-import { type ButtonProps as BaseButtonProps, buttonModel } from '@pounce/ui/models'
+const customAdapter = `import { uiComponent, gather } from '@sursaut/ui'
+import { type ButtonProps as BaseButtonProps, buttonModel } from '@sursaut/ui/models'
 
 const myComponent = uiComponent(['primary', 'secondary', 'danger'] as const)
 
@@ -25,7 +25,7 @@ export const Button = myComponent(function Button(props: MyButtonProps) {
 const packageShape = `src/
   factory.ts        // shared variant list + uiComponent(...)
   components/
-    button.tsx      // thin wrappers around @pounce/ui models
+    button.tsx      // thin wrappers around @sursaut/ui models
     card.tsx
     dialog.tsx
   directives/
@@ -43,7 +43,7 @@ export default function CreatingAdapterPage() {
 			<Section title="Implementation Guide">
 				<p>
 					A custom adapter is just a package of visual components built on top of{' '}
-					<code>@pounce/ui</code> models. Start with a shared <code>uiComponent(...)</code>
+					<code>@sursaut/ui</code> models. Start with a shared <code>uiComponent(...)</code>
 					factory for your variant set, then wrap each headless model with your DOM and classes.
 				</p>
 				<Code code={customAdapter} lang="tsx" />

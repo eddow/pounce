@@ -1,13 +1,13 @@
 # Server-Side Rendering and Hydration
 
-`@pounce/board` treats SSR as a first-class path. The server establishes an SSR request context, renders the matched route tree, and injects hydration payloads into the HTML response.
+`@sursaut/board` treats SSR as a first-class path. The server establishes an SSR request context, renders the matched route tree, and injects hydration payloads into the HTML response.
 
 ## Universal `api()` behavior
 
 The same `api()` call behaves differently depending on where it runs:
 
 ```ts
-import { api } from '@pounce/board'
+import { api } from '@sursaut/board'
 
 const posts = await api('/posts').get<Post[]>()
 ```
@@ -39,7 +39,7 @@ That context is what allows `api()` and `provide()` to cooperate during renderin
 SSR data is injected into the HTML as JSON script tags:
 
 ```html
-<script type="application/json" id="pounce-data-..."></script>
+<script type="application/json" id="sursaut-data-..."></script>
 ```
 
 The script ID is deterministic and based on the requested path, including query parameters when relevant.
@@ -54,10 +54,10 @@ The promise returned by `api().get()` also exposes a synchronous `hydrated` prop
 
 ## Head content
 
-When your UI uses `@pounce/kit`'s `<Head>` or `useHead()`, board collects that content during SSR and injects it into the final document `<head>`.
+When your UI uses `@sursaut/kit`'s `<Head>` or `useHead()`, board collects that content during SSR and injects it into the final document `<head>`.
 
 ```tsx
-import { Head } from '@pounce/kit'
+import { Head } from '@sursaut/kit'
 
 function Page() {
 	return <>
@@ -81,10 +81,10 @@ Notes:
 Sibling route `.ts` modules can export `provide()` through `expose()`:
 
 ```ts
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 export default expose({
-	provide: async () => ({ siteName: 'Pounce Demo' }),
+	provide: async () => ({ siteName: 'Sursaut Demo' }),
 })
 ```
 
@@ -96,7 +96,7 @@ During SSR:
 
 During SPA navigation:
 
-- the client requests page props through the internal provide channel using the `X-Pounce-Provide: true` header
+- the client requests page props through the internal provide channel using the `X-Sursaut-Provide: true` header
 - board invokes the composed `provide()` chain and returns JSON
 - that result becomes the next page's props
 
@@ -130,5 +130,5 @@ Important details:
 ## Common pitfalls
 
 - Empty root HTML usually means the route component did not render or SSR failed before `renderToStringAsync`
-- Hydration warnings usually mean the expected `pounce-data-*` script was not emitted for that route
+- Hydration warnings usually mean the expected `sursaut-data-*` script was not emitted for that route
 - Layout components should come from `layout.tsx` and render `props.children` exactly once

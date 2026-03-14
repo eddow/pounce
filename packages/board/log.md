@@ -3,7 +3,7 @@
 ## 2026-01-19: Initial Audit & Reflection
 
 ### Review of Assignments
-The initial task was to browse `pounce-board/walkthrough.md` and check for undone tasks that might have been implemented but not marked.
+The initial task was to browse `sursaut-board/walkthrough.md` and check for undone tasks that might have been implemented but not marked.
 
 ### Findings vs Plan
 The `walkthrough.md` served as a high-level roadmap, but the actual implementation has slightly diverged in terms of file naming and status.
@@ -13,7 +13,7 @@ The `walkthrough.md` served as a high-level roadmap, but the actual implementati
     -   **Reality**: The file is actually named `tests/integration/route-scanner.spec.ts`. This suggests a rename occurred during implementation to better reflect the component name (`RouteScanner`).
 
 2.  **Implemented but Unmarked Features**:
-    -   **SSR Data Injection**: The `walkthrough.md` listed "Test API responses are injected as script tags" as undone. However, `tests/integration/ssr-flow.spec.ts` clearly demonstrates and verifies this functionality (`expect(html).toContain('<script type="application/json" id="pounce-data-test">')`).
+    -   **SSR Data Injection**: The `walkthrough.md` listed "Test API responses are injected as script tags" as undone. However, `tests/integration/ssr-flow.spec.ts` clearly demonstrates and verifies this functionality (`expect(html).toContain('<script type="application/json" id="sursaut-data-test">')`).
     -   **Route Handler Loading**: Listed as undone, but `route-scanner.spec.ts` covers `index.ts` handler loading thoroughly.
 
 3.  **Partial Implementations**:

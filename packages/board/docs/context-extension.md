@@ -1,17 +1,17 @@
 # Extending RequestContext
 
-This guide is for the low-level server middleware APIs exported from `@pounce/board/server`, such as `runMiddlewares`, `RequestContext`, and `RouteHandler`.
+This guide is for the low-level server middleware APIs exported from `@sursaut/board/server`, such as `runMiddlewares`, `RequestContext`, and `RouteHandler`.
 
-It does **not** describe route-local `expose({ middle })` middleware, which uses `PounceRequest` instead of `RequestContext`.
+It does **not** describe route-local `expose({ middle })` middleware, which uses `SursautRequest` instead of `RequestContext`.
 
 ## Basic usage
 
 Create a declaration file such as `types/board.d.ts`:
 
 ```ts
-import '@pounce/board/server'
+import '@sursaut/board/server'
 
-declare module '@pounce/board/server' {
+declare module '@sursaut/board/server' {
 	interface RequestContext {
 		user?: {
 			id: string
@@ -30,7 +30,7 @@ declare module '@pounce/board/server' {
 ## Example: low-level middleware
 
 ```ts
-import type { Middleware } from '@pounce/board/server'
+import type { Middleware } from '@sursaut/board/server'
 
 export const withAuth: Middleware = async (ctx, next) => {
 	const token = ctx.request.headers.get('Authorization')
@@ -44,7 +44,7 @@ export const withAuth: Middleware = async (ctx, next) => {
 ## Example: using extended context in a handler
 
 ```ts
-import { expose, type RouteHandler } from '@pounce/board/server'
+import { expose, type RouteHandler } from '@sursaut/board/server'
 
 const getProfile: RouteHandler = async (ctx) => {
 	if (!ctx.user) {
@@ -65,7 +65,7 @@ export default expose({
 ## Multiple middleware layers
 
 ```ts
-import type { Middleware } from '@pounce/board/server'
+import type { Middleware } from '@sursaut/board/server'
 
 export const withUser: Middleware = async (ctx, next) => {
 	ctx.user = await getUser(ctx.request)
@@ -90,7 +90,7 @@ export const withSession: Middleware = async (ctx, next) => {
 ## Type-safe guards
 
 ```ts
-import type { RequestContext } from '@pounce/board/server'
+import type { RequestContext } from '@sursaut/board/server'
 
 export function requireAuth(
 	ctx: RequestContext

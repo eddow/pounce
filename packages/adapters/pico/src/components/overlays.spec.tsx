@@ -1,5 +1,5 @@
-import { document, type Env, latch } from '@pounce/core'
-import { bindDialog, bindDrawer, bindToast, dialogSpec, toastSpec } from '@pounce/ui'
+import { document, type Env, latch } from '@sursaut/core'
+import { bindDialog, bindDrawer, bindToast, dialogSpec, toastSpec } from '@sursaut/ui'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { WithOverlays } from './overlays'
 
@@ -61,7 +61,7 @@ describe('WithOverlays (integration)', () => {
 		push!(dialogSpec({ message: 'Hello' }))
 		await tick()
 
-		const item = document.querySelector('.pounce-overlay-item')
+		const item = document.querySelector('.sursaut-overlay-item')
 		expect(item).toBeTruthy()
 	})
 
@@ -82,7 +82,7 @@ describe('WithOverlays (integration)', () => {
 		push!(dialogSpec('Modal'))
 		await tick()
 
-		expect(document.querySelector('.pounce-backdrop')).toBeTruthy()
+		expect(document.querySelector('.sursaut-backdrop')).toBeTruthy()
 	})
 
 	it('dismisses on backdrop click if dismissible', async () => {
@@ -101,13 +101,13 @@ describe('WithOverlays (integration)', () => {
 		const promise = push!(dialogSpec({ message: 'Hello', dismissible: true }))
 		await Promise.resolve()
 
-		const backdrop = document.querySelector('.pounce-backdrop') as HTMLElement
+		const backdrop = document.querySelector('.sursaut-backdrop') as HTMLElement
 		expect(backdrop).toBeTruthy()
 		backdrop.click()
 
 		expect(await promise).toBe(null)
 		vi.advanceTimersByTime(500)
-		expect(document.querySelector('.pounce-overlay-item')).toBeFalsy()
+		expect(document.querySelector('.sursaut-overlay-item')).toBeFalsy()
 		vi.useRealTimers()
 	})
 
@@ -126,10 +126,10 @@ describe('WithOverlays (integration)', () => {
 		push!(dialogSpec({ message: 'Hello', dismissible: false }))
 		await tick()
 
-		const backdrop = document.querySelector('.pounce-backdrop') as HTMLElement
+		const backdrop = document.querySelector('.sursaut-backdrop') as HTMLElement
 		backdrop.click()
 
-		expect(document.querySelector('.pounce-overlay-item')).toBeTruthy()
+		expect(document.querySelector('.sursaut-overlay-item')).toBeTruthy()
 	})
 
 	// ── Escape key ─────────────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ describe('WithOverlays (integration)', () => {
 
 		const promise = push!(dialogSpec('Hello'))
 
-		const manager = document.querySelector('.pounce-overlay-manager') as HTMLElement
+		const manager = document.querySelector('.sursaut-overlay-manager') as HTMLElement
 		manager.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
 
 		expect(await promise).toBe(null)
@@ -172,8 +172,8 @@ describe('WithOverlays (integration)', () => {
 		push!(toastSpec('Toast'))
 		await tick()
 
-		expect(document.querySelector('.pounce-mode-modal .pounce-overlay-item')).toBeTruthy()
-		expect(document.querySelector('.pounce-mode-toast .pounce-overlay-item')).toBeTruthy()
+		expect(document.querySelector('.sursaut-mode-modal .sursaut-overlay-item')).toBeTruthy()
+		expect(document.querySelector('.sursaut-mode-toast .sursaut-overlay-item')).toBeTruthy()
 	})
 
 	// ── dialog helper ──────────────────────────────────────────────────────────
@@ -202,7 +202,7 @@ describe('WithOverlays (integration)', () => {
 		})
 		await tick()
 
-		const buttons = document.querySelectorAll('.pounce-overlay-item button')
+		const buttons = document.querySelectorAll('.sursaut-overlay-item button')
 		const ok = Array.from(buttons).find((b) => b.textContent === 'OK') as HTMLElement
 		expect(ok).toBeTruthy()
 		ok.click()
@@ -225,7 +225,7 @@ describe('WithOverlays (integration)', () => {
 		const promise = dialog!.confirm('Are you sure?')
 		await tick()
 
-		const manager = document.querySelector('.pounce-overlay-manager') as HTMLElement
+		const manager = document.querySelector('.sursaut-overlay-manager') as HTMLElement
 		manager.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
 
 		expect(await promise).toBe(false)
@@ -248,7 +248,7 @@ describe('WithOverlays (integration)', () => {
 		toast!('Notification')
 		await tick()
 
-		expect(document.querySelector('.pounce-overlay-item')).toBeTruthy()
+		expect(document.querySelector('.sursaut-overlay-item')).toBeTruthy()
 	})
 
 	// ── drawer helper ──────────────────────────────────────────────────────────
@@ -268,10 +268,10 @@ describe('WithOverlays (integration)', () => {
 		drawer!({ children: <p>Content</p>, side: 'left' })
 		await tick()
 
-		expect(document.querySelector('.pounce-overlay-item')).toBeTruthy()
+		expect(document.querySelector('.sursaut-overlay-item')).toBeTruthy()
 	})
 
-	// ── pounce-closing class ───────────────────────────────────────────────────
+	// ── sursaut-closing class ───────────────────────────────────────────────────
 
 	it('removes overlay from DOM after resolve and transition timeout', async () => {
 		let push: Env['overlay']
@@ -287,14 +287,14 @@ describe('WithOverlays (integration)', () => {
 
 		const promise = push!(dialogSpec('Hello'))
 		await tick()
-		expect(document.querySelector('.pounce-overlay-item')).toBeTruthy()
+		expect(document.querySelector('.sursaut-overlay-item')).toBeTruthy()
 
-		const manager = document.querySelector('.pounce-overlay-manager') as HTMLElement
+		const manager = document.querySelector('.sursaut-overlay-manager') as HTMLElement
 		manager.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
 		await promise
 
 		// wait for the 300ms deferred removal
 		await new Promise((r) => setTimeout(r, 350))
-		expect(document.querySelector('.pounce-overlay-item')).toBeFalsy()
+		expect(document.querySelector('.sursaut-overlay-item')).toBeFalsy()
 	})
 })

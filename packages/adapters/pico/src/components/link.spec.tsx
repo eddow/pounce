@@ -1,4 +1,4 @@
-import { document, latch } from '@pounce/core'
+import { document, latch } from '@sursaut/core'
 import { reactive } from 'mutts'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -8,7 +8,7 @@ const state = reactive({
 	onClick: vi.fn(),
 })
 
-vi.mock('@pounce/kit', () => ({
+vi.mock('@sursaut/kit', () => ({
 	linkModel: () => ({
 		get 'aria-current'() {
 			return state['aria-current']

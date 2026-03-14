@@ -1,4 +1,4 @@
-import { A, Heading, Inline, Select, Stack, Switch, Text } from '@pounce'
+import { A, Heading, Inline, Select, Stack, Switch, Text } from '@sursaut'
 import { reactive } from 'mutts'
 import { ApiTable, Demo, Section } from '../../components'
 
@@ -233,7 +233,7 @@ export default function TypographyPage() {
 
 			<Section title="A">
 				<p>
-					Styled anchor using <code>{'<A>'}</code> from <code>@pounce/kit</code> for client-side
+					Styled anchor using <code>{'<A>'}</code> from <code>@sursaut/kit</code> for client-side
 					routing. Supports variant coloring and optional underline.
 				</p>
 				<Demo title="A" source={linkSource} component={<LinkDemo />} />

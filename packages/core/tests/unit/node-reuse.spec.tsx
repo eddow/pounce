@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { atomic } from 'mutts'
-import { document, latch } from '@pounce/core'
+import { document, latch } from '@sursaut/core'
 import { reconcile } from '../../src/lib/reconciler'
 
 describe('node reuse and destruction semantics', () => {
@@ -47,6 +47,6 @@ describe('node reuse and destruction semantics', () => {
 		expect(() => {
 			const relatchStop = latch(container, node)
 			relatchStop()
-		}).toThrow('[pounce] Cannot re-add a node that has already been unlinked')
+		}).toThrow('[sursaut] Cannot re-add a node that has already been unlinked')
 	})
 })

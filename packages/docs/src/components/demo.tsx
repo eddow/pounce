@@ -1,4 +1,4 @@
-import { Accordion, componentStyle, latch } from '@pounce'
+import { Accordion, componentStyle, latch } from '@sursaut'
 import { reactive } from 'mutts'
 import { Code } from './code'
 
@@ -10,28 +10,28 @@ componentStyle.sass`
 		margin: 0 0 1rem 0
 		font-size: 1.1rem
 		font-weight: 600
-		color: var(--pounce-fg, #333)
+		color: var(--sursaut-fg, #333)
 		
 		[data-theme="dark"] &
-			color: var(--pounce-fg, #e0e0e0)
+			color: var(--sursaut-fg, #e0e0e0)
 	
 .demo-live
-	border: 1px solid var(--pounce-border, rgba(0, 0, 0, 0.1))
+	border: 1px solid var(--sursaut-border, rgba(0, 0, 0, 0.1))
 	padding: 1.5rem
 	border-radius: 0.5rem
-	background: var(--pounce-bg, #fff)
+	background: var(--sursaut-bg, #fff)
 	margin-bottom: 1rem
 	
 	[data-theme="dark"] &
-		border-color: var(--pounce-border, rgba(255, 255, 255, 0.1))
-		background: var(--pounce-bg, #0a0a0a)
+		border-color: var(--sursaut-border, rgba(255, 255, 255, 0.1))
+		background: var(--sursaut-bg, #0a0a0a)
 	
 	// Add some demo-specific styling
 	> *
 		max-width: 100%
 	
 	// Style buttons in demos
-	button.pounce-button
+	button.sursaut-button
 		margin-right: 0.5rem
 		margin-bottom: 0.5rem
 	

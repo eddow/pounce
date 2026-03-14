@@ -5,7 +5,7 @@ export default function MuttsIndexPage() {
 		<article>
 			<PackageHeader
 				name="Mutts"
-				description="The foundational reactivity engine for Pounce. Proxy-based signals, smart collections, and async context management."
+				description="The foundational reactivity engine for Sursaut. Proxy-based signals, smart collections, and async context management."
 				install="pnpm add mutts"
 			/>
 

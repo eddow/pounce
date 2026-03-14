@@ -1,6 +1,6 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const hydrationSnippet = `import { api } from '@pounce/board'
+const hydrationSnippet = `import { api } from '@sursaut/board'
 
 // On Server: Fetches and stores in context
 // On Client (First Load): Reads from <script> tag (no network)

@@ -1,4 +1,4 @@
-import { radioButtonModel } from '@pounce/ui'
+import { radioButtonModel } from '@sursaut/ui'
 import { reactive } from 'mutts'
 
 export default function RadioButtonDemo() {

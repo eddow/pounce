@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
-import { pounceCorePlugin } from '@pounce/core/plugin'
+import { sursautCorePlugin } from '@sursaut/core/plugin'
 
 const isWatch = process.argv.includes('--watch')
 
@@ -40,23 +40,23 @@ export default defineConfig({
 		sourcemap: true,
 		emptyOutDir: !isWatch,
 		rollupOptions: {
-			external: [/^@pounce\//, /^dockview-core/, /^mutts/],
+			external: [/^@sursaut\//, /^dockview-core/, /^mutts/],
 		},
 	},
 	plugins: [
 		...(isWatch ? [ensureStableTypeEntrypoints()] : []),
-		pounceCorePlugin(),
+		sursautCorePlugin(),
 		dts({
 			include: ['src/**/*.ts', 'src/**/*.tsx'],
 			exclude: ['src/**/*.spec.ts', 'src/**/*.spec.tsx', 'src/**/*.test.ts', 'src/**/*.test.tsx'],
 		}),
 	],
-	// For demo/e2e development: resolve @pounce/ui to source instead of dist
+	// For demo/e2e development: resolve @sursaut/ui to source instead of dist
 	resolve: {
 		alias: {
-			'@pounce/ui/dockview': resolve(__dirname, 'src/dockview.ts'),
-			'@pounce/ui/palette': resolve(__dirname, 'src/palette.ts'),
-			'@pounce/ui': resolve(__dirname, 'src/index.ts'),
+			'@sursaut/ui/dockview': resolve(__dirname, 'src/dockview.ts'),
+			'@sursaut/ui/palette': resolve(__dirname, 'src/palette.ts'),
+			'@sursaut/ui': resolve(__dirname, 'src/index.ts'),
 		},
 	},
 })

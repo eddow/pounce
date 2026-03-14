@@ -1,4 +1,4 @@
-# @pounce/kit TODO
+# @sursaut/kit TODO
 
 ## High priority
 

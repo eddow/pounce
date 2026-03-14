@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { reactive, unreactive } from 'mutts'
-import { document, latch } from '@pounce/core'
+import { document, latch } from '@sursaut/core'
 
 describe('directive lifecycle semantics', () => {
 	let container: HTMLElement

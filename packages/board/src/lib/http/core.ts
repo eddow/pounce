@@ -1,8 +1,8 @@
 /**
- * Core HTTP types and middleware runner for pounce-board
+ * Core HTTP types and middleware runner for sursaut-board
  */
 
-export { ApiError } from '@pounce/kit'
+export { ApiError } from '@sursaut/kit'
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
@@ -129,7 +129,7 @@ export function createErrorResponse(error: string | Error, status = 500): Respon
 	})
 }
 /**
- * Default security headers for pounce-board
+ * Default security headers for sursaut-board
  */
 export const DEFAULT_SECURITY_HEADERS: Record<string, string> = {
 	'X-Content-Type-Options': 'nosniff',

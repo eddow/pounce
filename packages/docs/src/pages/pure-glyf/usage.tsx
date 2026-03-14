@@ -25,7 +25,7 @@ export default function PureGlyfUsagePage() {
 		<article>
 			<PackageHeader
 				name="Pure-glyf Usage"
-				description="Generating and consuming icons in your Pounce application."
+				description="Generating and consuming icons in your Sursaut application."
 			/>
 
 			<Section title="Basic Usage">

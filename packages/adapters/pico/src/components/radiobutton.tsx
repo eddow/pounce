@@ -1,5 +1,5 @@
-import { gather } from '@pounce/ui'
-import { type RadioButtonProps as BaseRadioButtonProps, radioButtonModel } from '@pounce/ui/models'
+import { gather } from '@sursaut/ui'
+import { type RadioButtonProps as BaseRadioButtonProps, radioButtonModel } from '@sursaut/ui/models'
 import { type PicoButtonLikeProps, picoButtonClass, picoComponent } from '../factory'
 
 export type RadioButtonProps<Value = unknown> = PicoButtonLikeProps<BaseRadioButtonProps<Value>>

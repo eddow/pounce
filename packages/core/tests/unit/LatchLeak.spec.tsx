@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { reactive } from 'mutts'
-import { latch, document } from '@pounce/core'
+import { latch, document } from '@sursaut/core'
 
 describe('Latch re-render behavior', () => {
 	let container: HTMLElement

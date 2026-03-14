@@ -1,6 +1,6 @@
-import { type ThemeValue } from '@pounce/ui'
-import { DisplayProvider } from '@pounce/kit'
-import { AppShell, Button, ThemeToggle } from '@pounce/adapter-pico'
+import { type ThemeValue } from '@sursaut/ui'
+import { DisplayProvider } from '@sursaut/kit'
+import { AppShell, Button, ThemeToggle } from '@sursaut/adapter-pico'
 import { reactive } from 'mutts'
 import { DemoSection, DemoState } from './shared'
 

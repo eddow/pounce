@@ -1,5 +1,5 @@
 /**
- * Universal API client for pounce-board
+ * Universal API client for sursaut-board
  * Supports absolute, site-absolute, and site-relative URLs
  * Handles SSR data injection and hydration
  */
@@ -15,7 +15,7 @@ import {
 	setRequestHook,
 	setResponseHook,
 	setStreamGuardHook,
-} from '@pounce/kit'
+} from '@sursaut/kit'
 import { clearSSRData as clearSSRState, getSSRData, getSSRId, injectSSRData } from '../ssr/utils.js'
 import type { ExtractPathParams } from '../types/inference.js'
 import {
@@ -28,7 +28,7 @@ import {
 } from './core.js'
 
 declare global {
-	var __POUNCE_ROUTE_REGISTRY__: RouteRegistry | null | undefined
+	var __SURSAUT_ROUTE_REGISTRY__: RouteRegistry | null | undefined
 }
 
 import { addContextInterceptor, getContext } from '../http/context.js'
@@ -92,18 +92,18 @@ export function setRouteRegistry(registry: RouteRegistry): void {
 	if (ctx) {
 		ctx.routeRegistry = registry
 	}
-	globalThis.__POUNCE_ROUTE_REGISTRY__ = registry
+	globalThis.__SURSAUT_ROUTE_REGISTRY__ = registry
 }
 
 export function getRouteRegistry(): RouteRegistry | null {
-	return globalThis.__POUNCE_ROUTE_REGISTRY__ || null
+	return globalThis.__SURSAUT_ROUTE_REGISTRY__ || null
 }
 
 /**
  * Clear the route registry (for testing)
  */
 export function clearRouteRegistry(): void {
-	globalThis.__POUNCE_ROUTE_REGISTRY__ = null
+	globalThis.__SURSAUT_ROUTE_REGISTRY__ = null
 }
 
 /**
@@ -112,11 +112,11 @@ export function clearRouteRegistry(): void {
  */
 async function dispatchToHandler(request: Request): Promise<Response> {
 	const ctx = getContext()
-	const activeRegistry = ctx?.routeRegistry || globalThis.__POUNCE_ROUTE_REGISTRY__
+	const activeRegistry = ctx?.routeRegistry || globalThis.__SURSAUT_ROUTE_REGISTRY__
 
 	if (!activeRegistry) {
 		throw new Error(
-			'[pounce-board] SSR dispatch failed: No route registry set. ' +
+			'[sursaut-board] SSR dispatch failed: No route registry set. ' +
 				'Ensure setRouteRegistry() is called during app initialization.'
 		)
 	}
@@ -127,7 +127,7 @@ async function dispatchToHandler(request: Request): Promise<Response> {
 	const match = activeRegistry.match(path, method)
 
 	if (!match) {
-		throw new Error(`[pounce-board] SSR dispatch failed: No handler found for ${method} ${path}`)
+		throw new Error(`[sursaut-board] SSR dispatch failed: No handler found for ${method} ${path}`)
 	}
 
 	const context: RequestContext = {
@@ -144,7 +144,7 @@ async function dispatchToHandler(request: Request): Promise<Response> {
 const configWithSSR = Object.assign(kitConfig, { ssr: false })
 
 /**
- * Global configuration for pounce-board
+ * Global configuration for sursaut-board
  */
 export const config: typeof kitConfig & { ssr: boolean } = configWithSSR
 

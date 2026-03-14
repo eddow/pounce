@@ -1,4 +1,4 @@
-import { Button, ButtonGroup, CheckButton, RadioButton } from '@pounce/adapter-pico'
+import { Button, ButtonGroup, CheckButton, RadioButton } from '@sursaut/adapter-pico'
 import { reactive } from 'mutts'
 import { DemoCard, DemoGrid, DemoSection, DemoState } from './shared'
 

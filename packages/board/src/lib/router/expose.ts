@@ -10,10 +10,10 @@ import type {
 	InferVerb,
 	MiddleFunction,
 	MiddleNext,
-	PounceRequest,
 	ReservedKey,
 	RouteHandler,
 	RouteNode,
+	SursautRequest,
 	ValidatedTree,
 } from './expose-types.js'
 
@@ -25,7 +25,7 @@ export type {
 	InferVerb,
 	MiddleFunction,
 	MiddleNext,
-	PounceRequest,
+	SursautRequest,
 	RouteNode,
 	ReservedKey,
 	RouteHandler,
@@ -49,17 +49,17 @@ export interface RouteRegistryEntry {
 }
 
 declare global {
-	var __POUNCE_EXPOSE_ROUTE_REGISTRY__: Map<string, RouteRegistryEntry> | undefined
-	var __POUNCE_EXPOSE_FILE_REGISTRY__: Map<string, any> | undefined
+	var __SURSAUT_EXPOSE_ROUTE_REGISTRY__: Map<string, RouteRegistryEntry> | undefined
+	var __SURSAUT_EXPOSE_FILE_REGISTRY__: Map<string, any> | undefined
 }
 
 export const routeRegistry =
-	globalThis.__POUNCE_EXPOSE_ROUTE_REGISTRY__ ??
-	(globalThis.__POUNCE_EXPOSE_ROUTE_REGISTRY__ = new Map<string, RouteRegistryEntry>())
+	globalThis.__SURSAUT_EXPOSE_ROUTE_REGISTRY__ ??
+	(globalThis.__SURSAUT_EXPOSE_ROUTE_REGISTRY__ = new Map<string, RouteRegistryEntry>())
 
 export const fileRegistry =
-	globalThis.__POUNCE_EXPOSE_FILE_REGISTRY__ ??
-	(globalThis.__POUNCE_EXPOSE_FILE_REGISTRY__ = new Map<string, any>())
+	globalThis.__SURSAUT_EXPOSE_FILE_REGISTRY__ ??
+	(globalThis.__SURSAUT_EXPOSE_FILE_REGISTRY__ = new Map<string, any>())
 
 export function clearExposeRegistry(): void {
 	routeRegistry.clear()
@@ -67,7 +67,7 @@ export function clearExposeRegistry(): void {
 }
 
 function toStreamHandler(handler: RouteHandler<any>): RouteHandler<any> {
-	return async (req: PounceRequest) => {
+	return async (req: SursautRequest) => {
 		const result = await handler(req)
 		if (result instanceof Response) return result
 
@@ -110,15 +110,15 @@ function toStreamHandler(handler: RouteHandler<any>): RouteHandler<any> {
 // Returns `T` so the client can use `typeof` to extract the exact shape.
 //
 // RUNTIME BEHAVIOR:
-//   1. Read globalThis.__POUNCE_CURRENT_FILE__ to determine baseUrl
+//   1. Read globalThis.__SURSAUT_CURRENT_FILE__ to determine baseUrl
 //   2. Flatten the config tree into the central routeRegistry
 //   3. This runs once per file at server start (+ on HMR cache clear)
 export function expose<
 	FileParams extends Record<string, string> = Record<string, never>,
 	T extends RouteNode<FileParams> = RouteNode<FileParams>,
 >(tree: T): T {
-	const currentFile = (globalThis as any).__POUNCE_CURRENT_FILE__
-	const currentBaseUrl: string = (globalThis as any).__POUNCE_CURRENT_BASE_URL__ || ''
+	const currentFile = (globalThis as any).__SURSAUT_CURRENT_FILE__
+	const currentBaseUrl: string = (globalThis as any).__SURSAUT_CURRENT_BASE_URL__ || ''
 
 	if (currentFile) {
 		fileRegistry.set(currentFile, { tree, baseUrl: currentBaseUrl })
@@ -167,7 +167,7 @@ export function expose<
 			if (prefixProvide) {
 				const pFn = prefixProvide
 				const cFn = node.provide
-				composedProvide = async (req: PounceRequest) => {
+				composedProvide = async (req: SursautRequest) => {
 					const pData = await pFn(req)
 					if (pData) (req as any).provide = pData
 					const cData = await cFn(req)
@@ -239,7 +239,7 @@ export default expose<{ teamId: string }>({
 // ON THE CLIENT (type-only imports)
 // ==========================================
 // import type UsersRoute from '../../routes/teams/[teamId]/users.ts';
-// import type { InferProvide, InferPath, InferVerb } from '@pounce/board';
+// import type { InferProvide, InferPath, InferVerb } from '@sursaut/board';
 //
 // type PageData     = InferProvide<typeof UsersRoute>;
 // type UserResponse = InferPath<typeof UsersRoute, '/[userId]/get'>;

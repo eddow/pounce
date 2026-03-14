@@ -1,5 +1,5 @@
 /**
- * Main entry point for pounce-board (Universal)
+ * Main entry point for sursaut-board (Universal)
  * re-exports client or server output based on environment via package.json conditions
  */
 
@@ -24,7 +24,7 @@ export type {
 } from './lib/http/core.js'
 export { ApiError } from './lib/http/core.js'
 export { defineProxy, type ProxyConfig, type ProxyEndpointConfig } from './lib/http/proxy.js'
-export { PounceResponse } from './lib/http/response.js'
+export { SursautResponse } from './lib/http/response.js'
 export { defineStreamRoute, type StreamCleanup, type StreamHandler } from './lib/http/stream.js'
 export { defineRoute, type RouteDefinition } from './lib/router/defs.js'
 export { expose } from './lib/router/expose.js'
@@ -35,5 +35,5 @@ export type {
 	InferVerb,
 	MiddleFunction,
 	MiddleNext,
-	PounceRequest,
+	SursautRequest,
 } from './lib/router/expose-types.js'

@@ -1,14 +1,14 @@
 import { document } from '../shared'
-import { PounceElement } from './pounce-element'
+import { SursautElement } from './sursaut-element'
 
 /**
  * Default dev-mode error boundary fallback.
  * Renders a visible error panel in the DOM so unhandled throws don't produce a blank screen.
- * Only used when pounceOptions.devCatch is true (dev mode, not prod/test).
+ * Only used when sursautOptions.devCatch is true (dev mode, not prod/test).
  */
-export function devCatchElement(error: unknown, retry?: () => void): PounceElement {
+export function devCatchElement(error: unknown, retry?: () => void): SursautElement {
 	console.log(error)
-	return new PounceElement(() => {
+	return new SursautElement(() => {
 		const panel = document.createElement('div')
 		panel.setAttribute(
 			'style',
@@ -28,7 +28,7 @@ export function devCatchElement(error: unknown, retry?: () => void): PounceEleme
 		)
 
 		const title = document.createElement('strong')
-		title.textContent = '[pounce] Unhandled render error'
+		title.textContent = '[sursaut] Unhandled render error'
 		title.setAttribute('style', 'font-size:14px;color:#ff4444')
 
 		const msg = document.createElement('pre')

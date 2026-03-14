@@ -2,10 +2,10 @@ import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { pounceCorePlugin } from '@pounce/core/plugin';
+import { sursautCorePlugin } from '@sursaut/core/plugin';
 
 const isWatch = process.argv.includes('--watch');
-const pounceDts = "export declare function registerGlyfIconFactory(): void;\n";
+const sursautDts = "export declare function registerGlyfIconFactory(): void;\n";
 
 function ensureStableTypeEntrypoints() {
   const distDir = resolve(import.meta.dirname, 'dist');
@@ -14,7 +14,7 @@ function ensureStableTypeEntrypoints() {
     ['plugin.d.ts', "export * from '../src/plugin'\n"],
     ['inject.d.ts', "export * from '../src/inject'\n"],
     ['generator.d.ts', "export * from '../src/generator'\n"],
-    ['pounce.d.ts', pounceDts],
+    ['sursaut.d.ts', sursautDts],
   ];
   return {
     name: 'ensure-stable-type-entrypoints',
@@ -32,21 +32,21 @@ function ensureStableTypeEntrypoints() {
 export default defineConfig({
   plugins: [
     ensureStableTypeEntrypoints(),
-    pounceCorePlugin(),
+    sursautCorePlugin(),
     dts({
-      exclude: ['src/pounce.tsx'],
+      exclude: ['src/sursaut.tsx'],
       insertTypesEntry: true,
       beforeWriteFile(filePath, content) {
         return {
           filePath,
           content: content
-            .replace(/from\s+['"]\.\.[\/\w.-]*\/ui\/dist[\/\w.-]*['"]/g, "from '@pounce/ui'")
-            .replace(/from\s+['"]\.\.[\/\w.-]*\/core\/dist[\/\w.-]*['"]/g, "from '@pounce/core'")
+            .replace(/from\s+['"]\.\.[\/\w.-]*\/ui\/dist[\/\w.-]*['"]/g, "from '@sursaut/ui'")
+            .replace(/from\s+['"]\.\.[\/\w.-]*\/core\/dist[\/\w.-]*['"]/g, "from '@sursaut/core'")
         }
       },
       afterBuild() {
-        const pounceDtsPath = resolve(import.meta.dirname, 'dist/pounce.d.ts');
-        writeFileSync(pounceDtsPath, pounceDts);
+        const sursautDtsPath = resolve(import.meta.dirname, 'dist/sursaut.d.ts');
+        writeFileSync(sursautDtsPath, sursautDts);
       }
     })
   ],
@@ -58,12 +58,12 @@ export default defineConfig({
         plugin: './src/plugin.ts',
         inject: './src/inject.ts',
         generator: './src/generator.ts',
-        pounce: './src/pounce.tsx',
+        sursaut: './src/sursaut.tsx',
       },
       formats: ['es', 'cjs'],
     },
     rollupOptions: {
-      external: ['vite', 'node:fs', 'node:path', /^@pounce\/core/, /^@pounce\/ui/]
+      external: ['vite', 'node:fs', 'node:path', /^@sursaut\/core/, /^@sursaut\/ui/]
     },
     sourcemap: 'inline'
   }

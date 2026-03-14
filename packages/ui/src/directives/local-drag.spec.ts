@@ -1,4 +1,4 @@
-import { document } from '@pounce/core'
+import { document } from '@sursaut/core'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { type LocalDragStopReason, startLocalDragSession } from './local-drag'
 import {

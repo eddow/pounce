@@ -1,4 +1,4 @@
-import { componentStyle } from '@pounce'
+import { componentStyle } from '@sursaut'
 import hljs from 'highlight.js/lib/core'
 import bash from 'highlight.js/lib/languages/bash'
 import css from 'highlight.js/lib/languages/css'
@@ -11,6 +11,15 @@ hljs.registerLanguage('bash', bash)
 hljs.registerLanguage('css', css)
 hljs.registerLanguage('json', json)
 hljs.registerLanguage('html', xml)
+
+function escapeHtml(code: string) {
+	return code
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&#39;')
+}
 
 componentStyle.sass`
 .code-block
@@ -48,9 +57,10 @@ export function Code(p: CodeProps) {
 			return p.class ?? ''
 		},
 		get highlighted() {
-			return hljs.highlight(p.code, {
-				language: this.lang === 'tsx' ? 'typescript' : this.lang,
-			})
+			const language = this.lang === 'tsx' ? 'typescript' : this.lang
+			return hljs.getLanguage(language)
+				? hljs.highlight(p.code, { language })
+				: { value: escapeHtml(p.code) }
 		},
 	}
 

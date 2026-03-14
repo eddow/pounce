@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, it } from 'vitest'
-import type { InferPath, InferProvide, InferVerb, PounceRequest } from './expose-types.js'
+import type { InferPath, InferProvide, InferVerb, SursautRequest } from './expose-types.js'
 
 describe('expose-types type extraction', () => {
 	it('should infer correctly', () => {
@@ -7,7 +7,7 @@ describe('expose-types type extraction', () => {
 			get: async () => ({ rootData: true }),
 			provide: async () => ({ user: 'admin' }),
 			'/[id]': {
-				get: async (req: PounceRequest<{ id: string }>) => ({ id: req.params.id }),
+				get: async (req: SursautRequest<{ id: string }>) => ({ id: req.params.id }),
 				'/settings': {
 					post: async () => ({ saved: true }),
 				},

@@ -29,20 +29,20 @@ export function dialogModel(props: DialogPropsWithIds, close: (value: any) => vo
 				role: 'dialog',
 				'aria-modal': 'true',
 				class: [
-					'pounce-dialog',
-					props.size ? `pounce-size-${props.size}` : '',
-					props.variant ? `pounce-variant-${props.variant}` : '',
+					'sursaut-dialog',
+					props.size ? `sursaut-size-${props.size}` : '',
+					props.variant ? `sursaut-variant-${props.variant}` : '',
 				],
 			}
 		},
 		get header() {
-			return { class: 'pounce-dialog-header', id: props.titleId }
+			return { class: 'sursaut-dialog-header', id: props.titleId }
 		},
 		get body() {
-			return { class: 'pounce-dialog-body', id: props.descId }
+			return { class: 'sursaut-dialog-body', id: props.descId }
 		},
 		get footer() {
-			return { class: 'pounce-dialog-footer' }
+			return { class: 'sursaut-dialog-footer' }
 		},
 		get buttons() {
 			if (!props.buttons) return []
@@ -54,7 +54,10 @@ export function dialogModel(props: DialogPropsWithIds, close: (value: any) => vo
 					get button() {
 						return {
 							type: 'button' as const,
-							class: ['pounce-btn', b.variant ? `pounce-btn-${b.variant}` : 'pounce-btn-secondary'],
+							class: [
+								'sursaut-btn',
+								b.variant ? `sursaut-btn-${b.variant}` : 'sursaut-btn-secondary',
+							],
 							disabled: b.disabled,
 							get onClick() {
 								return (_e: MouseEvent) => {

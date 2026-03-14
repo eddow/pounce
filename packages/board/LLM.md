@@ -1,24 +1,24 @@
-# Pounce-Board LLM Cheatsheet
+# Sursaut-Board LLM Cheatsheet
 
 ## Core Philosophy
-- **Automated Integration**: Unlike bounce-ts which requires manual setup, pounce-board automatically wires routes, middleware, and Hono integration
+- **Automated Integration**: Unlike bounce-ts which requires manual setup, sursaut-board automatically wires routes, middleware, and Hono integration
 - **File-based Conventions**: Route structure determines behavior (`.ts` = backend via `expose()`, `.tsx` = frontend, `layout.tsx` = wrapping layout)
 - **Type Safety First**: Shared `.d.ts` files between client/server are mandatory
 - **Universal API Client**: Single `api()` function works with absolute, site-absolute, and site-relative URLs
 
 ## Status & Caveats (Updated 2026-02-10)
-- **Status**: Core routing, Hono integration, SSR injection, and basic CLI (`pounce dev`) are implemented.
+- **Status**: Core routing, Hono integration, SSR injection, and basic CLI (`sursaut dev`) are implemented.
 - **Caveat**: `walkthrough.md` may lag behind code. Verified tests are the source of truth.
 - **Drift**: Some test files referenced in plans might have different names (e.g., `route-scanner.spec.ts` vs `route-loading.spec.ts`).
 - **Known Issues**: 
   - SSR async rendering: Reactive state updates don't trigger DOM re-renders in JSDOM (2 test failures)
-  - API client duplication with @pounce/kit (ApiError, PounceResponse) - kept local to avoid compatibility issues
+  - API client duplication with @sursaut/kit (ApiError, SursautResponse) - kept local to avoid compatibility issues
 
 ## Package Entry Points
-- **Universal**: `import { ... } from '@pounce/board'` - Types, API client (adapts to env), universal utilities.
-- **Server-Only**: `import { ... } from 'pounce-board/server'` - Router, Hono adapters, middleware runner.
-- **Client-Only**: `import { ... } from 'pounce-board/client'` - Hydration utilities, client-side specifics.
-- **Automatic Resolution**: `pounce-board` automatically resolves to client or server build based on specific environment (browser vs node) via `package.json` exports.
+- **Universal**: `import { ... } from '@sursaut/board'` - Types, API client (adapts to env), universal utilities.
+- **Server-Only**: `import { ... } from 'sursaut-board/server'` - Router, Hono adapters, middleware runner.
+- **Client-Only**: `import { ... } from 'sursaut-board/client'` - Hydration utilities, client-side specifics.
+- **Automatic Resolution**: `sursaut-board` automatically resolves to client or server build based on specific environment (browser vs node) via `package.json` exports.
 
 
 ## Routing & File Conventions
@@ -31,10 +31,10 @@
 ## Data Fetching & SSR
 - **Unified `api()` client**: Works on server and client
   - **Server**: Direct handler dispatch (no network)
-  - **Client (first load)**: Reads from `<script id="pounce-data-{base64}">` tags
+  - **Client (first load)**: Reads from `<script id="sursaut-data-{base64}">` tags
   - **Client (navigation)**: Standard fetch
 - **SSR ID Generation**: Deterministic base64-encoded path for hydration keys
-- **CSS Injection**: Automatically collects and injects styles from `pounce-ui` (including `pure-glyf`)
+- **CSS Injection**: Automatically collects and injects styles from `sursaut-ui` (including `pure-glyf`)
 - **Hydration**: Data injected via script tags, not global window object
 - **Synchronous Hydration**: `api().get()` returns a "Smart Promise" with a `.hydrated` property.
   ```tsx
@@ -45,7 +45,7 @@
 - **Interceptors**: `config.interceptors.request/response` arrays. **Unique**: These run during SSR dispatch (not just `fetch`), so headers set by interceptors are visible to handlers.
 
 ## Hono Integration
-- **Fully Automated**: `createPounceMiddleware()` handles all route registration
+- **Fully Automated**: `createSursautMiddleware()` handles all route registration
 - **No Manual Wiring**: Unlike Express/Fastify, routes are discovered and mounted automatically
 - **File Scanning**: Uses `import.meta.glob` (Vite) or fs scanning (Node)
 
@@ -64,15 +64,15 @@
   - Search in files for <<< @vocab "Test as Documentation" >>> to find tests that verify specific behaviors.
 
 ## Key Differences from Bounce-TS
-1. **Automated vs Manual**: Pounce-board auto-discovers routes, bounce-ts requires explicit registration
-2. **Framework vs Library**: Pounce-board is opinionated meta-framework, bounce-ts is flexible library  
+1. **Automated vs Manual**: Sursaut-board auto-discovers routes, bounce-ts requires explicit registration
+2. **Framework vs Library**: Sursaut-board is opinionated meta-framework, bounce-ts is flexible library  
 3. **SSR Built-in**: First-class SSR support vs bolt-on
 4. **Middleware System**: `middle` in `expose()` cascades cross-tree (replaces `common.ts`)
 
 ## Recent Fixes & Learnings (2026-02-10)
 - **Request Type Conflicts**: Removed `import { Request } from '@playwright/test'` which was overriding global Request type
-- **PounceResponse setData**: Added missing `setData()` method for interceptor response modification
+- **SursautResponse setData**: Added missing `setData()` method for interceptor response modification
 - **Type Safety**: Changed `ApiError.data: any` to `unknown` for better type safety
 - **ESM Imports**: Fixed `cli/build.ts` to use `import { builtinModules } from 'node:module'` instead of require()
 - **Dynamic Imports**: Replaced dynamic `import('node:async_hooks')` with static import in server-only context.ts
-- **JSON Parsing**: Fixed PounceResponse.json() to handle empty/null responses gracefully
+- **JSON Parsing**: Fixed SursautResponse.json() to handle empty/null responses gracefully

@@ -3,7 +3,7 @@
  */
 import { afterEach, describe, expect, it } from 'vitest'
 import { effect, morph, caught, reactive, reset } from 'mutts'
-import '@pounce/core'
+import '@sursaut/core'
 
 describe('Effect topology and error propagation', () => {
 	afterEach(reset)
@@ -24,12 +24,12 @@ describe('Effect topology and error propagation', () => {
 		expect(logs).toEqual(['t1', 'Z1', 'Z2', 'Y1', 'Y2', 'X', 't2'])
 	})
 
-	it('sibling effects (pounce-style) do NOT propagate errors', () => {
+	it('sibling effects (sursaut-style) do NOT propagate errors', () => {
 		const state = reactive({ triggerError: false })
 		let parentCaught = false
 		const logs: string[] = []
 
-		// Simulate pounce rendering: component in one morph, children in another
+		// Simulate sursaut rendering: component in one morph, children in another
 		const m1 = morph`test:parent`([null], () => {
 			logs.push('parent-start')
 

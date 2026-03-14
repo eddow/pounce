@@ -1,5 +1,5 @@
-import { gather } from '@pounce/ui'
-import { type RadioProps, radioModel } from '@pounce/ui/models'
+import { gather } from '@sursaut/ui'
+import { type RadioProps, radioModel } from '@sursaut/ui/models'
 import { picoComponent } from '../factory'
 
 /**

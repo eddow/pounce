@@ -1,4 +1,4 @@
-import { defineProxy } from '@pounce/board'
+import { defineProxy } from '@sursaut/board'
 
 export interface Comment {
   id: number

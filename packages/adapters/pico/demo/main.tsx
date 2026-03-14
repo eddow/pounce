@@ -1,7 +1,7 @@
-import { latch } from '@pounce/core'
-import { type ClientRouteDefinition, Router, type RouterRender } from '@pounce/kit'
-import { A } from '@pounce/adapter-pico'
-import '@pounce/adapter-pico/css'
+import { latch } from '@sursaut/core'
+import { type ClientRouteDefinition, Router, type RouterRender } from '@sursaut/kit'
+import { A } from '@sursaut/adapter-pico'
+import '@sursaut/adapter-pico/css'
 import ButtonsSection from './sections/Buttons'
 import CardsSection from './sections/Cards'
 import FormControlsSection from './sections/FormControls'
@@ -79,7 +79,7 @@ function DemoApp() {
 	return (
 		<div class="container" style="padding-block: 2rem; display: grid; gap: 1.5rem;">
 			<header style="display: grid; gap: 0.5rem;">
-				<h1 style="margin: 0;">@pounce/adapter-pico Demo</h1>
+				<h1 style="margin: 0;">@sursaut/adapter-pico Demo</h1>
 				<p style="margin: 0; color: var(--pico-muted-color);">
 					Grouped adapter concerns, with the same section modules reused as direct test fixtures.
 				</p>

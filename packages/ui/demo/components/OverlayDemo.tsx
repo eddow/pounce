@@ -1,4 +1,4 @@
-import { applyAutoFocus, createOverlayStack, dialogSpec, drawerSpec, toastSpec, trapFocus } from '@pounce/ui'
+import { applyAutoFocus, createOverlayStack, dialogSpec, drawerSpec, toastSpec, trapFocus } from '@sursaut/ui'
 import { reactive } from 'mutts'
 
 export default function OverlayDemo() {
@@ -36,7 +36,7 @@ export default function OverlayDemo() {
 						<h3 data-test="overlay-title" style="margin-top: 0;">
 							Interactive Overlay
 						</h3>
-						<p data-test="overlay-message">This dialog is part of the Pounce overlay stack.</p>
+						<p data-test="overlay-message">This dialog is part of the Sursaut overlay stack.</p>
 						<div style="display: flex; gap: 8px;">
 							<button
 								data-test="confirm-overlay"

@@ -11,7 +11,7 @@ describe('HelloWorld Component', () => {
 		const messageElement = rootElement.querySelector('.message')
 
 		expect(greetingElement?.textContent).toBe('Hello, World!')
-		expect(messageElement?.textContent).toBe('Welcome to Pounce components')
+		expect(messageElement?.textContent).toBe('Welcome to Sursaut components')
 	})
 
 	it('renders with custom name', () => {

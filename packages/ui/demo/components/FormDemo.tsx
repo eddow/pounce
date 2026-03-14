@@ -5,7 +5,7 @@ import {
 	radioButtonModel,
 	radioModel,
 	selectModel,
-} from '@pounce/ui'
+} from '@sursaut/ui'
 import { reactive } from 'mutts'
 
 const colors = ['red', 'green', 'blue']

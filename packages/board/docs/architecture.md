@@ -1,6 +1,6 @@
-# Pounce-Board Architecture
+# Sursaut-Board Architecture
 
-`@pounce/board` separates routing, HTTP, SSR, and framework integration into distinct layers so the core routing and client behavior stay reusable while Hono wiring remains adapter-specific.
+`@sursaut/board` separates routing, HTTP, SSR, and framework integration into distinct layers so the core routing and client behavior stay reusable while Hono wiring remains adapter-specific.
 
 ## Directory Structure
 

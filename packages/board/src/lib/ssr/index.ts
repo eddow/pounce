@@ -1,5 +1,5 @@
 /**
- * SSR utilities for pounce-board
+ * SSR utilities for sursaut-board
  * Re-exports from utils.ts for package consumers
  */
 export {

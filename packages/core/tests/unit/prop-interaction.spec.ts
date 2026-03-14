@@ -1,20 +1,20 @@
 import { reactive } from 'mutts'
 import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest'
-import { ReactiveProp, c, h, pounceOptions, r } from '@pounce/core'
-import type { PropInteraction } from '@pounce/core'
+import { ReactiveProp, c, h, sursautOptions, r } from '@sursaut/core'
+import type { PropInteraction } from '@sursaut/core'
 
 describe('PropInteraction tracking', () => {
 	let warnSpy: ReturnType<typeof vi.spyOn>
 	let prevCheck: false | 'warn' | 'error'
 
 	beforeEach(() => {
-		prevCheck = pounceOptions.checkReactivity
-		pounceOptions.checkReactivity = 'warn'
+		prevCheck = sursautOptions.checkReactivity
+		sursautOptions.checkReactivity = 'warn'
 		warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 	})
 
 	afterEach(() => {
-		pounceOptions.checkReactivity = prevCheck
+		sursautOptions.checkReactivity = prevCheck
 		warnSpy.mockRestore()
 	})
 
@@ -91,7 +91,7 @@ describe('PropInteraction tracking', () => {
 	})
 
 	it('error mode: get after write-only throws', () => {
-		pounceOptions.checkReactivity = 'error'
+		sursautOptions.checkReactivity = 'error'
 		let local = 0
 		const rp = new ReactiveProp(
 			() => local,
@@ -99,11 +99,11 @@ describe('PropInteraction tracking', () => {
 		)
 		const proxy = c({ x: rp }).asProps()
 		proxy.x = 5
-		expect(() => { void proxy.x }).toThrow('[pounce]')
+		expect(() => { void proxy.x }).toThrow('[sursaut]')
 	})
 
 	it('no tracking when checkReactivity is false', () => {
-		pounceOptions.checkReactivity = false
+		sursautOptions.checkReactivity = false
 		const state = reactive({ v: 0 })
 		const rp = new ReactiveProp(
 			() => state.v,

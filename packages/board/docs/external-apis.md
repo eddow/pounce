@@ -1,13 +1,13 @@
 # External API Proxies
 
-`@pounce/board` provides a type-safe way to consume external APIs using `defineProxy`.
+`@sursaut/board` provides a type-safe way to consume external APIs using `defineProxy`.
 
 ## Defining a Proxy
 
 Proxies are defined with a configuration object that describes the endpoints, methods, and optional transformations.
 
 ```typescript
-import { defineProxy } from '@pounce/board';
+import { defineProxy } from '@sursaut/board';
 import { z } from 'zod';
 
 // 1. Fully typed: Return type is inferred from Zod schema (z.infer<T>)
@@ -38,7 +38,7 @@ const myApi = defineProxy({
 - **Retries**: Configurable retry logic at multiple levels:
     1. **Endpoint Level**: `retries` in endpoint config.
     2. **Proxy Level**: `retries` and `retryDelay` in `defineProxy` config.
-    3. **Global Level**: `config.retries` and `config.retryDelay` from `@pounce/board`.
+    3. **Global Level**: `config.retries` and `config.retryDelay` from `@sursaut/board`.
 - **Global Config**: `request` option allows setting global headers (like Auth tokens) for all endpoints.
 
 ## Implementation Details

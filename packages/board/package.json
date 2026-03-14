@@ -1,13 +1,13 @@
 {
-	"name": "@pounce/board",
+	"name": "@sursaut/board",
 	"version": "0.1.0",
-	"description": "Full-stack meta-framework for pounce-ts with file-based routing, SSR, and middleware",
+	"description": "Full-stack meta-framework for sursaut-ts with file-based routing, SSR, and middleware",
 	"type": "module",
 	"sideEffects": false,
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"bin": {
-		"pounce": "./dist/cli.js"
+		"sursaut": "./dist/cli.js"
 	},
 	"exports": {
 		".": {
@@ -47,7 +47,7 @@
 		"test:all": "npm run test:integration && npm run test:e2e"
 	},
 	"keywords": [
-		"pounce",
+		"sursaut",
 		"framework",
 		"ssr",
 		"routing",
@@ -57,7 +57,7 @@
 	"author": "",
 	"license": "MIT",
 	"peerDependenciesMeta": {
-		"pounce-ts": {
+		"sursaut-ts": {
 			"optional": true
 		},
 		"mutts": {
@@ -66,9 +66,9 @@
 	},
 	"dependencies": {
 		"@hono/node-server": "^1.19.9",
-		"@pounce/core": "link:../core",
-		"@pounce/kit": "link:../kit",
-		"@pounce/ui": "link:../ui",
+		"@sursaut/core": "link:../core",
+		"@sursaut/kit": "link:../kit",
+		"@sursaut/ui": "link:../ui",
 		"cac": "^6.7.14",
 		"hono": "^4.6.14",
 		"mutts": "link:../../../mutts",

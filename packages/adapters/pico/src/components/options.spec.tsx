@@ -1,4 +1,4 @@
-import { document, latch } from '@pounce/core'
+import { document, latch } from '@sursaut/core'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import OptionsSection, { ComboboxFixture, SelectFixture } from '../../demo/sections/Options'
 
@@ -79,6 +79,6 @@ describe('options components', () => {
 		) as HTMLSpanElement
 		expect(updatedVitestCheck.style.opacity).toBe('1')
 		const chosen = container.textContent ?? ''
-		expect(chosen).toContain('TypeScript, Pounce, Vitest')
+		expect(chosen).toContain('TypeScript, Sursaut, Vitest')
 	})
 })

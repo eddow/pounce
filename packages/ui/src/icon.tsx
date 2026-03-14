@@ -1,4 +1,4 @@
-import type { Env } from '@pounce/core'
+import type { Env } from '@sursaut/core'
 import { options } from './options'
 
 export type IconComponentProps = {
@@ -11,7 +11,7 @@ export type IconComponentProps = {
  * Renders an icon using the registered icon factory.
  * Falls back to a `<span data-icon>` if no factory is set.
  *
- * Must be used inside a Pounce component tree — receives `env` (DisplayContext)
+ * Must be used inside a Sursaut component tree — receives `env` (DisplayContext)
  * automatically, which the icon factory can use for RTL/LTR and theme awareness.
  *
  * @example

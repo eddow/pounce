@@ -1,4 +1,4 @@
-import { menuModel } from '@pounce/ui'
+import { menuModel } from '@sursaut/ui'
 
 export default function MenuDemo() {
 	const model = menuModel({

@@ -9,17 +9,17 @@ import {
 	type PerhapsReactive,
 	ReactiveProp,
 } from './composite-attributes'
-import { perfCounters, pounceOwner, rootComponents, testing } from './debug'
+import { perfCounters, rootComponents, sursautOwner, testing } from './debug'
+import { processChildren, reconcile, sursautElement } from './reconciler'
+import { attachAttributes, checkComponentRebuild, isString } from './renderer-internal'
 import {
 	type Child,
 	type Children,
 	DynamicRenderingError,
 	type Env,
-	PounceElement,
 	rootEnv,
-} from './pounce-element'
-import { pounceElement, processChildren, reconcile } from './reconciler'
-import { attachAttributes, checkComponentRebuild, isString } from './renderer-internal'
+	SursautElement,
+} from './sursaut-element'
 import { extend } from './utils'
 
 export const intrinsicComponentAliases = extend(null, {
@@ -38,14 +38,14 @@ export const intrinsicComponentAliases = extend(null, {
 	) {
 		if (Array.isArray(props.children) && props.children.length !== 1)
 			throw new DynamicRenderingError(
-				`[pounce] Invalid children for 'for' component: ${JSON.stringify(props.children)}. Children must evaluate to one function.`
+				`[sursaut] Invalid children for 'for' component: ${JSON.stringify(props.children)}. Children must evaluate to one function.`
 			)
 		const body = collapse(Array.isArray(props.children) ? props.children[0] : props.children) as (
 			item: T
 		) => Children
 		if (typeof body !== 'function') {
 			throw new DynamicRenderingError(
-				`[pounce] Invalid children for 'for' component: ${JSON.stringify(props.children)}. Children must evaluate to a function.`
+				`[sursaut] Invalid children for 'for' component: ${JSON.stringify(props.children)}. Children must evaluate to a function.`
 			)
 		}
 		// Lock to fence on purpose
@@ -68,10 +68,10 @@ export const intrinsicComponentAliases = extend(null, {
 			perf?.measure('for:update', 'for:update:start', 'for:update:end')
 			return res
 		})
-		return new PounceElement(() => nodes as any, 'for')
+		return new SursautElement(() => nodes as any, 'for')
 	},
-	fragment(props: { children: PounceElement[] }, env: Env) {
-		return new PounceElement(() => processChildren(props.children, env), 'fragment')
+	fragment(props: { children: SursautElement[] }, env: Env) {
+		return new SursautElement(() => processChildren(props.children, env), 'fragment')
 	},
 	try(
 		props: {
@@ -80,7 +80,7 @@ export const intrinsicComponentAliases = extend(null, {
 		},
 		_env: Env
 	) {
-		return new PounceElement((env) => {
+		return new SursautElement((env) => {
 			const CatchComponent = props.catch || env.catch
 			if (!CatchComponent) {
 				throw new Error('No catch component provided')
@@ -95,7 +95,7 @@ export const intrinsicComponentAliases = extend(null, {
 					result.error = undefined
 					caught((error) => {
 						result.error = unreactive(
-							pounceElement(CatchComponent(error, tryAgain), env).render(
+							sursautElement(CatchComponent(error, tryAgain), env).render(
 								Object.create(env, { catch: { value: undefined } })
 							)
 						)
@@ -131,18 +131,18 @@ export const intrinsicComponentAliases = extend(null, {
 			perf?.measure('dynamic:switch', 'dynamic:switch:start', 'dynamic:switch:end')
 			return res
 		})
-		return new PounceElement(() => nodes as any, 'dynamic')
+		return new SursautElement(() => nodes as any, 'dynamic')
 	},
 })
 
 /**
- * Custom h() function for JSX rendering - returns a PounceElement
+ * Custom h() function for JSX rendering - returns a SursautElement
  */
 export const h = (
 	tag: string | ComponentFunction,
 	props: Record<string, any> = {},
 	...children: Child[]
-): PounceElement => {
+): SursautElement => {
 	// 1. Wrap (or reuse) CompositeAttributes
 	const inAttrs =
 		props instanceof CompositeAttributes ? props : new CompositeAttributes(props || {})
@@ -163,11 +163,11 @@ export const h = (
 
 	if (!isString(resolvedTag) && !componentCtor) {
 		throw new DynamicRenderingError(
-			`[pounce] Invalid component tag: ${JSON.stringify(resolvedTag)}. Tag must be a string (intrinsic) or a function (component).`
+			`[sursaut] Invalid component tag: ${JSON.stringify(resolvedTag)}. Tag must be a string (intrinsic) or a function (component).`
 		)
 	}
 
-	// 4. Create PounceElement
+	// 4. Create SursautElement
 	return componentCtor
 		? produceComponent(componentCtor, inAttrs, children, meta)
 		: produceDOM(resolvedTag as string, inAttrs, children, meta)
@@ -178,7 +178,7 @@ function produceComponent(
 	inAttrs: CompositeAttributes,
 	children: Children,
 	meta: CompositeAttributesMeta
-): PounceElement {
+): SursautElement {
 	const info: ComponentInfo = unreactive({
 		id:
 			typeof globalThis !== 'undefined' && globalThis.crypto?.randomUUID
@@ -193,7 +193,7 @@ function produceComponent(
 		elements: new Set<Node>(),
 	})
 
-	return new PounceElement(
+	return new SursautElement(
 		function componentRender(env: Env) {
 			perfCounters.componentRenders++
 			perf?.mark(`component:${componentCtor.name}:start`)
@@ -243,16 +243,16 @@ export function produceDOM(
 	inAttrs: CompositeAttributes,
 	children: Children,
 	meta: CompositeAttributesMeta
-): PounceElement {
+): SursautElement {
 	const processedChildren =
 		Array.isArray(children) && !isReactive(children)
-			? children.map((c) => pounceElement(c, rootEnv))
+			? children.map((c) => sursautElement(c, rootEnv))
 			: []
 
 	const allChildrenStatic =
 		processedChildren.length > 0 && processedChildren.every((c) => c.isReactivityLeaf)
 
-	return new PounceElement(
+	return new SursautElement(
 		function elementRender(env: Env) {
 			perfCounters.elementRenders++
 			perf?.mark(`element:${tagName}:start`)
@@ -263,7 +263,7 @@ export function produceDOM(
 				: document.createElement(tagName)
 			const componentToUse = env.component
 			if (componentToUse) {
-				pounceOwner.set(element, componentToUse)
+				sursautOwner.set(element, componentToUse)
 				componentToUse.elements.add(element)
 			}
 

@@ -1,11 +1,11 @@
-# @pounce/adapter-pico LLM Cheat Sheet
+# @sursaut/adapter-pico LLM Cheat Sheet
 
 ## Imports
-- Import only from `@pounce/core`, `@pounce/ui`, and `@pounce/kit` public barrels.
+- Import only from `@sursaut/core`, `@sursaut/ui`, and `@sursaut/kit` public barrels.
 - Never deep-import another package internals from this adapter.
 
 ## Adapter model
-- `@pounce/ui` stays headless; pico components are thin wrappers around UI models.
+- `@sursaut/ui` stays headless; pico components are thin wrappers around UI models.
 - Prefer model output for behavior and ARIA, and keep pico code focused on DOM shape and classes.
 
 ## Variants and button styling
@@ -30,6 +30,6 @@
 - Button styling is class-based; use the shared helpers instead of ad-hoc class strings.
 
 ## When adding or changing a component
-- Start from the matching `@pounce/ui` model.
+- Start from the matching `@sursaut/ui` model.
 - Keep types narrow on the adapter side when Pico supports fewer variants than the headless layer.
 - Prefer shared adapter helpers/types in `factory.ts` before adding one-off logic to a component.

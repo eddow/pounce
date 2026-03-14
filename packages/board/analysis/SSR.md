@@ -1,7 +1,7 @@
 # Server-Side Rendering Guide
 
 ## 1. Data Injection
-Pounce injects API responses as script tags during SSR:
+Sursaut injects API responses as script tags during SSR:
 
 ```html
 <script type="application/json" id="api-response-user-123">
@@ -17,7 +17,7 @@ Pounce injects API responses as script tags during SSR:
 
 ### Example Implementation
 ```ts
-import { registerInjector } from 'pounce-board/ssr';
+import { registerInjector } from 'sursaut-board/ssr';
 
 // Register a custom injector (e.g. for styles)
 registerInjector(async (ctx) => {
@@ -68,7 +68,7 @@ export function UserProfile({ id }) {
 ```svelte
 <script>
   import { onMount } from 'svelte';
-  import { getSSRData } from 'pounce/ssr';
+  import { getSSRData } from 'sursaut/ssr';
 
   let user = getSSRData(`api-response-users-${id}`);
 

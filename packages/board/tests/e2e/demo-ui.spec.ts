@@ -18,7 +18,7 @@ test.describe('Demo UI', () => {
 
 		// Index page content (from provide)
 		await expect(page.locator('h1')).toHaveText('Index Page')
-		await expect(page.locator('text=Welcome to Pounce Demo')).toBeVisible()
+		await expect(page.locator('text=Welcome to Sursaut Demo')).toBeVisible()
 	})
 
 	// ── SSR hydration ────────────────────────────────────────────────
@@ -26,7 +26,7 @@ test.describe('Demo UI', () => {
 		const response = await page.goto('/')
 		const html = await response?.text() ?? ''
 		// Hydration data should be present in initial HTML
-		expect(html).toContain('pounce-data-')
+		expect(html).toContain('sursaut-data-')
 		expect(html).toContain('application/json')
 	})
 

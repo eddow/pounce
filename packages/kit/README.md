@@ -1,20 +1,20 @@
-# @pounce/kit
+# @sursaut/kit
 
-Application-level toolkit for [Pounce](https://github.com/eddow/pounce) apps — reactive client state, routing, API client, CSS injection, localStorage persistence, and Intl formatting.
+Application-level toolkit for [Sursaut](https://github.com/eddow/sursaut) apps — reactive client state, routing, API client, CSS injection, localStorage persistence, and Intl formatting.
 
 ## Entry Points
 
 | Import | Purpose |
 |--------|---------|
-| `@pounce/kit` | Auto-selects DOM (browser) or Node (SSR) |
-| `@pounce/kit/dom` | Browser: real DOM listeners, fetch API, `stored()` |
-| `@pounce/kit/node` | Node: ALS-backed request context, file-based routing helpers, storage stub |
-| `@pounce/kit/intl` | Intl formatting components (separate entry) |
+| `@sursaut/kit` | Auto-selects DOM (browser) or Node (SSR) |
+| `@sursaut/kit/dom` | Browser: real DOM listeners, fetch API, `stored()` |
+| `@sursaut/kit/node` | Node: ALS-backed request context, file-based routing helpers, storage stub |
+| `@sursaut/kit/intl` | Intl formatting components (separate entry) |
 
 ## Quick Start
 
 ```tsx
-import { client, Router, css } from '@pounce/kit'
+import { client, Router, css } from '@sursaut/kit'
 
 const routes = [
   { path: '/', view: () => <h1>Home</h1> },
@@ -44,17 +44,17 @@ function App() {
 - **CSS injection** — `css`/`sass`/`scss` template tags, SSR collection
 - **Head management** — `<Head>` and `useHead()` with additive DOM mounting and SSR collection through board
 - **localStorage** — `stored()` with inter-tab sync and reactive cleanup
-- **Intl** — `<Number>`, `<Date>`, `<RelativeTime>`, `<List>`, `<Plural>`, `<DisplayNames>` from `@pounce/kit/intl`
+- **Intl** — `<Number>`, `<Date>`, `<RelativeTime>`, `<List>`, `<Plural>`, `<DisplayNames>` from `@sursaut/kit/intl`
 
 ## Head Management
 
 ```tsx
-import { Head } from '@pounce/kit'
+import { Head } from '@sursaut/kit'
 
 function App() {
   return <>
     <Head>
-      <title>Pounce App</title>
+      <title>Sursaut App</title>
       <link rel="canonical" href="https://example.com/app" />
     </Head>
     <main>...</main>
@@ -69,7 +69,7 @@ function App() {
 
 ## Intl Entry
 
-Intl intentionally stays on `@pounce/kit/intl` rather than the shared kit barrel.
+Intl intentionally stays on `@sursaut/kit/intl` rather than the shared kit barrel.
 
 - it is an optional subsystem
 - it is cross-environment, not part of the platform bootstrap surface

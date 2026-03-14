@@ -25,7 +25,7 @@ describe('options models', () => {
 			// since we are in a headless model that returns JSX.
 			// Vitest with JSDOM should handle this.
 			const options = model.options
-			// options is a <for> element in Pounce, which might need specialized rendering to check.
+			// options is a <for> element in Sursaut, which might need specialized rendering to check.
 			// however, we can check the logic in selectModel.options
 			expect(options).toBeDefined()
 		})

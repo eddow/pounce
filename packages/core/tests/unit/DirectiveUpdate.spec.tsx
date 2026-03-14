@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { reactive, reactiveOptions, unreactive } from 'mutts'
-import { c, h, latch, document, pounceOptions } from '@pounce/core'
+import { c, h, latch, document, sursautOptions } from '@sursaut/core'
 
 describe('Directive Re-rendering', () => {
 	let container: HTMLElement
@@ -60,13 +60,13 @@ describe('Directive Re-rendering', () => {
 		const child = document.getElementById('child')
 		expect(child?.getAttribute('data-calls')).toBe('1')
 
-		const original = pounceOptions.checkRebuild
-		pounceOptions.checkRebuild = 'warn'
+		const original = sursautOptions.checkRebuild
+		sursautOptions.checkRebuild = 'warn'
 		try {
 			state.parentTrigger++
 			expect(callCount).toBe(1)
 		} finally {
-			pounceOptions.checkRebuild = original
+			sursautOptions.checkRebuild = original
 		}
 		expect(document.getElementById('child')?.getAttribute('data-calls')).toBe('1')
 	})
@@ -95,9 +95,9 @@ describe('Directive Re-rendering', () => {
 
 		// Rebuild fence prevents re-rendering: directive is NOT re-called
 		// checkRebuild='warn' means it logs but does not throw on rebuild-fence violations
-		const original = pounceOptions.checkRebuild
+		const original = sursautOptions.checkRebuild
 		const originalWarn = reactiveOptions.warn
-		pounceOptions.checkRebuild = 'warn'
+		sursautOptions.checkRebuild = 'warn'
 		reactiveOptions.warn = (...args: any[]) => {
 			if (typeof args[0] === 'string') warnings.push(args[0])
 		}
@@ -106,7 +106,7 @@ describe('Directive Re-rendering', () => {
 			expect(callCount).toBe(1)
 		} finally {
 			reactiveOptions.warn = originalWarn
-			pounceOptions.checkRebuild = original
+			sursautOptions.checkRebuild = original
 		}
 		expect(warnings[0]).toContain('Detailed trace:')
 		expect(warnings[0]).toContain('touch:')
@@ -131,10 +131,10 @@ describe('Directive Re-rendering', () => {
 			return h('div', attrs)
 		}
 
-		const originalReactivity = pounceOptions.checkReactivity
-		const originalRebuild = pounceOptions.checkRebuild
-		pounceOptions.checkReactivity = 'error'
-		pounceOptions.checkRebuild = 'error'
+		const originalReactivity = sursautOptions.checkReactivity
+		const originalRebuild = sursautOptions.checkRebuild
+		sursautOptions.checkReactivity = 'error'
+		sursautOptions.checkRebuild = 'error'
 		try {
 			latch(container, <App />, env)
 			expect(renderCount).toBe(1)
@@ -149,8 +149,8 @@ describe('Directive Re-rendering', () => {
 			expect(callCount).toBe(2)
 			expect(container.querySelector('div')?.getAttribute('data-arg')).toBe('2')
 		} finally {
-			pounceOptions.checkReactivity = originalReactivity
-			pounceOptions.checkRebuild = originalRebuild
+			sursautOptions.checkReactivity = originalReactivity
+			sursautOptions.checkRebuild = originalRebuild
 		}
 	})
 })

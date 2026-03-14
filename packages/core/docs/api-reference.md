@@ -1,16 +1,16 @@
 # API Reference
 
-Complete reference for Pounce-TS APIs and utilities.
+Complete reference for Sursaut-TS APIs and utilities.
 
 ## Core APIs
 
 ### `latch(target, content, env?)`
 
-Latch reactive content onto a DOM element. Polymorph: accepts PounceElement, Child[], Node, Node[], or undefined. Processes content through the appropriate pipeline, then reconciles into the target. Includes DOMContentLoaded guard and conflict detection.
+Latch reactive content onto a DOM element. Polymorph: accepts SursautElement, Child[], Node, Node[], or undefined. Processes content through the appropriate pipeline, then reconciles into the target. Includes DOMContentLoaded guard and conflict detection.
 
 **Parameters:**
 - `target` - CSS selector or HTMLElement to latch onto
-- `content` - The JSX content or PounceElement to render
+- `content` - The JSX content or SursautElement to render
 - `env` - Optional env object (defaults to rootEnv)
 
 **Returns:** Cleanup function that unmounts the content

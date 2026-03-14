@@ -1,4 +1,4 @@
-import { Badge, Chip, Pill, Stars } from '@pounce/adapter-pico'
+import { Badge, Chip, Pill, Stars } from '@sursaut/adapter-pico'
 import { reactive } from 'mutts'
 import { DemoCard, DemoGrid, DemoSection, DemoState } from './shared'
 

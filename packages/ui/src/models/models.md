@@ -1,6 +1,6 @@
 # Model Pattern — Recipes & Conventions
 
-Models are the headless layer of `@pounce/ui`. They encapsulate all behavioral logic, a11y, and derived state, returning a plain object of **lazy getters** that adapters spread onto JSX elements.
+Models are the headless layer of `@sursaut/ui`. They encapsulate all behavioral logic, a11y, and derived state, returning a plain object of **lazy getters** that adapters spread onto JSX elements.
 
 ## Anatomy of a Model
 

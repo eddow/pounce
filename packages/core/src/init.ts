@@ -6,17 +6,17 @@ export default function setGlobals() {
 	g.h = h
 	g.Fragment = Fragment
 
-	const GLOBAL_POUNCE_KEY = '__POUNCE_CORE_INSTANCE__'
-	if (g[GLOBAL_POUNCE_KEY]) {
-		const existing = g[GLOBAL_POUNCE_KEY]
+	const GLOBAL_SURSAUT_KEY = '__SURSAUT_CORE_INSTANCE__'
+	if (g[GLOBAL_SURSAUT_KEY]) {
+		const existing = g[GLOBAL_SURSAUT_KEY]
 		throw new Error(
-			`[Pounce] Multiple instances of @pounce/core detected!\n` +
+			`[Sursaut] Multiple instances of @sursaut/core detected!\n` +
 				`First loaded: ${JSON.stringify(existing)}\n` +
 				`This causes instanceof checks to fail (e.g. ReactiveProp). ` +
-				`Ensure @pounce/core is fully externalized in library builds.`
+				`Ensure @sursaut/core is fully externalized in library builds.`
 		)
 	}
-	g[GLOBAL_POUNCE_KEY] = { version: '1.0.0', timestamp: Date.now() }
+	g[GLOBAL_SURSAUT_KEY] = { version: '1.0.0', timestamp: Date.now() }
 
 	/*if (false)
 		reactiveOptions.introspection = {

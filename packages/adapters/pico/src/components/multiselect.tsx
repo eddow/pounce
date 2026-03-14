@@ -2,7 +2,7 @@ import {
 	type MultiselectItemState,
 	type MultiselectProps,
 	multiselectModel,
-} from '@pounce/ui/models'
+} from '@sursaut/ui/models'
 
 export type MultiselectAdapterProps<T> = MultiselectProps<T> & {
 	label?: JSX.Children

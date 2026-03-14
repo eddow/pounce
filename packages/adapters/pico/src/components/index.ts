@@ -1,6 +1,6 @@
 // Barrel export for all components
 
-export type { DialogOptions, DrawerOptions, ToastOptions } from '@pounce/ui'
+export type { DialogOptions, DrawerOptions, ToastOptions } from '@sursaut/ui'
 export type {
 	AccordionProps,
 	CheckboxProps,
@@ -15,7 +15,7 @@ export type {
 	StarsProps,
 	SwitchProps,
 	WithOverlaysProps,
-} from '@pounce/ui/models'
+} from '@sursaut/ui/models'
 export type { PicoOutlineProps, PicoVariant } from '../factory'
 export type { AccordionGroupProps } from './accordion'
 export { Accordion, AccordionGroup } from './accordion'

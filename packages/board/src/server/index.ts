@@ -1,10 +1,10 @@
 /**
- * Server-side exports for pounce-board
- * Use: import { buildRouteTree } from 'pounce-board/server'
+ * Server-side exports for sursaut-board
+ * Use: import { buildRouteTree } from 'sursaut-board/server'
  */
 
 // Adapters
-export { clearRouteTreeCache, createPounceApp, createPounceMiddleware } from '../adapters/hono.js'
+export { clearRouteTreeCache, createSursautApp, createSursautMiddleware } from '../adapters/hono.js'
 // HTTP client (works on server too for SSR dispatch)
 export {
 	api,

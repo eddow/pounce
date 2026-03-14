@@ -1,6 +1,6 @@
 # Routing System
 
-`@pounce/board` uses a file-based router for both UI pages and API handlers. The router scans the routes directory, builds a route tree for `.tsx` pages and `layout.tsx` wrappers, and executes sibling `.ts` files so `expose()` can register API endpoints, middleware, and `provide()` loaders.
+`@sursaut/board` uses a file-based router for both UI pages and API handlers. The router scans the routes directory, builds a route tree for `.tsx` pages and `layout.tsx` wrappers, and executes sibling `.ts` files so `expose()` can register API endpoints, middleware, and `provide()` loaders.
 
 ## Route files
 
@@ -70,10 +70,10 @@ Every matched page receives the collected layouts from root to leaf. For `/users
 Route-local API behavior is declared in sibling `.ts` files:
 
 ```ts
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 export default expose({
-	provide: async () => ({ siteName: 'Pounce Demo' }),
+	provide: async () => ({ siteName: 'Sursaut Demo' }),
 	get: async () => ({ ok: true }),
 	'/stats': {
 		get: async () => ({ visits: 42 }),
@@ -96,7 +96,7 @@ Board does not use `common.ts` middleware files.
 Instead, middleware and page loaders are declared inside `expose()` and cascade through the route tree:
 
 ```ts
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 export default expose({
 	middle: [async (req, next) => next()],

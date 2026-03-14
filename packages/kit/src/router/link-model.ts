@@ -1,4 +1,4 @@
-import type { StyleInput } from '@pounce/core'
+import type { StyleInput } from '@sursaut/core'
 import { link } from 'mutts'
 import { perf, recordPerf } from '../perf'
 import { client } from '../platform/shared'

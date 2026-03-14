@@ -6,7 +6,7 @@ import {
 	multiselectModel,
 	type SelectProps,
 	selectModel,
-} from '@pounce/ui/models'
+} from '@sursaut/ui/models'
 
 export function Select(props: SelectProps) {
 	const model = selectModel(props)

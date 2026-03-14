@@ -8,8 +8,8 @@ Spec: [api-routing.md](./api-routing.md) | Types: `src/lib/router/expose.ts`
 ## Phase 1: Runtime `expose()` function
 
 - [x] **1.1** Create `src/lib/router/expose.ts` with the runtime `expose()` implementation
-  - *Implemented the recursive flattening logic. Replaced `expose-utils.ts`. Uses `globalThis.__POUNCE_CURRENT_FILE__` to derive base paths.*
-  - Reads `globalThis.__POUNCE_CURRENT_FILE__` to determine `baseUrl`
+  - *Implemented the recursive flattening logic. Replaced `expose-utils.ts`. Uses `globalThis.__SURSAUT_CURRENT_FILE__` to derive base paths.*
+  - Reads `globalThis.__SURSAUT_CURRENT_FILE__` to determine `baseUrl`
   - Walks the config tree recursively
   - Distinguishes keys: verbs (handler leaves), `middle` (middleware), `provide` (SSR loader), `/`-prefixed (sub-path branches)
   - Flattens into a central `RouteRegistry` (path → verb → { handler, middle[] })
@@ -33,10 +33,10 @@ Spec: [api-routing.md](./api-routing.md) | Types: `src/lib/router/expose.ts`
 - [x] **2.1** File discovery in `buildRouteTree` (or new function)
   - *Integrated directly into `src/lib/router/index.ts` `buildRouteTree`. Discovers `.ts` files alongside `.tsx` components.*
   - Scan `routes/` for `**/*.ts` files
-  - Must be **sequential** (not parallel) — `__POUNCE_CURRENT_FILE__` is a global
+  - Must be **sequential** (not parallel) — `__SURSAUT_CURRENT_FILE__` is a global
 - [x] **2.2** Context injection + execution loop
-  - *Added robust try/finally block injecting `__POUNCE_CURRENT_FILE__` and `__POUNCE_CURRENT_BASE_URL__` around the dynamic route loader.*
-  - For each `.ts` file: set `globalThis.__POUNCE_CURRENT_FILE__`, `await import(file)`, clear global
+  - *Added robust try/finally block injecting `__SURSAUT_CURRENT_FILE__` and `__SURSAUT_CURRENT_BASE_URL__` around the dynamic route loader.*
+  - For each `.ts` file: set `globalThis.__SURSAUT_CURRENT_FILE__`, `await import(file)`, clear global
   - Calculate `baseUrl` from file path relative to `routesDir`
   - Handle HMR: clear registry + re-run on cache invalidation
 - [x] **2.3** Cross-tree inheritance resolution
@@ -52,13 +52,13 @@ Spec: [api-routing.md](./api-routing.md) | Types: `src/lib/router/expose.ts`
 ## Phase 3: Hono adapter integration
 
 - [x] **3.1** `app.all('*')` catch-all dispatcher
-  - *Implemented inside `createPounceMiddleware`. Non-HTML requests are matched against a pre-compiled `routeMatcher` from `@pounce/kit/router/logic` (enforcing exact path matches).*
+  - *Implemented inside `createSursautMiddleware`. Non-HTML requests are matched against a pre-compiled `routeMatcher` from `@sursaut/kit/router/logic` (enforcing exact path matches).*
   - Receive standardized `Request` from Hono
   - Content negotiation: `Accept: text/html` → SSR render `.tsx`, otherwise → API dispatch
   - Look up route in `RouteRegistry`, run `middle` chain, call handler
   - Return `Response`
 - [x] **3.2** `provide` integration with SSR
-  - *Implemented: `provide` is a purely SSR concept that passes props to components. If `X-Pounce-Provide` header is detected, we run the provide loader directly as its own API endpoint.*
+  - *Implemented: `provide` is a purely SSR concept that passes props to components. If `X-Sursaut-Provide` header is detected, we run the provide loader directly as its own API endpoint.*
 - [x] **3.3** `provide` integration with SPA navigation
   - *Implemented: `isSpaProvideFetch` intercepts SPA navigation requests.*
 - [x] **3.4** `setRouteRegistry()` call
@@ -70,10 +70,10 @@ Spec: [api-routing.md](./api-routing.md) | Types: `src/lib/router/expose.ts`
 
 - [x] **4.1** Verify `InferVerb`, `InferProvide`, `InferPath` work with `/`-prefixed keys
   - *Added `expose-types.spec.ts` type-level test proving accurate string chopping and verb resolution across generic tree depths.*
-- [x] **4.2** Integrate with `@pounce/kit` API client
-  - *Validated and incorporated. `@pounce/kit` already leverages `.get<T>()`, updated `minimal-app` strictly binding client `.get()` to server `InferVerb` types.*
+- [x] **4.2** Integrate with `@sursaut/kit` API client
+  - *Validated and incorporated. `@sursaut/kit` already leverages `.get<T>()`, updated `minimal-app` strictly binding client `.get()` to server `InferVerb` types.*
   - `api(route).get<InferVerb<typeof Route, 'get'>>()` pattern works.
-  - `stream` verb → SSE client from `@pounce/kit`
+  - `stream` verb → SSE client from `@sursaut/kit`
 
 ## Phase 5: CLI & dev experience
 
@@ -96,7 +96,7 @@ Spec: [api-routing.md](./api-routing.md) | Types: `src/lib/router/expose.ts`
 - [x] **6.8** Update `LLM.md` and `walkthrough.md`
   - *Done. Walkthrough summarizes the completed architecture.*
 - [x] **6.9** Update consumer test apps (`minimal-app`) with expose-style routes
-  - *Fixtures updated: `index.ts` and `users/[id]/index.ts` use `expose()` with `PounceRequest`. `users/common.ts` converted from legacy `middleware` export to `expose()` with `middle`. Full validation requires 2.3 (cross-tree inheritance).*
+  - *Fixtures updated: `index.ts` and `users/[id]/index.ts` use `expose()` with `SursautRequest`. `users/common.ts` converted from legacy `middleware` export to `expose()` with `middle`. Full validation requires 2.3 (cross-tree inheritance).*
 
 ---
 
@@ -111,10 +111,10 @@ Spec: [api-routing.md](./api-routing.md) | Types: `src/lib/router/expose.ts`
 | `middle` scope | Cross-tree (directory hierarchy) | `index.ts`'s `middle` cascades to sibling files + children |
 | `provide` scope | Cross-tree, merged parent-first | Parent `provide` data available to child via `req` |
 | `provide` client access | Hydration (SSR) + internal fetch (SPA nav) | Transparent to the component |
-| `provide` consumption | Merged result spread as props to sibling `.tsx` | Props are read-only in pounce-ts; component stays pure & testable; no magic import needed |
+| `provide` consumption | Merged result spread as props to sibling `.tsx` | Props are read-only in sursaut-ts; component stays pure & testable; no magic import needed |
 | `provide` + layouts | `layout.tsx` receives provide from its level and above | `children` injected by router; layouts never see child-level provide data |
 | `expose` return | Returns `T` | Enables `typeof` for client type extraction |
-| Boot concurrency | Sequential file imports | `__POUNCE_CURRENT_FILE__` is a mutable global |
+| Boot concurrency | Sequential file imports | `__SURSAUT_CURRENT_FILE__` is a mutable global |
 | `path` metadata | Removed | Sub-path key IS the path; `/` prefix makes `path` redundant |
 | Layout convention | `layout.tsx` file (not in `expose()`) | Layouts are UI concerns consumed by the client router; putting them in `.ts` would break dependency direction (client must never import server code) |
 | Replaces `common.tsx` | `layout.tsx` | Same role (wrapping layout), clearer name |

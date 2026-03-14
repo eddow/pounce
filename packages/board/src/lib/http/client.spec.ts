@@ -1,4 +1,4 @@
-import { PounceResponse } from '@pounce/kit'
+import { SursautResponse } from '@sursaut/kit'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { clearSSRData, getCollectedSSRResponses } from '../ssr/utils.js'
 import {
@@ -69,7 +69,7 @@ describe('api client SSR integration', () => {
 
 		it('should pick up data from the DOM script tags', async () => {
 			const url = 'http://localhost/api/user'
-			const id = `pounce-data-${btoa('/api/user')}`
+			const id = `sursaut-data-${btoa('/api/user')}`
 			const data = { name: 'Alice' }
 
 			const mockScript = {
@@ -207,20 +207,15 @@ describe('api client SSR integration', () => {
 
 			const result = await post(formData)
 			expect(result).toEqual({ uploaded: true })
-			expect(mockFetch).toHaveBeenCalledWith(
-				new URL('http://localhost/current/page'),
-				expect.objectContaining({
-					method: 'POST',
-					body: formData,
-				})
-			)
-			const headers = mockFetch.mock.calls[0][1].headers
-			// FormData should have a multipart/form-data Content-Type header (set by the browser/Request)
-			if (headers instanceof Headers) {
-				expect(headers.get('Content-Type')).toContain('multipart/form-data')
-			} else {
-				expect((headers as any)['Content-Type']).toContain('multipart/form-data')
-			}
+			const [url, init] = mockFetch.mock.calls[0]
+			expect(String(url)).toBe('http://localhost/current/page')
+			expect(init.method).toBe('POST')
+			expect(init.body).toBeInstanceOf(FormData)
+			expect((init.body as FormData).get('file')).toBeInstanceOf(File)
+			expect(((init.body as FormData).get('file') as File).name).toBe('test.txt')
+			expect(await ((init.body as FormData).get('file') as File).text()).toBe('test')
+			const headers = init.headers as Headers
+			expect(headers.get('Content-Type')).toContain('multipart/form-data')
 		})
 	})
 })
@@ -831,7 +826,7 @@ describe('SSR server-side dispatch', () => {
 		// Don't set registry
 
 		await expect(api('/test').get()).rejects.toThrow(
-			'[pounce-board] SSR dispatch failed: No route registry set'
+			'[sursaut-board] SSR dispatch failed: No route registry set'
 		)
 	})
 
@@ -844,7 +839,7 @@ describe('SSR server-side dispatch', () => {
 		enableSSR()
 
 		await expect(api('/nonexistent').get()).rejects.toThrow(
-			'[pounce-board] SSR dispatch failed: No handler found for GET /nonexistent'
+			'[sursaut-board] SSR dispatch failed: No handler found for GET /nonexistent'
 		)
 	})
 
@@ -1115,7 +1110,7 @@ describe('API Interceptors', () => {
 		expect(headers.get('X-Global')).toBe('true')
 	})
 
-	it('should modify response body via PounceResponse', async () => {
+	it('should modify response body via SursautResponse', async () => {
 		const mockFetch = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ data: 'original' }), {
 				status: 200,
@@ -1145,7 +1140,7 @@ describe('API Interceptors', () => {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' },
 			})
-			return PounceResponse.from(res)
+			return SursautResponse.from(res)
 		})
 
 		const result = await api('/test').get()

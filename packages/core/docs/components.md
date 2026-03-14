@@ -1,6 +1,6 @@
-# Components in Pounce-TS
+# Components in Sursaut-TS
 
-Components are the building blocks of Pounce-TS applications. They are TypeScript functions that receive props and return JSX elements.
+Components are the building blocks of Sursaut-TS applications. They are TypeScript functions that receive props and return JSX elements.
 
 ## Basic Component Syntax
 
@@ -211,7 +211,7 @@ Build complex UIs by composing simple components:
 function App() {
   const state = reactive({
     todos: [
-      { id: 1, text: 'Learn Pounce', done: false },
+      { id: 1, text: 'Learn Sursaut', done: false },
       { id: 2, text: 'Build app', done: false }
     ]
   })

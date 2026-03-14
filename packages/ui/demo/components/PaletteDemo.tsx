@@ -1,5 +1,5 @@
-import { h, type PounceElement } from '@pounce/core'
-import { componentStyle } from '@pounce/kit'
+import { h, type SursautElement } from '@sursaut/core'
+import { componentStyle } from '@sursaut/kit'
 import { reactive, reactiveOptions } from 'mutts'
 import { drag, dragging, drop } from '../../src/directives/drag-drop'
 import {
@@ -47,8 +47,8 @@ import {
 	type PaletteSurfaceContext,
 	type PaletteToolbarDropTarget,
 	type PaletteToolbar,
-} from '@pounce/ui/palette'
-import { type PaletteMatch } from '@pounce/ui/palette'
+} from '@sursaut/ui/palette'
+import { type PaletteMatch } from '@sursaut/ui/palette'
 import { starsModel, type StarStatus, type StarsValue } from '../../src/models/stars'
 
 type DemoResolvedDisplayItem = Extract<PaletteResolvedDisplayItem, { kind: 'intent' }>
@@ -61,7 +61,7 @@ type DemoPresenterProps = {
 	readonly onActivate: () => void
 }
 
-type DemoPresenter = (props: DemoPresenterProps) => PounceElement
+type DemoPresenter = (props: DemoPresenterProps) => SursautElement
 
 type DemoPresenterCatalog = {
 	readonly action: Readonly<Record<string, DemoPresenter>>
@@ -85,7 +85,7 @@ type DemoToolbarPath = {
 	readonly index: number
 }
 
-type DemoEditorRenderer = (props: DemoEditorRendererProps) => PounceElement | undefined
+type DemoEditorRenderer = (props: DemoEditorRendererProps) => SursautElement | undefined
 
 type DemoUiState = {
 	handleExpanded: boolean
@@ -401,7 +401,7 @@ if (!demoRuntime.__paletteDemoWarningsInstalled__) {
 	demoRuntime.__paletteDemoWarningsInstalled__ = true
 	demoRuntime.__paletteDemoWarningsOriginalWarn__ = reactiveOptions.warn
 	reactiveOptions.warn = (...args: any[]) => {
-		if (typeof args[0] === 'string' && args[0].startsWith('[pounce] Rebuild fence:')) {
+		if (typeof args[0] === 'string' && args[0].startsWith('[sursaut] Rebuild fence:')) {
 			warningState.messages.unshift(args[0])
 			if (warningState.messages.length > 5) warningState.messages.splice(5)
 		}
@@ -603,7 +603,7 @@ function intentTooltip(props: { resolved: DemoResolvedDisplayItem }): string | u
 	return shortcut ? `${label} (${shortcut})` : label
 }
 
-function buttonMarkup(props: DemoPresenterProps, marker = ''): PounceElement {
+function buttonMarkup(props: DemoPresenterProps, marker = ''): SursautElement {
 	return (
 		<button
 			class="palette-intent-button"
@@ -1719,7 +1719,7 @@ function ToolbarStrip(props: { toolbar: PaletteToolbar }) {
 						const entryIdentity = itemIdentity(entry)
 						return entryIdentity.id === identity.id && entryIdentity.kind === identity.kind
 					})
-					let content: PounceElement | undefined
+					let content: SursautElement | undefined
 					if (isEditorDisplayItem(displayItem)) {
 						content = <EditorItem displayItem={displayItem} toolbar={props.toolbar} />
 					} else if (isIntentDisplayItem(displayItem)) {

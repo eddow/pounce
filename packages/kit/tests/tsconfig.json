@@ -5,7 +5,7 @@
 		"noEmit": true,
 		"baseUrl": "../..",
 		"paths": {
-			"@pounce/kit": ["test/ep.ts"]
+			"@sursaut/kit": ["test/ep.ts"]
 		}
 	},
 	"include": [

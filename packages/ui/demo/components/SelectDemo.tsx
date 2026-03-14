@@ -1,4 +1,4 @@
-import { selectModel } from '@pounce/ui'
+import { selectModel } from '@sursaut/ui'
 import { reactive } from 'mutts'
 
 export default function SelectDemo() {

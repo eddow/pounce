@@ -1,5 +1,5 @@
 import { reactive } from 'mutts'
-import type { Env } from './pounce-element'
+import type { Env } from './sursaut-element'
 
 const defaultsProxy: ProxyHandler<any> & Record<symbol, unknown> = {
 	[Symbol.toStringTag]: 'Defaulted',

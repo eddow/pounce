@@ -1,6 +1,6 @@
 /**
- * Client-side exports for pounce-board
- * Use: import { api } from 'pounce-board/client'
+ * Client-side exports for sursaut-board
+ * Use: import { api } from 'sursaut-board/client'
  */
 
 // API client
@@ -18,7 +18,7 @@ export {
 
 // Types
 export { ApiError } from '../lib/http/core.js'
-export { PounceResponse } from '../lib/http/response.js'
+export { SursautResponse } from '../lib/http/response.js'
 export { defineRoute, type RouteDefinition } from '../lib/router/defs.js'
 export {
 	buildRouteTree,

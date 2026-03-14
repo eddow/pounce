@@ -1,12 +1,12 @@
-# @pounce/ui
+# @sursaut/ui
 
-Headless UI primitives for Pounce applications.
+Headless UI primitives for Sursaut applications.
 
-`@pounce/ui` owns behavior, accessibility, reactive bindings, and low-level interaction logic. It does **not** own styling. Adapters consume these models and render the actual markup and classes.
+`@sursaut/ui` owns behavior, accessibility, reactive bindings, and low-level interaction logic. It does **not** own styling. Adapters consume these models and render the actual markup and classes.
 
 ## What this package exports
 
-`@pounce/ui` currently exposes four kinds of API:
+`@sursaut/ui` currently exposes four kinds of API:
 
 - **Headless models**
   - `buttonModel`, `checkboxModel`, `radioModel`, `switchModel`
@@ -39,10 +39,10 @@ Headless UI primitives for Pounce applications.
 
 ## Architecture
 
-`@pounce/ui` is the headless layer. Adapters sit on top and decide the visual language.
+`@sursaut/ui` is the headless layer. Adapters sit on top and decide the visual language.
 
 ```tsx
-import { buttonModel } from '@pounce/ui'
+import { buttonModel } from '@sursaut/ui'
 
 export const Button = (props) => {
 	const model = buttonModel(props)
@@ -69,7 +69,7 @@ This makes models safe to construct in component bodies while preserving reactiv
 ## Quick start
 
 ```tsx
-import { buttonModel, checkboxModel } from '@pounce/ui'
+import { buttonModel, checkboxModel } from '@sursaut/ui'
 
 function Demo(props) {
 	const button = buttonModel(props.button)
@@ -118,7 +118,7 @@ See [docs/directives.md](./docs/directives.md).
 Curried helper for adapter authors. It narrows `variant`, adds dot-syntax variant accessors, and validates variants in development.
 
 ```tsx
-import { uiComponent } from '@pounce/ui'
+import { uiComponent } from '@sursaut/ui'
 
 const picoComponent = uiComponent(['primary', 'secondary', 'danger'] as const)
 ```

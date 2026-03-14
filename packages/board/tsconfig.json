@@ -21,37 +21,37 @@
 			"~/cli/*": [
 				"./src/cli/*"
 			],
-			"pounce-board": [
+			"sursaut-board": [
 				"./src/server/index.ts"
 			],
-			"pounce-board/client": [
+			"sursaut-board/client": [
 				"./src/client/index.ts"
 			],
-			"pounce-board/server": [
+			"sursaut-board/server": [
 				"./src/server/index.ts"
 			],
-			"pounce-ts": [
+			"sursaut-ts": [
 				"../core/dist/lib/index"
 			],
-			"pounce-ts/*": [
+			"sursaut-ts/*": [
 				"../core/dist/lib/*"
 			],
-			"pounce-ui": [
+			"sursaut-ui": [
 				"../ui/dist/index"
 			],
-			"pounce-ui/*": [
+			"sursaut-ui/*": [
 				"../ui/dist/*"
 			],
-			"@pounce/kit": [
+			"@sursaut/kit": [
 				"../kit/dist/index"
 			],
-			"@pounce/kit/*": [
+			"@sursaut/kit/*": [
 				"../kit/dist/*"
 			],
-			"@pounce/board": [
+			"@sursaut/board": [
 				"./src/index.ts"
 			],
-			"@pounce/board/*": [
+			"@sursaut/board/*": [
 				"./src/*"
 			],
 			"mutts": [

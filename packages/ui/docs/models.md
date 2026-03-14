@@ -1,6 +1,6 @@
 # Models catalogue
 
-This page is a source-aligned overview of the headless models exported from `@pounce/ui`.
+This page is a source-aligned overview of the headless models exported from `@sursaut/ui`.
 
 For the model-writing recipe, see [`src/models/models.md`](../src/models/models.md).
 
@@ -125,7 +125,7 @@ These are related to the UI interaction layer but are not model-returning APIs.
 
 ### Palette models
 
-The palette system is exported from the `@pounce/ui/palette` subpath rather than the root package entry.
+The palette system is exported from the `@sursaut/ui/palette` subpath rather than the root package entry.
 
 It includes:
 
@@ -200,7 +200,7 @@ Model/helper for wiring overlay rendering into higher-level adapter components.
 
 ## Notes
 
-- All of these APIs are exported from `@pounce/ui`.
+- All of these APIs are exported from `@sursaut/ui`.
 - Most models are pure getter objects with no owned state.
 - Internal owned state exists only where the model truly owns interaction state, such as dismissible chips or star dragging.
 - Adapters own markup and styling; models own behavior and spread groups.

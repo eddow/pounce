@@ -1,4 +1,9 @@
-import { type MenuBarProps, type MenuItemProps, type MenuProps, menuModel } from '@pounce/ui/models'
+import {
+	type MenuBarProps,
+	type MenuItemProps,
+	type MenuProps,
+	menuModel,
+} from '@sursaut/ui/models'
 import { A } from './link'
 
 export type { MenuProps, MenuItemProps, MenuBarProps }
@@ -12,7 +17,7 @@ export function MenuItem(props: MenuItemProps) {
 		)
 	}
 	return (
-		<button type="button" role="menuitem" onClick={props.onClick} class="pounce-menu-item">
+		<button type="button" role="menuitem" onClick={props.onClick} class="sursaut-menu-item">
 			{props.children}
 		</button>
 	)

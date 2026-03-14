@@ -1,4 +1,4 @@
-import { progressModel } from '@pounce/ui'
+import { progressModel } from '@sursaut/ui'
 import { effect, reactive } from 'mutts'
 
 export default function ProgressDemo() {

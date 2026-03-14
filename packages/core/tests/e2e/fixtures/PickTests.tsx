@@ -1,5 +1,5 @@
 import { reactive } from 'mutts'
-import type { Env } from '@pounce/core'
+import type { Env } from '@sursaut/core'
 
 export default function PickTests(_: any, env: Env) {
 	const state = reactive({

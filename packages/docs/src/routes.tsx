@@ -1,4 +1,4 @@
-import type { ClientRouteDefinition, Env } from '@pounce'
+import type { ClientRouteDefinition, Env } from '@sursaut'
 import CreatingAdapterPage from './pages/adapters/creating'
 import AdaptersIndexPage from './pages/adapters/index'
 import PicoAdapterPage from './pages/adapters/pico'

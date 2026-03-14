@@ -1,4 +1,4 @@
-# @pounce/ui v2 — Roadmap to Feature Parity with adapted-ui
+# @sursaut/ui v2 — Roadmap to Feature Parity with adapted-ui
 
 > **Generated from a full line-by-line read of every source file in `packages/adapted-ui/src/`.
 > Every feature listed here exists in adapted-ui. Nothing is speculative.**
@@ -31,7 +31,7 @@
 | `AppShell` | sticky header, `shadowOnScroll` via scroll listener |
 | `Heading` | levels 1-6, dynamic tag, align (start/center/end), variant color classes |
 | `Text` | size (sm/md/lg), muted, variant color classes |
-| `Link` | wraps `@pounce/kit`'s `A`, underline toggle, variant color classes |
+| `Link` | wraps `@sursaut/kit`'s `A`, underline toggle, variant color classes |
 
 ### Directives (`src/directives/`)
 | Directive | Description |
@@ -71,7 +71,7 @@ The old adapter system (registry, `setAdapter`, `getAdapter`, `renderStructure` 
 
 ---
 
-## What is NOT yet in @pounce/ui v2 hooks
+## What is NOT yet in @sursaut/ui v2 hooks
 
 ### Still missing
 
@@ -131,7 +131,7 @@ The old adapter system (registry, `setAdapter`, `getAdapter`, `renderStructure` 
 ## Implementation Priority (remaining)
 
 ### Next — Pico adapter catch-up (Hungry dogs 🐕)
-All files marked `// TODO: Hungry dog` are implemented in `@pounce/ui` but have no pico adapter counterpart yet:
+All files marked `// TODO: Hungry dog` are implemented in `@sursaut/ui` but have no pico adapter counterpart yet:
 
 | Hook/Utility | File | Pico component needed |
 |---|---|---|
@@ -191,10 +191,10 @@ A headless component is needed when:
 ---
 
 ### RTL/LTR (iconPosition)
-`iconPosition: 'start' | 'end'` must be resolved to physical `left`/`right` by the adapter using the document/element direction. The hook exposes `iconPosition` as-is; the adapter calls `@pounce/kit`'s `biDi` (or reads `document.dir`) to map start→left in LTR, start→right in RTL.
+`iconPosition: 'start' | 'end'` must be resolved to physical `left`/`right` by the adapter using the document/element direction. The hook exposes `iconPosition` as-is; the adapter calls `@sursaut/kit`'s `biDi` (or reads `document.dir`) to map start→left in LTR, start→right in RTL.
 
 ### Switch labelPosition
-Same RTL concern: `labelPosition: 'start' | 'end'`. The CSS class `pounce-switch-label-start` uses `flex-direction: row-reverse` in adapted-ui — the adapter owns this mapping.
+Same RTL concern: `labelPosition: 'start' | 'end'`. The CSS class `sursaut-switch-label-start` uses `flex-direction: row-reverse` in adapted-ui — the adapter owns this mapping.
 
 ### Chip dismissible state
 The `useChip` hook should own the `local.open` reactive state and expose `dismiss()` + `isVisible`. The adapter renders the dismiss button and calls `dismiss()`.
@@ -206,13 +206,13 @@ The `useStars` hook owns all drag/click/dblclick logic and exposes per-star `sta
 The `useInfiniteScroll` hook owns the offset table, binary search, ResizeObserver, and stickyLast logic. It exposes `visibleIndices`, `totalHeight`, `itemTop(i)`, `itemMinHeight(i)`, and `onScroll`/`onResize` callbacks. The adapter renders the scroll container and item wrappers.
 
 ### ButtonGroup / Toolbar keyboard nav
-The keyboard navigation logic (Arrow keys within group, Tab exits to next focusable outside group, toolbar segment cycling) is complex DOM-traversal code. It should live in a shared utility in `@pounce/ui` (not in the hook return value), exported as `setupButtonGroupNav(container)` and `setupToolbarNav(container)` — called by the adapter's `use=` mount callback.
+The keyboard navigation logic (Arrow keys within group, Tab exits to next focusable outside group, toolbar segment cycling) is complex DOM-traversal code. It should live in a shared utility in `@sursaut/ui` (not in the hook return value), exported as `setupButtonGroupNav(container)` and `setupToolbarNav(container)` — called by the adapter's `use=` mount callback.
 
 ### Overlay system
-`WithOverlays` uses `env` (Pounce's component environment) to expose `env.overlay`, `env.dialog`, etc. to descendant components. The v2 equivalent needs a context mechanism — either Pounce's `env` passthrough or a reactive context store. This is the most architecturally complex piece.
+`WithOverlays` uses `env` (Sursaut's component environment) to expose `env.overlay`, `env.dialog`, etc. to descendant components. The v2 equivalent needs a context mechanism — either Sursaut's `env` passthrough or a reactive context store. This is the most architecturally complex piece.
 
 ### ErrorBoundary
-Requires `caught()` from mutts and `reconcile`/`Env` from `@pounce/core`. The hook pattern here is unusual — it's more of a component pattern than a hook. The `ErrorReceiver` inner component approach should be preserved as-is in v2.
+Requires `caught()` from mutts and `reconcile`/`Env` from `@sursaut/core`. The hook pattern here is unusual — it's more of a component pattern than a hook. The `ErrorReceiver` inner component approach should be preserved as-is in v2.
 
 ---
 

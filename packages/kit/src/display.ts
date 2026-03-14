@@ -1,4 +1,4 @@
-import type { Env } from '@pounce/core'
+import type { Env } from '@sursaut/core'
 import { client } from './platform/shared.js'
 
 /** Env key used by DisplayProvider to inject context */

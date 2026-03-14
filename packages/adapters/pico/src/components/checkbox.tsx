@@ -1,5 +1,5 @@
-import { gather } from '@pounce/ui'
-import { type CheckboxProps, checkboxModel } from '@pounce/ui/models'
+import { gather } from '@sursaut/ui'
+import { type CheckboxProps, checkboxModel } from '@sursaut/ui/models'
 import { picoComponent } from '../factory'
 
 /**

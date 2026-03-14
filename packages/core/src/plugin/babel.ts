@@ -1,11 +1,11 @@
 import type { NodePath, PluginObj, types as t } from '@babel/core'
 import type { JSXElement } from '@babel/types'
 
-interface PounceBabelPluginOptions {
+interface SursautBabelPluginOptions {
 	types: typeof t
 }
 
-interface PounceBabelPluginState {
+interface SursautBabelPluginState {
 	opts?: Record<string, unknown>
 	file?: {
 		opts: {
@@ -13,11 +13,11 @@ interface PounceBabelPluginState {
 			cwd?: string
 		}
 	}
-	__pounceHelperLocals?: Partial<Record<CoreHelperName, string>>
+	__sursautHelperLocals?: Partial<Record<CoreHelperName, string>>
 }
 
 const EXTENDS_HELPERS = new Set(['_extends', '__assign'])
-const CORE_IMPORT_SOURCE = '@pounce/core'
+const CORE_IMPORT_SOURCE = '@sursaut/core'
 type CoreHelperName = 'h' | 'Fragment' | 'c' | 'r'
 
 function getProgramPath(path: NodePath): NodePath<t.Program> | null {
@@ -55,25 +55,25 @@ function findImportedLocalName(
 function ensureCoreHelperIdentifier(
 	t: typeof import('@babel/types'),
 	path: NodePath,
-	state: PounceBabelPluginState,
+	state: SursautBabelPluginState,
 	helperName: CoreHelperName,
 	forceAlias = false
 ): t.Identifier {
 	const programPath = getProgramPath(path)
 	if (!programPath) return t.identifier(helperName)
 
-	state.__pounceHelperLocals ??= {}
-	const cachedLocal = state.__pounceHelperLocals[helperName]
+	state.__sursautHelperLocals ??= {}
+	const cachedLocal = state.__sursautHelperLocals[helperName]
 	if (cachedLocal) return t.identifier(cachedLocal)
 
 	const existingLocal = findImportedLocalName(t, programPath, helperName)
 	if (existingLocal && (!forceAlias || existingLocal !== helperName)) {
-		state.__pounceHelperLocals[helperName] = existingLocal
+		state.__sursautHelperLocals[helperName] = existingLocal
 		return t.identifier(existingLocal)
 	}
 
 	const localId = forceAlias
-		? programPath.scope.generateUidIdentifier(`pounce_${helperName}`)
+		? programPath.scope.generateUidIdentifier(`sursaut_${helperName}`)
 		: t.identifier(helperName)
 
 	const importDecl = getCoreImportDeclaration(programPath)
@@ -88,7 +88,7 @@ function ensureCoreHelperIdentifier(
 		)
 	}
 
-	state.__pounceHelperLocals[helperName] = localId.name
+	state.__sursautHelperLocals[helperName] = localId.name
 	return t.identifier(localId.name)
 }
 
@@ -136,9 +136,9 @@ function buildCompositeCall(
 	return t.callExpression(t.identifier(compositeCalleeName), layers)
 }
 
-export function pounceBabelPlugin({
+export function sursautBabelPlugin({
 	types: t,
-}: PounceBabelPluginOptions): PluginObj<PounceBabelPluginState> {
+}: SursautBabelPluginOptions): PluginObj<SursautBabelPluginState> {
 	function isSafeExpression(node: t.Expression): boolean {
 		let target = node
 		// unwrapping type assertions
@@ -260,18 +260,18 @@ export function pounceBabelPlugin({
 	}
 
 	return {
-		name: 'pounce-babel',
+		name: 'sursaut-babel',
 		visitor: {
 			LabeledStatement(path: NodePath<t.LabeledStatement>) {
 				if (path.node.label.name !== 'bind') return
 				throw path.buildCodeFrameError(
-					'[bind] `bind:` label syntax was removed from @pounce/core; use bind(...) directly'
+					'[bind] `bind:` label syntax was removed from @sursaut/core; use bind(...) directly'
 				)
 			},
 			JSXFragment(path: NodePath<t.JSXFragment>) {
 				ensureImports(path, 'h', 'Fragment')
 			},
-			JSXElement(path: NodePath<JSXElement>, state: PounceBabelPluginState) {
+			JSXElement(path: NodePath<JSXElement>, state: SursautBabelPluginState) {
 				ensureImports(path, 'h')
 				// Traverse all JSX children and attributes
 				for (let index = 0; index < path.node.children.length; index++) {
@@ -434,9 +434,9 @@ export function pounceBabelPlugin({
 	}
 }
 
-export function pounceSpreadPlugin({
+export function sursautSpreadPlugin({
 	types: t,
-}: PounceBabelPluginOptions): PluginObj<PounceBabelPluginState> {
+}: SursautBabelPluginOptions): PluginObj<SursautBabelPluginState> {
 	function isAttributesMergeCall(path: NodePath<t.CallExpression>): boolean {
 		const parentPath = path.parentPath
 		if (!parentPath || !parentPath.isCallExpression()) return false
@@ -448,9 +448,9 @@ export function pounceSpreadPlugin({
 	}
 
 	return {
-		name: 'pounce-spread',
+		name: 'sursaut-spread',
 		visitor: {
-			CallExpression(path: NodePath<t.CallExpression>, state: PounceBabelPluginState) {
+			CallExpression(path: NodePath<t.CallExpression>, state: SursautBabelPluginState) {
 				const callee = path.node.callee
 				let shouldTransform = false
 				if (t.isIdentifier(callee) && EXTENDS_HELPERS.has(callee.name)) {

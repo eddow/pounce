@@ -1,8 +1,8 @@
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 export default expose({
   provide: async (req) => ({
-    siteName: 'Pounce Demo',
+    siteName: 'Sursaut Demo',
     buildTime: new Date().toISOString(),
   }),
 })

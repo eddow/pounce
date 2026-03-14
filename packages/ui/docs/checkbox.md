@@ -127,7 +127,7 @@ type SwitchModel = {
 ## Usage
 
 ```tsx
-import { checkboxModel, radioModel, switchModel } from '@pounce/ui'
+import { checkboxModel, radioModel, switchModel } from '@sursaut/ui'
 
 function Checkbox(props) {
 	const model = checkboxModel(props)

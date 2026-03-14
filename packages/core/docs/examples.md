@@ -1,6 +1,6 @@
 # Examples
 
-This page contains complete, working examples demonstrating various features of Pounce-TS.
+This page contains complete, working examples demonstrating various features of Sursaut-TS.
 
 ## Counter Component
 
@@ -8,7 +8,7 @@ A simple counter with increment and decrement buttons:
 
 ```tsx
 import { reactive } from 'mutts'
-import { latch } from '@pounce/core'
+import { latch } from '@sursaut/core'
 
 function Counter() {
   const state = reactive({ count: 0 })
@@ -40,8 +40,8 @@ A complete todo list with add, delete, and filter functionality:
 
 ```tsx
 import { reactive, computed } from 'mutts'
-import { latch } from '@pounce/core'
-import { array } from '@pounce/core'
+import { latch } from '@sursaut/core'
+import { array } from '@sursaut/core'
 
 interface Todo {
   id: number
@@ -156,7 +156,7 @@ A form with real-time validation:
 
 ```tsx
 import { reactive, computed } from 'mutts'
-import { latch } from '@pounce/core'
+import { latch } from '@sursaut/core'
 
 function FormApp() {
   const state = reactive({
@@ -268,7 +268,7 @@ A search input with debounced results:
 
 ```tsx
 import { reactive, computed, watch } from 'mutts'
-import { latch } from '@pounce/core'
+import { latch } from '@sursaut/core'
 
 function SearchApp() {
   const state = reactive({
@@ -327,7 +327,7 @@ A shopping cart with quantity management:
 
 ```tsx
 import { reactive, computed } from 'mutts'
-import { latch } from '@pounce/core'
+import { latch } from '@sursaut/core'
 
 interface CartItem {
   id: number
@@ -403,7 +403,7 @@ A tabbed interface with content switching:
 
 ```tsx
 import { reactive } from 'mutts'
-import { latch } from '@pounce/core'
+import { latch } from '@sursaut/core'
 
 function TabbedInterface() {
   const state = reactive({
@@ -448,8 +448,8 @@ A complete task management application combining multiple features:
 
 ```tsx
 import { reactive, computed, effect } from 'mutts'
-import { latch } from '@pounce/core'
-import { array } from '@pounce/core'
+import { latch } from '@sursaut/core'
+import { array } from '@sursaut/core'
 
 interface Task {
   id: number

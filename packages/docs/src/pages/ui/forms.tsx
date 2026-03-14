@@ -11,7 +11,7 @@ import {
 	Select,
 	Stack,
 	Switch,
-} from '@pounce'
+} from '@sursaut'
 import { reactive } from 'mutts'
 import { ApiTable, Demo, Section } from '../../components'
 

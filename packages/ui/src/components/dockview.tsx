@@ -12,8 +12,8 @@ import {
 	themeLight,
 } from 'dockview-core'
 import 'dockview-core/dist/styles/dockview.css'
-import { extend, fromAttribute, latch, ReactiveProp } from '@pounce/core'
-import { componentStyle, useDisplayContext } from '@pounce/kit'
+import { extend, fromAttribute, latch, ReactiveProp } from '@sursaut/core'
+import { componentStyle, useDisplayContext } from '@sursaut/kit'
 import {
 	biDi,
 	caught,
@@ -28,11 +28,11 @@ import {
 import { Icon } from '../icon'
 
 componentStyle.sass`
-.pounce-dockview
+.sursaut-dockview
 	width: 100%
 	height: 100%
 
-.pounce-dv-item
+.sursaut-dv-item
 	width: 100%
 	height: 100%
 
@@ -126,7 +126,7 @@ function contentRenderer(
 	onPanelError?: PanelErrorHandler
 ): IContentRenderer {
 	const element = document.createElement('div')
-	element.classList.add('pounce-dv-item', 'body')
+	element.classList.add('sursaut-dv-item', 'body')
 	const size = reactive({ width: 0, height: 0 })
 	const cleanups: ScopedCallback[] = [onDispose]
 
@@ -205,7 +205,7 @@ function tabRenderer(
 	onPanelError?: PanelErrorHandler
 ): IContentRenderer {
 	const element = document.createElement('div')
-	element.classList.add('pounce-dv-item', 'tab')
+	element.classList.add('sursaut-dv-item', 'tab')
 	let cleanup: ScopedCallback | undefined
 	let mountedCleanup: ScopedCallback | undefined
 
@@ -251,7 +251,7 @@ function headerActionRenderer(
 	onPanelError?: PanelErrorHandler
 ) {
 	const element = document.createElement('div')
-	element.classList.add('pounce-dv-item')
+	element.classList.add('sursaut-dv-item')
 	let cleanup: ScopedCallback | undefined
 	let mountedCleanup: ScopedCallback | undefined
 	return {
@@ -556,7 +556,7 @@ export const Dockview = (
 	return (
 		<div
 			{...(props.el || {})}
-			class="pounce-dockview"
+			class="sursaut-dockview"
 			data-testid="dockview-theme-container"
 			use={initDockview}
 		></div>

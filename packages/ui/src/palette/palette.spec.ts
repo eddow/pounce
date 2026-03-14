@@ -40,7 +40,7 @@ describe('Palette subpath entry point', () => {
 
 	it('maintains separate subpath isolation', () => {
 		// This test ensures the palette subpath can be imported independently
-		// and doesn't interfere with the main @pounce/ui barrel
+		// and doesn't interfere with the main @sursaut/ui barrel
 
 		// Main barrel should not export palette types directly
 		expect(rootExports.PaletteEntryId).toBeUndefined()
@@ -65,7 +65,7 @@ describe('Palette subpath entry point', () => {
 
 	it('can be imported via subpath', () => {
 		// Test that the subpath import works as expected
-		// This simulates: import { PaletteEntryId } from '@pounce/ui/palette'
+		// This simulates: import { PaletteEntryId } from '@sursaut/ui/palette'
 		// The fact that this test runs and the imports at the top work proves this
 
 		// Since we're now only exporting types, we verify through type usage

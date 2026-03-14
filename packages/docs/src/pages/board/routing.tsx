@@ -21,10 +21,10 @@ export default function Layout({ children }) {
 
 const crossPackageRouting = `Cross-package routing split:
 
-@pounce/kit
+@sursaut/kit
   route patterns, matching, links, SPA Router semantics
 
-@pounce/board
+@sursaut/board
   file-system discovery, inherited layouts, SSR integration, route module loading
 
 Board does not replace Kit's route concepts.

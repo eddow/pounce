@@ -1,11 +1,11 @@
-import { latch } from '@pounce/core'
+import { latch } from '@sursaut/core'
 import {
 	type ClientRouteDefinition,
 	type LinkProps,
 	linkModel,
 	Router,
 	type RouterRender,
-} from '@pounce/kit'
+} from '@sursaut/kit'
 import AccordionDemo from './components/AccordionDemo'
 import CheckButtonDemo from './components/CheckButtonDemo'
 import DisplayContextDemo from './components/DisplayContextDemo'
@@ -71,9 +71,9 @@ function DemoApp() {
 			data-test="demo-app"
 			style="padding: clamp(12px, 3vw, 24px); max-width: 1000px; margin: 0 auto; width: min(100%, 1000px); box-sizing: border-box; font-family: sans-serif;"
 		>
-			<h1 style="color: #f1f5f9; margin-bottom: 8px;">@pounce/ui Demo</h1>
+			<h1 style="color: #f1f5f9; margin-bottom: 8px;">@sursaut/ui Demo</h1>
 			<p style="color: #94a3b8; margin-bottom: 32px;">
-				Headless UI primitives for Pounce applications
+				Headless UI primitives for Sursaut applications
 			</p>
 
 			<nav

@@ -1,4 +1,4 @@
-import { checkboxModel } from '@pounce/ui'
+import { checkboxModel } from '@sursaut/ui'
 import { reactive } from 'mutts'
 
 export default function CheckboxDemo() {

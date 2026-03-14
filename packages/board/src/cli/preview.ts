@@ -3,7 +3,7 @@ import * as path from 'node:path'
 
 export async function runPreview() {
 	const cwd = process.cwd()
-	const serverEntry = path.join(cwd, 'dist/server/pounce-server-entry.js')
+	const serverEntry = path.join(cwd, 'dist/server/sursaut-server-entry.js')
 
 	console.log(`🚀 Starting preview server...`)
 

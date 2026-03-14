@@ -8,12 +8,12 @@ import {
 } from './context.js'
 import { ApiError, type HttpMethod } from './core.js'
 import type { ExtractPathParams } from './inference.js'
-import { PounceResponse } from './response.js'
+import { SursautResponse } from './response.js'
 
 export type InterceptorMiddleware = (
 	request: Request,
-	next: (req: Request) => Promise<PounceResponse>
-) => Promise<PounceResponse>
+	next: (req: Request) => Promise<SursautResponse>
+) => Promise<SursautResponse>
 
 interface InterceptorEntry {
 	pattern: string | RegExp
@@ -64,7 +64,7 @@ function matchPattern(urlString: string, pattern: string | RegExp): boolean {
 	return pathname === pattern
 }
 
-const CONFIG_SYMBOL = Symbol.for('__POUNCE_CONFIG__')
+const CONFIG_SYMBOL = Symbol.for('__SURSAUT_CONFIG__')
 
 type ApiGlobals = {
 	[CONFIG_SYMBOL]?: typeof DEFAULT_CONFIG
@@ -94,8 +94,8 @@ export const config = getGlobalConfig()
 
 async function runInterceptors(
 	initialRequest: Request,
-	finalHandler: (req: Request) => Promise<PounceResponse>
-): Promise<PounceResponse> {
+	finalHandler: (req: Request) => Promise<SursautResponse>
+): Promise<SursautResponse> {
 	const url = initialRequest.url
 	const ctx = getContext()
 	const contextInterceptors = ctx ? ctx.interceptors : []
@@ -105,14 +105,14 @@ async function runInterceptors(
 		.map((entry) => entry.handler)
 
 	let index = 0
-	const dispatch = async (req: Request): Promise<PounceResponse> => {
+	const dispatch = async (req: Request): Promise<SursautResponse> => {
 		if (index < chain.length) {
 			const handler = chain[index++]
 			return handler(req, dispatch)
 		}
 		return finalHandler(req)
 	}
-	return PounceResponse.from(await dispatch(initialRequest))
+	return SursautResponse.from(await dispatch(initialRequest))
 }
 
 /**
@@ -282,9 +282,9 @@ export function createApiClientFactory(executor: RequestExecutor) {
 							signal: signal ?? options.signal,
 						})
 
-						const finalHandler = async (req: Request): Promise<PounceResponse> => {
+						const finalHandler = async (req: Request): Promise<SursautResponse> => {
 							const response = await executor(req, timeout)
-							return PounceResponse.from(response)
+							return SursautResponse.from(response)
 						}
 
 						const response = await runInterceptors(request, finalHandler)
@@ -386,9 +386,9 @@ export function createApiClientFactory(executor: RequestExecutor) {
 							signal: controller.signal,
 						})
 
-						const finalHandler = async (req: Request): Promise<PounceResponse> => {
+						const finalHandler = async (req: Request): Promise<SursautResponse> => {
 							const res = await fetch(req)
-							return PounceResponse.from(res)
+							return SursautResponse.from(res)
 						}
 
 						const response = await runInterceptors(request, finalHandler)

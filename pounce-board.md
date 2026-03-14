@@ -1,4 +1,4 @@
-# Pounce-Board Project Walkthrough
+# Sursaut-Board Project Walkthrough
 
 > **Status:** Project specification complete, implementation not yet begun.
 
@@ -8,9 +8,9 @@
 
 > [!IMPORTANT]
 > **Read these LLM.md files before implementing:**
-> - [@pounce/core/LLM.md](file:///home/fmdm/dev/ownk/@pounce/core/LLM.md) – UI framework, fine-grained reactivity, JSX transforms
+> - [@sursaut/core/LLM.md](file:///home/fmdm/dev/ownk/@sursaut/core/LLM.md) – UI framework, fine-grained reactivity, JSX transforms
 > - [mutts/LLM.md](file:///home/fmdm/dev/ownk/mutts/LLM.md) – Reactivity system (**used both FE and BE**)
-> - [bounce-ts/LLM.md](file:///home/fmdm/dev/ownk/bounce-ts/LLM.md) – Existing Pounce implementation (reference for patterns)
+> - [bounce-ts/LLM.md](file:///home/fmdm/dev/ownk/bounce-ts/LLM.md) – Existing Sursaut implementation (reference for patterns)
 
 ---
 
@@ -18,27 +18,27 @@
 
 | Document | Purpose | Key Content |
 |----------|---------|-------------|
-| [README.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/README.md) | Quick start | Feature list, basic examples |
-| [CONCEPTS.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/CONCEPTS.md) | Core concepts | Routing, API calls, SSR flow, middleware |
-| [ARCHITECTURE.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/ARCHITECTURE.md) | Full architecture | Diagrams, security, scalability, CI/CD, plugins |
-| [API.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/API.md) | API reference | `api()`, `getSSRData()`, `Middleware` type, `defineProxy()` |
-| [SSR.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/SSR.md) | SSR guide | Injection, hydration, framework integrations |
-| [MIDDLEWARE.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/MIDDLEWARE.md) | Middleware patterns | Auth, rate-limiting, validation, caching, composition |
-| [EXTERNAL_APIS.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/EXTERNAL_APIS.md) | External proxies | `defineProxy()`, transforms, mocking, auth |
-| [IMPLEMENTATION.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/IMPLEMENTATION.md) | Core implementation | HTTP core, client, SSR utils, proxy system, testing |
-| [EXAMPLES.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/EXAMPLES.md) | Full examples | Blog, E-commerce, Admin dashboard |
-| [MIGRATION.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/MIGRATION.md) | Migration guides | From Express, Next.js, SvelteKit, NestJS |
-| [BEST_PRACTICES.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/BEST_PRACTICES.md) | Best practices | Structure, types, security, testing, deployment |
+| [README.md](file:///home/fmdm/dev/ownk/@sursaut/board/analysis/README.md) | Quick start | Feature list, basic examples |
+| [CONCEPTS.md](file:///home/fmdm/dev/ownk/@sursaut/board/analysis/CONCEPTS.md) | Core concepts | Routing, API calls, SSR flow, middleware |
+| [ARCHITECTURE.md](file:///home/fmdm/dev/ownk/@sursaut/board/analysis/ARCHITECTURE.md) | Full architecture | Diagrams, security, scalability, CI/CD, plugins |
+| [API.md](file:///home/fmdm/dev/ownk/@sursaut/board/analysis/API.md) | API reference | `api()`, `getSSRData()`, `Middleware` type, `defineProxy()` |
+| [SSR.md](file:///home/fmdm/dev/ownk/@sursaut/board/analysis/SSR.md) | SSR guide | Injection, hydration, framework integrations |
+| [MIDDLEWARE.md](file:///home/fmdm/dev/ownk/@sursaut/board/analysis/MIDDLEWARE.md) | Middleware patterns | Auth, rate-limiting, validation, caching, composition |
+| [EXTERNAL_APIS.md](file:///home/fmdm/dev/ownk/@sursaut/board/analysis/EXTERNAL_APIS.md) | External proxies | `defineProxy()`, transforms, mocking, auth |
+| [IMPLEMENTATION.md](file:///home/fmdm/dev/ownk/@sursaut/board/analysis/IMPLEMENTATION.md) | Core implementation | HTTP core, client, SSR utils, proxy system, testing |
+| [EXAMPLES.md](file:///home/fmdm/dev/ownk/@sursaut/board/analysis/EXAMPLES.md) | Full examples | Blog, E-commerce, Admin dashboard |
+| [MIGRATION.md](file:///home/fmdm/dev/ownk/@sursaut/board/analysis/MIGRATION.md) | Migration guides | From Express, Next.js, SvelteKit, NestJS |
+| [BEST_PRACTICES.md](file:///home/fmdm/dev/ownk/@sursaut/board/analysis/BEST_PRACTICES.md) | Best practices | Structure, types, security, testing, deployment |
 
 ---
 
 ## Overview
 
-**Pounce-Board** is a full-stack meta-framework for **@pounce/core**—analogous to what SvelteKit is to Svelte.
+**Sursaut-Board** is a full-stack meta-framework for **@sursaut/core**—analogous to what SvelteKit is to Svelte.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                       @pounce/board                          │
+│                       @sursaut/board                          │
 │  (Full-stack meta-framework)                                │
 │  - File-based routing        - Middleware stacks            │
 │  - SSR hydration             - External API proxies         │
@@ -46,7 +46,7 @@
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                        @pounce/core                            │
+│                        @sursaut/core                            │
 │  (UI Component Framework)                                   │
 │  - Fine-grained reactivity   - Direct DOM manipulation      │
 │  - Two-way binding via JSX   - No Virtual DOM               │
@@ -84,7 +84,7 @@
 ### Framework Source Structure
 
 ```
-@pounce/board/
+@sursaut/board/
 ├── src/
 │   ├── lib/                       # Framework internals
 │   │   ├── tsconfig.json          # Shared lib tsconfig
@@ -195,7 +195,7 @@ Folders wrapped in parentheses are **not included in the URL** but allow shared 
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "jsx": "react",
-    "jsxImportSource": "@pounce/core",
+    "jsxImportSource": "@sursaut/core",
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "types": ["vite/client"]
   },
@@ -313,7 +313,7 @@ const users = await api("/api/users").get();
 
 ```tsx
 // routes/dashboard/index.tsx
-import { api } from '@pounce/board/http';
+import { api } from '@sursaut/board/http';
 
 export default function Dashboard() {
   // This runs on server (SSR) first, then on client
@@ -329,7 +329,7 @@ export default function Dashboard() {
 2. api("/api/stats").get() is called
 3. Direct import: routes/api/stats/index.ts
 4. Call exported `get({ params, context })`
-5. Inject: <script id="pounce-data-L2FwaS9zdGF0cw">{"total":42}</script>
+5. Inject: <script id="sursaut-data-L2FwaS9zdGF0cw">{"total":42}</script>
 6. HTML sent to browser with data embedded
 ```
 
@@ -337,7 +337,7 @@ export default function Dashboard() {
 ```
 1. Component hydrates
 2. api("/api/stats").get() is called again
-3. Checks for <script id="pounce-data-L2FwaS9zdGF0cw">
+3. Checks for <script id="sursaut-data-L2FwaS9zdGF0cw">
 4. Finds it, reads {"total":42}, removes tag
 5. Returns cached data (no network request!)
 ```
@@ -363,7 +363,7 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 
 ---
 
-## @pounce/core Integration Notes
+## @sursaut/core Integration Notes
 
 > [!WARNING]
 > **Anti-patterns to avoid:**
@@ -389,21 +389,21 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 
 ### 1.2 Dependencies
 - [ ] Add `mutts` as dependency
-- [ ] Add `@pounce/core` as dependency
+- [ ] Add `@sursaut/core` as dependency
 - [ ] Implement Hono adapter (primary integration)
 - [ ] Add Arktype for validation
 - [ ] Add development dependencies (Vite, TypeScript, etc.)
 
 ### 1.3 Build Setup
 - [ ] All the tsconfig.xxx.json, all the vite plugins &c. should be confgured automatically - each with one import
-- [ ] The server shouldn't have to be configured manually - all the route/middleware/... initialisation should be centralised by @pounce/board, perhaps just exported from @pounce/board so that it can be augmented
+- [ ] The server shouldn't have to be configured manually - all the route/middleware/... initialisation should be centralised by @sursaut/board, perhaps just exported from @sursaut/board so that it can be augmented
 
 ---
 
 ## Phase 2: Core HTTP Layer
 
-### 2.1 - 2.3 Core HTTP Layer (Now in @pounce/kit)
-- [x] **Moved to Kit:** `lib/http/core.ts` is now part of `@pounce/kit/api/core`.
+### 2.1 - 2.3 Core HTTP Layer (Now in @sursaut/kit)
+- [x] **Moved to Kit:** `lib/http/core.ts` is now part of `@sursaut/kit/api/core`.
 - [x] **Moved to Kit:** Middleware Runner implemented in `kit`.
 - [x] **Moved to Kit:** Response utilities implemented in `kit`.
 
@@ -412,8 +412,8 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 
 ## Phase 3: API Client
 
-### 3.1 - 3.5 API Client (Now in @pounce/kit)
-- [x] **Moved to Kit:** `lib/http/client.ts` is now `@pounce/kit/api/client`.
+### 3.1 - 3.5 API Client (Now in @sursaut/kit)
+- [x] **Moved to Kit:** `lib/http/client.ts` is now `@sursaut/kit/api/client`.
 - [x] **Moved to Kit:** Universal `api()` implementation (DOM vs No-DOM strategies).
 - [x] **Moved to Kit:** ImplementationDependent errors for environment-specific features.
 - [x] **Moved to Kit:** SSR data tracking and injection.
@@ -421,18 +421,18 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 
 ## Phase 4: SSR Integration (Phased)
 
-### 4.1 Phase 1: Basic Node/SSR Support (`@pounce/core`)
-- [x] Implement `renderToString(element, scope)` in `@pounce/core/server`
+### 4.1 Phase 1: Basic Node/SSR Support (`@sursaut/core`)
+- [x] Implement `renderToString(element, scope)` in `@sursaut/core/server`
 - [x] Support `linkedom` as an optional server-side dependency
 - [x] Verify synchronous component rendering in Node
 
 ### 4.2 Phase 2: Async Data Tracking
-- [x] Implement SSR Promise Tracker in `@pounce/board/lib/http/context`
+- [x] Implement SSR Promise Tracker in `@sursaut/board/lib/http/context`
 - [x] Update `api()` client to register pending SSR requests
-- [x] Implement `renderToStringAsync` in `@pounce/core/server`
+- [x] Implement `renderToStringAsync` in `@sursaut/core/server`
 - [x] Verify components wait for data before final HTML generation
 
-### 4.3 Phase 3: Pounce-Board Integration
+### 4.3 Phase 3: Sursaut-Board Integration
 - [x] Update Hono adapter to use `renderToStringAsync`
 - [x] Update CLI dev server to match routes and render components
 - [x] Integrate layouts (`common.tsx`) into the SSR render chain
@@ -452,14 +452,14 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 > [!NOTE]
 > Proxies are **code utilities** for calling external APIs, not HTTP routes or forwarders.
 
-### 5.1 - 5.3 External API Proxies (Now in @pounce/kit)
+### 5.1 - 5.3 External API Proxies (Now in @sursaut/kit)
 - [x] **Moved to Kit:** Proxy system logic is part of `kit` API.
 
 ---
 
 ## Phase 6: File-Based Router
 
-### 6.1 - 6.4 File-Based Router (Now in @pounce/kit)
+### 6.1 - 6.4 File-Based Router (Now in @sursaut/kit)
 - [x] **Moved to Kit:** `lib/router/index.ts` concepts moved to `kit/router`.
 - [x] **Board Responsibility:** Board still handles scanning user's `routes/` directory (via CLI/Adapter) and passing it to Kit's `buildRouteTree`.
 - [ ] Load `types.d.ts` for shared types
@@ -476,7 +476,7 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 ## Phase 7: Server Adapters
 
 ### 7.1 Hono Integration (Automated)
-- [x] Implement `createHonoMiddleware()` connecting pounce router to Hono
+- [x] Implement `createHonoMiddleware()` connecting sursaut router to Hono
 - [x] Automate route table registration
 - [x] Automate middleware stack registration
 - [x] Handle request/response conversion
@@ -500,21 +500,21 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 ## Phase 8: CLI Tooling
 
 ### 8.1 Development Server (`cli/dev.ts`)
-- [x] Implement `pounce dev` command
+- [x] Implement `sursaut dev` command
 - [x] Integrate Vite for HMR (using middleware mode)
 - [x] Handle API route hot reloading (via route tree cache clearing)
 - [x] Display route table on startup (Basic version implemented)
 - [x] Add port configuration
 
 ### 8.2 Build Command (`cli/build.ts`)
-- [x] Implement `pounce build` command
+- [x] Implement `sursaut build` command
 - [x] Bundle client-side code
 - [x] Compile server-side code
 - [x] Generate route manifest
 - [x] Optimize for production
 
 ### 8.3 Preview Command (`cli/preview.ts`)
-- [x] Implement `pounce preview` command
+- [x] Implement `sursaut preview` command
 - [x] Serve production build locally
 - [x] Simulate production environment
 - [x] Support bundled deployment for consumers
@@ -567,7 +567,7 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 ### Test Structure Overview
 
 ```
-@pounce/board/
+@sursaut/board/
 ├── src/
 ├── src/
 │   ├── client/
@@ -595,7 +595,7 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 │   │   └── ssr-flow.spec.ts
 │   │
 │   └── consumers/                    # ← Test consumer apps
-│       ├── minimal-app/              # Minimal @pounce/board app
+│       ├── minimal-app/              # Minimal @sursaut/board app
 │       │   ├── routes/
 │       │   │   ├── index.ts
 │       │   │   ├── index.tsx
@@ -605,7 +605,7 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 │       │   │           ├── index.tsx
 │       │   │           └── common.ts
 
-│       │   ├── package.json          # Uses @pounce/board as dep
+│       │   ├── package.json          # Uses @sursaut/board as dep
 │       │   └── vite.config.ts
 │       │
 │       ├── blog-app/                 # Blog example as test
@@ -619,8 +619,8 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 └── package.json
 ```
 
-### 10.1 Unit Tests (Now in @pounce/kit)
-- **Note:** Unit tests for `router`, `client`, `http-core` are now located in `@pounce/kit`.
+### 10.1 Unit Tests (Now in @sursaut/kit)
+- **Note:** Unit tests for `router`, `client`, `http-core` are now located in `@sursaut/kit`.
 - Board tests focus on **Integration** and **Consumers**.
 
 ---
@@ -731,25 +731,25 @@ export default defineConfig({
 
 ### 10.4 Consumer Test Apps (`/tests/consumers/`)
 
-**Real applications** that use @pounce/board as a dependency, ensuring the package works correctly when consumed.
+**Real applications** that use @sursaut/board as a dependency, ensuring the package works correctly when consumed.
 
 #### `tests/consumers/minimal-app/`
 Bare-minimum app to test basic functionality:
-- [x] Create `package.json` with `@pounce/board` dependency
+- [x] Create `package.json` with `@sursaut/board` dependency
 - [x] Create single route with handler + page
 - [x] Create dynamic route `/users/[id]`
 - [x] Create middleware example
 - [x] Create SSR data loading example
 
 #### `tests/consumers/blog-app/`
-Full blog implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/EXAMPLES.md)):
+Full blog implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/@sursaut/board/analysis/EXAMPLES.md)):
 - [x] Posts CRUD routes
 - [x] Authentication middleware
 - [ ] SSR with initial data
 - [ ] External API proxy for comments
 
 #### `tests/consumers/e-commerce-app/` **[TO DO LAST]**
-E-commerce implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/@pounce/board/analysis/EXAMPLES.md)):
+E-commerce implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/@sursaut/board/analysis/EXAMPLES.md)):
 - [ ] Product catalog routes
 - [ ] Cart management
 - [ ] External payment API proxy
@@ -884,7 +884,7 @@ E-commerce implementation (from [EXAMPLES.md](file:///home/fmdm/dev/ownk/@pounce
 
 ## Quick Reference: What Lives Where
 
-| Concept | @pounce/board | @pounce/core | mutts |
+| Concept | @sursaut/board | @sursaut/core | mutts |
 |---------|--------------|-----------|-------|
 | Reactivity | Uses for BE caching | Uses for FE rendering | Provides core system |
 | Components | `index.tsx` files | `h()`, JSX runtime | - |

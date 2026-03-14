@@ -1,5 +1,5 @@
-import { gather } from '@pounce/ui'
-import { type SwitchProps, switchModel } from '@pounce/ui/models'
+import { gather } from '@sursaut/ui'
+import { type SwitchProps, switchModel } from '@sursaut/ui/models'
 
 /**
  * PicoCSS Switch component (styled checkbox)

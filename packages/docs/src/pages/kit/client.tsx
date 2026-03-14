@@ -1,6 +1,6 @@
 import { ApiTable, Code, Section } from '../../components'
 
-const clientBasics = `import { client } from '@pounce'
+const clientBasics = `import { client } from '@sursaut'
 
 // client is a reactive object — read any property in JSX
 // and it updates automatically when the browser state changes.
@@ -18,14 +18,14 @@ function StatusBar() {
 
 const urlAccess = `// client.url is a reactive parsed URL object
 client.url.pathname   // "/users/42"
-client.url.search     // "?q=pounce"
+client.url.search     // "?q=sursaut"
 client.url.hash       // "#section"
 client.url.segments   // ["users", "42"]
-client.url.query      // { q: "pounce" }
+client.url.query      // { q: "sursaut" }
 client.url.href       // full URL string
 client.url.origin     // "http://localhost:5290"`
 
-const navigation = `import { client } from '@pounce'
+const navigation = `import { client } from '@sursaut'
 
 // Programmatic navigation:
 client.navigate('/about')                    // pushState

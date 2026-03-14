@@ -1,5 +1,5 @@
-import type { Env } from '@pounce/core'
-import { collapse } from '@pounce/core'
+import type { Env } from '@sursaut/core'
+import { collapse } from '@sursaut/core'
 import { DISPLAY_KEY, type DisplayContext, useDisplayContext } from '../display.js'
 
 export type { DisplayContext } from '../display.js'
@@ -86,7 +86,7 @@ export function DisplayProvider(props: DisplayProviderProps, env: Env) {
 
 	return (
 		<div
-			class="pounce-display-provider"
+			class="sursaut-display-provider"
 			data-theme={context.theme}
 			dir={context.direction}
 			lang={context.locale}

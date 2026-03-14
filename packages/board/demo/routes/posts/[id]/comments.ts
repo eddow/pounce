@@ -1,4 +1,4 @@
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 export default expose<{ id: string }>({
   stream: async function* (req) {

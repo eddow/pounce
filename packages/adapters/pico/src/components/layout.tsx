@@ -7,7 +7,7 @@ import {
 	type TextProps,
 	type ToolbarNavOptions,
 	textModel,
-} from '@pounce/ui/models'
+} from '@sursaut/ui/models'
 
 export type { ContainerProps, HeadingProps, TextProps }
 

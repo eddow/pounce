@@ -1,4 +1,4 @@
-import { h } from '@pounce/core'
+import { h } from '@sursaut/core'
 import type { DockviewPanelApi, GroupPanelPartInitParameters } from 'dockview-core'
 import { effect, reactive } from 'mutts'
 import { afterEach, describe, expect, it, vi } from 'vitest'

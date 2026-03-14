@@ -11,7 +11,7 @@
 		"moduleResolution": "bundler",
 		"baseUrl": ".",
 		"paths": {
-			"@pounce/core": [
+			"@sursaut/core": [
 				"src/dom/index.ts"
 			],
 			"mutts": [

@@ -1,6 +1,7 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const installSnippet = `import { rootEnv, badge, intersect, loading, pointer, resize, scroll, sizeable, tail } from '@pounce'
+const installSnippet = `import { rootEnv } from '@sursaut/core'
+import { badge, intersect, loading, pointer, resize, scroll, sizeable, tail } from '@sursaut/ui'
 
 // Register only the directives your app needs
 Object.assign(rootEnv, {
@@ -41,7 +42,7 @@ const intersectSnippet = `<div use:intersect={{
 const resizeSnippet = `const size = reactive({ width: 0, height: 0 })
 
 // Bi-directional binding
-<div use:resize={size} style={{ border: '1px solid black' }}>
+<div use:resize={size} style="border: 1px solid black">
   Size: {size.width} x {size.height}
 </div>
 
@@ -74,11 +75,11 @@ const sizeableSnippet = `function SidebarLayout() {
   const state = stored({ width: 300 })
 
   return (
-    <div style={{ display: 'flex', height: '100vh' }}>
+    <div style="display: flex; height: 100vh">
       <aside use:sizeable={state.width}>
         Sidebar Content
       </aside>
-      <main style={{ flex: 1 }}>
+      <main style="flex: 1">
         Main Content
       </main>
     </div>
@@ -93,7 +94,7 @@ const sizeableOptionsSnippet = `/* CSS controls min/max via clamp() on the paren
 
 /* Customize handle size */
 .my-layout {
-  --pounce-resize-handle-width: 8px;
+  --sursaut-resize-handle-width: 8px;
 }`
 
 export default function UiDirectivesPage() {
@@ -109,7 +110,8 @@ export default function UiDirectivesPage() {
 					UI directives must be registered in the env to be available in JSX via the{' '}
 					<code>use:name</code> syntax. Register them explicitly on <code>rootEnv</code> for
 					app-wide availability, or assign them on a local component env when you only need a
-					subset.
+					subset. These directives live in <code>@sursaut/ui</code>; the adapter package only adds
+					adapter-specific directives such as <code>tooltip</code>.
 				</p>
 				<Code code={installSnippet} lang="tsx" />
 			</Section>
@@ -186,8 +188,8 @@ export default function UiDirectivesPage() {
 							updated during drag
 						</li>
 						<li>
-							<code>--pounce-resize-handle-width</code> / <code>--pounce-resize-handle-height</code>{' '}
-							— handle hit area (default: 5px)
+							<code>--sursaut-resize-handle-width</code> /{' '}
+							<code>--sursaut-resize-handle-height</code> — handle hit area (default: 5px)
 						</li>
 					</ul>
 				</Section>

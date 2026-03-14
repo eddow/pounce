@@ -1,6 +1,6 @@
-# Getting Started with Pounce-TS
+# Getting Started with Sursaut-TS
 
-Pounce-TS is a fine-grained reactive web framework built with TypeScript, JSX, and `mutts`. Components render once, then reactive bindings keep the DOM updated without component rebuilds.
+Sursaut-TS is a fine-grained reactive web framework built with TypeScript, JSX, and `mutts`. Components render once, then reactive bindings keep the DOM updated without component rebuilds.
 
 ## Features
 
@@ -52,12 +52,12 @@ Create a file `src/app.tsx`:
 
 ```tsx
 import { reactive } from 'mutts'
-import { latch } from '@pounce/core'
+import { latch } from '@sursaut/core'
 
 // Create reactive state
 const state = reactive({
   count: 0,
-  message: 'Hello Pounce!'
+  message: 'Hello Sursaut!'
 })
 
 // Define your app component
@@ -82,7 +82,7 @@ Create an HTML file with a container:
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My Pounce App</title>
+  <title>My Sursaut App</title>
 </head>
 <body>
   <div id="app"></div>

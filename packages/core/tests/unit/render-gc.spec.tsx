@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { reactive } from 'mutts'
-import { latch, document } from '@pounce/core'
+import { latch, document } from '@sursaut/core'
 
 const gc = typeof globalThis.gc === 'function' ? globalThis.gc : undefined
 const itGC = gc ? it : it.skip

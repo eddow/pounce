@@ -1,5 +1,5 @@
-import { r } from '@pounce/core'
-import { sizeable } from '@pounce/ui'
+import { r } from '@sursaut/core'
+import { sizeable } from '@sursaut/ui'
 import { reactive } from 'mutts'
 import '../../src/styles/sizeable.sass'
 

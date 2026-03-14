@@ -1,6 +1,6 @@
 import { ApiTable, Code, Section } from '../../components'
 
-const hFunction = `import { h, r } from '@pounce'
+const hFunction = `import { h, r } from '@sursaut'
 
 // JSX is syntactic sugar for h() calls:
 // <div class="box">Hello</div>
@@ -12,7 +12,7 @@ h('div', { class: 'box' }, 'Hello')
 // becomes:
 h(MyComponent, { name: 'World' })`
 
-const reactiveProp = `import { r } from '@pounce'
+const reactiveProp = `import { r } from '@sursaut'
 
 // The Babel plugin wraps JSX expressions automatically:
 // <span>{state.count}</span>
@@ -63,13 +63,13 @@ export default function JsxPage() {
 	return (
 		<article>
 			<h1>JSX Factory</h1>
-			<p>How Pounce transforms JSX into reactive DOM elements.</p>
+			<p>How Sursaut transforms JSX into reactive DOM elements.</p>
 
 			<Section title="The h() Function">
 				<p>
-					Pounce's <code>h()</code> function is the JSX factory. It creates
-					<code>PounceElement</code> descriptors — lightweight objects that describe what to render.
-					Actual DOM nodes are created lazily during <code>render()</code>.
+					Sursaut's <code>h()</code> function is the JSX factory. It creates
+					<code>SursautElement</code> descriptors — lightweight objects that describe what to
+					render. Actual DOM nodes are created lazily during <code>render()</code>.
 				</p>
 				<Code code={hFunction} lang="tsx" />
 			</Section>

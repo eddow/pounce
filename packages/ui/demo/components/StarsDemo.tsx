@@ -1,5 +1,5 @@
-import { componentStyle } from '@pounce/kit'
-import { starsModel } from '@pounce/ui'
+import { componentStyle } from '@sursaut/kit'
+import { starsModel } from '@sursaut/ui'
 import { reactive } from 'mutts'
 
 export default function StarsDemo() {

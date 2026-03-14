@@ -1,4 +1,4 @@
-import { Button, Card, Grid, Inline, Select, Stack, Switch, Toolbar } from '@pounce'
+import { Button, Card, Grid, Inline, Select, Stack, Switch, Toolbar } from '@sursaut'
 import { reactive } from 'mutts'
 import { ApiTable, Code, Demo, Section } from '../../components'
 
@@ -41,7 +41,7 @@ type Justify = 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly'
 function StackDemo() {
 	const state = reactive({ gap: 'md', align: '' as '' | Align })
 	const box =
-		'padding: 0.75rem 1rem; background: var(--pounce-bg-muted, #eee); border-radius: 0.25rem'
+		'padding: 0.75rem 1rem; background: var(--sursaut-bg-muted, #eee); border-radius: 0.25rem'
 	return (
 		<Stack gap="md">
 			<Inline gap="md" wrap>

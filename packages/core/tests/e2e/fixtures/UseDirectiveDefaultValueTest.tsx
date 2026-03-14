@@ -1,5 +1,5 @@
-import { reactive, latch } from '@pounce'
-import { rootEnv } from '@pounce'
+import { reactive, latch } from '@sursaut'
+import { rootEnv } from '@sursaut'
 
 // Test use:focus without value (should default to true)
 rootEnv.focus = (element: HTMLElement, value: any, access: any) => {

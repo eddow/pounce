@@ -1,4 +1,4 @@
-import { Inline, Progress, Stack, Switch } from '@pounce'
+import { Inline, Progress, Stack, Switch } from '@sursaut'
 import { reactive } from 'mutts'
 import { ApiTable, Demo, Section } from '../../components'
 

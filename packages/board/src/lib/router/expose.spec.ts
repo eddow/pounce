@@ -3,16 +3,16 @@ import {
 	clearExposeRegistry,
 	expose,
 	fileRegistry,
-	type PounceRequest,
 	routeRegistry,
+	type SursautRequest,
 } from './expose.js'
 
 describe('expose() Runtime', () => {
 	beforeEach(() => {
 		clearExposeRegistry()
 		// Mock out current file globals for accurate routing simulation
-		;(globalThis as any).__POUNCE_CURRENT_FILE__ = '/mock/routes/index.ts'
-		;(globalThis as any).__POUNCE_CURRENT_BASE_URL__ = '/'
+		;(globalThis as any).__SURSAUT_CURRENT_FILE__ = '/mock/routes/index.ts'
+		;(globalThis as any).__SURSAUT_CURRENT_BASE_URL__ = '/'
 	})
 
 	it('6.1: Flattens a config tree with sub-branches and verbs', () => {
@@ -50,8 +50,8 @@ describe('expose() Runtime', () => {
 			get: async (): Promise<string> => 'root',
 		})
 
-		;(globalThis as any).__POUNCE_CURRENT_FILE__ = '/mock/routes/users.ts'
-		;(globalThis as any).__POUNCE_CURRENT_BASE_URL__ = '/users'
+		;(globalThis as any).__SURSAUT_CURRENT_FILE__ = '/mock/routes/users.ts'
+		;(globalThis as any).__SURSAUT_CURRENT_BASE_URL__ = '/users'
 
 		expose({
 			middle: [subMiddle],
@@ -77,8 +77,8 @@ describe('expose() Runtime', () => {
 			provide: rootProvide,
 		})
 
-		;(globalThis as any).__POUNCE_CURRENT_FILE__ = '/mock/routes/dashboard.ts'
-		;(globalThis as any).__POUNCE_CURRENT_BASE_URL__ = '/dashboard'
+		;(globalThis as any).__SURSAUT_CURRENT_FILE__ = '/mock/routes/dashboard.ts'
+		;(globalThis as any).__SURSAUT_CURRENT_BASE_URL__ = '/dashboard'
 
 		expose({
 			provide: async (req: any) => {
@@ -92,8 +92,8 @@ describe('expose() Runtime', () => {
 		const composedProvideFn = routeRegistry.get('/dashboard')?.provide
 		expect(composedProvideFn).toBeDefined()
 
-		const reqObj: Partial<PounceRequest> = { params: {} as any }
-		const resolvedState = await composedProvideFn(reqObj as PounceRequest)
+		const reqObj: Partial<SursautRequest> = { params: {} as any }
+		const resolvedState = await composedProvideFn(reqObj as SursautRequest)
 
 		// The resulting state must be merged parent + child
 		expect(resolvedState).toEqual({

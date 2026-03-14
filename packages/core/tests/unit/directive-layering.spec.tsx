@@ -1,4 +1,4 @@
-import { c, h, rootEnv } from '@pounce/core'
+import { c, h, rootEnv } from '@sursaut/core'
 import { reactive } from 'mutts'
 import { describe, expect, it } from 'vitest'
 

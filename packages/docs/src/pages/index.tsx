@@ -1,26 +1,26 @@
-import { A } from '@pounce'
+import { A } from '@sursaut'
 import { Code, Section } from '../components'
 
-const installCore = 'pnpm add @pounce/core mutts'
+const installCore = 'pnpm add @sursaut/core mutts'
 const installFrontend =
-	'pnpm add @pounce/core @pounce/kit @pounce/ui @pounce/adapter-pico @picocss/pico mutts'
+	'pnpm add @sursaut/core @sursaut/kit @sursaut/ui @sursaut/adapter-pico @picocss/pico mutts'
 const installBarrel =
-	'pnpm add @pounce/core @pounce/kit @pounce/ui @pounce/adapter-pico @picocss/pico mutts'
+	'pnpm add @sursaut/core @sursaut/kit @sursaut/ui @sursaut/adapter-pico @picocss/pico mutts'
 
 const viteConfig = `import { defineConfig } from 'vite'
-import { pounceBarrelPlugin, pounceMinimalPackage } from '@pounce/core/plugin'
+import { sursautBarrelPlugin, sursautMinimalPackage } from '@sursaut/core/plugin'
 
 export default defineConfig({
   plugins: [
-    ...pounceMinimalPackage(),
-    pounceBarrelPlugin({
+    ...sursautMinimalPackage(),
+    sursautBarrelPlugin({
       skeleton: 'front-end',
-      adapter: '@pounce/adapter-pico',
+      adapter: '@sursaut/adapter-pico',
     }),
   ],
 })`
 
-const helloApp = `import { latch } from '@pounce'
+const helloApp = `import { latch } from '@sursaut'
 import { reactive } from 'mutts'
 
 function Counter() {
@@ -28,7 +28,7 @@ function Counter() {
 
   return (
     <main class="container">
-      <h1>Pounce counter</h1>
+      <h1>Sursaut counter</h1>
       <p>Count: {state.count}</p>
       <input type="range" min="1" max="5" value={state.step} />
       <button onClick={() => state.count -= state.step}>-{state.step}</button>
@@ -42,34 +42,34 @@ latch('#app', <Counter />)`
 const packageRows = [
 	{
 		href: '/core',
-		name: '@pounce/core',
+		name: '@sursaut/core',
 		description:
 			'JSX factory, directives, render-once components, env, SSR entrypoints, Babel plugin',
 		status: 'First package to publish',
 	},
 	{
 		href: '/kit',
-		name: '@pounce/kit',
+		name: '@sursaut/kit',
 		description:
 			'Router, client state, storage, i18n utilities, CSS helpers, app-level browser services',
 		status: 'Build on top of core',
 	},
 	{
 		href: '/ui',
-		name: '@pounce/ui',
+		name: '@sursaut/ui',
 		description: 'Headless models, directives, display primitives, overlays, component foundations',
 		status: 'Headless layer',
 	},
 	{
 		href: '/adapters/pico',
-		name: '@pounce/adapter-pico',
+		name: '@sursaut/adapter-pico',
 		description:
 			'Presentation layer using PicoCSS, so docs and apps get a clean default look quickly',
 		status: 'Nice default adapter',
 	},
 	{
 		href: '/board',
-		name: '@pounce/board',
+		name: '@sursaut/board',
 		description: 'Meta-framework for routing, SSR, middleware, and full-stack app structure',
 		status: 'Later / larger scope',
 	},
@@ -78,7 +78,7 @@ const packageRows = [
 const promiseCards = [
 	{
 		title: 'Affirmative by construction',
-		body: 'Write what should hold. Pounce keeps the rendered world aligned through live bindings instead of repetitive control code.',
+		body: 'Write what should hold. Sursaut keeps the rendered world aligned through live bindings instead of repetitive control code.',
 	},
 	{
 		title: 'Logical relationships stay local',
@@ -102,7 +102,7 @@ const gettingStartedLinks = [
 	},
 	{
 		href: '/core',
-		title: '@pounce/core',
+		title: '@sursaut/core',
 		detail: 'The runtime, JSX factory, directives, SSR, plugin',
 	},
 	{
@@ -110,7 +110,7 @@ const gettingStartedLinks = [
 		title: 'Router',
 		detail: 'Client-side routing, links, route definitions, params',
 	},
-	{ href: '/ui', title: '@pounce/ui', detail: 'Headless UI architecture and reusable primitives' },
+	{ href: '/ui', title: '@sursaut/ui', detail: 'Headless UI architecture and reusable primitives' },
 ]
 
 export default function IndexPage() {
@@ -118,15 +118,15 @@ export default function IndexPage() {
 		<article>
 			<section class="docs-hero">
 				<div class="docs-hero-copy">
-					<div class="docs-eyebrow">Pounce</div>
+					<div class="docs-eyebrow">Sursaut</div>
 					<h1>Affirmative UI for the web.</h1>
 					<p class="docs-subtitle">
-						Pounce is a component-oriented web stack inspired by affirmative and logical styles of
+						Sursaut is a component-oriented web stack inspired by affirmative and logical styles of
 						programming: state what should hold, keep relationships explicit, and let direct DOM
 						reactivity maintain the result.
 					</p>
 					<p>
-						Start with <code>@pounce/core</code> for the runtime and compiler story. Add kit, ui,
+						Start with <code>@sursaut/core</code> for the runtime and compiler story. Add kit, ui,
 						and an adapter only when the problem actually asks for them.
 					</p>
 					<div class="docs-hero-actions">
@@ -153,7 +153,7 @@ export default function IndexPage() {
 				</div>
 			</section>
 
-			<Section title="Why Pounce">
+			<Section title="Why Sursaut">
 				<div class="docs-card-grid">
 					<for each={promiseCards}>
 						{(card) => (
@@ -197,22 +197,22 @@ export default function IndexPage() {
 				</p>
 			</Section>
 
-			<Section title="The shape of a Pounce app">
+			<Section title="The shape of a Sursaut app">
 				<div class="docs-home-split">
 					<div>
 						<p>There are really two moving parts to understand early:</p>
 						<ul>
 							<li>
 								<strong>Runtime import surface</strong> — what you import from{' '}
-								<code>@pounce/core</code> or the generated <code>@pounce</code> barrel.
+								<code>@sursaut/core</code> or the generated <code>@sursaut</code> barrel.
 							</li>
 							<li>
 								<strong>Build transform</strong> — the Babel/Vite plugin that rewrites JSX into
-								Pounce’s reactive shape.
+								Sursaut’s reactive shape.
 							</li>
 						</ul>
 						<p>
-							Pounce is not only a runtime import. It is also a transform and a style of
+							Sursaut is not only a runtime import. It is also a transform and a style of
 							programming. The docs need to show that up front: imports, Babel plugin, virtual
 							barrel, package layering, and the affirmative model behind them.
 						</p>

@@ -1,7 +1,7 @@
-import { A } from '@pounce'
+import { A } from '@sursaut'
 import { Code, PackageHeader, Section } from '../../components'
 
-const bindAppExample = `import { latch } from '@pounce'
+const bindAppExample = `import { latch } from '@sursaut'
 
 function App() {
   return <h1>Hello World</h1>
@@ -21,26 +21,26 @@ export default function CorePage() {
 	return (
 		<article>
 			<PackageHeader
-				name="@pounce/core"
-				description="JSX factory, PounceElement, reactivity integration, env, reconciler, and directives."
+				name="@sursaut/core"
+				description="JSX factory, SursautElement, reactivity integration, env, reconciler, and directives."
 			/>
 
 			<p>
-				<code>@pounce/core</code> is the foundation of every Pounce application. It provides the JSX
-				factory (<code>h()</code>), the element abstraction (<code>PounceElement</code>), the
+				<code>@sursaut/core</code> is the foundation of every Sursaut application. It provides the
+				JSX factory (<code>h()</code>), the element abstraction (<code>SursautElement</code>), the
 				reconciler that syncs reactive state to the DOM, and built-in directives for control flow.
 			</p>
 
 			<Section title="Entry Point">
 				<p>
-					<code>latch()</code> mounts a Pounce component tree into the DOM. It sets up the root env
+					<code>latch()</code> mounts a Sursaut component tree into the DOM. It sets up the root env
 					and starts the reactive rendering pipeline.
 				</p>
 				<Code code={bindAppExample} lang="tsx" />
 			</Section>
 
 			<Section title="Architecture">
-				<p>Pounce's rendering pipeline:</p>
+				<p>Sursaut's rendering pipeline:</p>
 				<ol>
 					<li>
 						<strong>Babel plugin</strong> transforms JSX — wraps expressions in <code>r()</code>,
@@ -50,11 +50,11 @@ export default function CorePage() {
 						<strong>
 							<code>h()</code>
 						</strong>{' '}
-						creates <code>PounceElement</code> descriptors (not DOM nodes yet)
+						creates <code>SursautElement</code> descriptors (not DOM nodes yet)
 					</li>
 					<li>
 						<strong>
-							<code>PounceElement.render()</code>
+							<code>SursautElement.render()</code>
 						</strong>{' '}
 						produces real DOM nodes inside a <code>mutts</code> effect
 					</li>
@@ -76,7 +76,7 @@ export default function CorePage() {
 						<code>ReactiveProp</code>, two-way binding
 					</li>
 					<li>
-						<A href="/core/components">Components</A> — <code>PounceElement</code>, render
+						<A href="/core/components">Components</A> — <code>SursautElement</code>, render
 						lifecycle, mount/use callbacks
 					</li>
 					<li>

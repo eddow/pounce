@@ -21,22 +21,22 @@ export function drawerModel(props: DrawerPropsWithIds, close: (value: any) => vo
 			return {
 				role: 'dialog',
 				'aria-modal': 'true',
-				class: ['pounce-drawer', `pounce-drawer-${side}`],
+				class: ['sursaut-drawer', `sursaut-drawer-${side}`],
 			}
 		},
 		get header() {
-			return { class: 'pounce-drawer-header', id: props.titleId }
+			return { class: 'sursaut-drawer-header', id: props.titleId }
 		},
 		get body() {
-			return { class: 'pounce-drawer-body' }
+			return { class: 'sursaut-drawer-body' }
 		},
 		get footer() {
-			return { class: 'pounce-drawer-footer' }
+			return { class: 'sursaut-drawer-footer' }
 		},
 		get close() {
 			return {
 				type: 'button' as const,
-				class: 'pounce-drawer-close',
+				class: 'sursaut-drawer-close',
 				'aria-label': 'Close',
 				get onClick() {
 					return () => close(null)

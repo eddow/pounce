@@ -1,6 +1,6 @@
-import { latch } from '@pounce'
+import { latch } from '@sursaut'
 import '@picocss/pico/css/pico.min.css'
-import '@pounce/ui/styles/sizeable.sass'
+import '@sursaut/ui/styles/sizeable.sass'
 import './styles/docs.sass'
 import { ensureHighlightThemes } from './highlight-theme'
 import { DocsApp } from './layout'

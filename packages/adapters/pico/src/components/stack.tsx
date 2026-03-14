@@ -5,7 +5,7 @@ import {
 	inlineModel,
 	type StackProps,
 	stackModel,
-} from '@pounce/ui/models'
+} from '@sursaut/ui/models'
 
 export function Stack(props: StackProps) {
 	const model = stackModel(props)

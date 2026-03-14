@@ -1,5 +1,5 @@
 /**
- * External API proxy system for pounce-board
+ * External API proxy system for sursaut-board
  * Allows defining typed proxies for external APIs with transformation and validation
  */
 

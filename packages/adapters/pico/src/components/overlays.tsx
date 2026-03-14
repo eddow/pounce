@@ -1,4 +1,4 @@
-import type { Env } from '@pounce/core'
+import type { Env } from '@sursaut/core'
 import {
 	type DialogOptions,
 	type DrawerOptions,
@@ -8,8 +8,8 @@ import {
 	type ToastOptions,
 	toastModel,
 	trapFocus,
-} from '@pounce/ui'
-import { type WithOverlaysProps, withOverlaysModel } from '@pounce/ui/models'
+} from '@sursaut/ui'
+import { type WithOverlaysProps, withOverlaysModel } from '@sursaut/ui/models'
 
 function toastCloseStyle(): string {
 	return 'margin:0 0 0 auto;padding:0;border:none;background:transparent;box-shadow:none;min-width:auto;width:auto;height:auto;color:inherit;font-size:1.125rem;line-height:1;opacity:0.8;'
@@ -35,7 +35,7 @@ export const Toast = (props: ToastOptions & { close: (v: unknown) => void }) => 
 	return (
 		<div {...model.toast}>
 			<span {...model.icon} />
-			<div class="pounce-toast-content">{model.message}</div>
+			<div class="sursaut-toast-content">{model.message}</div>
 			<button {...model.close} style={toastCloseStyle()}>
 				&times;
 			</button>
@@ -48,7 +48,7 @@ export const Drawer = (props: DrawerOptions & { close: (v: unknown) => void }) =
 	return (
 		<div {...model.drawer}>
 			<div {...model.header}>
-				{model.title && <div class="pounce-drawer-title">{model.title}</div>}
+				{model.title && <div class="sursaut-drawer-title">{model.title}</div>}
 				<button {...model.close}>&times;</button>
 			</div>
 			<div {...model.body}>{props.children}</div>
@@ -79,7 +79,7 @@ function OverlayRenderer(props: { entry: OverlayEntry }) {
 
 	if (entry.render) {
 		return (
-			<div class="pounce-overlay-custom" use={setupFocus}>
+			<div class="sursaut-overlay-custom" use={setupFocus}>
 				{entry.render(close)}
 			</div>
 		)
@@ -100,7 +100,7 @@ function renderLayer(
 	const toast = mode === 'toast'
 	return (
 		<div
-			class={['pounce-layer', `pounce-mode-${mode}`]}
+			class={['sursaut-layer', `sursaut-mode-${mode}`]}
 			role={toast ? 'log' : undefined}
 			aria-live={toast ? 'polite' : undefined}
 		>
@@ -123,13 +123,13 @@ export function WithOverlays(props: WithOverlaysProps, env: Env) {
 			<div {...model.manager}>
 				<div
 					if={model.stack.hasBackdrop}
-					class="pounce-backdrop"
+					class="sursaut-backdrop"
 					onClick={model.stack.onBackdropClick}
 				/>
 				{props.layers ? (
 					<for each={props.layers}>{(mode) => renderLayer(model.stack, model, mode)}</for>
 				) : (
-					<div class="pounce-layer pounce-flat">
+					<div class="sursaut-layer sursaut-flat">
 						<for each={model.stack.stack}>
 							{(entry) => <div {...model.overlayItem(entry)}>{renderOverlay(entry)}</div>}
 						</for>
@@ -151,7 +151,7 @@ export function StandardOverlays(props: { children?: JSX.Children }, env: Env) {
 			<div {...model.manager}>
 				<div
 					if={model.stack.hasBackdrop}
-					class="pounce-backdrop"
+					class="sursaut-backdrop"
 					onClick={model.stack.onBackdropClick}
 				/>
 				<for each={['modal', 'toast', 'drawer-left', 'drawer-right'] as string[]}>

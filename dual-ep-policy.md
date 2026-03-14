@@ -28,11 +28,11 @@ The codebase is split into three layers:
 
 To prevent implementation fragmentation, the project follows a "Single Hub" model:
 
-1.  **@pounce/core as Authority**: This package defines the **canonical environment contract**. It exports the full suite of DOM globals (`document`, `window`, etc.) as **Live-Binding Exports**.
-2.  **@pounce/kit as the Reactive Suite**: Provides higher-level isomorphic utilities:
+1.  **@sursaut/core as Authority**: This package defines the **canonical environment contract**. It exports the full suite of DOM globals (`document`, `window`, etc.) as **Live-Binding Exports**.
+2.  **@sursaut/kit as the Reactive Suite**: Provides higher-level isomorphic utilities:
     - **`client`**: The reactive interface to the platform (e.g., `client.url`, `client.prefersDark`). Changing `client.url` on the server triggers a 304 redirect.
     - **`api` & `router`**: Primary functional exports.
-3.  **Cross-Project Binding**: When an application resolves an entry point, it "enlightens" the canonical exports in `@pounce/core`. Because these exports are singletons in the dependency graph, all other packages (`kit`, `board`) automatically inherit the correct environment implementation.
+3.  **Cross-Project Binding**: When an application resolves an entry point, it "enlightens" the canonical exports in `@sursaut/core`. Because these exports are singletons in the dependency graph, all other packages (`kit`, `board`) automatically inherit the correct environment implementation.
 
 ---
 
@@ -50,7 +50,7 @@ In the Node.js entry point, globals like `document` are bound to a **Context Pro
 - **Reference**: See detailed analysis in [als-export.md](./packages/core/analysis/als-export.md).
 
 ### C. Reactive Controllers (Application State)
-Used for the `client` object in `@pounce/kit`. It is a singleton instance whose properties/methods are reactive. It internally consumes the bound `document` from `@pounce/core`.
+Used for the `client` object in `@sursaut/kit`. It is a singleton instance whose properties/methods are reactive. It internally consumes the bound `document` from `@sursaut/core`.
 
 ---
 
@@ -80,7 +80,7 @@ graph TD
 
 ## 7. Final "Don't Forget" Checklist
 
-- [ ] **Direct Imports**: Use `import { document } from '@pounce/core'`.
+- [ ] **Direct Imports**: Use `import { document } from '@sursaut/core'`.
 - [ ] **No Namespace Prefixing**: Do not use `platform.` or `host.` prefixes for canonical globals.
 - [ ] **ESM Mutation Rule**: You **cannot** reassign an imported variable. You **must** call the provided setter in the Entry Point.
 - [ ] **Concurrency**: Always ensure the server implementation isolates requests via `AsyncLocalStorage`.

@@ -1,5 +1,5 @@
 import { reactive } from 'mutts'
-import { latch } from '@pounce'
+import { latch } from '@sursaut'
 
 export default function ThisAttributeTest() {
 	const state = reactive({

@@ -1,4 +1,4 @@
-import { h, PounceElement } from '@pounce/core'
+import { h, SursautElement } from '@sursaut/core'
 import type { DockviewApi } from 'dockview-core'
 import { describe, expect, it, vi } from 'vitest'
 import { type DockviewRouteWidgetParams, dockviewRouterInternals } from './dockview-router'
@@ -7,7 +7,7 @@ type DemoRoute = { readonly path: string }
 
 function renderToText(element: JSX.Element | JSX.Element[]) {
 	const item = Array.isArray(element) ? element[0] : element
-	if (!(item instanceof PounceElement)) throw new Error('Expected PounceElement')
+	if (!(item instanceof SursautElement)) throw new Error('Expected SursautElement')
 	const nodes = item.render({})
 	const array = Array.isArray(nodes) ? nodes : Array.from(nodes as Iterable<Node>)
 	return array.map((node) => node.textContent ?? '').join('')

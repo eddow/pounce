@@ -1,20 +1,20 @@
-import { expose } from '@pounce/board'
-import type { PounceRequest } from '@pounce/board'
+import { expose } from '@sursaut/board'
+import type { SursautRequest } from '@sursaut/board'
 import { deletePost, findPost } from '+shared/posts'
 
 export default expose<{ id: string }>({
-  provide: async (req: PounceRequest<{ id: string }>) => {
+  provide: async (req: SursautRequest<{ id: string }>) => {
     const post = findPost(req.params.id)
     return { post: post ?? null }
   },
 
-  get: async (req: PounceRequest<{ id: string }>) => {
+  get: async (req: SursautRequest<{ id: string }>) => {
     const post = findPost(req.params.id)
     if (!post) return new Response('Not found', { status: 404 })
     return post
   },
 
-  put: async (req: PounceRequest<{ id: string }>) => {
+  put: async (req: SursautRequest<{ id: string }>) => {
     const post = findPost(req.params.id)
     if (!post) return new Response('Not found', { status: 404 })
     const body = await req.raw.json()
@@ -22,7 +22,7 @@ export default expose<{ id: string }>({
     return post
   },
 
-  delete: async (req: PounceRequest<{ id: string }>) => {
+  delete: async (req: SursautRequest<{ id: string }>) => {
     if (!deletePost(req.params.id)) return new Response('Not found', { status: 404 })
     return { deleted: true }
   },

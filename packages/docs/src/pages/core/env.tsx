@@ -14,7 +14,7 @@ function Child(_props: {}, env: Env) {
   return <span>{env.theme.dark ? 'Dark' : 'Light'}</span>
 }`
 
-const extendFunction = `import { extend } from '@pounce'
+const extendFunction = `import { extend } from '@sursaut'
 import { reactive } from 'mutts'
 
 // extend(base, added) creates:
@@ -53,7 +53,7 @@ function App() {
 // Equivalent to calling extend(env, { user, config })
 // inside a wrapper component, but without the extra component.`
 
-const rootEnv = `import { rootEnv } from '@pounce'
+const rootEnv = `import { rootEnv } from '@sursaut'
 
 // rootEnv is the top-level env object.
 // latch() passes it (or a child of it) to the root component.
@@ -70,7 +70,7 @@ export default function EnvPage() {
 		<article>
 			<h1>Env</h1>
 			<p>
-				Env is Pounce's dependency injection mechanism. It's a prototype-chained reactive object
+				Env is Sursaut's dependency injection mechanism. It's a prototype-chained reactive object
 				passed to every component — no Context providers, no prop drilling.
 			</p>
 

@@ -1,4 +1,4 @@
-import { type AppShellProps, appShellModel } from '@pounce/ui/models'
+import { type AppShellProps, appShellModel } from '@sursaut/ui/models'
 
 export type { AppShellProps }
 

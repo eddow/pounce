@@ -1,5 +1,5 @@
 {
-  "name": "@pounce/docs",
+  "name": "@sursaut/docs",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@picocss/pico": "^2",
-    "@pounce/adapter-pico": "workspace:*",
-    "@pounce/core": "workspace:*",
-    "@pounce/kit": "workspace:*",
-    "@pounce/ui": "workspace:*",
+    "@sursaut/adapter-pico": "workspace:*",
+    "@sursaut/core": "workspace:*",
+    "@sursaut/kit": "workspace:*",
+    "@sursaut/ui": "workspace:*",
     "highlight.js": "^11",
     "mutts": "1.0.13",
     "pure-glyf": "workspace:*"

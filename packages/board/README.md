@@ -1,6 +1,6 @@
-# @pounce/board
+# @sursaut/board
 
-`@pounce/board` is the full-stack layer for Pounce applications. It combines file-based routing, SSR, typed route helpers, a universal `api()` client, and a Hono adapter for serving API and UI routes from the same route tree.
+`@sursaut/board` is the full-stack layer for Sursaut applications. It combines file-based routing, SSR, typed route helpers, a universal `api()` client, and a Hono adapter for serving API and UI routes from the same route tree.
 
 ## What it provides
 
@@ -14,17 +14,17 @@
 ## Package entry points
 
 ```ts
-import { api, expose, defineRoute, InferVerb, InferProvide } from '@pounce/board'
-import { createPounceMiddleware } from '@pounce/board/server'
-import { getSSRData } from '@pounce/board/client'
+import { api, expose, defineRoute, InferVerb, InferProvide } from '@sursaut/board'
+import { createSursautMiddleware } from '@sursaut/board/server'
+import { getSSRData } from '@sursaut/board/client'
 ```
 
-- `@pounce/board`
+- `@sursaut/board`
   - Universal entry point
   - Exposes the API client, route helpers, SSR helpers, and route type utilities
-- `@pounce/board/server`
+- `@sursaut/board/server`
   - Server-only helpers such as the Hono adapter, route tree building, and SSR request context utilities
-- `@pounce/board/client`
+- `@sursaut/board/client`
   - Client-side helpers for hydration-aware code
 
 ## Route conventions
@@ -68,10 +68,10 @@ routes/
 
 ## SSR model
 
-`@pounce/board` treats SSR as a first-class path:
+`@sursaut/board` treats SSR as a first-class path:
 
 - Local `api()` calls made during SSR dispatch directly to the matched route handler instead of going through the network
-- Successful SSR reads are injected into the HTML as `<script type="application/json" id="pounce-data-...">...`
+- Successful SSR reads are injected into the HTML as `<script type="application/json" id="sursaut-data-...">...`
 - On the first client load, `api().get()` reads that payload before falling back to `fetch`
 - On client-side navigations, page `provide()` data is fetched through the internal provide channel and merged into page props
 
@@ -87,7 +87,7 @@ const posts = initialPosts ?? (await request)
 
 ```ts
 // routes/posts/index.ts
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 export default expose({
 	provide: async () => ({ posts: [{ id: '1', title: 'Hello' }] }),
@@ -97,7 +97,7 @@ export default expose({
 
 ```tsx
 // routes/posts/index.tsx
-import type { InferProvide } from '@pounce/board'
+import type { InferProvide } from '@sursaut/board'
 import type PostsRoute from './index'
 
 type Props = InferProvide<typeof PostsRoute>
@@ -116,12 +116,12 @@ export default function PostsPage(props: Props) {
 
 ## CLI
 
-The package ships a `pounce` CLI.
+The package ships a `sursaut` CLI.
 
 ```bash
-pnpm exec pounce dev --routes ./routes --html ./index.html
-pnpm exec pounce build --out ./dist
-pnpm exec pounce preview
+pnpm exec sursaut dev --routes ./routes --html ./index.html
+pnpm exec sursaut build --out ./dist
+pnpm exec sursaut preview
 ```
 
 See the detailed CLI guide in `docs/cli.md`.

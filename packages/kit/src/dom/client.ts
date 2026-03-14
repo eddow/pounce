@@ -1,4 +1,4 @@
-import { document } from '@pounce/core'
+import { document } from '@sursaut/core'
 import { atom, reactive } from 'mutts'
 import { mountHeadContent } from '../head-mount.js'
 import { perf, recordPerf } from '../perf.js'

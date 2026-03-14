@@ -1,26 +1,26 @@
 import { Code, PackageHeader, Section } from '../../components'
 
 const adapterPattern = `// vite.config.ts
-import { pounceBarrelPlugin, pounceMinimalPackage } from '@pounce/core/plugin'
+import { sursautBarrelPlugin, sursautMinimalPackage } from '@sursaut/core/plugin'
 
 export default defineConfig({
   plugins: [
-    ...pounceMinimalPackage(),
-    pounceBarrelPlugin({
-      name: '@pounce',
+    ...sursautMinimalPackage(),
+    sursautBarrelPlugin({
+      name: '@sursaut',
       skeleton: 'front-end',
-      adapter: '@pounce/adapter-pico',
+      adapter: '@sursaut/adapter-pico',
     }),
   ],
 })
 
 // app.tsx
-import { Button } from '@pounce'
+import { Button } from '@sursaut'
 
 <Button.primary>Save</Button.primary>`
 
-const wrapperSnippet = `import { gather } from '@pounce/ui'
-import { type ButtonProps as BaseButtonProps, buttonModel } from '@pounce/ui/models'
+const wrapperSnippet = `import { gather } from '@sursaut/ui'
+import { type ButtonProps as BaseButtonProps, buttonModel } from '@sursaut/ui/models'
 import { picoComponent, type PicoButtonLikeProps, picoButtonClass } from '../factory'
 
 export type ButtonProps = PicoButtonLikeProps<BaseButtonProps>
@@ -46,12 +46,12 @@ export default function AdaptersIndexPage() {
 
 			<Section title="The Pattern">
 				<p>
-					Pounce keeps behavior and visuals separate. <code>@pounce/ui</code> owns models,
-					directives, and overlay logic; an adapter such as <code>@pounce/adapter-pico</code>
+					Sursaut keeps behavior and visuals separate. <code>@sursaut/ui</code> owns models,
+					directives, and overlay logic; an adapter such as <code>@sursaut/adapter-pico</code>
 					wraps those models with concrete DOM shape and framework classes.
 				</p>
 				<p>
-					The app itself normally imports through a generated <code>@pounce</code> barrel, so you
+					The app itself normally imports through a generated <code>@sursaut</code> barrel, so you
 					can swap adapters without changing application imports.
 				</p>
 				<Code code={adapterPattern} lang="tsx" />
@@ -68,8 +68,8 @@ export default function AdaptersIndexPage() {
 			<Section title="Consumption">
 				<p>
 					Consumers do not install or mutate a global adapter registry. They pick an adapter at
-					build time, import from <code>@pounce</code> or the adapter package, and use the resulting
-					components directly.
+					build time, import from <code>@sursaut</code> or the adapter package, and use the
+					resulting components directly.
 				</p>
 			</Section>
 		</article>

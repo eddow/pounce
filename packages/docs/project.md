@@ -1,32 +1,32 @@
-# @pounce/docs — Interactive Documentation
+# @sursaut/docs — Interactive Documentation
 
-A **pounce** application that serves as the living documentation for the entire pounce ecosystem. Every code example runs live, every component is interactive, and the docs app itself dogfoods the framework.
+A **sursaut** application that serves as the living documentation for the entire sursaut ecosystem. Every code example runs live, every component is interactive, and the docs app itself dogfoods the framework.
 
 ## Packages Documented
 
 | Package | Description |
 |---|---|
-| `@pounce/core` | JSX factory, reactivity (`r()`), PounceElement, env, reconciler, directives (`if`, `when`, `for`, `dynamic`), two-way binding, `compose()`, SSR |
-| `@pounce/kit` | Router, client state, `stored()`, CSS injection, Intl components, API utilities |
-| `@pounce/ui` | 15+ components, 6 directives, overlay system, DisplayProvider, adapter pattern, CSS variable contract |
-| `@pounce/board` | Full-stack meta-framework: file-based routing, SSR, middleware (Hono) |
-| `@pounce/adapter-pico` | PicoCSS adapter: variant traits, bridge CSS, tooltip directive, icon factory |
+| `@sursaut/core` | JSX factory, reactivity (`r()`), SursautElement, env, reconciler, directives (`if`, `when`, `for`, `dynamic`), two-way binding, `compose()`, SSR |
+| `@sursaut/kit` | Router, client state, `stored()`, CSS injection, Intl components, API utilities |
+| `@sursaut/ui` | 15+ components, 6 directives, overlay system, DisplayProvider, adapter pattern, CSS variable contract |
+| `@sursaut/board` | Full-stack meta-framework: file-based routing, SSR, middleware (Hono) |
+| `@sursaut/adapter-pico` | PicoCSS adapter: variant traits, bridge CSS, tooltip directive, icon factory |
 | `pure-glyf` | Icon system: SVG → CSS classes, Vite plugin, icon factories |
 | `mutts` | Reactive primitives: signals, effects, reactive objects/arrays/sets/maps, zones |
 
 ## Stack
 
-- **Runtime**: `@pounce/core` + `@pounce/kit` + `@pounce/ui` + `@pounce/adapter-pico` + `mutts`
+- **Runtime**: `@sursaut/core` + `@sursaut/kit` + `@sursaut/ui` + `@sursaut/adapter-pico` + `mutts`
 - **Styling**: PicoCSS via adapter-pico + docs-specific SASS
 - **Icons**: pure-glyf with @tabler/icons
-- **Build**: Vite + `@pounce/core/plugin`
+- **Build**: Vite + `@sursaut/core/plugin`
 - **Syntax Highlighting**: highlight.js (lightweight, covers TSX/SASS/JSON/bash)
 
 ## Architecture
 
 ### New UI Components
 
-The docs app needs a few components that live in **`@pounce/ui`** (not in the docs app) because they're generally useful:
+The docs app needs a few components that live in **`@sursaut/ui`** (not in the docs app) because they're generally useful:
 
 #### `<Code>` — Syntax-highlighted code block
 
@@ -42,7 +42,7 @@ interface CodeProps {
 
 - Renders `<pre><code>` with highlight.js classes
 - Adapter key: `Code` in `UiComponents` — adapter provides container class, copy button class
-- SASS: `@layer pounce.components` with `--pounce-code-bg`, `--pounce-code-border`, `--pounce-code-font`
+- SASS: `@layer sursaut.components` with `--sursaut-code-bg`, `--sursaut-code-border`, `--sursaut-code-font`
 - highlight.js is a **peer dependency** (consumer picks the theme)
 - Pico adapter: `<pre><code>` already styled natively — zero bridge CSS
 
@@ -94,7 +94,7 @@ Each documentation page follows a consistent pattern:
 ```tsx
 const ButtonPage = () => (
   <article>
-    <PackageHeader package="@pounce/ui" />
+    <PackageHeader package="@sursaut/ui" />
     <h1>Button</h1>
     <p>Interactive button with icon support and variant styling.</p>
 
@@ -134,25 +134,25 @@ const ButtonPage = () => (
 ## Routes
 
 ```
-/                                   Landing page — what is pounce, install, quick start
+/                                   Landing page — what is sursaut, install, quick start
 /getting-started                    Installation, first app, concepts overview
 /getting-started/concepts           Env, reactivity, components, directives
 
-/core                               @pounce/core overview
-/core/components                    PounceElement, render, mount/use lifecycle
+/core                               @sursaut/core overview
+/core/components                    SursautElement, render, mount/use lifecycle
 /core/jsx                           JSX factory, r(), two-way binding, this=
 /core/directives                    if, when, for, dynamic, fragment
 /core/env                         Env chain, <env>, injection
 /core/ssr                           Node entry, JSDOM, AsyncLocalStorage
 
-/kit                                @pounce/kit overview
+/kit                                @sursaut/kit overview
 /kit/router                         Router, <A>, route definitions, params, guards
 /kit/client                         Browser state: url, prefersDark, direction, language
 /kit/intl                           Intl.Number, Intl.Date, Intl.RelativeTime, ...
 /kit/storage                        stored() — reactive localStorage
 /kit/api                            API utilities, validation (arktype)
 
-/ui                                 @pounce/ui overview
+/ui                                 @sursaut/ui overview
 /ui/components/button               Button, Button.primary, loading
 /ui/components/dialog               Dialog, Dialog.show(), backdrop, focus trap
 /ui/components/toast                Toast, bindToast(), variants
@@ -163,10 +163,10 @@ const ButtonPage = () => (
 /ui/directives                      badge, intersect, loading, pointer, resize, scroll
 /ui/display                         DisplayProvider, ThemeToggle, useDisplayContext
 /ui/overlays                        Overlay system architecture, WithOverlays
-/ui/css-variables                   Full --pounce-* contract with live swatches
+/ui/css-variables                   Full --sursaut-* contract with live swatches
 /ui/adapter                         Adapter pattern, creating custom adapters
 
-/board                              @pounce/board overview
+/board                              @sursaut/board overview
 /board/routing                      File-based routing, layouts
 /board/ssr                          Server-side rendering, hydration
 /board/middleware                    Hono middleware, API routes
@@ -261,15 +261,15 @@ packages/docs/
 
 ```json
 {
-  "name": "@pounce/docs",
+  "name": "@sursaut/docs",
   "private": true,
   "type": "module",
   "dependencies": {
     "@picocss/pico": "^2",
-    "@pounce/adapter-pico": "workspace:*",
-    "@pounce/core": "workspace:*",
-    "@pounce/kit": "workspace:*",
-    "@pounce/ui": "workspace:*",
+    "@sursaut/adapter-pico": "workspace:*",
+    "@sursaut/core": "workspace:*",
+    "@sursaut/kit": "workspace:*",
+    "@sursaut/ui": "workspace:*",
     "highlight.js": "^11",
     "mutts": "link:../../../mutts",
     "pure-glyf": "workspace:*"
@@ -292,11 +292,11 @@ pnpm dev         # Vite dev server on :5290
 
 ## Key Decisions
 
-1. **`<Code>` and `<Demo>` live in `@pounce/ui`** — They're general-purpose components useful in any pounce app (READMEs, changelogs, help pages). highlight.js is a peer dep so it's opt-in.
+1. **`<Code>` and `<Demo>` live in `@sursaut/ui`** — They're general-purpose components useful in any sursaut app (READMEs, changelogs, help pages). highlight.js is a peer dep so it's opt-in.
 2. **No codegen for API tables** — Hand-written `<ApiTable>` prop arrays are more accurate and readable than auto-generated docs. Types change rarely; descriptions need human touch.
 3. **PicoCSS adapter** — The docs app uses the Pico adapter for consistent, beautiful styling out of the box. Demonstrates the adapter pattern in action.
 4. **`private: true`** — This package is never published to npm. It's a deployable app (GitHub Pages / Netlify).
-5. **No SSR** — Static SPA is fine for docs. Can add prerendering later via `@pounce/board` if SEO matters.
+5. **No SSR** — Static SPA is fine for docs. Can add prerendering later via `@sursaut/board` if SEO matters.
 6. **One route per topic** — Flat, linkable, bookmarkable. No multi-section mega-pages.
 7. **highlight.js over shiki** — Lighter bundle (~30KB vs ~2MB). Good enough for docs. TSX/SASS/JSON/bash coverage.
 
@@ -304,8 +304,8 @@ pnpm dev         # Vite dev server on :5290
 
 ### Phase 1 — Skeleton + Core Infra Pages
 1. Project scaffold (package.json, vite.config, index.html, main.tsx)
-2. `<Code>` component in `@pounce/ui` (with highlight.js peer dep)
-3. `<Demo>` component in `@pounce/ui`
+2. `<Code>` component in `@sursaut/ui` (with highlight.js peer dep)
+3. `<Demo>` component in `@sursaut/ui`
 4. Layout shell (sidebar nav + content + ThemeToggle)
 5. Landing page + Getting Started
 6. Core docs (JSX, components, directives, env) — these are the hardest to understand

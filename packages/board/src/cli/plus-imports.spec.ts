@@ -6,7 +6,7 @@ import { resolvePlusImport } from './plus-imports.js'
 
 describe('resolvePlusImport', () => {
 	it('resolves nearest +bucket from importer directory upward', async () => {
-		const projectRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'pounce-plus-imports-'))
+		const projectRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'sursaut-plus-imports-'))
 		const routesDir = path.join(projectRoot, 'routes')
 		const nestedDir = path.join(routesDir, 'users', '[id]')
 
@@ -41,7 +41,7 @@ describe('resolvePlusImport', () => {
 	})
 
 	it('does not resolve + imports for files outside routesDir', async () => {
-		const projectRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'pounce-plus-imports-'))
+		const projectRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'sursaut-plus-imports-'))
 		const routesDir = path.join(projectRoot, 'routes')
 		const externalFile = path.join(projectRoot, 'outside.ts')
 
@@ -65,7 +65,7 @@ describe('resolvePlusImport', () => {
 	})
 
 	it('resolves +bucket root import to index file', async () => {
-		const projectRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'pounce-plus-imports-'))
+		const projectRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'sursaut-plus-imports-'))
 		const routesDir = path.join(projectRoot, 'routes')
 		const importer = path.join(routesDir, 'index.tsx')
 

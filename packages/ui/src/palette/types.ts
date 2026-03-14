@@ -1,4 +1,4 @@
-import type { PounceElement } from '@pounce/core'
+import type { SursautElement } from '@sursaut/core'
 
 // ============================================================================
 // Forward declarations - to avoid circular dependencies
@@ -48,7 +48,7 @@ export type PaletteEnumOption<T extends string = string> = {
 	readonly value: T
 	readonly label?: string
 	readonly description?: string
-	readonly icon?: string | PounceElement
+	readonly icon?: string | SursautElement
 	readonly categories?: readonly PaletteCategory[]
 }
 
@@ -68,7 +68,7 @@ export type PaletteEntryDefinition = {
 	readonly id: PaletteEntryId
 	readonly label: string
 	readonly description?: string
-	readonly icon?: string | PounceElement
+	readonly icon?: string | SursautElement
 	readonly categories?: readonly PaletteCategory[]
 	readonly schema: PaletteEntrySchema
 }
@@ -82,7 +82,7 @@ export type PaletteIntentBase = {
 	readonly targetId: PaletteEntryId
 	readonly label?: string
 	readonly description?: string
-	readonly icon?: string | PounceElement
+	readonly icon?: string | SursautElement
 	readonly categories?: readonly PaletteCategory[]
 	readonly showText?: boolean
 }

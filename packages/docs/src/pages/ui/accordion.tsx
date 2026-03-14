@@ -1,4 +1,4 @@
-import { Accordion, AccordionGroup, Button, Inline, Stack, Switch } from '@pounce'
+import { Accordion, AccordionGroup, Button, Inline, Stack, Switch } from '@sursaut'
 import { reactive } from 'mutts'
 import { ApiTable, Demo, Section } from '../../components'
 

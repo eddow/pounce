@@ -68,7 +68,7 @@ export function getSSRId(url: string | URL): string {
   const path = typeof url === "string" ? url : url.pathname + url.search;
   // Simple hash or base64 could work, but keeping it readable for now
   // Using btoa for base64 encoding of the path to be safe characters
-  return `pounce-data-${typeof btoa !== 'undefined' ? btoa(path) : Buffer.from(path).toString('base64')}`;
+  return `sursaut-data-${typeof btoa !== 'undefined' ? btoa(path) : Buffer.from(path).toString('base64')}`;
 }
 
 export function getSSRData<T>(id: string): T | null {
@@ -274,7 +274,7 @@ export function defineProxy(config: ProxyConfig) {
 
 ## 2. Server Integration (Automated Hono)
 
-Pounce-Board automatically integrates with Hono. Users do not manually wire up routes.
+Sursaut-Board automatically integrates with Hono. Users do not manually wire up routes.
 
 ### Automated Entry Point (`lib/adapters/hono.ts`)
 ```ts
@@ -282,7 +282,7 @@ import { Hono } from "hono";
 import { runMiddlewares } from "../http/core";
 import { enableSSR, injectApiResponses } from "../ssr/utils";
 
-export function createPounceMiddleware() {
+export function createSursautMiddleware() {
   return async (c, next) => {
     // 1. Enable SSR context
     enableSSR();
@@ -294,7 +294,7 @@ export function createPounceMiddleware() {
         return next(); // 404 handled by Hono or next middleware
     }
 
-    // 3. Execute Pounce Middleware Stack
+    // 3. Execute Sursaut Middleware Stack
     const response = await runMiddlewares(
         route.middlewareStack,
         {
@@ -318,7 +318,7 @@ export function createPounceMiddleware() {
 
 // Usage in user app (hidden in framework files usually)
 const app = new Hono();
-app.use("*", createPounceMiddleware());
+app.use("*", createSursautMiddleware());
 export default app;
 ```
 
@@ -327,8 +327,8 @@ export default app;
 ### React Example
 ```tsx
 // components/UserProfile.tsx
-import { api } from "pounce/http/client";
-import { api, getSSRData, getSSRId } from "pounce/http/client";
+import { api } from "sursaut/http/client";
+import { api, getSSRData, getSSRId } from "sursaut/http/client";
 import { useQuery } from "@tanstack/react-query";
 
 export function UserProfile({ id }) {
@@ -357,8 +357,8 @@ export function UserProfile({ id }) {
 <!-- components/UserProfile.svelte -->
 <script>
   import { onMount } from "svelte";
-  import { api } from "pounce/http/client";
-  import { api, getSSRData, getSSRId } from "pounce/http/client";
+  import { api } from "sursaut/http/client";
+  import { api, getSSRData, getSSRId } from "sursaut/http/client";
 
   export let id;
 
@@ -413,7 +413,7 @@ Add this to your `tsconfig.json`:
 ### Type Generation for External APIs
 ```ts
 // scripts/generate-types.ts
-import { defineProxy } from "pounce/http";
+import { defineProxy } from "sursaut/http";
 import { writeFileSync } from "fs";
 
 // Generate types from OpenAPI spec
@@ -446,7 +446,7 @@ generateTypes();
 
 ### Middleware Testing
 ```ts
-import { runMiddlewares } from "pounce/http/core";
+import { runMiddlewares } from "sursaut/http/core";
 import { middleware } from "../routes/users/common";
 
 test("auth middleware blocks unauthenticated requests", async () => {
@@ -465,8 +465,8 @@ test("auth middleware blocks unauthenticated requests", async () => {
 
 ### API Client Testing
 ```ts
-import { api } from "pounce/http/client";
-import { enableSSR, getSSRData } from "pounce/ssr/utils";
+import { api } from "sursaut/http/client";
+import { enableSSR, getSSRData } from "sursaut/ssr/utils";
 
 test("SSR data injection", () => {
   enableSSR();
@@ -587,7 +587,7 @@ export const loggingMiddleware: Middleware = async (ctx, next) => {
 
 ### From Express API
 1. Move routes to `routes/` directory
-2. Convert route handlers to Pounce format
+2. Convert route handlers to Sursaut format
 3. Add `common.ts` for middleware
 4. Update frontend to use `api()` client
 
@@ -599,6 +599,6 @@ export const loggingMiddleware: Middleware = async (ctx, next) => {
 
 ### From SvelteKit
 1. Replace `+page.server.ts` load functions with SSR injection
-2. Convert endpoints to Pounce route handlers
+2. Convert endpoints to Sursaut route handlers
 3. Update stores to use `api()` client
 4. Move hooks to `common.ts` middleware

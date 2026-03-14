@@ -1,4 +1,4 @@
-import type { Env } from '@pounce/core'
+import type { Env } from '@sursaut/core'
 import { isDev } from './shared/utils'
 
 /** Props type with variant narrowed to the declared union V */
@@ -56,7 +56,7 @@ export function uiComponent<const V extends string>(
 				!(variants as readonly string[]).includes(props.variant)
 			) {
 				throw new Error(
-					`[pounce/ui] <${ctor.name}> unknown variant "${props.variant}". Known: ${variants.join(', ')}`
+					`[sursaut/ui] <${ctor.name}> unknown variant "${props.variant}". Known: ${variants.join(', ')}`
 				)
 			}
 			return ctor(props as unknown as Props, env)

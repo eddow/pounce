@@ -1,4 +1,4 @@
-import { createOverlayStack, drawerSpec } from '@pounce/ui'
+import { createOverlayStack, drawerSpec } from '@sursaut/ui'
 
 export default function DrawerDemo() {
 	const stack = createOverlayStack()

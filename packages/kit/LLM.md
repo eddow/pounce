@@ -1,10 +1,10 @@
-# @pounce/kit LLM Cheat Sheet
+# @sursaut/kit LLM Cheat Sheet
 
-Read [pounce core's LLM](../core/LLM.md)
+Read [sursaut core's LLM](../core/LLM.md)
 
 ## Overview
 
-Application-level toolkit for Pounce apps. It owns **reactive client state**, **routing**, **the shared API client**, **CSS injection**, **display context**, **localStorage persistence**, and the **Intl entry point**.
+Application-level toolkit for Sursaut apps. It owns **reactive client state**, **routing**, **the shared API client**, **CSS injection**, **display context**, **localStorage persistence**, and the **Intl entry point**.
 
 ## Entry Points
 
@@ -12,12 +12,12 @@ Kit follows the [dual entry-point policy](../../dual-ep-policy.md):
 
 | Entry | Import | Purpose |
 |-------|--------|---------|
-| shared | `@pounce/kit` | Shared surface auto-selected by package exports |
-| browser | `@pounce/kit/dom` | DOM bootstrap (`setPlatform()` side effect) + `stored()` |
-| node | `@pounce/kit/node` | ALS context + file-based routing helpers + node `stored()` stub |
-| intl | `@pounce/kit/intl` | Intl formatters only |
+| shared | `@sursaut/kit` | Shared surface auto-selected by package exports |
+| browser | `@sursaut/kit/dom` | DOM bootstrap (`setPlatform()` side effect) + `stored()` |
+| node | `@sursaut/kit/node` | ALS context + file-based routing helpers + node `stored()` stub |
+| intl | `@sursaut/kit/intl` | Intl formatters only |
 
-`@pounce/kit` should not re-export the Intl components. End-consumer Intl imports go through `@pounce/kit/intl`.
+`@sursaut/kit` should not re-export the Intl components. End-consumer Intl imports go through `@sursaut/kit/intl`.
 
 ## Platform Adapter
 
@@ -125,7 +125,7 @@ Board should hook API behavior at the shared level, not by depending on a node-s
 
 Intl is separate on purpose.
 
-- import from `@pounce/kit/intl`
+- import from `@sursaut/kit/intl`
 - do not re-export Intl components from the shared barrel
 - formatter cache and locale resolution belong to that entry point
 
@@ -136,5 +136,5 @@ Intl is separate on purpose.
 3. `stored()` returns a cleanup-bound reactive object. Outside component lifecycle, keep and call cleanup yourself.
 4. `components/display.tsx` is shared, not DOM-only. It uses env + `collapse`, not raw DOM APIs.
 5. No arrow-function JSX children: `{() => expr}` stays a raw function and is dropped by the reconciler. Use `{expr}`.
-6. `models.ts` is useful for other pounce libraries (for example `linkModel()`), but it is not intended as end-consumer API.
+6. `models.ts` is useful for other sursaut libraries (for example `linkModel()`), but it is not intended as end-consumer API.
 7. For async route-module rendering in kit, prefer a stable mounted subtree (`use` + `latch`) over relying on the parent router `lift` to observe promise completion.

@@ -1,9 +1,9 @@
 /**
- * Enhanced Response wrapper for pounce-board
+ * Enhanced Response wrapper for sursaut-board
  * Allows multiple reads of the body and tracks internal state
  */
 
-export class PounceResponse extends Response {
+export class SursautResponse extends Response {
 	private _bufferCache: string | null = null
 
 	// Override json to cache the parsed value
@@ -31,8 +31,8 @@ export class PounceResponse extends Response {
 		this._bufferCache = JSON.stringify(data)
 	}
 
-	override clone(): PounceResponse {
-		const cloned = new PounceResponse(this._bufferCache || this.body, {
+	override clone(): SursautResponse {
+		const cloned = new SursautResponse(this._bufferCache || this.body, {
 			status: this.status,
 			statusText: this.statusText,
 			headers: this.headers,
@@ -41,8 +41,8 @@ export class PounceResponse extends Response {
 		return cloned
 	}
 
-	static from(response: Response): PounceResponse {
-		if (response instanceof PounceResponse) return response
+	static from(response: Response): SursautResponse {
+		if (response instanceof SursautResponse) return response
 
 		// Handle the case where the body might have already been consumed
 		let body: BodyInit | null = null
@@ -56,7 +56,7 @@ export class PounceResponse extends Response {
 			}
 		}
 
-		const res = new PounceResponse(body, response)
+		const res = new SursautResponse(body, response)
 		// If we couldn't get the body, mark it as already consumed
 		if (body === null) {
 			res._bufferCache = ''

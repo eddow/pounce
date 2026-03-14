@@ -3,12 +3,12 @@ import babelPluginDecorators from '@babel/plugin-proposal-decorators'
 import babelPluginJsx from '@babel/plugin-transform-react-jsx'
 import babelPluginTs from '@babel/plugin-transform-typescript'
 import dts, { type PluginOptions as DtsPluginOptions } from 'vite-plugin-dts'
-import { pounceBabelPlugin, pounceSpreadPlugin } from './babel'
-import { pounceBarrelPlugin } from './barrel'
+import { sursautBabelPlugin, sursautSpreadPlugin } from './babel'
+import { sursautBarrelPlugin } from './barrel'
 
-export { pounceBabelPlugin, pounceSpreadPlugin }
-export { pounceBarrelPlugin }
-export type { BarrelSkeleton, PounceBarrelPluginOptions } from './barrel'
+export { sursautBabelPlugin, sursautSpreadPlugin }
+export { sursautBarrelPlugin }
+export type { BarrelSkeleton, SursautBarrelPluginOptions } from './barrel'
 
 export interface DtsConfigOptions {
 	insertTypesEntry?: boolean
@@ -45,14 +45,14 @@ export function createStandardDtsPlugin(options: DtsConfigOptions = {}) {
 	})
 }
 
-export interface PounceBabelPluginsOptions {
+export interface SursautBabelPluginsOptions {
 	isTSX: boolean
 	onlyRemoveTypeImports?: boolean
 }
 
-export function createPounceBabelPlugins(options: PounceBabelPluginsOptions): PluginItem[] {
+export function createSursautBabelPlugins(options: SursautBabelPluginsOptions): PluginItem[] {
 	return [
-		[pounceBabelPlugin],
+		[sursautBabelPlugin],
 		[babelPluginDecorators, { version: '2023-05' }],
 		[
 			babelPluginJsx,
@@ -74,26 +74,26 @@ export function createPounceBabelPlugins(options: PounceBabelPluginsOptions): Pl
 	]
 }
 
-export interface PounceCorePluginOptions {
+export interface SursautCorePluginOptions {
 	projectRoot?: string
 	onlyRemoveTypeImports?: boolean
 }
 
 /**
- * Standard Vite plugin for Pounce JSX transformation
+ * Standard Vite plugin for Sursaut JSX transformation
  */
-export function pounceCorePlugin(options: PounceCorePluginOptions = {}) {
+export function sursautCorePlugin(options: SursautCorePluginOptions = {}) {
 	const resolvedOptions = {
 		onlyRemoveTypeImports: true,
 		...options,
 	}
 	return {
-		name: 'pounce-core',
+		name: 'sursaut-core',
 		enforce: 'pre' as const,
 		async transform(code: string, id: string, inMap: any) {
 			if (id.startsWith('\0') || id.includes('?')) return null
 			if (!/\.(tsx?|jsx?)$/.test(id)) return null
-			if (id.includes('node_modules') && !id.includes('/pounce/packages/')) return null
+			if (id.includes('node_modules') && !id.includes('/sursaut/packages/')) return null
 			if (/(^|\/)dist\//.test(id)) return null
 
 			const result = transformSync(code, {
@@ -101,7 +101,7 @@ export function pounceCorePlugin(options: PounceCorePluginOptions = {}) {
 				cwd: resolvedOptions.projectRoot,
 				babelrc: false,
 				configFile: false,
-				plugins: createPounceBabelPlugins({
+				plugins: createSursautBabelPlugins({
 					onlyRemoveTypeImports: resolvedOptions.onlyRemoveTypeImports,
 					isTSX: id.endsWith('.tsx'),
 				}),
@@ -117,7 +117,7 @@ export function pounceCorePlugin(options: PounceCorePluginOptions = {}) {
 				cwd: resolvedOptions.projectRoot,
 				babelrc: false,
 				configFile: false,
-				plugins: [[pounceSpreadPlugin]],
+				plugins: [[sursautSpreadPlugin]],
 				sourceFileName: id,
 				inputSourceMap:
 					result.map && typeof result.map === 'object' && 'mappings' in result.map
@@ -133,7 +133,7 @@ export function pounceCorePlugin(options: PounceCorePluginOptions = {}) {
 }
 
 export interface CorePackageOptions {
-	core?: PounceCorePluginOptions
+	core?: SursautCorePluginOptions
 	dts?: DtsConfigOptions
 }
 
@@ -141,16 +141,16 @@ export interface CorePackageOptions {
  * Core package: JSX transformation + TypeScript declarations
  * Perfect for libraries that need reactive JSX but no UI styling
  */
-export function pounceCorePackage(options: CorePackageOptions = {}) {
+export function sursautCorePackage(options: CorePackageOptions = {}) {
 	const { core: coreOptions = {}, dts: dtsOptions = {} } = options
 
-	return [pounceCorePlugin(coreOptions), createStandardDtsPlugin(dtsOptions)]
+	return [sursautCorePlugin(coreOptions), createStandardDtsPlugin(dtsOptions)]
 }
 
 /**
  * Minimal package: Just JSX transformation
  * Perfect for simple projects that only need reactive JSX
  */
-export function pounceMinimalPackage(options: Partial<PounceCorePluginOptions> = {}) {
-	return [pounceCorePlugin(options)]
+export function sursautMinimalPackage(options: Partial<SursautCorePluginOptions> = {}) {
+	return [sursautCorePlugin(options)]
 }

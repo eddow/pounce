@@ -1,11 +1,11 @@
 import { reactive } from 'mutts'
-import { latch } from '@pounce/core'
+import { latch } from '@sursaut/core'
 import { testing } from '../../../src/lib/debug'
 import DynamicTests from './DynamicTests'
 
 declare global {
 	interface Window {
-		__pounceEvents?: {
+		__sursautEvents?: {
 			renderingEvents: Array<{ event: string; args: any[]; timestamp: number }>
 			reset(): void
 		}
@@ -101,7 +101,7 @@ const TestRouter = () => {
 
 // Load fixture when hash changes
 export function initTests() {
-	window.__pounceEvents = {
+	window.__sursautEvents = {
 		renderingEvents: renderingEventLog,
 		reset() {
 			renderingEventLog.length = 0

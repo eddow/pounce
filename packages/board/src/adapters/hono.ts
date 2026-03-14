@@ -1,24 +1,24 @@
 /**
- * Hono adapter for pounce-board
+ * Hono adapter for sursaut-board
  * Handles UI route tree building for SSR and content injection.
  * API routing is handled separately by the `expose` system.
  */
 
-import { type RouteMatch, routeMatcher } from '@pounce/kit/router/logic'
+import { type RouteMatch, routeMatcher } from '@sursaut/kit/router/logic'
 import type { Context, MiddlewareHandler } from 'hono'
 import { Hono } from 'hono'
 import { enableSSR, setRouteRegistry } from '../lib/http/client.js'
 import {
 	clearExposeRegistry,
 	type HTTPVerb,
-	type PounceRequest,
 	type RouteRegistryEntry,
 	routeRegistry,
+	type SursautRequest,
 } from '../lib/router/expose.js'
 import { buildRouteTree, type RouteTreeNode } from '../lib/router/index.js'
 import { injectSSRContent, withSSRContext } from '../lib/ssr/utils.js'
 
-export interface PounceMiddlewareOptions {
+export interface SursautMiddlewareOptions {
 	/** Path to routes directory. Defaults to './routes' */
 	routesDir?: string
 	/** Custom module importer (e.g. vite.ssrLoadModule) */
@@ -38,10 +38,10 @@ interface ApiRoute {
 const apiMatcherCache = new Map<string, (url: string) => RouteMatch<ApiRoute> | null>()
 
 /**
- * Create Hono middleware that handles pounce-board SSR and UI routing.
+ * Create Hono middleware that handles sursaut-board SSR and UI routing.
  * API routing is handled separately by the `expose` system.
  */
-export function createPounceMiddleware(options?: PounceMiddlewareOptions): MiddlewareHandler {
+export function createSursautMiddleware(options?: SursautMiddlewareOptions): MiddlewareHandler {
 	const routesDir = options?.routesDir ?? './routes'
 
 	return async (c: Context, next: () => Promise<void>) => {
@@ -87,7 +87,7 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
 
 			// Content negotiation
 			const accept = c.req.header('accept') || ''
-			const isSpaProvideFetch = c.req.header('X-Pounce-Provide') === 'true'
+			const isSpaProvideFetch = c.req.header('X-Sursaut-Provide') === 'true'
 			const expectsHtml = accept.includes('text/html')
 
 			// 1. Check API Routes (if it's not explicitly a UI navigation request)
@@ -99,14 +99,14 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
 				// API routes require an EXACT match (no leftover unusedPath)
 				if (match && (!match.unusedPath || match.unusedPath === '/')) {
 					apiHandled = true
-					const pounceReq: PounceRequest = {
+					const sursautReq: SursautRequest = {
 						params: match.params,
 						url,
 						raw: c.req.raw,
 						request: c.req.raw,
 					}
 
-					let finalHandler: ((req: PounceRequest) => any) | null = null
+					let finalHandler: ((req: SursautRequest) => any) | null = null
 
 					if (isSpaProvideFetch) {
 						if (match.definition.entry.provide) {
@@ -136,11 +136,11 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
 
 							if (!isSpaProvideFetch && i < match.definition.entry.middle.length) {
 								const layer = match.definition.entry.middle[i]
-								const result = await layer(pounceReq, () => executeChain(i + 1))
+								const result = await layer(sursautReq, () => executeChain(i + 1))
 								if (result === undefined) return executeChain(i + 1)
 								return result
 							} else {
-								const result = await finalHandler(pounceReq)
+								const result = await finalHandler(sursautReq)
 								if (result instanceof Response) return result
 								return c.json(result)
 							}
@@ -174,11 +174,11 @@ export function createPounceMiddleware(options?: PounceMiddlewareOptions): Middl
 }
 
 /**
- * Create a Hono app with pounce-board integration
+ * Create a Hono app with sursaut-board integration
  */
-export function createPounceApp(options?: PounceMiddlewareOptions): Hono {
+export function createSursautApp(options?: SursautMiddlewareOptions): Hono {
 	const app = new Hono()
-	app.use('*', createPounceMiddleware(options))
+	app.use('*', createSursautMiddleware(options))
 	return app
 }
 

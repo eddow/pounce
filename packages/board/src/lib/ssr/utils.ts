@@ -1,12 +1,12 @@
-import type { Children, Env } from '@pounce/core'
-import { mountHeadContent, setHeadMount } from '@pounce/kit/node'
+import type { Children, Env } from '@sursaut/core'
+import { mountHeadContent, setHeadMount } from '@sursaut/kit/node'
 import { createScope, getContext, type RequestScope, runWithContext } from '../http/context.js'
 
 export type SSRDataMap = Record<string, { id: string; data: unknown }>
 
 let _globalClientCounter = 0
 const clientHydrationCache = new Map<string, unknown>()
-const SSR_HEAD_HTML = Symbol.for('pounce-board:ssr-head-html')
+const SSR_HEAD_HTML = Symbol.for('sursaut-board:ssr-head-html')
 
 function serializeHead(head: HTMLHeadElement): string {
 	return Array.from(head.childNodes)
@@ -62,7 +62,7 @@ export function getSSRId(url: string | URL): string {
 	// We use 'btoa' which is universal (available in Node 16+ and browsers)
 	const pathHash = btoa(path).replace(/[=/+]/g, '')
 
-	return `pounce-data-${pathHash}`
+	return `sursaut-data-${pathHash}`
 }
 
 /**
@@ -213,14 +213,14 @@ export function getSSRData<T>(id: string): T | undefined {
 		const script = document.getElementById(id)
 		if (!script) {
 			if (process.env.NODE_ENV === 'development') {
-				console.warn(`[pounce-board] SSR hydration: Script tag with ID "${id}" not found.`)
+				console.warn(`[sursaut-board] SSR hydration: Script tag with ID "${id}" not found.`)
 			}
 			return undefined
 		}
 
 		if (!script.textContent) {
 			if (process.env.NODE_ENV === 'development') {
-				console.warn(`[pounce-board] SSR hydration: Script tag "${id}" is empty.`)
+				console.warn(`[sursaut-board] SSR hydration: Script tag "${id}" is empty.`)
 			}
 			return undefined
 		}
@@ -232,7 +232,7 @@ export function getSSRData<T>(id: string): T | undefined {
 			return data
 		} catch (err) {
 			if (process.env.NODE_ENV === 'development') {
-				console.warn(`[pounce-board] SSR hydration: Failed to parse JSON for "${id}".`, err)
+				console.warn(`[sursaut-board] SSR hydration: Failed to parse JSON for "${id}".`, err)
 			}
 			return undefined
 		}

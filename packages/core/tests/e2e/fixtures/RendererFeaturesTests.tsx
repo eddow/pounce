@@ -1,5 +1,5 @@
 import { reactive, effect } from 'mutts'
-import type { Env } from '@pounce/core'
+import type { Env } from '@sursaut/core'
 
 
 type Role = 'guest' | 'member' | 'admin'

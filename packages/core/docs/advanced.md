@@ -1,10 +1,10 @@
 # Advanced Features
 
-This guide covers advanced features and patterns in Pounce-TS.
+This guide covers advanced features and patterns in Sursaut-TS.
 
 ## Conditional Rendering
 
-Pounce-TS supports several conditional rendering patterns using component-local conditions and environment properties.
+Sursaut-TS supports several conditional rendering patterns using component-local conditions and environment properties.
 
 ### `if={...}` boolean conditions
 
@@ -69,7 +69,7 @@ function Area(props: {}, env: Env) {
 
 ## Environment Management
 
-Env in Pounce-TS is like React's context or Svelte's context - it provides a way to share data down the component tree through **prototype inheritance**.
+Env in Sursaut-TS is like React's context or Svelte's context - it provides a way to share data down the component tree through **prototype inheritance**.
 
 ### How Env Works
 
@@ -89,7 +89,7 @@ The `<env>` component is a special component that forwards its children but adds
 **Usage example:**
 
 ```tsx
-import { Env } from '@pounce/core'
+import { Env } from '@sursaut/core'
 
 function App() {
   return (
@@ -283,7 +283,7 @@ function MyComponent() {
 
 ## Attribute Merging (Class & Style)
 
-Unlike React, where the last defined attribute typically replaces earlier ones, Pounce-TS **merges** `class` and `style` attributes across all definition layers. This is particularly useful when components spread external props onto their root elements.
+Unlike React, where the last defined attribute typically replaces earlier ones, Sursaut-TS **merges** `class` and `style` attributes across all definition layers. This is particularly useful when components spread external props onto their root elements.
 
 ### Class Merging
 
@@ -316,14 +316,14 @@ function Box(props: { style?: any }) {
 
 ### Other Attributes
 
-For all other attributes (like `id`, `title`, etc.), Pounce-TS follows standard `Object.assign` behavior: the last defined value replaces any previous values.
+For all other attributes (like `id`, `title`, etc.), Sursaut-TS follows standard `Object.assign` behavior: the last defined value replaces any previous values.
 
 ## Debug Mode
 
 Enable debug mode to see reactive changes:
 
 ```tsx
-import { debug, onEffectTrigger } from '@pounce/core'
+import { debug, onEffectTrigger } from '@sursaut/core'
 
 function MyComponent() {
   onEffectTrigger((obj, evolution) => {
@@ -338,7 +338,7 @@ function MyComponent() {
 
 ### Namespaced Props
 
-Pounce-TS automatically expands optional object props into _namespaced_ variants so you can target nested values directly in JSX attributes. This is handled by the custom `h()` runtime and the JSX types—no wrapper helpers required.
+Sursaut-TS automatically expands optional object props into _namespaced_ variants so you can target nested values directly in JSX attributes. This is handled by the custom `h()` runtime and the JSX types—no wrapper helpers required.
 
 - **Automatic restructuring:** Component props are reorganized so attributes like `config:title="..."` land on `props.config.title`.
 - **Optional only:** Namespaced attributes are generated when the original prop is optional _and_ the prop type accepts `undefined` and `{}`. Required props (e.g. `{ item: Item }`) do **not** receive namespaced keys.

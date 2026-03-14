@@ -18,25 +18,25 @@
 		"jsxFactory": "h",
 		"jsxFragmentFactory": "Fragment",
 		"paths": {
-			"@pounce/core": [
+			"@sursaut/core": [
 				"./core/src"
 			],
-			"@pounce/core/testing": [
+			"@sursaut/core/testing": [
 				"./core/src/testing/index.ts"
 			],
-			"@pounce/core/*": [
+			"@sursaut/core/*": [
 				"./core/src/*"
 			],
-			"@pounce/ui": [
+			"@sursaut/ui": [
 				"./ui/src"
 			],
-			"@pounce/ui/*": [
+			"@sursaut/ui/*": [
 				"./ui/src/*"
 			],
-			"@pounce/kit": [
+			"@sursaut/kit": [
 				"./kit/src"
 			],
-			"@pounce/kit/*": [
+			"@sursaut/kit/*": [
 				"./kit/src/*"
 			]
 		}

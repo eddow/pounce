@@ -11,8 +11,8 @@ Added
 bin
  entry to 
 package.json
- for pounce command
-Implemented pounce dev with --port, --routes, --html options
+ for sursaut command
+Implemented sursaut dev with --port, --routes, --html options
 2. Development Server (
 src/cli/dev.ts
 )
@@ -34,12 +34,12 @@ getSSRId()
 New 
 vite.config.ts
  with babel JSX plugin and all necessary aliases
-Uses pounce dev command (via tsx ../../../src/cli/index.ts dev)
+Uses sursaut dev command (via tsx ../../../src/cli/index.ts dev)
 Verification Results
 SSR Data Injection: ✅ WORKING
-Browser subagent confirmed the server correctly injects pounce-data script tags:
+Browser subagent confirmed the server correctly injects sursaut-data script tags:
 
-<script id="pounce-data-L3VzZXJzLzEyMw" type="application/json">
+<script id="sursaut-data-L3VzZXJzLzEyMw" type="application/json">
   {"id":"123","name":"User 123","role":"Tester",...}
 </script>
 SSR verification recording
@@ -76,15 +76,15 @@ New documentation
 
 SSR Hydration Verification: Partial Success
 ✅ Server-Side Data Injection: WORKING
-The pounce dev server now correctly:
+The sursaut dev server now correctly:
 
 Wraps SSR operations in withSSRContext
 Calls the API handler to pre-fetch data
-Injects pounce-data-<path> script tags into HTML
+Injects sursaut-data-<path> script tags into HTML
 Browser verification confirmed the server sends:
 
 html
-<script id="pounce-data-L3VzZXJzLzEyMw" type="application/json">
+<script id="sursaut-data-L3VzZXJzLzEyMw" type="application/json">
   {"id":"123","name":"User 123","role":"Tester",...}
 </script>
 ⚠️ Client-Side Hydration: NOT CONSUMING
@@ -103,4 +103,4 @@ Open
 Complete walkthrough of CLI and dev server implementation, including SSR hydration verification.
 
 
-pounce-board/tests/e2e/ssr-hydration.spec.ts
+sursaut-board/tests/e2e/ssr-hydration.spec.ts

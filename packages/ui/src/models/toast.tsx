@@ -19,16 +19,16 @@ export function toastModel(props: ToastOptions, close: (value: any) => void): To
 			return {
 				role: 'status',
 				'aria-live': 'polite',
-				class: ['pounce-toast', `pounce-variant-${variant}`],
+				class: ['sursaut-toast', `sursaut-variant-${variant}`],
 			}
 		},
 		get icon() {
-			return { class: 'pounce-toast-icon' }
+			return { class: 'sursaut-toast-icon' }
 		},
 		get close() {
 			return {
 				type: 'button' as const,
-				class: 'pounce-toast-close',
+				class: 'sursaut-toast-close',
 				'aria-label': 'Close',
 				get onClick() {
 					return () => close(null)

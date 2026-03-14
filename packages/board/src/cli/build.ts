@@ -19,7 +19,7 @@ export async function runBuild(options: BuildOptions = {}) {
 	const outDir = options.outDir ?? './dist'
 	const _entryHtml = options.entryHtml ?? './index.html'
 
-	console.log('🚧 Starting Pounce-Board build...')
+	console.log('🚧 Starting Sursaut-Board build...')
 
 	// 1. Client Build
 	console.log('\n📦 Building Client...')
@@ -33,10 +33,10 @@ export async function runBuild(options: BuildOptions = {}) {
 		},
 		resolve: {
 			alias: {
-				'pounce-board/adapters': path.resolve(__dirname, '../../src/adapters/hono.ts'),
-				'pounce-board/client': path.resolve(__dirname, '../../src/client/index.ts'),
-				'pounce-board/server': path.resolve(__dirname, '../../src/server/index.ts'),
-				'pounce-board': path.resolve(__dirname, '../../src/client/index.ts'),
+				'sursaut-board/adapters': path.resolve(__dirname, '../../src/adapters/hono.ts'),
+				'sursaut-board/client': path.resolve(__dirname, '../../src/client/index.ts'),
+				'sursaut-board/server': path.resolve(__dirname, '../../src/server/index.ts'),
+				'sursaut-board': path.resolve(__dirname, '../../src/client/index.ts'),
 			},
 		},
 	})
@@ -49,14 +49,14 @@ import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { 
-    createPounceMiddleware, 
+    createSursautMiddleware, 
     buildRouteTree, 
     matchRoute,
     flushSSRPromises
-} from 'pounce-board/server'
-import { api } from 'pounce-board/client'
-import { renderToStringAsync, withSSR } from '@pounce/core/node'
-import { h } from '@pounce/core'
+} from 'sursaut-board/server'
+import { api } from 'sursaut-board/client'
+import { renderToStringAsync, withSSR } from '@sursaut/core/node'
+import { h } from '@sursaut/core'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
@@ -69,8 +69,8 @@ const app = new Hono()
 // Serve static assets - Moved to end
 // app.use('/*', serveStatic({ root: './dist/client' }))
 
-// Pounce middleware for API routes and context setup
-app.use('*', createPounceMiddleware({
+// Sursaut middleware for API routes and context setup
+app.use('*', createSursautMiddleware({
 	globRoutes: routes,
 	routesDir: '${routesDir}'
 }))
@@ -80,8 +80,8 @@ app.get('*', async (c, next) => {
 	const url = new URL(c.req.url)
 	const origin = \`\${url.protocol}//\${url.host}\`
 
-	// This should already be inside withSSRContext thanks to createPounceMiddleware falling through
-	// BUT createPounceMiddleware calls next(), so we are inside its scope? 
+	// This should already be inside withSSRContext thanks to createSursautMiddleware falling through
+	// BUT createSursautMiddleware calls next(), so we are inside its scope? 
 	// YES. The middleware wraps next() in withSSRContext.
 
 	// Try API pre-fetch
@@ -131,7 +131,7 @@ app.get('*', async (c, next) => {
         return next()
     }
 
-	// Get collected SSR data (from middleware context) handled by createPounceMiddleware
+	// Get collected SSR data (from middleware context) handled by createSursautMiddleware
 	// const ssrData = getCollectedSSRResponses()
 	// const finalHtml = injectApiResponses(template, ssrData)
 
@@ -149,7 +149,7 @@ serve({
 	port
 })
 `
-	const tempEntry = path.join(root, 'pounce-server-entry.ts')
+	const tempEntry = path.join(root, 'sursaut-server-entry.ts')
 	fs.writeFileSync(tempEntry, serverEntryContent)
 
 	try {
@@ -167,10 +167,10 @@ serve({
 			},
 			resolve: {
 				alias: {
-					'pounce-board/adapters': path.resolve(__dirname, '../../src/adapters/hono.ts'),
-					'pounce-board/client': path.resolve(__dirname, '../../src/client/index.ts'),
-					'pounce-board/server': path.resolve(__dirname, '../../src/server/index.ts'),
-					'pounce-board': path.resolve(__dirname, '../../src/client/index.ts'),
+					'sursaut-board/adapters': path.resolve(__dirname, '../../src/adapters/hono.ts'),
+					'sursaut-board/client': path.resolve(__dirname, '../../src/client/index.ts'),
+					'sursaut-board/server': path.resolve(__dirname, '../../src/server/index.ts'),
+					'sursaut-board': path.resolve(__dirname, '../../src/client/index.ts'),
 				},
 			},
 		})

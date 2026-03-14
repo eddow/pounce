@@ -1,8 +1,8 @@
-import type { Env } from '@pounce/core'
-import { useDisplayContext } from '@pounce/kit'
-import { type ThemeValue, themeToggleModel } from '@pounce/ui/models'
+import type { Env } from '@sursaut/core'
+import { useDisplayContext } from '@sursaut/kit'
+import { type ThemeValue, themeToggleModel } from '@sursaut/ui/models'
 
-export type { ThemeValue } from '@pounce/ui/models'
+export type { ThemeValue } from '@sursaut/ui/models'
 
 export type ThemeToggleProps = {
 	/** Reactive object with a `theme` property — mutated on click */
@@ -27,11 +27,11 @@ export const ThemeToggle = (props: ThemeToggleProps, env: Env) => {
 	})
 
 	return (
-		<div class="pounce-theme-toggle" use={m.clickOutside}>
+		<div class="sursaut-theme-toggle" use={m.clickOutside}>
 			<button {...props.el} {...m.button}>
 				{props.simple ? ICONS[m.themeSetting] : `${ICONS[m.themeSetting]} ${m.currentLabel}`}
 			</button>
-			<div if={m.menuOpen} role="menu" class="pounce-theme-menu">
+			<div if={m.menuOpen} role="menu" class="sursaut-theme-menu">
 				<button {...m.autoButton}>Auto</button>
 				<for each={m.allThemes}>
 					{(theme: string) => <button {...m.optionButton(theme)}>{theme}</button>}

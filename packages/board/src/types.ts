@@ -1,10 +1,10 @@
 /**
- * Type definitions and augmentation support for @pounce/board
+ * Type definitions and augmentation support for @sursaut/board
  *
  * Users can extend RequestContext by declaring a module augmentation:
  *
  * ```ts
- * declare module '@pounce/board/server' {
+ * declare module '@sursaut/board/server' {
  *   interface RequestContext {
  *     user?: { id: string; email: string }
  *     session?: Session

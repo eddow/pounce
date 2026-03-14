@@ -1,5 +1,5 @@
-import { defaults } from '@pounce/core'
-import { componentStyle } from '@pounce/kit'
+import { defaults } from '@sursaut/core'
+import { componentStyle } from '@sursaut/kit'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 

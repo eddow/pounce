@@ -1,6 +1,6 @@
 # Components catalogue
 
-`@pounce/ui` currently exports two concrete components in addition to its headless models.
+`@sursaut/ui` currently exports two concrete components in addition to its headless models.
 
 ## `Dockview`
 
@@ -40,7 +40,7 @@ Use `Dockview` when you need:
 ### Notes
 
 - `Dockview` is a real component, not a model.
-- It bridges `dockview-core` into Pounce.
+- It bridges `dockview-core` into Sursaut.
 - It supports external layout persistence through the `layout` prop.
 - Widgets receive both `params` and a shared reactive `context` object.
 
@@ -74,5 +74,5 @@ type InfiniteScrollProps<T> = {
 ### Notes
 
 - `InfiniteScroll` is self-contained and does not use an adapter model.
-- It is exported directly from `@pounce/ui`.
+- It is exported directly from `@sursaut/ui`.
 - It is suitable for logs, feeds, chats, and long lists.

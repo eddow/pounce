@@ -80,7 +80,7 @@ test.describe('For component', () => {
 
 	test('rendering events are captured', async ({ page }) => {
 		// Reset events
-		await page.evaluate(() => window.__pounceEvents?.reset())
+		await page.evaluate(() => window.__sursautEvents?.reset())
 		
 		const list = page.locator('[data-testid="child-list"]')
 		const items = list.locator('li')
@@ -89,7 +89,7 @@ test.describe('For component', () => {
 		// Add item and check events
 		await page.click('[data-action="add-start"]')
 		
-		const events = await page.evaluate(() => window.__pounceEvents?.renderingEvents || [])
+		const events = await page.evaluate(() => window.__sursautEvents?.renderingEvents || [])
 		const eventTypes = events.map(e => e.event)
 		
 		// Should have reconciliation events

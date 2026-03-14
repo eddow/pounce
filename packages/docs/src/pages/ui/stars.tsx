@@ -1,4 +1,4 @@
-import { Inline, Select, Stack, Stars, Switch } from '@pounce'
+import { Inline, Select, Stack, Stars, Switch } from '@sursaut'
 import { effect, reactive } from 'mutts'
 import { ApiTable, Demo, Section } from '../../components'
 

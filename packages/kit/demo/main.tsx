@@ -1,4 +1,4 @@
-import { latch } from '@pounce/core'
+import { latch } from '@sursaut/core'
 import '../src/dom/index'
 import { componentStyle } from '../src/css'
 import { type ClientRouteDefinition, Router, type RouterRender } from '../src/router/components'
@@ -91,7 +91,7 @@ const routes: DemoRoute[] = [
 
 const App = () => (
 	<>
-		<p class="demo-title">@pounce/kit Demo</p>
+		<p class="demo-title">@sursaut/kit Demo</p>
 		<p class="demo-subtitle">Interactive showcase of all kit features</p>
 		<nav class="demo-nav" data-testid="global-nav">
 			<for each={routes.filter((r) => r.label !== null)}>

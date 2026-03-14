@@ -1,4 +1,4 @@
-import { Menu } from '@pounce'
+import { Menu } from '@sursaut'
 import { ApiTable, Code, Demo, Section } from '../../components'
 
 const menuSource = `<Menu summary="Options">
@@ -25,7 +25,7 @@ const a11yNote = `// Menu enforces a11y in dev mode:
 // - Each item needs an actionable element (a, button, or role="menuitem")
 // - summary gets aria-haspopup="menu"
 //
-// Set globalThis.PounceA11y = { STRICT: true } to throw on violations.`
+// Set globalThis.SursautA11y = { STRICT: true } to throw on violations.`
 
 function MenuDemo() {
 	return (
@@ -47,9 +47,9 @@ function MenuDemo() {
 
 function MenuBarDemo() {
 	return (
-		<nav class="pounce-menu-nav">
+		<nav class="sursaut-menu-nav">
 			<Menu.Bar
-				brand="Pounce Docs"
+				brand="Sursaut Docs"
 				items={[
 					<Menu.Item href="/ui/button">Button</Menu.Item>,
 					<Menu.Item href="/ui/card">Card</Menu.Item>,
@@ -138,7 +138,7 @@ export default function MenuPage() {
 						{
 							name: 'brand',
 							type: 'JSX.Element | string',
-							description: "Brand/title displayed in the toolbar. Default: 'Pounce UI'",
+							description: "Brand/title displayed in the toolbar. Default: 'Sursaut UI'",
 							required: false,
 						},
 						{

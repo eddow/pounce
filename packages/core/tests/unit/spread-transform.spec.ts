@@ -2,15 +2,15 @@ import { describe, it, expect } from 'vitest'
 import { transformSync } from '@babel/core'
 import babelPluginJsx from '@babel/plugin-transform-react-jsx'
 import babelPluginTs from '@babel/plugin-transform-typescript'
-import { pounceBabelPlugin, pounceSpreadPlugin } from '../../src/plugin/babel'
+import { sursautBabelPlugin, sursautSpreadPlugin } from '../../src/plugin/babel'
 
 function transform(code: string): string {
 	const result = transformSync(code, {
 		filename: 'test.tsx',
 		plugins: [
-			[pounceBabelPlugin],
+			[sursautBabelPlugin],
 			[babelPluginJsx, { runtime: 'classic', pragma: 'h', pragmaFrag: 'Fragment', throwIfNamespace: false }],
-			[pounceSpreadPlugin],
+			[sursautSpreadPlugin],
 			[babelPluginTs, { isTSX: true, allowDeclareFields: true }],
 		],
 		generatorOpts: { compact: true },
@@ -25,10 +25,10 @@ describe('spread attribute babel transform', () => {
 		expect(out).not.toContain('_extends')
 	})
 
-	it('wraps spread with other attrs: mixed case via pounceSpreadPlugin', () => {
+	it('wraps spread with other attrs: mixed case via sursautSpreadPlugin', () => {
 		const out = transform(`<Comp id="x" {...state.attrs} />`)
 		expect(out).toContain('_extends({id:"x"},')
-		expect(out).toContain('_pounce_c(()=>state.attrs)')
+		expect(out).toContain('_sursaut_c(()=>state.attrs)')
 	})
 
 	it('wraps spread of a plain identifier', () => {
@@ -41,30 +41,30 @@ describe('spread attribute babel transform', () => {
 		expect(out).toContain('c(()=>getProps())')
 	})
 
-	it('auto-imports c from @pounce/core', () => {
+	it('auto-imports c from @sursaut/core', () => {
 		const out = transform(`<div {...state} />`)
-		expect(out).toMatch(/import\s*\{[^}]*\bc\b[^}]*\}.*from"@pounce\/core"/)
+		expect(out).toMatch(/import\s*\{[^}]*\bc\b[^}]*\}.*from"@sursaut\/core"/)
 	})
 
 	it('does not import c when no composite helper is emitted', () => {
 		const out = transform(`<div id="x" />`)
-		expect(out).not.toMatch(/import\s*\{[^}]*\bc\b[^}]*\}.*from"@pounce\/core"/)
+		expect(out).not.toMatch(/import\s*\{[^}]*\bc\b[^}]*\}.*from"@sursaut\/core"/)
 	})
 
 	it('does not import Fragment when the file has no fragments', () => {
 		const out = transform(`<div id="x" />`)
-		expect(out).not.toMatch(/import\s*\{[^}]*\bFragment\b[^}]*\}.*from"@pounce\/core"/)
+		expect(out).not.toMatch(/import\s*\{[^}]*\bFragment\b[^}]*\}.*from"@sursaut\/core"/)
 	})
 
 	it('imports Fragment when the file uses JSX fragments', () => {
 		const out = transform(`<>ok</>`)
-		expect(out).toMatch(/import\s*\{[^}]*\bFragment\b[^}]*\}.*from"@pounce\/core"/)
+		expect(out).toMatch(/import\s*\{[^}]*\bFragment\b[^}]*\}.*from"@sursaut\/core"/)
 	})
 
 	it('wraps multiple spreads in a single c() with multiple arguments', () => {
 		const out = transform(`<Comp value={state.count} {...counts[state.locale]} />`)
-		expect(out).toContain('_extends({value:_pounce_r(()=>state.count,val=>state.count=val)},')
-		expect(out).toContain('_pounce_c(()=>counts[state.locale])')
+		expect(out).toContain('_extends({value:_sursaut_r(()=>state.count,val=>state.count=val)},')
+		expect(out).toContain('_sursaut_c(()=>counts[state.locale])')
 	})
 
 	it('does not transform regular object spreads outside JSX', () => {
@@ -88,7 +88,7 @@ describe('spread attribute babel transform', () => {
 
 	it('keeps member-expression attrs on standard getter/setter ReactiveProp emission', () => {
 		const out = transform(`<div value={state.count} />`)
-		expect(out).toContain('value:_pounce_r(()=>state.count,val=>state.count=val)')
-		expect(out).not.toContain('_pounce_r(state,"count")')
+		expect(out).toContain('value:_sursaut_r(()=>state.count,val=>state.count=val)')
+		expect(out).not.toContain('_sursaut_r(state,"count")')
 	})
 })

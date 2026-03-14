@@ -1,4 +1,4 @@
-import { accordionModel } from '@pounce/ui'
+import { accordionModel } from '@sursaut/ui'
 import { reactive } from 'mutts'
 
 export default function AccordionDemo() {
@@ -10,8 +10,8 @@ export default function AccordionDemo() {
 	const items = [
 		{
 			id: 'a',
-			title: 'What is Pounce?',
-			content: 'Pounce is a minimal reactive framework for the web.',
+			title: 'What is Sursaut?',
+			content: 'Sursaut is a minimal reactive framework for the web.',
 		},
 		{
 			id: 'b',

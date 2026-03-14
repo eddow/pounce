@@ -77,7 +77,7 @@ export function defineRoute<Path extends string, QuerySchema extends AssertSchem
 	const fn = (...args: RouteArgs<Path, QuerySchema>): ApiClientInstance<Path> => {
 		if (!_api)
 			throw new Error(
-				'[pounce] api not initialised — import from @pounce/kit before calling a route'
+				'[sursaut] api not initialised — import from @sursaut/kit before calling a route'
 			)
 		const params = (args[0] ?? {}) as Record<string, unknown>
 		return _api(buildUrl(params)) as ApiClientInstance<Path>

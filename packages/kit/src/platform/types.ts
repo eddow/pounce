@@ -1,4 +1,4 @@
-import type { Children, Env } from '@pounce/core'
+import type { Children, Env } from '@sursaut/core'
 import type { ScopedCallback } from 'mutts'
 
 /** Parsed representation of the current URL. */

@@ -1,9 +1,9 @@
 ## Differences with Angular
 
-This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Angular (v16+ with signals, and earlier patterns).
+This guide highlights how Sursaut‑TS (with `mutts` reactivity) differs from Angular (v16+ with signals, and earlier patterns).
 
 ### Reactivity and State
-- **Direct mutation reactivity**: Pounce uses `reactive(...)` and direct mutations (`state.count++`). Angular signals use `signal()` with getters/setters (`count.set(count()+1)`), or component class fields with change detection.
+- **Direct mutation reactivity**: Sursaut uses `reactive(...)` and direct mutations (`state.count++`). Angular signals use `signal()` with getters/setters (`count.set(count()+1)`), or component class fields with change detection.
 - **Derived values**: Use `memoize(() => ...)` and call it in JSX. Angular uses `computed(() => ...)` for signals, or pipes for transformations in templates.
 - **Effects**: Use `effect(() => { ...; return () => cleanup })`. Angular has `effect()` for signals and lifecycle hooks (`ngOnInit`, `ngOnDestroy`).
 
@@ -13,8 +13,8 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Ang
 - **Explicit setters**: `update:prop={fn}` customizes set behavior; in Angular you’d handle in `(input)` or convert via form controls.
 
 ### Rendering Model
-- **JSX and no VDOM**: Pounce uses JSX compiled to a custom `h()` and updates the real DOM directly. Angular uses templates compiled to instructions and runs change detection (signals or zone.js).
-- **No DI / decorators**: Pounce has no dependency injection, decorators, or modules. Angular relies on DI, `@Component`, `@Injectable`, etc.
+- **JSX and no VDOM**: Sursaut uses JSX compiled to a custom `h()` and updates the real DOM directly. Angular uses templates compiled to instructions and runs change detection (signals or zone.js).
+- **No DI / decorators**: Sursaut has no dependency injection, decorators, or modules. Angular relies on DI, `@Component`, `@Injectable`, etc.
 
 ### Control Flow and Lists
 - **Attributes for control flow**: `if={...}`, `if:path={...}`, `when:path={...}`, `else`, `else if={...}`, `else when={...}`. Paths support dash-separated keys (e.g., `if:user-role`). Angular uses `@if`/`*ngIf` and `@else` (or older structural directives), and `@for`/`*ngFor` with `trackBy`.

@@ -18,17 +18,17 @@ type Prettify<T> = { [K in keyof T]: T[K] } & {}
 // 3. Framework Base Types
 export type HTTPVerb = 'get' | 'post' | 'put' | 'patch' | 'delete' | 'stream'
 
-// DESIGN: PounceRequest will be expanded (headers, body, env, etc.)
+// DESIGN: SursautRequest will be expanded (headers, body, env, etc.)
 // The handler contract is req → Promise<value>. No `res` object.
-// For `stream`, the handler returns a ReadableStream (see @pounce/kit stream client).
-export interface PounceRequest<Params = Record<string, string>> {
+// For `stream`, the handler returns a ReadableStream (see @sursaut/kit stream client).
+export interface SursautRequest<Params = Record<string, string>> {
 	params: Params
 	url: URL
 	raw: Request
 	request: Request
 }
 
-export type RouteHandler<Params> = (req: PounceRequest<Params>) => any
+export type RouteHandler<Params> = (req: SursautRequest<Params>) => any
 
 // DESIGN: `middle` = middleware. Combines pre-check (abort) and wrapping (next) patterns.
 // - Return void/undefined → next middleware (or handler) is called automatically.
@@ -42,7 +42,7 @@ export type RouteHandler<Params> = (req: PounceRequest<Params>) => any
 // Stacking order: ancestor-first. Computed once at boot, stored flat in the registry.
 export type MiddleNext = () => Promise<Response>
 export type MiddleFunction<Params = Record<string, string>> = (
-	req: PounceRequest<Params>,
+	req: SursautRequest<Params>,
 	next: MiddleNext
 ) => Response | void | Promise<Response | void>
 

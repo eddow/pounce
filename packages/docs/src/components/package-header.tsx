@@ -1,4 +1,4 @@
-import { componentStyle } from '@pounce'
+import { componentStyle } from '@sursaut'
 import { Code } from './code'
 
 componentStyle.sass`

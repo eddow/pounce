@@ -1,4 +1,4 @@
-import { document } from '@pounce/core'
+import { document } from '@sursaut/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
 	type BadgeOptions,
@@ -221,10 +221,10 @@ describe('Directives', () => {
 		it('should add badge with string value', () => {
 			cleanup = badge(element, '5')
 
-			expect(element.classList.contains('pounce-badged')).toBe(true)
-			expect(element.classList.contains('pounce-badged-top-right')).toBe(true)
+			expect(element.classList.contains('sursaut-badged')).toBe(true)
+			expect(element.classList.contains('sursaut-badged-top-right')).toBe(true)
 
-			const badgeEl = element.querySelector('.pounce-badge-floating')
+			const badgeEl = element.querySelector('.sursaut-badge-floating')
 			expect(badgeEl).toBeTruthy()
 			expect(badgeEl?.getAttribute('aria-hidden')).toBe('true')
 		})
@@ -237,19 +237,19 @@ describe('Directives', () => {
 			}
 			cleanup = badge(element, options)
 
-			expect(element.classList.contains('pounce-badged-bottom-left')).toBe(true)
-			const badgeEl = element.querySelector('.pounce-badge-floating')
+			expect(element.classList.contains('sursaut-badged-bottom-left')).toBe(true)
+			const badgeEl = element.querySelector('.sursaut-badge-floating')
 			expect(badgeEl?.classList.contains('custom-class')).toBe(true)
 		})
 
 		it('should return cleanup function that removes badge', () => {
 			const result = badge(element, '5')
-			expect(element.querySelector('.pounce-badge-floating')).toBeTruthy()
+			expect(element.querySelector('.sursaut-badge-floating')).toBeTruthy()
 
 			result?.()
 
-			expect(element.querySelector('.pounce-badge-floating')).toBeFalsy()
-			expect(element.classList.contains('pounce-badged')).toBe(false)
+			expect(element.querySelector('.sursaut-badge-floating')).toBeFalsy()
+			expect(element.classList.contains('sursaut-badged')).toBe(false)
 		})
 
 		it('should handle non-HTMLElement target', () => {

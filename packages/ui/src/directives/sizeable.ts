@@ -1,4 +1,4 @@
-import { collapse, type PerhapsReactive, ReactiveProp } from '@pounce/core'
+import { collapse, type PerhapsReactive, ReactiveProp } from '@sursaut/core'
 import type { EffectAccess } from 'mutts'
 import { resolveElement } from './shared'
 

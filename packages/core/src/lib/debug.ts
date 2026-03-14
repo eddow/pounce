@@ -124,12 +124,12 @@ export const perfCounters: PerfCounters = {
 }
 
 /**
- * Pounce framework configuration options
+ * Sursaut framework configuration options
  * These can be modified at runtime to adjust framework behavior
  */
 const isDevMode = isDev
 
-export const pounceOptions = {
+export const sursautOptions = {
 	/**
 	 * Maximum number of component rebuilds allowed in a time window before triggering a warning
 	 * Set to 0 to disable hyper-build detection
@@ -151,7 +151,7 @@ export const pounceOptions = {
 
 	/**
 	 * Controls what happens when a component's reactive dependencies change after initial render
-	 * (the "rebuild fence"). Pounce forbids re-running the component body to avoid infinite loops
+	 * (the "rebuild fence"). Sursaut forbids re-running the component body to avoid infinite loops
 	 * and state destruction, but the detection can be surfaced in three ways:
 	 * - false: silent (production)
 	 * - 'warn': console.warn with the triggering dependency chain (default in dev)
@@ -168,7 +168,7 @@ export const pounceOptions = {
 }
 
 /** Preset for production: no checks, no rebuild detection overhead */
-export const prodPreset: Partial<typeof pounceOptions> = {
+export const prodPreset: Partial<typeof sursautOptions> = {
 	maxRebuildsPerWindow: 0,
 	checkReactivity: false,
 	checkRebuild: false,
@@ -176,7 +176,7 @@ export const prodPreset: Partial<typeof pounceOptions> = {
 }
 
 /** Preset for development (default): both checks warn */
-export const devPreset: Partial<typeof pounceOptions> = {
+export const devPreset: Partial<typeof sursautOptions> = {
 	maxRebuildsPerWindow: 1000,
 	checkReactivity: 'warn',
 	checkRebuild: 'warn',
@@ -184,7 +184,7 @@ export const devPreset: Partial<typeof pounceOptions> = {
 }
 
 /** Preset for debug: all violations throw — use in tests to assert clean boundaries */
-export const debugPreset: Partial<typeof pounceOptions> = {
+export const debugPreset: Partial<typeof sursautOptions> = {
 	maxRebuildsPerWindow: 1000,
 	checkReactivity: 'error',
 	checkRebuild: 'error',
@@ -195,19 +195,19 @@ try {
 	const win = window as any
 	if (win) {
 		win.reactiveOptions = reactiveOptions
-		win.__POUNCE_PERF__ = perfCounters
+		win.__SURSAUT_PERF__ = perfCounters
 	}
 } catch {
 	// Platform not yet bound, ignore
 }
-export const pounceOwner = new WeakMap<Node, ComponentInfo>()
+export const sursautOwner = new WeakMap<Node, ComponentInfo>()
 
 export const rootComponents = new Set<ComponentInfo>()
 /**
  * Returns the component instance (ComponentInfo) that "owns" the given DOM element.
  */
 export function getComponentInstance(element: Node | null): ComponentInfo | undefined {
-	return element ? pounceOwner.get(element) : undefined
+	return element ? sursautOwner.get(element) : undefined
 }
 
 /**

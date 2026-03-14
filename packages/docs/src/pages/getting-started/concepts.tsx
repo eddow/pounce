@@ -1,4 +1,4 @@
-import { A } from '@pounce'
+import { A } from '@sursaut'
 import { Code, Section } from '../../components'
 
 const reactivityExample = `import { reactive, effect } from 'mutts'
@@ -33,7 +33,7 @@ const twoWayExample = `function LoginForm() {
   )
 }`
 
-const scopeExample = `import { extend } from '@pounce'
+const scopeExample = `import { extend } from '@sursaut'
 
 // Parent injects "theme" into env
 function App(_props: {}, env: Record<string, any>) {
@@ -66,11 +66,11 @@ export default function ConceptsPage() {
 	return (
 		<article>
 			<h1>Core Concepts</h1>
-			<p>The mental model behind Pounce: reactivity, components, env, and directives.</p>
+			<p>The mental model behind Sursaut: reactivity, components, env, and directives.</p>
 
 			<Section title="Reactivity">
 				<p>
-					Pounce's reactivity comes from <code>mutts</code>. Wrap an object in{' '}
+					Sursaut's reactivity comes from <code>mutts</code>. Wrap an object in{' '}
 					<code>reactive()</code> and any property access is tracked. When a tracked property
 					changes, only the specific DOM nodes or effects that read it are updated — no diffing, no
 					re-renders.
@@ -80,7 +80,7 @@ export default function ConceptsPage() {
 
 			<Section title="Components">
 				<p>
-					A Pounce component is a plain function that receives <code>props</code> and{' '}
+					A Sursaut component is a plain function that receives <code>props</code> and{' '}
 					<code>env</code>
 					and returns JSX. <strong>Components render once.</strong> The Babel plugin wraps JSX
 					expressions in <code>r()</code> calls that create fine-grained reactive subscriptions.
@@ -117,7 +117,7 @@ export default function ConceptsPage() {
 
 			<Section title="Directives">
 				<p>
-					Pounce provides built-in JSX directives for control flow. These are handled at the
+					Sursaut provides built-in JSX directives for control flow. These are handled at the
 					reconciler level, not as components.
 				</p>
 				<Code code={directivesExample} lang="tsx" />

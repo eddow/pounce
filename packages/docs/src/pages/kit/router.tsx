@@ -1,6 +1,6 @@
 import { ApiTable, Code, Section } from '../../components'
 
-const routeDefinition = `import { Router, A, type ClientRouteDefinition } from '@pounce'
+const routeDefinition = `import { Router, A, type ClientRouteDefinition } from '@sursaut'
 
 const routes: ClientRouteDefinition[] = [
   { path: '/', view: HomePage },
@@ -36,7 +36,7 @@ function DocsPage(spec: { params: { slug: string } }) {
   return <h1>Docs: {spec.params.slug}</h1>
 }`
 
-const aComponent = `import { A } from '@pounce'
+const aComponent = `import { A } from '@sursaut'
 
 // <A> is a reactive link that uses pushState navigation.
 // It sets aria-current="page" on the active link.
@@ -47,7 +47,7 @@ const aComponent = `import { A } from '@pounce'
 // Equivalent to <a> but intercepts clicks for SPA navigation.
 // External links (different origin) fall through to normal navigation.`
 
-const defineRouteExample = `import { defineRoute } from '@pounce'
+const defineRouteExample = `import { defineRoute } from '@sursaut'
 import { type } from 'arktype'
 
 // defineRoute() creates a typed route with buildUrl() helper.
@@ -56,7 +56,7 @@ userRoute.buildUrl({ id: '42' }) // → "/users/42"
 
 // With query schema validation (arktype):
 const searchRoute = defineRoute('/search', type({ q: 'string', page: 'number' }))
-searchRoute.buildUrl({ q: 'pounce', page: 1 }) // → "/search?q=pounce&page=1"`
+searchRoute.buildUrl({ q: 'sursaut', page: 1 }) // → "/search?q=sursaut&page=1"`
 
 const notFound = `// notFound receives the unmatched URL
 function NotFoundPage({ url }: { url: string }) {
@@ -72,13 +72,13 @@ function NotFoundPage({ url }: { url: string }) {
 
 const routingLayers = `Reactive URL and route matching span a few layers:
 
-@pounce/kit
+@sursaut/kit
   owns route parsing/matching, link behavior, and the SPA Router component
 
-@pounce/ui
+@sursaut/ui
   can compose kit routing primitives into alternate shells such as tabbed navigation
 
-@pounce/board
+@sursaut/board
   adds file-based route discovery and SSR on top of the same route concepts`
 
 const routerFlow = `Normal SPA flow:
@@ -106,10 +106,10 @@ The same concepts also support richer shells that keep multiple routes alive.`
 
 const dockviewComposition = `One important cross-package pattern is tabbed routing:
 
-@pounce/kit
+@sursaut/kit
   route matching + navigation state
 
-@pounce/ui
+@sursaut/ui
   dockview/tab container primitive
 
 consumer app
@@ -129,7 +129,7 @@ export default function RouterPage() {
 
 			<Section title="Cross-Package Routing Concept">
 				<p>
-					Routing in Pounce is not a single monolith. It is a concept that spans the suite: route
+					Routing in Sursaut is not a single monolith. It is a concept that spans the suite: route
 					matching lives in Kit, UI packages can compose alternate navigation shells on top of it,
 					and Board adds file-based routing and SSR conventions.
 				</p>

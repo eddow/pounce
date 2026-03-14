@@ -58,7 +58,7 @@ const fixtureControls = {
 
 declare global {
 	interface Window {
-		__pounceFixture?: typeof fixtureControls
+		__sursautFixture?: typeof fixtureControls
 	}
 }
 
@@ -67,7 +67,7 @@ function logEvent(name: string, payload?: number) {
 	state.log.push(message)
 }
 
-window.__pounceFixture = fixtureControls
+window.__sursautFixture = fixtureControls
 
 const ChildList = () => (
 	<ul data-testid="child-list" aria-live="polite">

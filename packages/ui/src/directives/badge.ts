@@ -1,4 +1,4 @@
-import { Fragment, h, latch } from '@pounce/core'
+import { Fragment, h, latch } from '@sursaut/core'
 import { resolveElement } from './shared'
 
 export type BadgePosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
@@ -36,10 +36,10 @@ export function badge(target: Node | Node[], input: BadgeInput): (() => void) | 
 	const options: BadgeOptions = isBadgeOptions(input) ? input : { value: input }
 	const position = options.position ?? 'top-right'
 
-	element.classList.add('pounce-badged', `pounce-badged-${position}`)
+	element.classList.add('sursaut-badged', `sursaut-badged-${position}`)
 
 	const badgeEl = document.createElement('span')
-	badgeEl.className = 'pounce-badge-floating'
+	badgeEl.className = 'sursaut-badge-floating'
 	if (options.class) {
 		for (const cls of options.class.split(' ')) {
 			if (cls) badgeEl.classList.add(cls)
@@ -58,6 +58,6 @@ export function badge(target: Node | Node[], input: BadgeInput): (() => void) | 
 	return () => {
 		if (typeof unbind === 'function') unbind()
 		badgeEl.remove()
-		element.classList.remove('pounce-badged', `pounce-badged-${position}`)
+		element.classList.remove('sursaut-badged', `sursaut-badged-${position}`)
 	}
 }

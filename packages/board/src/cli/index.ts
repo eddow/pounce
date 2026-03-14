@@ -5,7 +5,7 @@ import { runBuild } from './build.js'
 import { runDevServer } from './dev.js'
 import { runPreview } from './preview.js'
 
-const cli = cac('pounce')
+const cli = cac('sursaut')
 
 cli
 	.command('dev', 'Start development server')

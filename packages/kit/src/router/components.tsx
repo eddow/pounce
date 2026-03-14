@@ -1,4 +1,4 @@
-import { defaults, latch, PounceElement } from '@pounce/core'
+import { defaults, latch, SursautElement } from '@sursaut/core'
 import { effect, lift, link, reactive, untracked } from 'mutts'
 import { perf, recordPerf } from '../perf.js'
 import { client } from '../platform/shared.js'
@@ -336,7 +336,7 @@ export function Router<Definition extends ClientRouteDefinition>(
 		const els = Array.isArray(jsx) ? jsx : [jsx]
 		const outputs: Node[] = []
 		els.forEach((el) => {
-			if (!(el instanceof PounceElement)) throw new Error('Invalid JSX element for route')
+			if (!(el instanceof SursautElement)) throw new Error('Invalid JSX element for route')
 			const nodes = el.render(scope)
 			const nodeArray = Array.isArray(nodes)
 				? Array.from(nodes)

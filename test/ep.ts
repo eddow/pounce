@@ -1,4 +1,4 @@
-// Test entry point for @pounce/kit
+// Test entry point for @sursaut/kit
 // Re-exports all kit public API plus test-only internals
 
 export * from '../packages/kit/src/index'

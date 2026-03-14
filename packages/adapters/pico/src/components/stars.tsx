@@ -1,4 +1,4 @@
-import { type StarItemState, type StarsProps, starsModel } from '@pounce/ui/models'
+import { type StarItemState, type StarsProps, starsModel } from '@sursaut/ui/models'
 
 const STAR_GLYPHS: Record<string, string> = {
 	'star-filled': '★',

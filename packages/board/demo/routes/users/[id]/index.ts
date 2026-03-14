@@ -1,14 +1,14 @@
-import { expose } from '@pounce/board'
-import type { PounceRequest } from '@pounce/board'
+import { expose } from '@sursaut/board'
+import type { SursautRequest } from '@sursaut/board'
 import { findUser } from '+shared/users'
 
 export default expose<{ id: string }>({
-  provide: async (req: PounceRequest<{ id: string }>) => {
+  provide: async (req: SursautRequest<{ id: string }>) => {
     const user = findUser(req.params.id)
     return { user: user ?? null }
   },
 
-  get: async (req: PounceRequest<{ id: string }>) => {
+  get: async (req: SursautRequest<{ id: string }>) => {
     const user = findUser(req.params.id) || { id: req.params.id, name: `User ${req.params.id}`, role: 'guest' }
     return {
       ...user,

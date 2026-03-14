@@ -1,6 +1,6 @@
-# Two-Way Binding in Pounce-TS
+# Two-Way Binding in Sursaut-TS
 
-Pounce-TS provides automatic two-way binding for form inputs and component properties. The Babel plugin automatically detects when you're binding to an assignable expression and sets up the binding for you.
+Sursaut-TS provides automatic two-way binding for form inputs and component properties. The Babel plugin automatically detects when you're binding to an assignable expression and sets up the binding for you.
 
 ## Automatic Two-Way Binding
 
@@ -208,7 +208,7 @@ const binding = {
 
 ## Array Manipulation
 
-Pounce-TS provides utilities for reactive array operations:
+Sursaut-TS provides utilities for reactive array operations:
 
 ```tsx
 import { array } from '../lib/utils'
@@ -346,7 +346,7 @@ function DebouncedSearch() {
 
 ## Bidirectional Binding — `bind:` Statement
 
-For synchronizing two reactive state slices symmetrically, Pounce provides the `bind:` labeled statement. Unlike JSX attributes (which bind a component prop to state), `bind:` lives in the **component body** and wires two reactive values together so that changes to either side propagate to the other.
+For synchronizing two reactive state slices symmetrically, Sursaut provides the `bind:` labeled statement. Unlike JSX attributes (which bind a component prop to state), `bind:` lives in the **component body** and wires two reactive values together so that changes to either side propagate to the other.
 
 ### Syntax
 
@@ -415,7 +415,7 @@ The `bind()` runtime function:
 When used as a statement (`bind: dst = src`), the return value is discarded and cleanup is tied to the enclosing component's lifecycle. To stop the binding manually, call `bind()` directly:
 
 ```ts
-import { bind, ReactiveProp } from '@pounce/core'
+import { bind, ReactiveProp } from '@sursaut/core'
 
 const stop = bind(
   new ReactiveProp(() => a.x, v => { a.x = v }),
@@ -429,7 +429,7 @@ stop()
 ### Rules
 
 - Both sides must be **assignable** — the plugin throws a build-time error for literals or `const` identifiers.
-- `bind` and `r` are **auto-imported** from `@pounce/core` by the plugin. Do not import them manually in files using the `bind:` label.
+- `bind` and `r` are **auto-imported** from `@sursaut/core` by the plugin. Do not import them manually in files using the `bind:` label.
 - Biome's `noUnusedLabels` rule is disabled in `biome.json` — do not re-enable it.
 
 

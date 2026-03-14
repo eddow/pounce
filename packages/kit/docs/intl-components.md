@@ -2,7 +2,7 @@
 
 ## Summary
 
-Add reactive JSX components to `@pounce/kit` that wrap the browser's `Intl` APIs, providing locale-aware formatting for numbers, dates, lists, relative time, and more. These components read the locale from the reactive `client.language` (or a scoped override via `DisplayProvider`) and re-render automatically when it changes.
+Add reactive JSX components to `@sursaut/kit` that wrap the browser's `Intl` APIs, providing locale-aware formatting for numbers, dates, lists, relative time, and more. These components read the locale from the reactive `client.language` (or a scoped override via `DisplayProvider`) and re-render automatically when it changes.
 
 ## Motivation
 
@@ -24,7 +24,7 @@ We want:
 
 1. **Thin wrappers** — each component maps 1:1 to an `Intl.*Format` API. No invented abstractions.
 2. **Reactive** — re-formats when `value` or `locale` changes (via mutts reactivity).
-3. **Locale cascade** — uses `client.language` by default, can be overridden per-component via `locale` prop, or per-subtree via `DisplayProvider` (from `@pounce/ui`).
+3. **Locale cascade** — uses `client.language` by default, can be overridden per-component via `locale` prop, or per-subtree via `DisplayProvider` (from `@sursaut/ui`).
 4. **SSR-safe** — `Intl` APIs are available in Node.js. No DOM dependency.
 5. **Tree-shakable** — each component is an independent export.
 
@@ -58,7 +58,7 @@ observer.observe(document.documentElement, { attributes: true, attributeFilter: 
 
 ## Component API
 
-All components live in `@pounce/kit` (shared entry point — no DOM dependency since `Intl` is universal).
+All components live in `@sursaut/kit` (shared entry point — no DOM dependency since `Intl` is universal).
 
 ### `<Intl.Number>`
 
@@ -239,14 +239,14 @@ export { DisplayNames } from './display-names'
 
 Consumer usage via namespace import:
 ```tsx
-import * as Intl from '@pounce/kit/intl'
+import * as Intl from '@sursaut/kit/intl'
 // or
-import { Number, Date } from '@pounce/kit/intl'
+import { Number, Date } from '@sursaut/kit/intl'
 
 <Intl.Number value={42} />
 ```
 
-**Decision**: Separate entry point `@pounce/kit/intl`. Most apps won't need all 6 formatters, and this keeps the main kit bundle lean.
+**Decision**: Separate entry point `@sursaut/kit/intl`. Most apps won't need all 6 formatters, and this keeps the main kit bundle lean.
 
 ## DisplayProvider Integration
 
@@ -255,7 +255,7 @@ import { Number, Date } from '@pounce/kit/intl'
 Kit provides a resolver slot that UI's `DisplayProvider` can plug into:
 
 ```typescript
-// @pounce/kit/intl/locale.ts
+// @sursaut/kit/intl/locale.ts
 let localeOverride: (() => string | undefined) | null = null
 
 export function setLocaleResolver(resolver: () => string | undefined) {
@@ -297,7 +297,7 @@ Since `Intl` is available in Node.js, tests run in the default vitest environmen
 
 ## Resolved Questions
 
-1. **Entry point**: `@pounce/kit/intl` (separate) ✅
+1. **Entry point**: `@sursaut/kit/intl` (separate) ✅
 2. **Wrapper element**: Text nodes, no wrappers ✅ (Plural uses fragment for JSX children)
 3. **DisplayProvider integration**: Option B (`setLocaleResolver`) ✅
 4. **`<Intl.Plural>`**: Slot-based (`one={}`, `other={}`) ✅ — declarative, statically analysable

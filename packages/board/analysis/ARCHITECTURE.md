@@ -9,7 +9,7 @@
 │  │  Components │    │  Components │    │   JS/TS     │  │
 │  └─────────────┘    └─────────────┘    └─────────────┘  │
 │               ┌───────────────────────┐               │
-│               │       Pounce Client    │               │
+│               │       Sursaut Client    │               │
 │               │   - API Client         │               │
 │               │   - SSR Hydration      │               │
 │               │   - Query Management   │               │
@@ -21,7 +21,7 @@
 ┌───────────────────────────────────────────────────────┐
 │                     Server Side                       │
 │  ┌─────────────────────────────────────────────────┐  │
-│  │                 Pounce Core                     │  │
+│  │                 Sursaut Core                     │  │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌───────────┐  │  │
 │  │  │  Router     │  │  Middleware │  │  Handlers │  │  │
 │  │  │  - Route    │  │  - Auth     │  │  - GET    │  │  │
@@ -238,7 +238,7 @@ export const securityMiddleware: Middleware = async (ctx, next) => {
 │          │                  │                 │      │
 │  ┌───────┴───────┐    ┌──────┴──────┐    ┌──────┴──────┐│
 │  │ API Gateway   │    │ Message    │    │ Event      ││
-│  │ (Pounce)     │    │ Broker     │    │ Bus        ││
+│  │ (Sursaut)     │    │ Broker     │    │ Bus        ││
 │  └───────────────┘    └────────────┘    └────────────┘│
 └───────────────────────────────────────────────────────┘
 ```
@@ -253,7 +253,7 @@ export const securityMiddleware: Middleware = async (ctx, next) => {
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
 │  │ Load        │    │ App         │    │ Database    │  │
 │  │ Balancer    │───▶│ Servers     │───▶│ Cluster     │  │
-│  └─────────────┘    │ (Pounce)    │    └─────────────┘  │
+│  └─────────────┘    │ (Sursaut)    │    └─────────────┘  │
 │                     └─────────────┘                   │
 │  ┌─────────────────────────────────────────────────┐  │
 │  │               Monitoring                       │  │
@@ -271,7 +271,7 @@ export const securityMiddleware: Middleware = async (ctx, next) => {
 │                                                       │
 │  ┌─────────────┐    ┌─────────────────────────────┐  │
 │  │ API         │    │ Cloud Functions            │  │
-│  │ Gateway     │───▶│ (Pounce handlers)          │  │
+│  │ Gateway     │───▶│ (Sursaut handlers)          │  │
 │  └─────────────┘    │ - Auto-scaling              │  │
 │                     │ - Pay-per-use               │  │
 │                     └─────────────────────────────┘  │
@@ -291,7 +291,7 @@ export const securityMiddleware: Middleware = async (ctx, next) => {
 │                                                       │
 │  ┌─────────────┐    ┌─────────────────────────────┐  │
 │  │ CDN         │    │ Edge Workers               │  │
-│  │ - Caching   │───▶│ (Pounce running at edge)   │  │
+│  │ - Caching   │───▶│ (Sursaut running at edge)   │  │
 │  │ - Static     │    │ - Low latency             │  │
 │  │   Assets    │    │ - Global distribution     │  │
 │  └─────────────┘    └─────────────────────────────┘  │
@@ -482,15 +482,15 @@ export const securityMiddleware: Middleware = async (ctx, next) => {
 ### 12.2 Creating Plugins
 ```ts
 // Example plugin structure
-interface PouncePlugin {
+interface SursautPlugin {
   name: string;
-  setup?: (app: PounceApp) => void;
+  setup?: (app: SursautApp) => void;
   middleware?: Middleware[];
   clientExtensions?: (client: ApiClient) => void;
 }
 
 // Usage
-const myPlugin: PouncePlugin = {
+const myPlugin: SursautPlugin = {
   name: "my-plugin",
   setup: (app) => {
     // Modify app configuration
@@ -515,20 +515,20 @@ app.use(myPlugin);
 ```ts
 // Example Express adapter
 import express from "express";
-import { createPounceHandler } from "pounce/http";
+import { createSursautHandler } from "sursaut/http";
 
 export function createExpressAdapter() {
   const app = express();
 
-  // Convert Express request to Pounce request
+  // Convert Express request to Sursaut request
   app.use((req, res, next) => {
-    const pounceHandler = createPounceHandler({
+    const sursautHandler = createSursautHandler({
       request: req,
       response: res,
       // Convert Express-specific features
     });
 
-    pounceHandler(req, res, next);
+    sursautHandler(req, res, next);
   });
 
   return app;
@@ -716,13 +716,13 @@ export function createValidator(schema: z.ZodSchema): Middleware {
 // Plugin system implementation
 interface Plugin {
   name: string;
-  setup?: (app: PounceApp) => void | Promise<void>;
+  setup?: (app: SursautApp) => void | Promise<void>;
   middleware?: Middleware | Middleware[];
   routes?: Record<string, RouteHandler>;
   clientExtensions?: (client: ApiClient) => void;
 }
 
-class PounceApp {
+class SursautApp {
   private plugins: Plugin[] = [];
 
   use(plugin: Plugin) {
@@ -1192,18 +1192,18 @@ debugApi.get = async (params) => {
 ```html
 <!-- Debug script tags -->
 <script>
-  window.__pounceDebug = {
+  window.__sursautDebug = {
     ssrData: {},
     hydrated: false
   };
 
   document.querySelectorAll('script[type="application/json"]').forEach(script => {
     if (script.id.startsWith('api-response-')) {
-      window.__pounceDebug.ssrData[script.id] = JSON.parse(script.textContent);
+      window.__sursautDebug.ssrData[script.id] = JSON.parse(script.textContent);
     }
   });
 
-  window.__pounceDebug.hydrated = true;
+  window.__sursautDebug.hydrated = true;
 </script>
 ```
 
@@ -1264,7 +1264,7 @@ export const queryLoggingMiddleware: Middleware = async (ctx, next) => {
 ## 17. Upgrade Guide
 
 ### 17.1 Versioning Strategy
-Pounce follows **Semantic Versioning** (SemVer):
+Sursaut follows **Semantic Versioning** (SemVer):
 - **MAJOR**: Breaking changes
 - **MINOR**: Backwards-compatible new features
 - **PATCH**: Backwards-compatible bug fixes
@@ -1280,7 +1280,7 @@ Pounce follows **Semantic Versioning** (SemVer):
 2. **Migration Steps**:
 ```bash
 # 1. Update package
-npm install pounce-framework@latest
+npm install sursaut-framework@latest
 
 # 2. Rename route files
 mv routes/users/[id].ts routes/users/[id]/index.ts
@@ -1296,7 +1296,7 @@ mv routes/users/[id].ts routes/users/[id]/index.ts
 
 3. **Configuration Updates**:
 ```ts
-// Update pounce.config.ts
+// Update sursaut.config.ts
 export default {
   // New required version field
   version: 2,
@@ -1324,7 +1324,7 @@ npm install typescript@latest
 # Change from defineExternalApi() to defineProxy()
 
 # 3. Update context types
-interface MyContext extends PounceContext {
+interface MyContext extends SursautContext {
   // Your custom properties
 }
 ```
@@ -1344,8 +1344,8 @@ interface MyContext extends PounceContext {
 ### 18.1 Development Setup
 ```bash
 # Clone repository
-git clone https://github.com/yourorg/pounce.git
-cd pounce
+git clone https://github.com/yourorg/sursaut.git
+cd sursaut
 
 # Install dependencies
 npm install
@@ -1362,7 +1362,7 @@ npm run dev
 
 ### 18.2 Project Structure
 ```
-pounce/
+sursaut/
 ├── packages/
 │   ├── core/          # Core framework
 │   ├── http/          # HTTP utilities
@@ -1403,28 +1403,28 @@ pounce/
 
 ### 19.1 General Questions
 
-**Q: How does Pounce compare to Next.js?**
-A: Pounce is more lightweight and focused on explicit patterns rather than magic conventions. It provides more control over middleware and type safety while maintaining similar SSR capabilities.
+**Q: How does Sursaut compare to Next.js?**
+A: Sursaut is more lightweight and focused on explicit patterns rather than magic conventions. It provides more control over middleware and type safety while maintaining similar SSR capabilities.
 
-**Q: Can I use Pounce with my existing backend?**
-A: Yes! Pounce can be incrementally adopted. You can start with just the client-side features and gradually migrate your backend.
+**Q: Can I use Sursaut with my existing backend?**
+A: Yes! Sursaut can be incrementally adopted. You can start with just the client-side features and gradually migrate your backend.
 
-**Q: What frameworks does Pounce work with?**
-A: Pounce works with React, Svelte, and vanilla JS/TS. The backend can run on Node.js, Deno, or edge environments.
+**Q: What frameworks does Sursaut work with?**
+A: Sursaut works with React, Svelte, and vanilla JS/TS. The backend can run on Node.js, Deno, or edge environments.
 
 ### 19.2 Technical Questions
 
 **Q: How does the type system work across client and server?**
-A: Pounce uses shared `.d.ts` files that are imported by both client and server code. The build system ensures these types stay in sync.
+A: Sursaut uses shared `.d.ts` files that are imported by both client and server code. The build system ensures these types stay in sync.
 
-**Q: Can I use Pounce with GraphQL?**
-A: Yes! While Pounce is REST-first, you can add GraphQL support via plugins or integrate with existing GraphQL servers.
+**Q: Can I use Sursaut with GraphQL?**
+A: Yes! While Sursaut is REST-first, you can add GraphQL support via plugins or integrate with existing GraphQL servers.
 
-**Q: How does Pounce handle authentication?**
+**Q: How does Sursaut handle authentication?**
 A: Authentication is handled via middleware. You can use any auth system (JWT, sessions, etc.) by adding the appropriate middleware to your `common.ts`.
 
 **Q: What about file uploads?**
-A: Pounce supports file uploads through standard FormData. The API client automatically handles multipart requests when it detects File objects.
+A: Sursaut supports file uploads through standard FormData. The API client automatically handles multipart requests when it detects File objects.
 
 ### 19.3 Troubleshooting
 
@@ -1455,7 +1455,7 @@ A: Common issues:
 
 ### 19.4 Performance
 
-**Q: How can I improve my Pounce app's performance?**
+**Q: How can I improve my Sursaut app's performance?**
 A: Key optimizations:
 1. Implement caching at multiple levels
 2. Use code splitting for large bundles
@@ -1463,8 +1463,8 @@ A: Key optimizations:
 4. Enable compression
 5. Use CDN for static assets
 
-**Q: Is Pounce suitable for large applications?**
-A: Yes! Pounce is designed to scale:
+**Q: Is Sursaut suitable for large applications?**
+A: Yes! Sursaut is designed to scale:
 - File-based routing works for hundreds of routes
 - Middleware system is efficient
 - Type system helps maintain large codebases
@@ -1472,28 +1472,28 @@ A: Yes! Pounce is designed to scale:
 
 ### 19.5 Deployment
 
-**Q: What platforms can I deploy Pounce to?**
-A: Pounce works on:
+**Q: What platforms can I deploy Sursaut to?**
+A: Sursaut works on:
 - Traditional Node.js servers
 - Serverless platforms (Vercel, Netlify, AWS Lambda)
 - Edge networks (Cloudflare Workers, Deno Edge)
 - Containerized environments (Docker, Kubernetes)
 
-**Q: How do I configure my server for Pounce?**
-A: Pounce provides adapters for popular servers:
+**Q: How do I configure my server for Sursaut?**
+A: Sursaut provides adapters for popular servers:
 ```ts
 // Express example
-import { createExpressAdapter } from "pounce/adapters/express";
+import { createExpressAdapter } from "sursaut/adapters/express";
 import express from "express";
 
 const app = express();
 createExpressAdapter(app, {
-  // Your Pounce configuration
+  // Your Sursaut configuration
 });
 ```
 
-**Q: Can I use Pounce with a monorepo?**
-A: Absolutely! Pounce works well with:
+**Q: Can I use Sursaut with a monorepo?**
+A: Absolutely! Sursaut works well with:
 - npm/yarn workspaces
 - Turborepo
 - Nx
@@ -1515,7 +1515,7 @@ Just ensure your routes are properly configured in each package.
 | **Common File** | A `common.ts` file containing middleware for a route and its children |
 | **Script Tag Injection** | The process of embedding API responses in HTML during SSR |
 | **Type Safety** | Ensuring type correctness across client and server code |
-| **External API** | Third-party APIs integrated via Pounce's proxy system |
+| **External API** | Third-party APIs integrated via Sursaut's proxy system |
 | **Middleware Stack** | The ordered collection of middleware for a route |
 | **Route Matching** | The process of determining which route handler should process a request |
 | **Payload** | The data sent in an API request or response |
@@ -1556,9 +1556,9 @@ Just ensure your routes are properly configured in each package.
 ## 22. Community
 
 ### 22.1 Getting Help
-- **GitHub Discussions**: [github.com/yourorg/pounce/discussions](https://github.com/yourorg/pounce/discussions)
-- **Discord**: [discord.gg/pounce](https://discord.gg/pounce)
-- **Stack Overflow**: Use tag `pounce-framework`
+- **GitHub Discussions**: [github.com/yourorg/sursaut/discussions](https://github.com/yourorg/sursaut/discussions)
+- **Discord**: [discord.gg/sursaut](https://discord.gg/sursaut)
+- **Stack Overflow**: Use tag `sursaut-framework`
 
 ### 22.2 Contributing
 We welcome contributions! See our [Contribution Guide](#18-contribution-guide) for details.
@@ -1567,7 +1567,7 @@ We welcome contributions! See our [Contribution Guide](#18-contribution-guide) f
 We follow the [Contributor Covenant](https://www.contributor-covenant.org/). Be kind and respectful!
 
 ### 22.4 Governance
-Pounce is maintained by a core team with community contributions. Major decisions are made through RFCs (Request for Comments).
+Sursaut is maintained by a core team with community contributions. Major decisions are made through RFCs (Request for Comments).
 
 ### 22.5 RFC Process
 1. Open an issue with the "RFC" label
@@ -1578,18 +1578,18 @@ Pounce is maintained by a core team with community contributions. Major decision
 
 ### 22.6 Meetups and Events
 - **Monthly Community Call**: First Tuesday of each month
-- **Annual Conference**: PounceConf (planned for 2025)
+- **Annual Conference**: SursautConf (planned for 2025)
 - **Local Meetups**: Organized by community members worldwide
 
 ### 22.7 Sponsorship
-Pounce is an open-source project that relies on community support. Consider:
+Sursaut is an open-source project that relies on community support. Consider:
 - [GitHub Sponsors](https://github.com/sponsors/yourorg)
-- [Open Collective](https://opencollective.com/pounce)
+- [Open Collective](https://opencollective.com/sursaut)
 - Corporate sponsorships
 
 ## 23. License
 
-Pounce is licensed under the **MIT License**.
+Sursaut is licensed under the **MIT License**.
 
 ### 23.1 Full License Text
 ```
@@ -1624,12 +1624,12 @@ SOFTWARE.
 - No liability or warranty
 
 ### 23.3 Attribution
-When using Pounce, please include:
+When using Sursaut, please include:
 - A copy of the LICENSE file in your project
-- Credit in your documentation (e.g., "Built with Pounce Framework")
+- Credit in your documentation (e.g., "Built with Sursaut Framework")
 
 ### 23.4 Third-Party Licenses
-Pounce includes code from these open-source projects:
+Sursaut includes code from these open-source projects:
 - TypeScript (Apache-2.0)
 - Zod (MIT)
 - React Query (MIT)

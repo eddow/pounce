@@ -1,9 +1,9 @@
 ## Differences with Vue
 
-This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Vue 3.
+This guide highlights how Sursaut‑TS (with `mutts` reactivity) differs from Vue 3.
 
 ### Reactivity and State
-- **Direct mutation reactivity**: Pounce uses `reactive(...)` and direct mutations (`state.count++`). No `ref().value` indirection.
+- **Direct mutation reactivity**: Sursaut uses `reactive(...)` and direct mutations (`state.count++`). No `ref().value` indirection.
 - **Derived values**: Use `memoize(() => ...)` and call it in JSX. Vue uses `computed(() => ...)` and reads `.value`.
 - **Effects**: Use `effect(() => { ...; return () => cleanup })`. In Vue, use `watchEffect`/`watch` and lifecycle hooks.
 
@@ -13,12 +13,12 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Vue
 - **Explicit setters**: `update:prop={fn}` customizes set behavior.
 
 ### Templates vs JSX
-- **JSX only**: Pounce uses JSX with a custom `h()`; Vue primarily uses templates (or JSX with a plugin). No VDOM in Pounce.
-- **No VDOM**: Pounce updates the DOM directly with fine‑grained reactivity. Vue uses VDOM diffing (even with compiler optimizations).
+- **JSX only**: Sursaut uses JSX with a custom `h()`; Vue primarily uses templates (or JSX with a plugin). No VDOM in Sursaut.
+- **No VDOM**: Sursaut updates the DOM directly with fine‑grained reactivity. Vue uses VDOM diffing (even with compiler optimizations).
 
 ### Control Flow and Lists
 - **Attributes for control flow**: `if={...}`, `if:name={...}`, `when:name={...}`, `else`, `else if={...}`, `else when={...}` inside fragments. Vue uses `v-if`, `v-else-if`, `v-else`.
-- **Lists**: Use `<for each={array}>` or `morph(array, fn)` (optionally with `memoize`). Vue uses `v-for` with `:key`; Pounce does not require keys in typical cases.
+- **Lists**: Use `<for each={array}>` or `morph(array, fn)` (optionally with `memoize`). Vue uses `v-for` with `:key`; Sursaut does not require keys in typical cases.
 
 ### Context/Env vs provide/inject
 - **Reactive env inheritance**: Components receive a prototype‑inherited reactive `env`. Components can set `env.foo = ...` and descendants see it. Vue uses `provide/inject` (explicit), not prototype inheritance.
@@ -33,7 +33,7 @@ This guide highlights how Pounce‑TS (with `mutts` reactivity) differs from Vue
 
 ### Application Structure
 - **Mounting**: `latch('#app', <App />)` vs `createApp(App).mount('#app')`.
-- **No DI/runtime**: Pounce has no DI container; Vue has plugin system and app instance.
+- **No DI/runtime**: Sursaut has no DI container; Vue has plugin system and app instance.
 
 ### Quick mapping
 - **Derived state**: `memoize` vs `computed`.

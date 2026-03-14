@@ -3,7 +3,7 @@
 ## Overview
 Tree-shakeable SVG icon library. Each icon is a CSS class name injected on-demand via the `/*#__PURE__*/` IIFE pattern, enabling bundlers to eliminate unused icons and their CSS.
 
-`pure-glyf` is standalone first. The main package, plugin, generator, and inject APIs do not depend on Pounce. Only the optional `./pounce` export integrates with Pounce.
+`pure-glyf` is standalone first. The main package, plugin, generator, and inject APIs do not depend on Sursaut. Only the optional `./sursaut` export integrates with Sursaut.
 
 ## Architecture
 - **Core**: `inject.ts` manages a deduplicated set of styles. Styles are injected ONLY when `mount()` is called.
@@ -34,7 +34,7 @@ Exports:
 - `.` (main): Exports `mount`, `sheet`, `onInject`.
 - `./plugin`: Vite plugin.
 - `./inject`: Internal injection utility (exposed for generated code).
-- `./pounce`: Optional adapter that registers a pure-glyf-backed `options.iconFactory` for `@pounce/ui`.
+- `./sursaut`: Optional adapter that registers a pure-glyf-backed `options.iconFactory` for `@sursaut/ui`.
 
 ## Performance Optimization
 
@@ -87,22 +87,22 @@ export default defineConfig({
 });
 ```
 
-### Pounce Adapter (`./pounce` export)
-`pure-glyf/pounce` exports `registerGlyfIconFactory()` — an optional adapter for Pounce applications. It assigns `@pounce/ui`'s `options.iconFactory` so generated `pure-glyf/icons` strings can be used directly by Pounce UI components. This export depends on `@pounce/core` and `@pounce/ui`.
+### Sursaut Adapter (`./sursaut` export)
+`pure-glyf/sursaut` exports `registerGlyfIconFactory()` — an optional adapter for Sursaut applications. It assigns `@sursaut/ui`'s `options.iconFactory` so generated `pure-glyf/icons` strings can be used directly by Sursaut UI components. This export depends on `@sursaut/core` and `@sursaut/ui`.
 
 ```typescript
 import { mount } from 'pure-glyf'
-import { registerGlyfIconFactory } from 'pure-glyf/pounce'
-import { options } from '@pounce/ui'
+import { registerGlyfIconFactory } from 'pure-glyf/sursaut'
+import { options } from '@sursaut/ui'
 
 mount()
 registerGlyfIconFactory()
 ```
 
-Build note: `vite.config.ts` uses `pounceCorePlugin` for JSX transform on `pounce.tsx`, and `beforeWriteFile` in `vite-plugin-dts` rewrites relative `../ui/dist/...` paths back to `@pounce/ui` in generated `.d.ts` files.
+Build note: `vite.config.ts` uses `sursautCorePlugin` for JSX transform on `sursaut.tsx`, and `beforeWriteFile` in `vite-plugin-dts` rewrites relative `../ui/dist/...` paths back to `@sursaut/ui` in generated `.d.ts` files.
 
-### Pounce Babel Plugin Compatibility
-`@pounce/core/plugin` (formerly `@pounce/plugin`) now skips virtual module IDs (`\0`-prefixed) and query-string IDs. Full icon libraries (e.g. `@tabler/icons/icons/outline` with ~5000 SVGs) work directly — no curated subset needed.
+### Sursaut Babel Plugin Compatibility
+`@sursaut/core/plugin` (formerly `@sursaut/plugin`) now skips virtual module IDs (`\0`-prefixed) and query-string IDs. Full icon libraries (e.g. `@tabler/icons/icons/outline` with ~5000 SVGs) work directly — no curated subset needed.
 
 ### Rollup
 Requires `@rollup/plugin-node-resolve` to handle runtime imports.

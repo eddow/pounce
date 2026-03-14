@@ -63,7 +63,7 @@ export type RouteTreeNode = {
 }
 
 /**
- * Segment info derived from @pounce/core parsePathSegment.
+ * Segment info derived from @sursaut/core parsePathSegment.
  * Adapts ParsedPathSegment to the format used by buildRouteTree.
  */
 export interface SegmentInfo {
@@ -74,7 +74,7 @@ export interface SegmentInfo {
 }
 
 /**
- * Parse dynamic segment from path segment using @pounce/core core.
+ * Parse dynamic segment from path segment using @sursaut/core core.
  * Adapts the ParsedPathSegment to SegmentInfo format for tree building.
  *
  * [id] -> { isDynamic: true, paramName: 'id' }
@@ -139,7 +139,7 @@ export function matchFileRoute(
 		layouts: any[]
 	} | null {
 		if (depth > 50) {
-			console.warn('[@pounce/board] Route matching depth exceeded')
+			console.warn('[@sursaut/board] Route matching depth exceeded')
 			return null
 		}
 		// Base case: If we've consumed all segments, check for handler OR component at this node
@@ -439,7 +439,7 @@ export async function buildRouteTree(
 
 	async function scan(dir: string, node: RouteTreeNode) {
 		if (path.relative(routesDir, dir).split(path.sep).length > 20) {
-			console.warn(`[@pounce/board] Route recursion depth exceeded at ${dir}`)
+			console.warn(`[@sursaut/board] Route recursion depth exceeded at ${dir}`)
 			return
 		}
 

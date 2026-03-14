@@ -1,4 +1,4 @@
-import { uiComponent } from '@pounce/ui'
+import { uiComponent } from '@sursaut/ui'
 
 /**
  * PicoCSS variant list

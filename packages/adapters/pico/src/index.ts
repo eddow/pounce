@@ -1,9 +1,9 @@
 /**
- * PicoCSS adapter for @pounce/ui v2
+ * PicoCSS adapter for @sursaut/ui v2
  *
  * Usage:
  * ```tsx
- * import { Button, Card, Modal } from '@pounce/adapter-pico'
+ * import { Button, Card, Modal } from '@sursaut/adapter-pico'
  * ```
  */
 

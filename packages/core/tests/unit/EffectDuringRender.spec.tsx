@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { reactive, effect, type CleanupReason } from 'mutts'
-import { latch, type Env, document } from '@pounce/core'
+import { latch, type Env, document } from '@sursaut/core'
 
 describe('Effect during render bug', () => {
 	let container: HTMLElement

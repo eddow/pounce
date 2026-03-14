@@ -1,8 +1,8 @@
-# Pounce Framework: API Routing & `expose` Specification
+# Sursaut Framework: API Routing & `expose` Specification
 
 ## 1. Architectural Overview
 
-The Pounce Framework utilizes a hybrid File-System + Recursive Record routing system for its Server-Side (Board) API endpoints. 
+The Sursaut Framework utilizes a hybrid File-System + Recursive Record routing system for its Server-Side (Board) API endpoints. 
 
 * `**/*.tsx` files are strictly Client/UI routes (`index.tsx` = page, `layout.tsx` = wrapping layout).
 * `**/*.ts` files in the `routes` directory are API/Server routes (configured via `expose()`).
@@ -20,9 +20,9 @@ The Board Engine discovers and registers routes using an execution-context injec
 ### The Boot Sequence
 
 1.  **Discovery:** The engine scans the `routes` directory for all `.ts` files.
-2.  **Context Injection:** Before importing a file, the engine sets a global identifier (e.g., `globalThis.__POUNCE_CURRENT_FILE__ = '/absolute/path/to/routes/api/users.ts'`).
+2.  **Context Injection:** Before importing a file, the engine sets a global identifier (e.g., `globalThis.__SURSAUT_CURRENT_FILE__ = '/absolute/path/to/routes/api/users.ts'`).
 3.  **Execution:** The engine dynamically imports the file: `await import(filePath)`.
-4.  **Capture:** The file executes and calls `expose(config)`. Inside `expose`, the function reads `globalThis.__POUNCE_CURRENT_FILE__` to know exactly which file is currently defining routes. It then calculates the `baseUrl` (e.g., `/api/users`) and flattens the `config` tree into the central Router registry.
+4.  **Capture:** The file executes and calls `expose(config)`. Inside `expose`, the function reads `globalThis.__SURSAUT_CURRENT_FILE__` to know exactly which file is currently defining routes. It then calculates the `baseUrl` (e.g., `/api/users`) and flattens the `config` tree into the central Router registry.
 5.  **Cleanup:** The engine clears or updates the global variable and moves to the next file.
 
 ---
@@ -110,7 +110,7 @@ export default function UsersLayout({ auth, children }: { auth: AuthInfo; childr
 
 `children` is injected by the router (the nested page content). A layout receives provide data from its level and above — never from children below it.
 
-* **Why props?** Props are read-only in pounce-ts — a natural fit since `provide` data shouldn't be mutated by the component. Components stay pure and testable. No framework-specific import required.
+* **Why props?** Props are read-only in sursaut-ts — a natural fit since `provide` data shouldn't be mutated by the component. Components stay pure and testable. No framework-specific import required.
 * **Typing:** The component's prop interface is the contract. TypeScript catches mismatches between `provide` return shape and component expectations.
 
 [Image of a tree data structure illustrating middleware and provide cascading down nested route branches]
@@ -132,7 +132,7 @@ Layouts are a **UI concern**, not an API concern. They stay in `.tsx` land and a
 **Injected Base URL:** `/api/admin`
 
 ```typescript
-import { expose } from '@pounce/board';
+import { expose } from '@sursaut/board';
 import { requireAuth, checkOwnership } from '../middle';
 
 // `export default` so the client can infer types via `typeof`

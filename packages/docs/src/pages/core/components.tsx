@@ -1,6 +1,6 @@
 import { ApiTable, Code, Section } from '../../components'
 
-const componentSignature = `// A Pounce component is a plain function:
+const componentSignature = `// A Sursaut component is a plain function:
 function MyComponent(props: MyProps, env: Env): JSX.Element {
   // Body runs ONCE — no re-renders.
   // All reactivity comes from r() wrappers in JSX.
@@ -10,10 +10,10 @@ function MyComponent(props: MyProps, env: Env): JSX.Element {
 // Arrow function form:
 const Greeting = ({ name }: { name: string }) => <h1>Hello, {name}!</h1>`
 
-const pounceElement = `// PounceElement is the core abstraction.
-// h() creates PounceElements, render() produces DOM nodes.
+const sursautElement = `// SursautElement is the core abstraction.
+// h() creates SursautElements, render() produces DOM nodes.
 
-class PounceElement {
+class SursautElement {
   // The produce function creates real DOM nodes
   produce: (env?: Env) => Node | readonly Node[]
 
@@ -81,7 +81,7 @@ export default function ComponentsPage() {
 		<article>
 			<h1>Components</h1>
 			<p>
-				How Pounce components work: the render-once model, PounceElement, and lifecycle callbacks.
+				How Sursaut components work: the render-once model, SursautElement, and lifecycle callbacks.
 			</p>
 
 			<Section title="Component Signature">
@@ -94,17 +94,17 @@ export default function ComponentsPage() {
 				<Code code={componentSignature} lang="tsx" />
 			</Section>
 
-			<Section title="PounceElement">
+			<Section title="SursautElement">
 				<p>
-					<code>PounceElement</code> is the internal abstraction that bridges JSX descriptors and
+					<code>SursautElement</code> is the internal abstraction that bridges JSX descriptors and
 					real DOM nodes. When <code>h()</code> encounters a component function, it wraps the
-					component call in a PounceElement whose <code>produce</code> function invokes the
+					component call in a SursautElement whose <code>produce</code> function invokes the
 					component inside a <code>mutts</code> effect with a rebuild fence.
 				</p>
-				<Code code={pounceElement} lang="tsx" />
+				<Code code={sursautElement} lang="tsx" />
 				<p>
 					Render results are cached in a static WeakMap — calling <code>render()</code> twice on the
-					same PounceElement returns the same DOM nodes.
+					same SursautElement returns the same DOM nodes.
 				</p>
 			</Section>
 
@@ -127,7 +127,7 @@ export default function ComponentsPage() {
 				<Code code={lifecycleExample} lang="tsx" />
 			</Section>
 
-			<Section title="PounceElement API">
+			<Section title="SursautElement API">
 				<ApiTable
 					props={[
 						{

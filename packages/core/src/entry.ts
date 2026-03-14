@@ -11,7 +11,7 @@ function entry() {
 
 	// Test fixtures start with uppercase letter (e.g., Binding, Dynamic, For, etc.)
 	if (hash && /^[A-Z]/.test(hash)) {
-		console.log('[pounce] Entry: Loading test fixtures')
+		console.log('[sursaut] Entry: Loading test fixtures')
 		initTests()
 	}
 	// Main demo mounts by default (already imported via side effects)

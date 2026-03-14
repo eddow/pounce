@@ -8,11 +8,11 @@ test.describe('Demo API', () => {
 	// ── Root ──────────────────────────────────────────────────────────
 	test('GET / returns provide data (root)', async ({ request }) => {
 		const res = await request.get('/', {
-			headers: { 'X-Pounce-Provide': 'true' },
+			headers: { 'X-Sursaut-Provide': 'true' },
 		})
 		expect(res.ok()).toBeTruthy()
 		const data = await res.json()
-		expect(data.siteName).toBe('Pounce Demo')
+		expect(data.siteName).toBe('Sursaut Demo')
 		expect(data.buildTime).toBeDefined()
 	})
 

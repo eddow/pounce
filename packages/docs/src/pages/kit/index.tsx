@@ -1,6 +1,6 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const routerExample = `import { Router, A } from '@pounce'
+const routerExample = `import { Router, A } from '@sursaut'
 
 const routes = [
   { path: '/', view: HomePage },
@@ -23,7 +23,7 @@ function App() {
   )
 }`
 
-const clientExample = `import { client } from '@pounce'
+const clientExample = `import { client } from '@sursaut'
 
 // client is a reactive object with browser state:
 client.url.pathname    // current URL path
@@ -35,7 +35,7 @@ client.direction       // 'ltr' | 'rtl'
 // Navigate programmatically:
 client.navigate('/about')`
 
-const storedExample = `import { stored } from '@pounce'
+const storedExample = `import { stored } from '@sursaut'
 
 // stored() creates a reactive value backed by localStorage.
 // Changes persist across page reloads.
@@ -43,7 +43,7 @@ const storedExample = `import { stored } from '@pounce'
 const theme = stored('theme', 'light')
 theme.value = 'dark' // saved to localStorage['theme']`
 
-const intlExample = `import { IntlNumber, IntlDate, IntlRelativeTime } from '@pounce/kit/intl'
+const intlExample = `import { IntlNumber, IntlDate, IntlRelativeTime } from '@sursaut/kit/intl'
 
 // Intl components render formatted text nodes — no wrapper elements.
 <IntlNumber value={1234.56} style="currency" currency="EUR" />
@@ -59,12 +59,12 @@ export default function KitPage() {
 	return (
 		<article>
 			<PackageHeader
-				name="@pounce/kit"
+				name="@sursaut/kit"
 				description="Router, client state, storage, Intl formatting, and API utilities."
 			/>
 
 			<p>
-				<code>@pounce/kit</code> provides the application-level tools that sit between the core
+				<code>@sursaut/kit</code> provides the application-level tools that sit between the core
 				framework and UI components: routing, browser state, persistent storage,
 				internationalization, and API helpers.
 			</p>

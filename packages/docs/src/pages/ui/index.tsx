@@ -1,23 +1,23 @@
 import { Code, PackageHeader, Section } from '../../components'
 
-const adapterSetup = `import { pounceBarrelPlugin, pounceMinimalPackage } from '@pounce/core/plugin'
+const adapterSetup = `import { sursautBarrelPlugin, sursautMinimalPackage } from '@sursaut/core/plugin'
 
 export default defineConfig({
   plugins: [
-    ...pounceMinimalPackage(),
-    pounceBarrelPlugin({
+    ...sursautMinimalPackage(),
+    sursautBarrelPlugin({
       skeleton: 'front-end',
-      adapter: '@pounce/adapter-pico',
+      adapter: '@sursaut/adapter-pico',
     }),
   ],
 })
 
 import '@picocss/pico/css/pico.min.css'
-import '@pounce/adapter-pico/css'`
+import '@sursaut/adapter-pico/css'`
 
-const buttonExample = `import { Button } from '@pounce'
+const buttonExample = `import { Button } from '@sursaut'
 
-// Headless behavior comes from @pounce/ui models.
+// Headless behavior comes from @sursaut/ui models.
 // The visual implementation comes from your adapter.
 <Button variant="primary">Save</Button>
 <Button variant="danger">Delete</Button>
@@ -32,7 +32,7 @@ const buttonExample = `import { Button } from '@pounce'
 // With icons (via pure-glyf):
 <Button icon="check">Save</Button>`
 
-const overlayExample = `import { StandardOverlays } from '@pounce'
+const overlayExample = `import { StandardOverlays } from '@sursaut/adapter-pico'
 
 // Wrap your app with StandardOverlays:
 <StandardOverlays>
@@ -47,7 +47,9 @@ env.dialog({ title: 'Confirm', message: 'Are you sure?' })
 
 env.drawer({ children: <SettingsPanel />, side: 'right' })`
 
-const displayContext = `import { DisplayProvider, ThemeToggle, useDisplayContext } from '@pounce'
+const displayContext = `import type { Env } from '@sursaut/core'
+import { DisplayProvider, useDisplayContext } from '@sursaut/kit'
+import { ThemeToggle } from '@sursaut'
 import { reactive } from 'mutts'
 
 const settings = reactive({ theme: 'auto' as const })
@@ -70,15 +72,15 @@ export default function UIPage() {
 	return (
 		<article>
 			<PackageHeader
-				name="@pounce/ui"
-				description="Headless primitives, directives, overlays, and models for adapter-driven Pounce UIs."
+				name="@sursaut/ui"
+				description="Headless primitives, directives, overlays, and models for adapter-driven Sursaut UIs."
 			/>
 
 			<p>
-				<code>@pounce/ui</code> is the headless layer of the Pounce UI stack. It exports models,
+				<code>@sursaut/ui</code> is the headless layer of the Sursaut UI stack. It exports models,
 				directives, overlays, and shared utilities; visual components come from an adapter such as{' '}
-				<code>@pounce/adapter-pico</code> and are typically consumed through the{' '}
-				<code>@pounce</code> front-end barrel.
+				<code>@sursaut/adapter-pico</code> and are typically consumed through the{' '}
+				<code>@sursaut</code> front-end barrel.
 			</p>
 
 			<Section title="Adapter Setup">
@@ -89,8 +91,12 @@ export default function UIPage() {
 				<Code code={adapterSetup} lang="tsx" />
 			</Section>
 
-			<Section title="Components">
-				<p>Available components:</p>
+			<Section title="Components & Overlay APIs">
+				<p>
+					The front-end barrel mainly exposes adapter-backed components. Overlays are usually
+					consumed through env helpers provided by <code>StandardOverlays</code>, rather than by
+					rendering <code>Dialog</code>, <code>Toast</code>, or <code>Drawer</code> directly.
+				</p>
 				<table>
 					<thead>
 						<tr>
@@ -131,21 +137,21 @@ export default function UIPage() {
 						</tr>
 						<tr>
 							<td>
-								<code>Dialog</code>
+								<code>env.dialog(...)</code>
 							</td>
-							<td>Modal dialog with backdrop and focus trap</td>
+							<td>Imperative dialog API exposed by the overlay host</td>
 						</tr>
 						<tr>
 							<td>
-								<code>Toast</code>
+								<code>env.toast(...)</code>
 							</td>
-							<td>Notification toasts with variants</td>
+							<td>Imperative toast API exposed by the overlay host</td>
 						</tr>
 						<tr>
 							<td>
-								<code>Drawer</code>
+								<code>env.drawer(...)</code>
 							</td>
-							<td>Slide-out panel (left/right)</td>
+							<td>Imperative drawer API exposed by the overlay host</td>
 						</tr>
 						<tr>
 							<td>
@@ -262,9 +268,10 @@ export default function UIPage() {
 
 			<Section title="Display Context">
 				<p>
-					<code>DisplayProvider</code> resolves theme, direction, locale, and timezone for its
-					subtree. <code>ThemeToggle</code> mutates your reactive settings object, while{' '}
-					<code>useDisplayContext()</code> reads the resolved values from env.
+					<code>DisplayProvider</code> and <code>useDisplayContext()</code> come from{' '}
+					<code>@sursaut/kit</code>. <code>ThemeToggle</code> is adapter-backed and typically
+					consumed through the front-end barrel. Together they resolve theme, direction, locale, and
+					timezone for a subtree.
 				</p>
 				<Code code={displayContext} lang="tsx" />
 			</Section>

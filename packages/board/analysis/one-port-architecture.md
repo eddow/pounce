@@ -1,8 +1,8 @@
-# Pounce Framework: The "One Port" Architecture (Vite + Hono)
+# Sursaut Framework: The "One Port" Architecture (Vite + Hono)
 
 ## 1. Architectural Overview: The "Flip"
 
-To provide the ultimate developer experience (instant HMR) and the most robust production environment (a single, unified server deployment), Pounce utilizes a "Flipped" architecture. 
+To provide the ultimate developer experience (instant HMR) and the most robust production environment (a single, unified server deployment), Sursaut utilizes a "Flipped" architecture. 
 
 Regardless of the environment, the frontend and backend always run on the exact same port. This eliminates all CORS configurations and `OPTIONS` preflight requests. However, which server acts as the "Front Door" changes depending on the environment.
 
@@ -17,7 +17,7 @@ In development, we need Vite to parse the `**/*.tsx` files, inject Hot Module Re
 
 To achieve "One Port" in development, we use the `@hono/vite-dev-server` plugin. Vite listens on port `5173`. 
 1. If a request comes in for a static asset or a `.tsx` file, Vite handles it natively.
-2. If a request comes in for the API (e.g., `/api/*` or the Deck Batch Provider `/__pounce/*`), Vite intercepts it and passes the raw standard Request object directly to your Hono instance.
+2. If a request comes in for the API (e.g., `/api/*` or the Deck Batch Provider `/__sursaut/*`), Vite intercepts it and passes the raw standard Request object directly to your Hono instance.
 
 
 
@@ -70,9 +70,9 @@ import { engine } from './board-engine'; // Your custom expose parser
 
 const app = new Hono();
 
-// 1. Register all Pounce API routes and the Batch Provider
+// 1. Register all Sursaut API routes and the Batch Provider
 app.route('/api', engine.apiRouter);
-app.post('/__pounce/batch-provide', engine.batchProvider);
+app.post('/__sursaut/batch-provide', engine.batchProvider);
 
 // 2. Fallback: Serve the static Vite build for everything else
 app.use('/*', serveStatic({ 
@@ -104,4 +104,4 @@ To make this architecture a reality, ensure the AI agents handle the following:
 
 1.  **Separate Entry Points:** Maintain a clean separation between `src/server/entry.ts` (used by Vite plugin, exports just the `app`) and `server.production.ts` (used in production, imports the `app` and calls `serve()`).
 2.  **Path Resolution:** Ensure the Board Engine's file-system scanner (`glob`) looks in `src/panels/` during dev, but correctly maps paths to the compiled `.js` files when running in the production build.
-3.  **Environment Variables:** Standardize how the Client Kit determines its base URL. Because of the single port, API calls from the `.tsx` files should always use relative paths (e.g., `fetch('/__pounce/batch-provide')`), never absolute URLs like `http://localhost:3000`.
+3.  **Environment Variables:** Standardize how the Client Kit determines its base URL. Because of the single port, API calls from the `.tsx` files should always use relative paths (e.g., `fetch('/__sursaut/batch-provide')`), never absolute URLs like `http://localhost:3000`.

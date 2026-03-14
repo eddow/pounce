@@ -10,7 +10,7 @@
 		"resolveJsonModule": true,
 		"baseUrl": ".",
 		"paths": {
-			"@pounce/core": ["../packages/core/src/test/index.ts"]
+			"@sursaut/core": ["../packages/core/src/test/index.ts"]
 		}
 	},
 	"include": ["./**/*.ts"]

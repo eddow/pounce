@@ -1,6 +1,6 @@
 import { ApiTable, Code, Section } from '../../components'
 
-const storedBasics = `import { stored } from '@pounce'
+const storedBasics = `import { stored } from '@sursaut'
 
 // stored() creates a reactive object backed by localStorage.
 // Changes persist across page reloads and sync across tabs.
@@ -29,7 +29,7 @@ session.user = { name: 'Alice' }
 
 // Tab B sees the change instantly via storage event.`
 
-const jsonCustom = `import { json } from '@pounce'
+const jsonCustom = `import { json } from '@sursaut'
 
 // The json object controls serialization.
 // Override parse/stringify for custom types:
@@ -40,7 +40,7 @@ json.parse = <T>(value: string): T => {
   return originalParse(value)
 }`
 
-const cleanup = `import { stored } from '@pounce'
+const cleanup = `import { stored } from '@sursaut'
 import { cleanup } from 'mutts'
 
 // stored() registers effects for each key.

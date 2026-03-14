@@ -1,4 +1,4 @@
-import type { Env } from '@pounce/core'
+import type { Env } from '@sursaut/core'
 import type { ElementPassthroughProps } from '../shared/types'
 import { type GroupBinding, hasGroupValue, setGroupValue } from './group'
 // TODO: we should have the accordionGroup component here - in components I mean, in `ui` - as it is a purely behavior-forwarding-children component

@@ -1,4 +1,4 @@
-# Pounce-Board Project Walkthrough
+# Sursaut-Board Project Walkthrough
 
 > **Status:** Implementation phase completed. Core modules reorganized and consumer app types fixed.
 
@@ -7,7 +7,7 @@
 ## Core Modules
 
 ### [Core HTTP Client](src/lib/http/client.ts)
-Universal API client for pounce-board. Supports SSR hydration.
+Universal API client for sursaut-board. Supports SSR hydration.
 
 ### [Context Management](src/lib/http/context.ts)
 Typed global context for SSR and request-scoped data using AsyncLocalStorage.
@@ -19,9 +19,9 @@ File-based router (`index.ts`), `expose()` runtime (`expose.ts`), and client-imp
 
 > [!IMPORTANT]
 > **Read these LLM.md files before implementing:**
-> - [pounce-ts (core)](../core/LLM.md) – UI framework, fine-grained reactivity, JSX transforms
+> - [sursaut-ts (core)](../core/LLM.md) – UI framework, fine-grained reactivity, JSX transforms
 > - [mutts](../../../../mutts/LLM.md) – Reactivity system (**used both FE and BE**)
-> - [pounce-board](./LLM.md) – This package's cheatsheet
+> - [sursaut-board](./LLM.md) – This package's cheatsheet
 
 ---
 
@@ -44,11 +44,11 @@ File-based router (`index.ts`), `expose()` runtime (`expose.ts`), and client-imp
 
 ## Overview
 
-**Pounce-Board** is a full-stack meta-framework for **pounce-ts**—analogous to what SvelteKit is to Svelte.
+**Sursaut-Board** is a full-stack meta-framework for **sursaut-ts**—analogous to what SvelteKit is to Svelte.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                       pounce-board                          │
+│                       sursaut-board                          │
 │  (Full-stack meta-framework)                                │
 │  - File-based routing        - Middleware stacks            │
 │  - SSR hydration             - External API proxies         │
@@ -56,7 +56,7 @@ File-based router (`index.ts`), `expose()` runtime (`expose.ts`), and client-imp
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                        pounce-ts                            │
+│                        sursaut-ts                            │
 │  (UI Component Framework)                                   │
 │  - Fine-grained reactivity   - Direct DOM manipulation      │
 │  - Two-way binding via JSX   - No Virtual DOM               │
@@ -94,7 +94,7 @@ File-based router (`index.ts`), `expose()` runtime (`expose.ts`), and client-imp
 ### Framework Source Structure
 
 ```
-pounce-board/
+sursaut-board/
 ├── src/
 │   ├── index.ts                   # Public API re-exports
 │   ├── types.ts                   # Shared types
@@ -104,7 +104,7 @@ pounce-board/
 │   │   │   ├── client.ts          # API client (universal FE+BE)
 │   │   │   ├── context.ts         # AsyncLocalStorage request context
 │   │   │   ├── proxy.ts           # External API proxy system
-│   │   │   ├── response.ts        # PounceResponse utilities
+│   │   │   ├── response.ts        # SursautResponse utilities
 │   │   │   └── stream.ts          # Streaming support
 │   │   ├── ssr/
 │   │   │   └── utils.ts           # SSR injection/hydration
@@ -119,7 +119,7 @@ pounce-board/
 │   ├── client/                    # Client-only entry
 │   ├── server/                    # Server-only entry
 │   └── cli/
-│       ├── index.ts               # CLI entry (pounce dev|build|preview)
+│       ├── index.ts               # CLI entry (sursaut dev|build|preview)
 │       ├── dev.ts                 # Dev server (Vite HMR)
 │       ├── build.ts               # Production build
 │       └── preview.ts             # Preview production build
@@ -190,12 +190,12 @@ Folders wrapped in parentheses are **not included in the URL** but allow shared 
 **`tsconfig.json`** (root — design-time, bundler resolution):
 - Targets ES2022, `moduleResolution: "bundler"`, `strict: true`, `noEmit: true`
 - Paths alias `~/lib/*`, `~/adapters/*`, `~/cli/*` for internal imports
-- Paths alias `@pounce/board`, `pounce-ts`, `pounce-ui`, `@pounce/kit`, `mutts` to source/dist
+- Paths alias `@sursaut/board`, `sursaut-ts`, `sursaut-ui`, `@sursaut/kit`, `mutts` to source/dist
 - Includes `src/**/*` and `tests/**/*`
 
 **`tsconfig.build.json`** (production build):
 - Extends root concepts, adds `outDir: "./dist"`, JSX config (`react`, `h`, `Fragment`)
-- Includes both DOM and Node libs, types: `["node", "@pounce/core"]`
+- Includes both DOM and Node libs, types: `["node", "@sursaut/core"]`
 - Excludes `tests/`
 
 **`tsconfig.node.json`** (vitest config only):
@@ -230,11 +230,11 @@ const doubled = memoize(() => state.count * 2);
 ### Route Handlers
 ```ts
 // routes/users/[id]/index.ts
-import { expose } from '@pounce/board'
-import type { PounceRequest } from '@pounce/board'
+import { expose } from '@sursaut/board'
+import type { SursautRequest } from '@sursaut/board'
 
 export default expose({
-  get: async (req: PounceRequest<{ id: string }>) => {
+  get: async (req: SursautRequest<{ id: string }>) => {
     return { id: req.params.id, name: `User ${req.params.id}` }
   }
 })
@@ -243,7 +243,7 @@ export default expose({
 ### Middleware
 ```ts
 // routes/users/index.ts — middle cascades to sibling files + children
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 export default expose({
   middle: [
@@ -310,7 +310,7 @@ const users = await api("/api/users").get();
 
 ```tsx
 // routes/dashboard/index.tsx
-import { api } from 'pounce-board/http';
+import { api } from 'sursaut-board/http';
 
 export default function Dashboard() {
   // This runs on server (SSR) first, then on client
@@ -326,7 +326,7 @@ export default function Dashboard() {
 2. api("/api/stats").get() is called
 3. Direct import: routes/api/stats/index.ts
 4. Call exported `get({ params, context })`
-5. Inject: <script id="pounce-data-L2FwaS9zdGF0cw">{"total":42}</script>
+5. Inject: <script id="sursaut-data-L2FwaS9zdGF0cw">{"total":42}</script>
 6. HTML sent to browser with data embedded
 ```
 
@@ -334,7 +334,7 @@ export default function Dashboard() {
 ```
 1. Component hydrates
 2. api("/api/stats").get() is called again
-3. Checks for <script id="pounce-data-L2FwaS9zdGF0cw">
+3. Checks for <script id="sursaut-data-L2FwaS9zdGF0cw">
 4. Finds it, reads {"total":42}, removes tag
 5. Returns cached data (no network request!)
 ```
@@ -360,7 +360,7 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 
 ---
 
-## pounce-ts Integration Notes
+## sursaut-ts Integration Notes
 
 > [!WARNING]
 > **Anti-patterns to avoid:**
@@ -386,14 +386,14 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 
 ### 1.2 Dependencies
 - [ ] Add `mutts` as dependency
-- [ ] Add `pounce-ts` as dependency
+- [ ] Add `sursaut-ts` as dependency
 - [ ] Implement Hono adapter (primary integration)
 - [ ] Add Arktype for validation
 - [ ] Add development dependencies (Vite, TypeScript, etc.)
 
 ### 1.3 Build Setup
 - [ ] All the tsconfig.xxx.json, all the vite plugins &c. should be confgured automatically - each with one import
-- [ ] The server shouldn't have to be configured manually - all the route/middleware/... initialisation should be centralised by pounce-board, perhaps just exported from pounce-board so that it can be augmented
+- [ ] The server shouldn't have to be configured manually - all the route/middleware/... initialisation should be centralised by sursaut-board, perhaps just exported from sursaut-board so that it can be augmented
 
 ---
 
@@ -465,18 +465,18 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 
 ## Phase 4: SSR Integration (Phased)
 
-### 4.1 Phase 1: Basic Node/SSR Support (`pounce-ts`)
-- [x] Implement `renderToString(element, scope)` in `pounce-ts/server`
+### 4.1 Phase 1: Basic Node/SSR Support (`sursaut-ts`)
+- [x] Implement `renderToString(element, scope)` in `sursaut-ts/server`
 - [x] Support `linkedom` as an optional server-side dependency
 - [x] Verify synchronous component rendering in Node
 
 ### 4.2 Phase 2: Async Data Tracking
-- [x] Implement SSR Promise Tracker in `pounce-board/lib/http/context`
+- [x] Implement SSR Promise Tracker in `sursaut-board/lib/http/context`
 - [x] Update `api()` client to register pending SSR requests
-- [x] Implement `renderToStringAsync` in `pounce-ts/server`
+- [x] Implement `renderToStringAsync` in `sursaut-ts/server`
 - [x] Verify components wait for data before final HTML generation
 
-### 4.3 Phase 3: Pounce-Board Integration
+### 4.3 Phase 3: Sursaut-Board Integration
 - [x] Update Hono adapter to use `renderToStringAsync`
 - [x] Update CLI dev server to match routes and render components
 - [x] Integrate layouts (`layout.tsx`) into the SSR render chain
@@ -556,7 +556,7 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 ## Phase 7: Server Adapters
 
 ### 7.1 Hono Integration (Automated)
-- [x] Implement `createHonoMiddleware()` connecting pounce router to Hono
+- [x] Implement `createHonoMiddleware()` connecting sursaut router to Hono
 - [x] Automate route table registration
 - [x] Automate middleware stack registration
 - [x] Handle request/response conversion
@@ -575,21 +575,21 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 ## Phase 8: CLI Tooling
 
 ### 8.1 Development Server (`cli/dev.ts`)
-- [x] Implement `pounce dev` command
+- [x] Implement `sursaut dev` command
 - [x] Integrate Vite for HMR (using middleware mode)
 - [x] Handle API route hot reloading (via route tree cache clearing)
 - [x] Display route table on startup (Basic version implemented)
 - [x] Add port configuration
 
 ### 8.2 Build Command (`cli/build.ts`)
-- [x] Implement `pounce build` command
+- [x] Implement `sursaut build` command
 - [x] Bundle client-side code
 - [x] Compile server-side code
 - [x] Generate route manifest
 - [x] Optimize for production
 
 ### 8.3 Preview Command (`cli/preview.ts`)
-- [x] Implement `pounce preview` command
+- [x] Implement `sursaut preview` command
 - [x] Serve production build locally
 - [x] Simulate production environment
 - [x] Support bundled deployment for consumers
@@ -642,7 +642,7 @@ Most of the time, you don't need `getSSRData()` directly - just use `api()` and 
 ### Test Structure Overview
 
 ```
-pounce-board/
+sursaut-board/
 ├── src/
 │   ├── lib/
 │   │   ├── http/
@@ -676,7 +676,7 @@ pounce-board/
 │   │   └── ssr-flow.spec.ts
 │   │
 │   └── consumers/                    # ← Test consumer apps
-│       ├── minimal-app/              # Minimal pounce-board app
+│       ├── minimal-app/              # Minimal sursaut-board app
 │       │   ├── routes/
 │       │   │   ├── index.ts          # Root API via expose()
 │       │   │   ├── index.tsx         # Home page
@@ -688,7 +688,7 @@ pounce-board/
 │       │   │       └── [id]/
 │       │   │           ├── index.ts  # User detail API via expose()
 │       │   │           └── index.tsx # User detail page
-│       │   ├── package.json          # Uses @pounce/board as dep
+│       │   ├── package.json          # Uses @sursaut/board as dep
 │       │   └── vite.config.ts
 │       │
 │       ├── blog-app/                 # Blog example as test
@@ -876,11 +876,11 @@ export default defineConfig({
 
 ### 10.4 Consumer Test Apps (`/tests/consumers/`)
 
-**Real applications** that use pounce-board as a dependency, ensuring the package works correctly when consumed.
+**Real applications** that use sursaut-board as a dependency, ensuring the package works correctly when consumed.
 
 #### `tests/consumers/minimal-app/`
 Bare-minimum app to test basic functionality:
-- [x] Create `package.json` with `pounce-board` dependency
+- [x] Create `package.json` with `sursaut-board` dependency
 - [x] Create single route with handler + page
 - [x] Create dynamic route `/users/[id]`
 - [x] Create middleware example
@@ -1029,7 +1029,7 @@ E-commerce implementation:
 
 ## Quick Reference: What Lives Where
 
-| Concept | pounce-board | pounce-ts | mutts |
+| Concept | sursaut-board | sursaut-ts | mutts |
 |---------|--------------|-----------|-------|
 | Reactivity | Uses for BE caching | Uses for FE rendering | Provides core system |
 | Components | `index.tsx` files | `h()`, JSX runtime | - |

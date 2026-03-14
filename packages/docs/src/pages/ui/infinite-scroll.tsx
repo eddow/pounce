@@ -1,4 +1,4 @@
-import { InfiniteScroll, Inline, Select, Stack, Switch } from '@pounce'
+import { InfiniteScroll, Inline, Select, Stack, Switch } from '@sursaut'
 import { reactive } from 'mutts'
 import { ApiTable, Code, Demo, Section } from '../../components'
 
@@ -31,10 +31,10 @@ function FixedHeightDemo() {
 				<Switch checked={state.sticky}>stickyLast</Switch>
 			</Inline>
 			<hr />
-			<div style="height: 300px; border: 1px solid var(--pounce-border, #e5e7eb); border-radius: 0.25rem">
+			<div style="height: 300px; border: 1px solid var(--sursaut-border, #e5e7eb); border-radius: 0.25rem">
 				<InfiniteScroll items={items} itemHeight={Number(state.height)} stickyLast={state.sticky}>
 					{(item: string, i: number) => (
-						<div style="padding: 0.5rem 1rem; border-bottom: 1px solid var(--pounce-border, #eee)">
+						<div style="padding: 0.5rem 1rem; border-bottom: 1px solid var(--sursaut-border, #eee)">
 							{i}: {item}
 						</div>
 					)}

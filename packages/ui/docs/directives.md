@@ -1,6 +1,6 @@
 # Directives
 
-`@pounce/ui` exports the following DOM directives from `src/directives/index.ts`:
+`@sursaut/ui` exports the following DOM directives from `src/directives/index.ts`:
 
 - `badge`
 - `drag`
@@ -14,7 +14,7 @@
 - `sizeable`
 - `tail`
 
-These are plain directive functions meant to be used through Pounce `use:name={value}` bindings.
+These are plain directive functions meant to be used through Sursaut `use:name={value}` bindings.
 
 ## Exported directives
 
@@ -127,5 +127,5 @@ Use for logs, chat threads, and similar append-only scroll regions.
 
 - These directives are headless DOM behavior helpers.
 - They do not style anything.
-- They are exported directly from `@pounce/ui`.
+- They are exported directly from `@sursaut/ui`.
 - For exact value types, see the corresponding files in `src/directives/`.

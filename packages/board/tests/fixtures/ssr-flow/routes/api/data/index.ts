@@ -1,4 +1,4 @@
-import { expose } from 'pounce-board/server'
+import { expose } from 'sursaut-board/server'
 
 export default expose({
 	get: async () => {

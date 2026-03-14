@@ -1,6 +1,6 @@
 # SSR & Node
 
-Node-specific utilities exported from `@pounce/kit/node`.
+Node-specific utilities exported from `@sursaut/kit/node`.
 
 The current node entry exposes three things:
 - ALS-backed request context helpers
@@ -14,7 +14,7 @@ It does **not** currently export a separate node-specific API client or SSR rend
 `<Head>` and `useHead()` are shared kit APIs, but their SSR behavior depends on the active adapter.
 
 - in plain kit node usage, they require a configured `mountHead()` delegate
-- `@pounce/board` installs that delegate for you and collects head HTML during SSR
+- `@sursaut/board` installs that delegate for you and collects head HTML during SSR
 - the collected head HTML is injected into the final document `<head>` before the response is returned
 
 ## Request Context
@@ -23,12 +23,12 @@ It does **not** currently export a separate node-specific API client or SSR rend
 
 Available helpers:
 - `createScope()` from the shared API context surface
-- `runWithContext()` from `@pounce/kit/node`
+- `runWithContext()` from `@sursaut/kit/node`
 - `getContext()` from the shared API context surface
 
 ```typescript
-import { createScope, getContext } from '@pounce/kit'
-import { runWithContext } from '@pounce/kit/node'
+import { createScope, getContext } from '@sursaut/kit'
+import { runWithContext } from '@sursaut/kit/node'
 
 const scope = createScope({ timeout: 5000, retries: 1 })
 scope.origin = 'http://localhost:3000'
@@ -44,7 +44,7 @@ await runWithContext(scope, async () => {
 `serverRouter` re-exports the helpers from `src/node/router.ts`.
 
 ```typescript
-import { serverRouter } from '@pounce/kit/node'
+import { serverRouter } from '@sursaut/kit/node'
 
 const tree = await serverRouter.buildRouteTree('./src/routes')
 const match = serverRouter.matchFileRoute('/users/123', tree, 'GET')
@@ -82,7 +82,7 @@ Useful outputs from `matchFileRoute()`:
 The node entry exports a simple reactive in-memory storage stub:
 
 ```typescript
-import { stored } from '@pounce/kit/node'
+import { stored } from '@sursaut/kit/node'
 
 const state = stored({ theme: 'dark' })
 state.theme = 'light'

@@ -1,9 +1,9 @@
-import { pounceOptions } from '@pounce/core'
+import { sursautOptions } from '@sursaut/core'
 import { reactiveOptions, reset } from 'mutts'
 import { beforeEach, vi } from 'vitest'
 
 // Ensure any reactivity violations (like rebuilds) throw an error during tests.
-pounceOptions.checkReactivity = 'error'
+sursautOptions.checkReactivity = 'error'
 
 // Configure mutts to be strict as well: throw on cycles or max depth exceeded
 reactiveOptions.maxEffectReaction = 'throw'
@@ -16,7 +16,7 @@ beforeEach(() => {
 vi.spyOn(console, 'warn').mockImplementation((...args) => {
 	const log = args.join(' ')
 	if (log.includes('[reactive]') || log.includes('render effect dependency') || log.includes('rebuild detected')) {
-		if (pounceOptions.checkReactivity === 'error') {
+		if (sursautOptions.checkReactivity === 'error') {
 			throw new Error(`Forbidden warning detected: ${log}`)
 		}
 	}

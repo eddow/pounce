@@ -3,13 +3,13 @@
 	"compilerOptions": {
 		"rootDir": "../../../../",
 		"paths": {
-			"@pounce/core": ["../../core/dist/index"],
-			"@pounce/core/*": ["../../core/dist/*"],
-			"@pounce/kit": ["../../kit/dist/dom"],
-			"@pounce/kit/*": ["../../kit/dist/*"],
-			"@pounce/ui": ["../../ui/dist/index"],
-			"@pounce/ui/*": ["../../ui/dist/*"],
-			"@pounce/ui/models": ["../../ui/dist/models/index"],
+			"@sursaut/core": ["../../core/dist/index"],
+			"@sursaut/core/*": ["../../core/dist/*"],
+			"@sursaut/kit": ["../../kit/dist/dom"],
+			"@sursaut/kit/*": ["../../kit/dist/*"],
+			"@sursaut/ui": ["../../ui/dist/index"],
+			"@sursaut/ui/*": ["../../ui/dist/*"],
+			"@sursaut/ui/models": ["../../ui/dist/models/index"],
 			"mutts": ["../../../../mutts/dist/browser"],
 			"mutts/*": ["../../../../mutts/dist/*"]
 		}

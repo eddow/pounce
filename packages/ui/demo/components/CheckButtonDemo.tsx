@@ -1,4 +1,4 @@
-import { checkButtonModel } from '@pounce/ui'
+import { checkButtonModel } from '@sursaut/ui'
 import { reactive } from 'mutts'
 
 export default function CheckButtonDemo() {

@@ -8,10 +8,10 @@ type Post = { id: number; title: string; body: string; userId: number }
 const interceptLog = reactive({ entries: [] as string[] })
 
 intercept('**', async (req, next) => {
-	req.headers.set('X-Demo', 'pounce-kit')
+	req.headers.set('X-Demo', 'sursaut-kit')
 	interceptLog.entries = [
 		...interceptLog.entries,
-		`→ ${req.method} ${new URL(req.url).pathname}${new URL(req.url).search} [X-Demo: pounce-kit]`,
+		`→ ${req.method} ${new URL(req.url).pathname}${new URL(req.url).search} [X-Demo: sursaut-kit]`,
 	]
 	const res = await next(req)
 	interceptLog.entries = [...interceptLog.entries, `← ${res.status} ${new URL(req.url).pathname}`]

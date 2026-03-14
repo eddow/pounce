@@ -1,4 +1,4 @@
-import type { Env } from '@pounce/core'
+import type { Env } from '@sursaut/core'
 import {
 	applyAutoFocus,
 	bindDialog,
@@ -49,7 +49,7 @@ export function withOverlaysModel(props: WithOverlaysProps, env: Env): WithOverl
 		isModalMode,
 		get overlayItem() {
 			return (entry: OverlayEntry): JSX.IntrinsicElements['div'] => ({
-				class: ['pounce-overlay-item', stack.isClosing(entry.id) ? 'pounce-closing' : ''],
+				class: ['sursaut-overlay-item', stack.isClosing(entry.id) ? 'sursaut-closing' : ''],
 				role: isModalMode(entry.mode) ? 'dialog' : undefined,
 				'aria-modal': isModalMode(entry.mode) ? 'true' : undefined,
 				'aria-labelledby': entry.aria?.labelledby,
@@ -70,7 +70,10 @@ export function withOverlaysModel(props: WithOverlaysProps, env: Env): WithOverl
 		},
 		get manager() {
 			return {
-				class: ['pounce-overlay-manager', (props.fixed ?? true) ? 'pounce-fixed' : 'pounce-local'],
+				class: [
+					'sursaut-overlay-manager',
+					(props.fixed ?? true) ? 'sursaut-fixed' : 'sursaut-local',
+				],
 				onKeydown: stack.onKeydown,
 			}
 		},

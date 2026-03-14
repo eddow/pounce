@@ -11,7 +11,7 @@ import { flavored } from 'mutts'
  *
  * @example
  * ```ts
- * import { css, sass, scss } from '@pounce/kit'
+ * import { css, sass, scss } from '@sursaut/kit'
  *
  * css`.my-class { color: red; }`
  *
@@ -113,8 +113,8 @@ export function scss(strings: TemplateStringsArray, ...values: any[]): void {
 	__injectCSS(cssText)
 }
 
-/** Component-specific style tag. Wrapped in `@layer pounce.components` by the Vite plugin. */
+/** Component-specific style tag. Wrapped in `@layer sursaut.components` by the Vite plugin. */
 export const componentStyle = flavored(css, { css, sass, scss })
 
-/** Base style tag. Wrapped in `@layer pounce.base` by the Vite plugin. */
+/** Base style tag. Wrapped in `@layer sursaut.base` by the Vite plugin. */
 export const baseStyle = flavored(css, { css, sass, scss })

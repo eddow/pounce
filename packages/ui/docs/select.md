@@ -57,7 +57,7 @@ type SelectModel = {
 ### Usage
 
 ```tsx
-import { selectModel } from '@pounce/ui'
+import { selectModel } from '@sursaut/ui'
 
 function Select(props) {
 	const model = selectModel(props)
@@ -97,7 +97,7 @@ type ComboboxModel = {
 ### Usage
 
 ```tsx
-import { comboboxModel } from '@pounce/ui'
+import { comboboxModel } from '@sursaut/ui'
 
 function Combobox(props) {
 	const model = comboboxModel(props)

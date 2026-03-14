@@ -1,8 +1,8 @@
-# Pounce-TS Documentation
+# Sursaut-TS Documentation
 
 ## JSX Configuration Standard ⚠️ **CRITICAL**
 
-**ALL Pounce projects MUST use the classic JSX transform configuration.**
+**ALL Sursaut projects MUST use the classic JSX transform configuration.**
 Do NOT use `jsx: "react-jsx"` or `jsxImportSource` - this causes build failures and inconsistencies.
 
 ### Standard TypeScript Configuration
@@ -20,13 +20,13 @@ Do NOT use `jsx: "react-jsx"` or `jsxImportSource` - this causes build failures 
 ### Why Classic Transform?
 
 1. **Consistency** - All packages use the same JSX configuration
-2. **Compatibility** - Works with Pounce's custom JSX transform via Babel plugin
+2. **Compatibility** - Works with Sursaut's custom JSX transform via Babel plugin
 3. **Simplicity** - No need for jsx-runtime exports or imports
 
 ### What NOT to Do
 
 ❌ DO NOT use `jsx: "react-jsx"`  
-❌ DO NOT use `jsxImportSource: "@pounce/core"`  
+❌ DO NOT use `jsxImportSource: "@sursaut/core"`  
 ❌ DO NOT add jsx-runtime or jsx-dev-runtime exports to package.json
 
 ### Babel Plugin Configuration
@@ -41,10 +41,10 @@ The Babel plugin handles JSX transformation with:
 }]
 ```
 
-This ensures JSX is transformed to `h()` calls which Pounce understands.
+This ensures JSX is transformed to `h()` calls which Sursaut understands.
 
 ## Overview
-Pounce is a **Component-Oriented UI Framework** that *looks* like React but works very differently. It uses **fine-grained reactivity** (via `mutts`) and direct DOM manipulation, avoiding the overhead of a Virtual DOM diffing engine.
+Sursaut is a **Component-Oriented UI Framework** that *looks* like React but works very differently. It uses **fine-grained reactivity** (via `mutts`) and direct DOM manipulation, avoiding the overhead of a Virtual DOM diffing engine.
 
 ## Core Architecture
 
@@ -61,7 +61,7 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
 
 > [!IMPORTANT]
 > **NO MANUAL CALLBACKS IN JSX EXPRESSIONS**
-> Reactivity in Pounce is a **pair**:
+> Reactivity in Sursaut is a **pair**:
 > 1.  **Babel Plugin**: Automatically rewrites `{expr}` into `{() => expr}`.
 > 2.  **Renderer**: Expects a callback and calls it to establish tracking.
 > 
@@ -84,7 +84,7 @@ Pounce is a **Component-Oriented UI Framework** that *looks* like React but work
 
 > [!TIP]
 > **Attribute Merging (Cumulation)**:
-> For `class` and `style` attributes, Pounce **merges** values across layers (e.g., when using spread operators `{...attrs}`) instead of replacing them:
+> For `class` and `style` attributes, Sursaut **merges** values across layers (e.g., when using spread operators `{...attrs}`) instead of replacing them:
 > *   **Classes**: Cumulate into a single space-separated string. Supports strings, arrays, and objects.
 > *   **Styles**: Merge into a single style object. Later layers override earlier ones for the same property, but distinct properties accumulate.
 > *   **node.isConnected**: Has been made reactive.
@@ -188,7 +188,7 @@ See `mutts/LLM.md` for a deeper conceptual explanation of the "Assembly Line vs.
 
 ### 7. Component Constructor: Static, Run-Once
 
-Component constructors run **once** inside `PounceElement.render`'s effect. A **rebuild fence** prevents re-execution: if the constructor accidentally reads reactive state directly, it reports through `pounceOptions.checkRebuild` and does NOT re-run the body. All reactivity comes from:
+Component constructors run **once** inside `SursautElement.render`'s effect. A **rebuild fence** prevents re-execution: if the constructor accidentally reads reactive state directly, it reports through `sursautOptions.checkRebuild` and does NOT re-run the body. All reactivity comes from:
 - JSX attributes wrapped by the babel plugin (`r()`)
 - Explicit `effect()`, `attend()`, `lift()`, `project()` inside the body
 - JSX directives (`if={}`, `when={}`, `if:path={}`, `when:path={}`, `use:path={}`, `pick:path={}`)
@@ -230,24 +230,24 @@ env.tab = (options: Set<string>) => state.active  // oracle picks one
 
 ### 9. Vitest Uses Babel Plugin
 
-The vitest base config (`test/vitest.config.base.ts`) includes `pounceCorePlugin` so tests undergo the same babel transform as production code. Tests should NOT manually wrap JSX attributes in `r()` — the plugin handles this. `esbuild` is disabled in test config to avoid double-transformation.
+The vitest base config (`test/vitest.config.base.ts`) includes `sursautCorePlugin` so tests undergo the same babel transform as production code. Tests should NOT manually wrap JSX attributes in `r()` — the plugin handles this. `esbuild` is disabled in test config to avoid double-transformation.
 
 ### 10. Dual-Module Hazard — Library Build Externals
 
-`@pounce/core` uses `instanceof ReactiveProp` in critical paths (`propsInto`, `valuedAttributeGetter`, event handlers, reconciler). If a library build bundles a **second copy** of `ReactiveProp` — all `instanceof` checks break at runtime (manifests as `[object Object]` in DOM attributes).
+`@sursaut/core` uses `instanceof ReactiveProp` in critical paths (`propsInto`, `valuedAttributeGetter`, event handlers, reconciler). If a library build bundles a **second copy** of `ReactiveProp` — all `instanceof` checks break at runtime (manifests as `[object Object]` in DOM attributes).
 
-**Rule**: Library builds that externalize `@pounce/core` MUST externalize ALL subpaths: use `/^@pounce\/core/` regex. A singleton guard in `src/lib/index.ts` throws if two instances load.
+**Rule**: Library builds that externalize `@sursaut/core` MUST externalize ALL subpaths: use `/^@sursaut\/core/` regex. A singleton guard in `src/lib/index.ts` throws if two instances load.
 
-**JSX Runtime**: Pounce uses the **classic** JSX transform (`pragma: h`, `pragmaFrag: Fragment`). There is no `jsx-runtime` module — babel emits direct `h()` calls. The `h` and `Fragment` functions are set as globals in `src/lib/index.ts`.
+**JSX Runtime**: Sursaut uses the **classic** JSX transform (`pragma: h`, `pragmaFrag: Fragment`). There is no `jsx-runtime` module — babel emits direct `h()` calls. The `h` and `Fragment` functions are set as globals in `src/lib/index.ts`.
 
-**CRITICAL**: Never switch to `jsx: "react-jsx"` or add jsx-runtime exports. This breaks the build system and creates inconsistencies across packages. All Pounce projects must use the classic transform as documented in the JSX Configuration Standard section at the top of this file.
+**CRITICAL**: Never switch to `jsx: "react-jsx"` or add jsx-runtime exports. This breaks the build system and creates inconsistencies across packages. All Sursaut projects must use the classic transform as documented in the JSX Configuration Standard section at the top of this file.
 
 ### 11. `latch()` — Latching Content onto Elements
 
-`latch(target, content, scope?)` is the public API for rendering pounce content into any DOM element. It replaces the old `<portal>` intrinsic and kit's `head()` function.
+`latch(target, content, scope?)` is the public API for rendering sursaut content into any DOM element. It replaces the old `<portal>` intrinsic and kit's `head()` function.
 
 ```typescript
-import { latch } from '@pounce/core'
+import { latch } from '@sursaut/core'
 
 // Latch into document.head (replaces kit's head())
 const unlatch = latch(document.head, <link rel="canonical" href="/page" />)
@@ -260,25 +260,25 @@ latch(myElement, [<span>a</span>, <span>b</span>])
 unlatch()
 ```
 
-- **Polymorph**: accepts `PounceElement`, `Child[]`, `Node`, `Node[]`, or `undefined`
+- **Polymorph**: accepts `SursautElement`, `Child[]`, `Node`, `Node[]`, or `undefined`
 - **DOMContentLoaded guard**: defers if document is still loading
 - **Conflict detection**: warns if two latches target the same element
 - **`latch()`** is the core primitive for mounting reactive content onto DOM elements
 - **`bindApp()`** was a thin wrapper around `latch()` with perf markers (now removed)
 - **`reconcile()`** is the internal primitive (not exported for consumers) — syncs `Node[]` into a parent
 
-### 12. Barrel Plugin — `pounceBarrelPlugin`
+### 12. Barrel Plugin — `sursautBarrelPlugin`
 
-`pounceBarrelPlugin(options?)` in `@pounce/core/plugin` creates a **virtual module** that re-exports from the right Pounce packages based on a skeleton.
+`sursautBarrelPlugin(options?)` in `@sursaut/core/plugin` creates a **virtual module** that re-exports from the right Sursaut packages based on a skeleton.
 
 ```ts
-import { pounceBarrelPlugin } from '@pounce/core/plugin'
+import { sursautBarrelPlugin } from '@sursaut/core/plugin'
 
-pounceBarrelPlugin({
-  name: '@pounce',        // virtual module name (default: '@pounce')
+sursautBarrelPlugin({
+  name: '@sursaut',        // virtual module name (default: '@sursaut')
   skeleton: 'front-end', // 'kit' | 'front-end' | 'back-end' | 'full-stack' (default)
-  adapter: '@pounce/adapter-pico', // required when skeleton includes UI
-  dts: 'src/@pounce.d.ts', // path to write ambient declare module file (default: '<name>.d.ts' in cwd)
+  adapter: '@sursaut/adapter-pico', // required when skeleton includes UI
+  dts: 'src/@sursaut.d.ts', // path to write ambient declare module file (default: '<name>.d.ts' in cwd)
                             // set to false to disable
 })
 ```
@@ -286,19 +286,19 @@ pounceBarrelPlugin({
 **Skeletons:**
 | Skeleton | Packages re-exported |
 |---|---|
-| `kit` | `@pounce/core`, `@pounce/kit` |
-| `front-end` | `@pounce/core`, `@pounce/kit/dom`, `@pounce/ui`, adapter |
-| `back-end` | `@pounce/core`, `@pounce/kit`, `@pounce/board` |
-| `full-stack` | `@pounce/core`, `@pounce/kit/dom`, `@pounce/ui`, adapter, `@pounce/board` |
+| `kit` | `@sursaut/core`, `@sursaut/kit` |
+| `front-end` | `@sursaut/core`, `@sursaut/kit/dom`, `@sursaut/ui`, adapter |
+| `back-end` | `@sursaut/core`, `@sursaut/kit`, `@sursaut/board` |
+| `full-stack` | `@sursaut/core`, `@sursaut/kit/dom`, `@sursaut/ui`, adapter, `@sursaut/board` |
 
 The virtual module ID is the `name` string itself (no `\0` prefix). Consumers import from it directly:
 ```ts
-import { reactive, Button, A } from '@pounce'
+import { reactive, Button, A } from '@sursaut'
 ```
 
-At `buildStart`, the plugin writes an ambient `declare module` `.d.ts` file to disk for IDE type support (same pattern as `pure-glyf`). The generated file contains `declare module '@pounce' { export * from ... }` matching the skeleton. Add the path to `tsconfig.json` `paths` and `include`.
+At `buildStart`, the plugin writes an ambient `declare module` `.d.ts` file to disk for IDE type support (same pattern as `pure-glyf`). The generated file contains `declare module '@sursaut' { export * from ... }` matching the skeleton. Add the path to `tsconfig.json` `paths` and `include`.
 
-Used by `@pounce/docs` and `mARC` (and any app that wants a single import namespace).
+Used by `@sursaut/docs` and `mARC` (and any app that wants a single import namespace).
 
 ### 13. `bind(...)` — Explicit Bidirectional Binding API
 

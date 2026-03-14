@@ -1,6 +1,6 @@
 import { Code, Section } from '../../components'
 
-const cssTag = `import { css, sass, scss } from '@pounce'
+const cssTag = `import { css, sass, scss } from '@sursaut'
 
 // Template tag functions that inject CSS into the document head.
 // Processed through Vite's PostCSS pipeline (autoprefixer, etc.)
@@ -21,33 +21,33 @@ scss\`
 }
 \``
 
-const componentStyleExample = `import { componentStyle } from '@pounce'
+const componentStyleExample = `import { componentStyle } from '@sursaut'
 
-// componentStyle wraps css/sass/scss with @layer pounce.components.
+// componentStyle wraps css/sass/scss with @layer sursaut.components.
 // Use this for component-env-based styles.
 
 componentStyle.sass\`
 .my-widget
   padding: 1rem
-  border: 1px solid var(--pounce-border)
+  border: 1px solid var(--sursaut-border)
 
   &:hover
-    background: var(--pounce-bg-muted)
+    background: var(--sursaut-bg-muted)
 \``
 
-const baseStyleExample = `import { baseStyle } from '@pounce'
+const baseStyleExample = `import { baseStyle } from '@sursaut'
 
-// baseStyle wraps css/sass/scss with @layer pounce.base.
+// baseStyle wraps css/sass/scss with @layer sursaut.base.
 // Use this for foundational styles (resets, typography, etc.)
 
 baseStyle.css\`
 :root {
-  --pounce-font: system-ui, sans-serif;
-  --pounce-radius: 0.25rem;
+  --sursaut-font: system-ui, sans-serif;
+  --sursaut-radius: 0.25rem;
 }
 \``
 
-const ssrStyles = `import { getSSRStyles } from '@pounce'
+const ssrStyles = `import { getSSRStyles } from '@sursaut'
 
 // During SSR, styles are collected instead of injected.
 // Call getSSRStyles() to get the <style> tag HTML for the <head>.
@@ -77,14 +77,15 @@ export default function CSSPage() {
 
 			<Section title="componentStyle">
 				<p>
-					Wraps styles in <code>@layer pounce.components</code>. Use for component-env-based styles.
+					Wraps styles in <code>@layer sursaut.components</code>. Use for component-env-based
+					styles.
 				</p>
 				<Code code={componentStyleExample} lang="tsx" />
 			</Section>
 
 			<Section title="baseStyle">
 				<p>
-					Wraps styles in <code>@layer pounce.base</code>. Use for foundational styles.
+					Wraps styles in <code>@layer sursaut.base</code>. Use for foundational styles.
 				</p>
 				<Code code={baseStyleExample} lang="tsx" />
 			</Section>

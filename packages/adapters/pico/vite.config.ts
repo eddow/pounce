@@ -2,11 +2,11 @@ import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
 import { resolve } from 'node:path'
 
-import { pounceCorePlugin } from '@pounce/core/plugin'
+import { sursautCorePlugin } from '@sursaut/core/plugin'
 
 export default defineConfig({
 	plugins: [
-		pounceCorePlugin(),
+		sursautCorePlugin(),
 		dts({
 			tsconfigPath: resolve(__dirname, 'tsconfig.build.json'),
 			include: ['src'],
@@ -19,13 +19,13 @@ export default defineConfig({
 	build: {
 		lib: {
 			entry: resolve(__dirname, 'src/index.ts'),
-			name: 'PounceAdapterPico',
+			name: 'SursautAdapterPico',
 			formats: ['es', 'cjs'],
 			fileName: (format) => `index.${format === 'es' ? 'mjs' : 'cjs'}`,
 		},
 		sourcemap: true,
 		rollupOptions: {
-			external: [/^@pounce\//, /^mutts/, /^pure-glyf/, '@picocss/pico', 'arktype'],
+			external: [/^@sursaut\//, /^mutts/, /^pure-glyf/, '@picocss/pico', 'arktype'],
 		},
 	},
 })

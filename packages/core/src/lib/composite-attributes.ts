@@ -6,7 +6,7 @@ import {
 	reactiveOptions,
 	unreactive,
 } from 'mutts'
-import { pounceOptions } from './debug'
+import { sursautOptions } from './debug'
 import { styles } from './styles'
 import { stringKeys } from './utils'
 
@@ -19,10 +19,10 @@ export class ReactiveProp<T> {
 		public set?: (v: T) => void
 	) {
 		if (typeof get !== 'function') {
-			throw new TypeError('[pounce] ReactiveProp get must be a function')
+			throw new TypeError('[sursaut] ReactiveProp get must be a function')
 		}
 		if (set !== undefined && typeof set !== 'function') {
-			throw new TypeError('[pounce] ReactiveProp set must be a function')
+			throw new TypeError('[sursaut] ReactiveProp set must be a function')
 		}
 	}
 }
@@ -61,14 +61,14 @@ export interface CompositeAttributesMeta {
 	directives(): CompositeAttributesDirectives
 }
 function report(msg: string) {
-	if (pounceOptions.checkReactivity === 'error') throw new Error(msg)
+	if (sursautOptions.checkReactivity === 'error') throw new Error(msg)
 	reactiveOptions.warn(msg)
 }
 
 function trackRead(rp: ReactiveProp<any>) {
-	if (!pounceOptions.checkReactivity) return
+	if (!sursautOptions.checkReactivity) return
 	if (rp.interaction === 'write') {
-		report('[pounce] Prop read after write-only interaction — expected bidi but got write-only')
+		report('[sursaut] Prop read after write-only interaction — expected bidi but got write-only')
 		rp.interaction = 'bidi'
 	} else if (rp.interaction === 'none') {
 		rp.interaction = 'read'
@@ -77,9 +77,9 @@ function trackRead(rp: ReactiveProp<any>) {
 
 function trackWrite(rp: ReactiveProp<any>, value: any): boolean {
 	if (!rp.set) {
-		throw new TypeError(`[pounce] Cannot set read-only prop`)
+		throw new TypeError(`[sursaut] Cannot set read-only prop`)
 	}
-	if (!pounceOptions.checkReactivity) {
+	if (!sursautOptions.checkReactivity) {
 		rp.set(value)
 		return true
 	}
@@ -102,7 +102,7 @@ function trackWrite(rp: ReactiveProp<any>, value: any): boolean {
 	}
 	rp.interaction = wasTouched ? 'bidi' : rp.interaction === 'read' ? 'read' : 'write'
 	if (rp.interaction === 'read') {
-		report('[pounce] Prop written after read-only interaction — expected bidi but got read-only')
+		report('[sursaut] Prop written after read-only interaction — expected bidi but got read-only')
 		rp.interaction = 'bidi'
 	}
 	return true
@@ -128,7 +128,7 @@ const propsProxy: ProxyHandler<{
 			if (!(prop in target.superLayer)) {
 				const rp = target.composite.get(prop)
 				if (rp instanceof ReactiveProp) return trackWrite(rp, value)
-				//reactiveOptions.warn(`[pounce] Cannot set read-only property "${prop}"`)
+				//reactiveOptions.warn(`[sursaut] Cannot set read-only property "${prop}"`)
 			}
 			// try setting value in superLayer?? Is it a good idea?
 			target.superLayer[prop] = value

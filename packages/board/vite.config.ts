@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'node:path'
-import { pounceCorePlugin } from '../core/src/plugin/index'
+import { sursautCorePlugin } from '../core/src/plugin/index'
 import dts from 'vite-plugin-dts'
 
 const rootDir = resolve(__dirname, '..')
@@ -9,7 +9,7 @@ const isWatch = process.argv.includes('--watch')
 
 export default defineConfig({
   plugins: [
-    pounceCorePlugin({
+    sursautCorePlugin({
       projectRoot: boardDir,
     }),
     dts({
@@ -32,16 +32,16 @@ export default defineConfig({
   esbuild: false,
   resolve: {
     alias: {
-      'pounce-ts/server': resolve(boardDir, '../core/src/node/index.ts'),
-      'pounce-ts': resolve(boardDir, '../core/src'),
-      'pounce-ui': resolve(boardDir, '../ui/src'),
-      '@pounce/kit': resolve(boardDir, '../kit/src'),
+      'sursaut-ts/server': resolve(boardDir, '../core/src/node/index.ts'),
+      'sursaut-ts': resolve(boardDir, '../core/src'),
+      'sursaut-ui': resolve(boardDir, '../ui/src'),
+      '@sursaut/kit': resolve(boardDir, '../kit/src'),
       'mutts': resolve(rootDir, '../../../mutts/src'),
       'npc-script': resolve(rootDir, '../../../npcs/src'),
       'omni18n': resolve(rootDir, '../../../omni18n/src'),
-      'pounce-board/client': resolve(boardDir, 'src/client'),
-      'pounce-board/server': resolve(boardDir, 'src/server'),
-      'pounce-board': resolve(boardDir, 'src'),
+      'sursaut-board/client': resolve(boardDir, 'src/client'),
+      'sursaut-board/server': resolve(boardDir, 'src/server'),
+      'sursaut-board': resolve(boardDir, 'src'),
     },
   },
   build: {
@@ -58,9 +58,9 @@ export default defineConfig({
     rollupOptions: {
       external: [
         'mutts',
-        /^@pounce\/core/,
-        /^@pounce\/kit/,
-        /^@pounce\/ui/,
+        /^@sursaut\/core/,
+        /^@sursaut\/kit/,
+        /^@sursaut\/ui/,
         'hono',
         '@hono/node-server',
         'zod',

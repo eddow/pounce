@@ -1,4 +1,4 @@
-import { type LinkProps, linkModel } from '@pounce/kit'
+import { type LinkProps, linkModel } from '@sursaut/kit'
 
 export type { LinkProps }
 

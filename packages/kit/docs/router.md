@@ -76,7 +76,7 @@ buildRoute('/search?q=[query]', { query: 'hello world' })
 Creates a typed route definition with `buildUrl()`. Supports arktype schemas for query validation.
 
 ```typescript
-import { defineRoute } from '@pounce/kit'
+import { defineRoute } from '@sursaut/kit'
 import { type } from 'arktype'
 
 const userRoute = defineRoute('/users/[id]')
@@ -93,7 +93,7 @@ searchRoute.buildUrl({ q: 'hello', page: 1 }) // → '/search?q=hello&page=1'
 Reactive router component. Matches the current reactive URL (`pathname + search + hash`) against route definitions and renders the matching view.
 
 ```tsx
-import { Router } from '@pounce/kit'
+import { Router } from '@sursaut/kit'
 
 const routes = [
   { path: '/', view: (spec, scope) => <Home /> },
@@ -137,7 +137,7 @@ Navigation hook notes:
 Routes may also be lazy:
 
 ```tsx
-import { Router } from '@pounce/kit'
+import { Router } from '@sursaut/kit'
 
 const routes = [
   { path: '/', view: () => <Home /> },
@@ -184,10 +184,10 @@ Router lazy-loading notes:
 
 ### `linkModel()`
 
-Kit does not currently export a concrete `<A>` component. The headless navigation helper is `linkModel()` from `@pounce/kit/models`.
+Kit does not currently export a concrete `<A>` component. The headless navigation helper is `linkModel()` from `@sursaut/kit/models`.
 
 ```tsx
-import { linkModel } from '@pounce/kit/models'
+import { linkModel } from '@sursaut/kit/models'
 
 const model = linkModel({ href: '/dashboard' })
 

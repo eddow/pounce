@@ -5,7 +5,7 @@ Kit provides a universal HTTP client with **interceptors**, **shared context hoo
 ## Quick Start
 
 ```typescript
-import { api } from '@pounce/kit'
+import { api } from '@sursaut/kit'
 
 // Simple GET
 const users = await api('/api/users').get<User[]>()
@@ -17,7 +17,7 @@ const created = await api('/api/users').post<User>({ name: 'Alice' })
 const user = await api('/api/users/[id]').get<User>({ id: '42' })
 
 // With callable endpoints (recommended)
-import { defineRoute } from '@pounce/kit'
+import { defineRoute } from '@sursaut/kit'
 const users = {
   byId: defineRoute('/api/users/[id]'),
   list: defineRoute('/api/users'),
@@ -57,7 +57,7 @@ import {
   setResponseHook,
   setPromiseHook,
   setStreamGuardHook,
-} from '@pounce/kit'
+} from '@sursaut/kit'
 
 setRequestHook((method, url) => {
   // short-circuit GETs from a cache, if desired
@@ -89,7 +89,7 @@ const unsubscribe = api('/api/events').stream<string>(
 Register middleware that runs on every request matching a pattern.
 
 ```typescript
-import { intercept } from '@pounce/kit'
+import { intercept } from '@sursaut/kit'
 
 // Global interceptor — adds auth header
 const unsubscribe = intercept('**', async (request, next) => {
@@ -110,7 +110,7 @@ Interceptors are scoped: global ones persist, context-scoped ones (registered in
 ## Configuration
 
 ```typescript
-import { config } from '@pounce/kit'
+import { config } from '@sursaut/kit'
 
 config.timeout = 10000  // Request timeout (ms)
 config.retries = 3      // Retry count for 5xx/408 errors
@@ -119,10 +119,10 @@ config.retryDelay = 100 // Delay between retries (ms)
 
 ## Server-Side Middleware
 
-For `@pounce/board` API routes, kit provides a middleware runner:
+For `@sursaut/board` API routes, kit provides a middleware runner:
 
 ```typescript
-import { runMiddlewares, type Middleware, type RouteHandler } from '@pounce/kit'
+import { runMiddlewares, type Middleware, type RouteHandler } from '@sursaut/kit'
 
 const authMiddleware: Middleware = async (ctx, next) => {
   const token = ctx.request.headers.get('Authorization')
@@ -143,7 +143,7 @@ const response = await runMiddlewares([authMiddleware], context, handler)
 ## Helpers
 
 ```typescript
-import { createJsonResponse, createErrorResponse, addSecurityHeaders, compressResponse } from '@pounce/kit'
+import { createJsonResponse, createErrorResponse, addSecurityHeaders, compressResponse } from '@sursaut/kit'
 
 createJsonResponse({ ok: true })                    // 200 JSON
 createErrorResponse('Not found', 404)               // 404 JSON error
@@ -151,12 +151,12 @@ addSecurityHeaders(response)                         // X-Content-Type-Options, 
 await compressResponse(response, 'gzip')             // CompressionStream
 ```
 
-## `PounceResponse`
+## `SursautResponse`
 
 Extended `Response` that caches the body for multiple reads (useful in interceptor chains):
 
 ```typescript
-const res = PounceResponse.from(fetchResponse)
+const res = SursautResponse.from(fetchResponse)
 const json1 = await res.json()  // Reads and caches
 const json2 = await res.json()  // Returns cached — no error
 res.setData(transformed)        // Override cached data (for interceptor transforms)

@@ -15,8 +15,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@pounce": [
-        "./.generated-types/@pounce.d.ts"
+      "@sursaut": [
+        "./.generated-types/@sursaut.d.ts"
       ],
     }
   },

@@ -1,4 +1,4 @@
-import { type Children, type Env, h, rootEnv } from '@pounce/core'
+import { type Children, type Env, h, rootEnv } from '@sursaut/core'
 import { effect, isReactive, link, type ScopedCallback, unlink, unwrap } from 'mutts'
 
 function destroyNode(node: Node): void {
@@ -77,8 +77,8 @@ export function mountHeadContent(
 	onChange?: () => void
 ): ScopedCallback {
 	const documentNode = target.ownerDocument ?? (target as Document)
-	const start = documentNode.createComment('pounce-head:start')
-	const end = documentNode.createComment('pounce-head:end')
+	const start = documentNode.createComment('sursaut-head:start')
+	const end = documentNode.createComment('sursaut-head:end')
 	target.appendChild(start)
 	target.appendChild(end)
 

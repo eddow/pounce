@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { latch, document } from '@pounce/core'
+import { latch, document } from '@sursaut/core'
 import { reactive } from 'mutts'
 
 describe('JSX Directives: fragment, dynamic, and for', () => {

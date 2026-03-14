@@ -51,7 +51,7 @@ type ButtonModel = {
 ## Usage
 
 ```tsx
-import { buttonModel } from '@pounce/ui'
+import { buttonModel } from '@sursaut/ui'
 
 function Button(props) {
 	const model = buttonModel(props)

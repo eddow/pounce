@@ -1,4 +1,4 @@
-import { document, latch } from '@pounce/core'
+import { document, latch } from '@sursaut/core'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { BadgeFixture, ChipFixture, PillFixture } from '../../demo/sections/Status'
 
@@ -22,7 +22,7 @@ describe('status components', () => {
 		stop = latch(container, <BadgeFixture />)
 
 		const badge = container.querySelector('[data-testid="badge"]') as HTMLSpanElement
-		expect(badge.className).toContain('pounce-badge')
+		expect(badge.className).toContain('sursaut-badge')
 		expect(badge.className).toContain('custom-badge')
 		expect(badge.getAttribute('data-variant')).toBe('danger')
 	})
@@ -31,7 +31,7 @@ describe('status components', () => {
 		stop = latch(container, <PillFixture />)
 
 		const pill = container.querySelector('[data-testid="pill"]') as HTMLSpanElement
-		expect(pill.className).toContain('pounce-pill')
+		expect(pill.className).toContain('sursaut-pill')
 		expect(pill.className).toContain('custom-pill')
 		expect(pill.getAttribute('data-variant')).toBe('success')
 	})

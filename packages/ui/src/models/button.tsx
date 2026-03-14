@@ -1,4 +1,4 @@
-import type { PounceElement } from '@pounce/core'
+import type { SursautElement } from '@sursaut/core'
 import { Icon } from '../icon'
 import type {
 	AriaLabelProps,
@@ -85,11 +85,11 @@ export function buttonModel(props: ButtonProps): ButtonModel {
 			const hasLabel = model.hasLabel
 			return {
 				position: (isEnd ? 'end' : 'start') as 'start' | 'end',
-				get element(): PounceElement {
+				get element(): SursautElement {
 					return typeof props.icon === 'string' ? (
 						<Icon name={props.icon} />
 					) : (
-						(props.icon as PounceElement)
+						(props.icon as SursautElement)
 					)
 				},
 				get span() {

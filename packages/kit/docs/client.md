@@ -30,7 +30,7 @@ interface Client extends ClientState {
 ## Usage
 
 ```tsx
-import { client } from '@pounce/kit'
+import { client } from '@sursaut/kit'
 
 // Reactive — updates automatically when URL changes
 <span>{client.url.pathname}</span>
@@ -61,10 +61,10 @@ All listeners are tracked for cleanup via `client.dispose()`.
 
 ### Node / SSR
 
-The shared `client` proxy still exists in node/SSR contexts, but request-scoped installation is the responsibility of the consuming server framework. Kit itself exports the ALS request-context helper in `@pounce/kit/node` via `runWithContext()`.
+The shared `client` proxy still exists in node/SSR contexts, but request-scoped installation is the responsibility of the consuming server framework. Kit itself exports the ALS request-context helper in `@sursaut/kit/node` via `runWithContext()`.
 
 ```typescript
-import { createScope, runWithContext } from '@pounce/kit/node'
+import { createScope, runWithContext } from '@sursaut/kit/node'
 
 const scope = createScope({ timeout: 5000 })
 scope.origin = 'http://example.com'

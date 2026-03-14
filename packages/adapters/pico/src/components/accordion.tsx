@@ -1,10 +1,10 @@
-import { defaults } from '@pounce/core'
+import { defaults } from '@sursaut/core'
 import {
 	type AccordionEnv,
 	type AccordionGroupVar,
 	type AccordionProps,
 	accordionModel,
-} from '@pounce/ui/models'
+} from '@sursaut/ui/models'
 
 /**
  * PicoCSS Accordion component

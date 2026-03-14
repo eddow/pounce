@@ -2,7 +2,7 @@
  * Router component logic tests.
  * Tests the reactive matching + view selection without the full DOM rendering pipeline.
  */
-import { h, latch, PounceElement } from '@pounce/core'
+import { h, latch, SursautElement } from '@sursaut/core'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { setPlatform } from '../platform/shared'
 import { createTestAdapter } from '../platform/test'
@@ -138,7 +138,7 @@ describe('Router reactive view selection', () => {
 					return h(
 						'div',
 						{ 'data-test': 'branch-value' },
-						PounceElement.text(
+						SursautElement.text(
 							() =>
 								(
 									routeScope?.routeSpecification as

@@ -1,4 +1,4 @@
-import { Button, Card } from '@pounce/adapter-pico'
+import { Button, Card } from '@sursaut/adapter-pico'
 import { DemoSection } from './shared'
 
 export default function CardsSection() {

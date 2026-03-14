@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { h } from '@pounce/core'
+import { h } from '@sursaut/core'
 import { reactive } from 'mutts'
 
 describe('pick directive', () => {

@@ -1,6 +1,6 @@
 import { effect, reactive, reset } from 'mutts'
 import { afterEach, describe, expect, it } from 'vitest'
-import { ReactiveProp, bind } from '@pounce/core'
+import { ReactiveProp, bind } from '@sursaut/core'
 
 afterEach(() => reset())
 

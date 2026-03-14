@@ -16,12 +16,12 @@
 		"lib": ["ES2022", "DOM", "DOM.Iterable"],
 		"paths": {
 			"+*": ["routes/+*"],
-			"@pounce/board": ["../src/index.ts"],
-			"@pounce/board/*": ["../src/*"],
-			"@pounce/core": ["../../core/src"],
-			"@pounce/core/*": ["../../core/src/*"],
-			"@pounce/kit": ["../../kit/src"],
-			"@pounce/kit/*": ["../../kit/src/*"],
+			"@sursaut/board": ["../src/index.ts"],
+			"@sursaut/board/*": ["../src/*"],
+			"@sursaut/core": ["../../core/src"],
+			"@sursaut/core/*": ["../../core/src/*"],
+			"@sursaut/kit": ["../../kit/src"],
+			"@sursaut/kit/*": ["../../kit/src/*"],
 			"mutts": ["../../../../mutts/src"],
 			"mutts/*": ["../../../../mutts/src/*"]
 		}

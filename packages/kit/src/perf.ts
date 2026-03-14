@@ -1,5 +1,5 @@
 /**
- * Performance instrumentation shim for @pounce/kit
+ * Performance instrumentation shim for @sursaut/kit
  * Conditionally exports native Performance API in development
  */
 
@@ -17,15 +17,15 @@ export function recordPerf(name: string, start: number, end = perf?.now()) {
 	perf.measure(name, { start, end })
 }
 
-const perfState = globalThis as typeof globalThis & { __pounceKitPerfLogging?: boolean }
+const perfState = globalThis as typeof globalThis & { __sursautKitPerfLogging?: boolean }
 
 if (
 	perf &&
 	perfLogFlag &&
 	typeof PerformanceObserver !== 'undefined' &&
-	!perfState.__pounceKitPerfLogging
+	!perfState.__sursautKitPerfLogging
 ) {
-	perfState.__pounceKitPerfLogging = true
+	perfState.__sursautKitPerfLogging = true
 	new PerformanceObserver((list) => {
 		for (const entry of list.getEntries()) {
 			if (!entry.name.startsWith('route:')) continue

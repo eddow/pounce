@@ -1,5 +1,5 @@
-import { A } from '@pounce'
-import { stored } from '@pounce/kit'
+import { A } from '@sursaut'
+import { stored } from '@sursaut/kit'
 import { navigation } from '../nav-index'
 
 interface PageNavProps {

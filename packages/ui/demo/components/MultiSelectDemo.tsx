@@ -1,4 +1,4 @@
-import { multiselectModel } from '@pounce/ui'
+import { multiselectModel } from '@sursaut/ui'
 import { reactive } from 'mutts'
 
 type Language = { id: string; label: string }

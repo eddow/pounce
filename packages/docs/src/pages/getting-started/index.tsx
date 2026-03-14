@@ -1,21 +1,21 @@
-import { A } from '@pounce'
+import { A } from '@sursaut'
 import { Code, Section } from '../../components'
 
-const installFrontend = `pnpm add @pounce/core @pounce/kit @pounce/ui @pounce/adapter-pico @picocss/pico mutts
+const installFrontend = `pnpm add @sursaut/core @sursaut/kit @sursaut/ui @sursaut/adapter-pico @picocss/pico mutts
 pnpm add -D vite typescript sass
 
-# Add @pounce/board when you want the back-end/full-stack layer.`
+# Add @sursaut/board when you want the back-end/full-stack layer.`
 
 const viteConfig = `import { defineConfig } from 'vite'
-import { pounceBarrelPlugin, pounceMinimalPackage } from '@pounce/core/plugin'
+import { sursautBarrelPlugin, sursautMinimalPackage } from '@sursaut/core/plugin'
 
 export default defineConfig({
   plugins: [
-    ...pounceMinimalPackage(),
-    pounceBarrelPlugin({
-      name: '@pounce',
+    ...sursautMinimalPackage(),
+    sursautBarrelPlugin({
+      name: '@sursaut',
       skeleton: 'front-end',
-      adapter: '@pounce/adapter-pico',
+      adapter: '@sursaut/adapter-pico',
     }),
   ],
 })`
@@ -23,10 +23,10 @@ export default defineConfig({
 const barrelShapes = `// Think: kit / FE / BE / F-S
 // Actual plugin values are: 'kit' | 'front-end' | 'back-end' | 'full-stack'
 
-pounceBarrelPlugin({ name: '@pounce', skeleton: 'kit' })
-pounceBarrelPlugin({ name: '@pounce', skeleton: 'front-end', adapter: '@pounce/adapter-pico' })
-pounceBarrelPlugin({ name: '@pounce', skeleton: 'back-end' })
-pounceBarrelPlugin({ name: '@pounce', skeleton: 'full-stack', adapter: '@pounce/adapter-pico' })`
+sursautBarrelPlugin({ name: '@sursaut', skeleton: 'kit' })
+sursautBarrelPlugin({ name: '@sursaut', skeleton: 'front-end', adapter: '@sursaut/adapter-pico' })
+sursautBarrelPlugin({ name: '@sursaut', skeleton: 'back-end' })
+sursautBarrelPlugin({ name: '@sursaut', skeleton: 'full-stack', adapter: '@sursaut/adapter-pico' })`
 
 const tsconfig = `{
   "compilerOptions": {
@@ -39,7 +39,7 @@ const tsconfig = `{
     "strict": true,
     "skipLibCheck": true,
     "paths": {
-      "@pounce": ["./.generated-types/@pounce.d.ts"]
+      "@sursaut": ["./.generated-types/@sursaut.d.ts"]
     }
   },
   "include": ["src/**/*", ".generated-types/**/*.d.ts"]
@@ -50,7 +50,7 @@ const indexHtml = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Pounce App</title>
+  <title>My Sursaut App</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
 </head>
 <body>
@@ -58,13 +58,13 @@ const indexHtml = `<!DOCTYPE html>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>`
-const mainTsx = `import { latch } from '@pounce'
+const mainTsx = `import { latch } from '@sursaut'
 
 function App() {
   return (
     <main class="container">
-      <h1>Hello Pounce!</h1>
-      <p>Your first pounce application is running.</p>
+      <h1>Hello Sursaut!</h1>
+      <p>Your first sursaut application is running.</p>
     </main>
   )
 }
@@ -76,57 +76,58 @@ export default function GettingStartedPage() {
 		<article>
 			<h1>Getting Started</h1>
 			<p>
-				Pounce works best when you read it as <strong>logical/assertive programming for UI</strong>:
-				you state relationships once, and the runtime keeps the concrete DOM and app state aligned.
+				Sursaut works best when you read it as <strong>logical/assertive programming for UI</strong>
+				: you state relationships once, and the runtime keeps the concrete DOM and app state
+				aligned.
 			</p>
 			<p class="docs-subtitle">
-				This page is the map before the first app: how <code>@pounce/core</code>,{' '}
-				<code>@pounce/kit</code>,<code>@pounce/ui</code>, adapters, and <code>@pounce/board</code>{' '}
-				fit together, and how the Vite plugin can generate a virtual <code>@pounce</code> barrel
-				with the union of the exports you choose.
+				This page is the map before the first app: how <code>@sursaut/core</code>,{' '}
+				<code>@sursaut/kit</code>,<code>@sursaut/ui</code>, adapters, and{' '}
+				<code>@sursaut/board</code> fit together, and how the Vite plugin can generate a virtual{' '}
+				<code>@sursaut</code> barrel with the union of the exports you choose.
 			</p>
 
 			<Section title="Package Map" id="package-map">
 				<p>
-					The Pounce suite starts at <code>@pounce/core</code>, then adds platform services through{' '}
-					<code>@pounce/kit</code>, then either UI/adapters, full-stack routing, or both.
+					The Sursaut suite starts at <code>@sursaut/core</code>, then adds platform services
+					through <code>@sursaut/kit</code>, then either UI/adapters, full-stack routing, or both.
 				</p>
 				<p>
-					Under the hood, Pounce relies on <a href="https://www.npmjs.com/package/mutts">mutts</a>{' '}
+					Under the hood, Sursaut relies on <a href="https://www.npmjs.com/package/mutts">mutts</a>{' '}
 					for reactive primitives, but
 					<code>mutts</code> is an external foundation rather than a package in the suite.
 				</p>
 				<div class="docs-map">
 					<div class="docs-map-row">
 						<A href="/core" class="docs-map-node">
-							<code>@pounce/core</code>
+							<code>@sursaut/core</code>
 							<small>JSX, env, directives, reconciler</small>
 						</A>
 						<span class="docs-map-arrow">→</span>
 						<A href="/kit" class="docs-map-node">
-							<code>@pounce/kit</code>
+							<code>@sursaut/kit</code>
 							<small>router, client, storage, intl, api</small>
 						</A>
 					</div>
 					<div class="docs-map-row">
 						<A href="/ui" class="docs-map-node">
-							<code>@pounce/ui</code>
+							<code>@sursaut/ui</code>
 							<small>headless models and directives</small>
 						</A>
 						<span class="docs-map-arrow">→</span>
 						<A href="/adapters/pico" class="docs-map-node">
-							<code>@pounce/adapter-pico</code>
+							<code>@sursaut/adapter-pico</code>
 							<small>actual styled components</small>
 						</A>
 						<span class="docs-map-arrow">or</span>
 						<A href="/board" class="docs-map-node">
-							<code>@pounce/board</code>
+							<code>@sursaut/board</code>
 							<small>SSR, routes, middleware, server hooks</small>
 						</A>
 					</div>
 					<div class="docs-map-row">
 						<div class="docs-map-node docs-map-node-barrel">
-							<code>@pounce</code>
+							<code>@sursaut</code>
 							<small>virtual package union generated by the Vite plugin</small>
 						</div>
 					</div>
@@ -150,7 +151,7 @@ export default function GettingStartedPage() {
 				</p>
 				<p>
 					There is no package-to-package re-exporting in the suite. Instead,
-					<code>pounceBarrelPlugin()</code> generates a virtual module named <code>@pounce</code>
+					<code>sursautBarrelPlugin()</code> generates a virtual module named <code>@sursaut</code>
 					whose exports are the union of the selected packages.
 				</p>
 				<table>
@@ -158,7 +159,7 @@ export default function GettingStartedPage() {
 						<tr>
 							<th>Skeleton</th>
 							<th>
-								Virtual <code>@pounce</code> contents
+								Virtual <code>@sursaut</code> contents
 							</th>
 							<th>Use when</th>
 						</tr>
@@ -169,7 +170,7 @@ export default function GettingStartedPage() {
 								<code>kit</code>
 							</td>
 							<td>
-								<code>@pounce/core</code> + <code>@pounce/kit</code>
+								<code>@sursaut/core</code> + <code>@sursaut/kit</code>
 							</td>
 							<td>Shared browser/runtime services without the headless UI or board layers.</td>
 						</tr>
@@ -178,13 +179,13 @@ export default function GettingStartedPage() {
 								<code>front-end</code>
 							</td>
 							<td>
-								<code>@pounce/core</code> + <code>@pounce/kit</code> + <code>@pounce/ui</code> +
+								<code>@sursaut/core</code> + <code>@sursaut/kit</code> + <code>@sursaut/ui</code> +
 								adapter
 							</td>
 							<td>
 								Client-side app with headless UI and a presentation adapter such as{' '}
 								<A href="/adapters/pico">
-									<code>@pounce/adapter-pico</code>
+									<code>@sursaut/adapter-pico</code>
 								</A>
 								.
 							</td>
@@ -194,7 +195,7 @@ export default function GettingStartedPage() {
 								<code>back-end</code>
 							</td>
 							<td>
-								<code>@pounce/core</code> + <code>@pounce/kit</code> + <code>@pounce/board</code>
+								<code>@sursaut/core</code> + <code>@sursaut/kit</code> + <code>@sursaut/board</code>
 							</td>
 							<td>Routing, SSR, middleware, and server work without the UI/adapters layer.</td>
 						</tr>
@@ -203,10 +204,10 @@ export default function GettingStartedPage() {
 								<code>full-stack</code>
 							</td>
 							<td>
-								<code>@pounce/core</code> + <code>@pounce/kit</code> + <code>@pounce/ui</code> +
-								adapter + <code>@pounce/board</code>
+								<code>@sursaut/core</code> + <code>@sursaut/kit</code> + <code>@sursaut/ui</code> +
+								adapter + <code>@sursaut/board</code>
 							</td>
-							<td>The full Pounce stack behind one barrel.</td>
+							<td>The full Sursaut stack behind one barrel.</td>
 						</tr>
 					</tbody>
 				</table>
@@ -215,7 +216,7 @@ export default function GettingStartedPage() {
 
 			<Section title="Installation" id="installation">
 				<p>
-					For a first browser app, install the front-end stack. Add <code>@pounce/board</code> only
+					For a first browser app, install the front-end stack. Add <code>@sursaut/board</code> only
 					when you want the back-end/full-stack layer.
 				</p>
 				<Code code={installFrontend} lang="bash" />
@@ -223,7 +224,8 @@ export default function GettingStartedPage() {
 
 			<Section title="Vite Configuration" id="vite-configuration">
 				<p>
-					Use the minimal Pounce JSX transform and generate a front-end virtual <code>@pounce</code>
+					Use the minimal Sursaut JSX transform and generate a front-end virtual{' '}
+					<code>@sursaut</code>
 					package that unions the exports from Core, Kit, UI, and your chosen adapter.
 				</p>
 				<Code code={viteConfig} lang="typescript" />
@@ -254,16 +256,17 @@ export default function GettingStartedPage() {
 						directives
 					</li>
 					<li>
-						<A href="/core">@pounce/core</A> — JSX factory, PounceElement, reconciler
+						<A href="/core">@sursaut/core</A> — JSX factory, SursautElement, reconciler
 					</li>
 					<li>
-						<A href="/kit">@pounce/kit</A> — router, client state, storage, and integration services
+						<A href="/kit">@sursaut/kit</A> — router, client state, storage, and integration
+						services
 					</li>
 					<li>
-						<A href="/ui">@pounce/ui</A> — headless primitives, directives, overlays, and models
+						<A href="/ui">@sursaut/ui</A> — headless primitives, directives, overlays, and models
 					</li>
 					<li>
-						<A href="/board">@pounce/board</A> — when you want file-based routing and SSR
+						<A href="/board">@sursaut/board</A> — when you want file-based routing and SSR
 					</li>
 				</ul>
 			</Section>

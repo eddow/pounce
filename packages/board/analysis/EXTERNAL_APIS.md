@@ -9,7 +9,7 @@ Create typed proxies for external APIs in `routes/api/`:
 
 ```ts
 // routes/api/legacy.ts
-import { defineProxy } from "pounce/http";
+import { defineProxy } from "sursaut/http";
 
 export const proxy = defineProxy({
   baseUrl: "https://legacy-api.example.com",
@@ -44,7 +44,7 @@ export const proxy = defineProxy({
       // Transform request body
       prepare: (body) => ({
         userData: body,
-        source: "pounce-framework"
+        source: "sursaut-framework"
       })
     },
 
@@ -68,7 +68,7 @@ Proxies are **imported and called in your code**, not accessed via HTTP:
 
 ```ts
 // In a route handler
-import { expose } from '@pounce/board/server'
+import { expose } from '@sursaut/board/server'
 import { legacyApi } from '../../lib/proxies/legacy.js'
 
 export default expose({
@@ -163,7 +163,7 @@ endpoints: {
 ## 5. Mocking for Development
 ```ts
 // routes/api/legacy.ts
-import { defineProxy } from "pounce/http";
+import { defineProxy } from "sursaut/http";
 
 export const proxy = defineProxy({
   baseUrl: process.env.NODE_ENV === "development"
@@ -187,7 +187,7 @@ export const proxy = defineProxy({
 ## 6. Authentication
 ```ts
 // routes/api/secure.ts
-import { defineProxy } from "pounce/http";
+import { defineProxy } from "sursaut/http";
 
 export const proxy = defineProxy({
   baseUrl: "https://secure-api.example.com",

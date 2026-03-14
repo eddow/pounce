@@ -6,7 +6,7 @@
 
 Kit's API layer has SSR awareness baked into **three files**:
 
-#### 1. [context.ts](file:///home/fmdm/dev/ownk/pounce/packages/kit/src/api/context.ts) — Request Scope
+#### 1. [context.ts](file:///home/fmdm/dev/ownk/sursaut/packages/kit/src/api/context.ts) — Request Scope
 
 `RequestScope` hardcodes an `ssr` sub-object:
 
@@ -29,13 +29,13 @@ export interface RequestScope {
 - `trackSSRPromise()` and `flushSSRPromises()` assume the `ssr` field exists.
 - `setGetContext()` is the only extensibility hook (lets `node/context.ts` inject ALS).
 
-#### 2. [ssr-hydration.ts](file:///home/fmdm/dev/ownk/pounce/packages/kit/src/api/ssr-hydration.ts) — Data Injection/Retrieval
+#### 2. [ssr-hydration.ts](file:///home/fmdm/dev/ownk/sursaut/packages/kit/src/api/ssr-hydration.ts) — Data Injection/Retrieval
 
 - `getSSRId()`, `injectSSRData()`, `getSSRData()`, `clearSSRData()`, `escapeJson()`
 - Reads/writes `ctx.ssr.responses` — tightly couples to the `RequestScope.ssr` shape.
 - `getSSRData()` reads `<script type="application/json">` from the DOM — pure client-side hydration concern baked into the shared layer.
 
-#### 3. [base-client.ts](file:///home/fmdm/dev/ownk/pounce/packages/kit/src/api/base-client.ts) — API Client
+#### 3. [base-client.ts](file:///home/fmdm/dev/ownk/sursaut/packages/kit/src/api/base-client.ts) — API Client
 
 SSR checks appear in **6 places**:
 
@@ -52,9 +52,9 @@ Also re-exports: `getSSRId`, `getSSRData`, `injectSSRData`, `clearSSRData`.
 
 #### 4. Node entry points
 
-- [node/context.ts](file:///home/fmdm/dev/ownk/pounce/packages/kit/src/node/context.ts) — ALS storage, `runWithContext`
-- [node/ssr.ts](file:///home/fmdm/dev/ownk/pounce/packages/kit/src/node/ssr.ts) — `withSSRContext`, `getCollectedSSRResponses`, `injectApiResponses`
-- [node/api.ts](file:///home/fmdm/dev/ownk/pounce/packages/kit/src/node/api.ts) — Server executor with `dispatchToHandler` and route registry
+- [node/context.ts](file:///home/fmdm/dev/ownk/sursaut/packages/kit/src/node/context.ts) — ALS storage, `runWithContext`
+- [node/ssr.ts](file:///home/fmdm/dev/ownk/sursaut/packages/kit/src/node/ssr.ts) — `withSSRContext`, `getCollectedSSRResponses`, `injectApiResponses`
+- [node/api.ts](file:///home/fmdm/dev/ownk/sursaut/packages/kit/src/node/api.ts) — Server executor with `dispatchToHandler` and route registry
 
 ### Board's Duplication
 
@@ -66,11 +66,11 @@ Board has **near-verbatim copies** of kit's SSR code:
 | `api/ssr-hydration.ts` | `lib/ssr/utils.ts` (223L) | +injector registry, +`injectSSRContent()`, same hydration logic |
 | `node/ssr.ts` | `lib/ssr/utils.ts` | Same `withSSRContext`, `getCollectedSSRResponses` |
 
-Board imports from **itself** (`../http/context.js`), not from `@pounce/kit`. The two context systems coexist using the same global symbols, but there's no shared contract — just copy-paste convergence.
+Board imports from **itself** (`../http/context.js`), not from `@sursaut/kit`. The two context systems coexist using the same global symbols, but there's no shared contract — just copy-paste convergence.
 
 ### What's Clean
 
-- [dom/api.ts](file:///home/fmdm/dev/ownk/pounce/packages/kit/src/dom/api.ts) — Pure `fetch` executor, 44 lines. Exactly what kit should be: create a client factory with a transport.
+- [dom/api.ts](file:///home/fmdm/dev/ownk/sursaut/packages/kit/src/dom/api.ts) — Pure `fetch` executor, 44 lines. Exactly what kit should be: create a client factory with a transport.
 
 ---
 
@@ -117,9 +117,9 @@ Remove `ssr`, `routeRegistry`, and any SSR-specific fields. Board extends:
 
 ```ts
 // board/lib/http/context.ts
-import { type RequestScope as BaseScope } from '@pounce/kit'
+import { type RequestScope as BaseScope } from '@sursaut/kit'
 
-const SSR_KEY = Symbol.for('__POUNCE_SSR__')
+const SSR_KEY = Symbol.for('__SURSAUT_SSR__')
 
 export interface SSRState { ... }
 

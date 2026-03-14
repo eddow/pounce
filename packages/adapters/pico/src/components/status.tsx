@@ -1,5 +1,5 @@
-import { type ElementPassthroughProps, Icon, type IconProps } from '@pounce/ui'
-import { type ChipProps, chipModel } from '@pounce/ui/models'
+import { type ElementPassthroughProps, Icon, type IconProps } from '@sursaut/ui'
+import { type ChipProps, chipModel } from '@sursaut/ui/models'
 import type { PicoVariantProps } from '../factory'
 
 export type BadgeProps = PicoVariantProps &
@@ -24,7 +24,7 @@ export function Badge(props: BadgeProps) {
 		<dynamic
 			tag={props.tag ?? 'mark'}
 			{...props.el}
-			class={props.el?.class ? ['pounce-badge', props.el.class] : 'pounce-badge'}
+			class={props.el?.class ? ['sursaut-badge', props.el.class] : 'sursaut-badge'}
 			data-variant={props.variant}
 		>
 			{props.icon &&
@@ -39,7 +39,7 @@ export function Pill(props: PillProps) {
 		<dynamic
 			tag={props.tag ?? 'mark'}
 			{...props.el}
-			class={props.el?.class ? ['pounce-pill', props.el.class] : 'pounce-pill'}
+			class={props.el?.class ? ['sursaut-pill', props.el.class] : 'sursaut-pill'}
 			data-variant={props.variant}
 		>
 			{props.icon &&

@@ -1,13 +1,13 @@
 # DOM Utilities
 
-Browser-specific utilities exported from `@pounce/kit/dom` (or `@pounce/kit` in browser context).
+Browser-specific utilities exported from `@sursaut/kit/dom` (or `@sursaut/kit` in browser context).
 
 ## Head Management
 
 Use kit's shared `<Head>` component or `useHead()` helper to mount document head content.
 
 ```tsx
-import { Head, useHead } from '@pounce/kit'
+import { Head, useHead } from '@sursaut/kit'
 
 function Page() {
   return <>
@@ -37,7 +37,7 @@ Kit provides template tag functions for inline CSS that are processed by the Vit
 ### `css`, `sass`, `scss`
 
 ```typescript
-import { css, sass, scss } from '@pounce/kit'
+import { css, sass, scss } from '@sursaut/kit'
 
 // Plain CSS
 css`.my-class { color: red; }`
@@ -69,22 +69,22 @@ At build time, the Vite plugin replaces these calls with processed CSS + `__inje
 Flavored variants (via `mutts.flavored()`) for `@layer` scoping:
 
 ```typescript
-import { componentStyle, baseStyle } from '@pounce/kit'
+import { componentStyle, baseStyle } from '@sursaut/kit'
 
-// Wrapped in @layer pounce.components by the Vite plugin
+// Wrapped in @layer sursaut.components by the Vite plugin
 componentStyle.sass`
-.pounce-button
+.sursaut-button
   padding: 0.5rem 1rem
 `
 
-// Wrapped in @layer pounce.base
-baseStyle.css`.pounce-reset { box-sizing: border-box; }`
+// Wrapped in @layer sursaut.base
+baseStyle.css`.sursaut-reset { box-sizing: border-box; }`
 ```
 
 ### SSR CSS Collection
 
 ```typescript
-import { getSSRStyles } from '@pounce/kit'
+import { getSSRStyles } from '@sursaut/kit'
 
 // Returns <style data-hydrated-hashes="...">...</style> for injection into <head>
 const styleTag = getSSRStyles()
@@ -101,7 +101,7 @@ For syntax highlighting in template literals, install the [es6-string-html](http
 Creates a reactive object synced to `localStorage` with inter-tab communication.
 
 ```typescript
-import { stored } from '@pounce/kit/dom'
+import { stored } from '@sursaut/kit/dom'
 
 const prefs = stored({
   theme: 'light',
@@ -128,7 +128,7 @@ prefs.theme = 'dark'
 ### Custom Serialization
 
 ```typescript
-import { json } from '@pounce/kit/dom'
+import { json } from '@sursaut/kit/dom'
 
 // Override the global JSON parser/serializer
 json.parse = (value) => myCustomParse(value)
@@ -137,4 +137,4 @@ json.stringify = (value) => myCustomStringify(value)
 
 ## Node Stubs
 
-In the Node entry point (`@pounce/kit/node`), `css`, `sass`, and `scss` are exported as no-ops. This allows shared code to import them without errors in SSR context.
+In the Node entry point (`@sursaut/kit/node`), `css`, `sass`, and `scss` are exported as no-ops. This allows shared code to import them without errors in SSR context.

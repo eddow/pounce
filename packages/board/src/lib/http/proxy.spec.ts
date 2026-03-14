@@ -167,7 +167,7 @@ describe('defineProxy', () => {
 						path: '/users',
 						prepare: (body: any) => ({
 							userData: body,
-							source: 'pounce-framework',
+							source: 'sursaut-framework',
 						}),
 					},
 				},
@@ -180,7 +180,7 @@ describe('defineProxy', () => {
 				expect.objectContaining({
 					body: JSON.stringify({
 						userData: { name: 'Alice' },
-						source: 'pounce-framework',
+						source: 'sursaut-framework',
 					}),
 				})
 			)

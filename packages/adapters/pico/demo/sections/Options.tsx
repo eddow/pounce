@@ -1,4 +1,4 @@
-import { Combobox, Multiselect, Select } from '@pounce/adapter-pico'
+import { Combobox, Multiselect, Select } from '@sursaut/adapter-pico'
 import { reactive } from 'mutts'
 import { DemoCard, DemoGrid, DemoSection, DemoState } from './shared'
 
@@ -22,7 +22,7 @@ export default function OptionsSection() {
 	const state = reactive({
 		selectValue: 'beta',
 		comboValue: 'alpha',
-		items: new Set(['TypeScript', 'Pounce']),
+		items: new Set(['TypeScript', 'Sursaut']),
 	})
 
 	return (
@@ -55,7 +55,7 @@ export default function OptionsSection() {
 				>
 					<Multiselect
 						label="Tech stack"
-						items={['TypeScript', 'Pounce', 'PicoCSS', 'Vitest']}
+						items={['TypeScript', 'Sursaut', 'PicoCSS', 'Vitest']}
 						value={state.items}
 						onChange={(value: Set<string>) => {
 							state.items = value

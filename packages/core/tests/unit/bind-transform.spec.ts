@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { transformSync } from '@babel/core'
-import { pounceBabelPlugin } from '../../src/plugin/babel'
+import { sursautBabelPlugin } from '../../src/plugin/babel'
 
 function transform(code: string): string {
 	const result = transformSync(code, {
 		filename: 'test.tsx',
-		plugins: [[pounceBabelPlugin]],
+		plugins: [[sursautBabelPlugin]],
 		parserOpts: { plugins: ['typescript'] },
 		generatorOpts: { compact: true },
 	})

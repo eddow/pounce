@@ -1,8 +1,8 @@
 import { Hono } from 'hono'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createPounceMiddleware } from 'pounce-board/server'
-import { clearSSRData, injectSSRData } from 'pounce-board/server'
-import { api } from 'pounce-board/client'
+import { createSursautMiddleware } from 'sursaut-board/server'
+import { clearSSRData, injectSSRData } from 'sursaut-board/server'
+import { api } from 'sursaut-board/client'
 
 /**
  * @vocab "Test as Documentation"
@@ -22,12 +22,12 @@ describe('SSR Flow Integration', () => {
 	it('should inject collected SSR data into HTML response', async () => {
 		const app = new Hono()
 
-		// Add Pounce middleware
-		app.use('*', createPounceMiddleware())
+		// Add Sursaut middleware
+		app.use('*', createSursautMiddleware())
 
 		// Simulated route handler that "fetches" data (injects into SSR state)
 		app.get('/test', async (c) => {
-			injectSSRData('pounce-data-test', { user: 'tester', id: 123 })
+			injectSSRData('sursaut-data-test', { user: 'tester', id: 123 })
 			return c.html(
 				"<html><head><title>Test App</title></head><body><div id='root'></div></body></html>"
 			)
@@ -39,7 +39,7 @@ describe('SSR Flow Integration', () => {
 		const html = await res.text()
 
 		// Verify script tag injection
-		expect(html).toContain('<script type="application/json" id="pounce-data-test">')
+		expect(html).toContain('<script type="application/json" id="sursaut-data-test">')
 		expect(html).toContain('{"user":"tester","id":123}')
 
 		// Verify it's in the head (as per our current implementation in hono.ts)
@@ -48,7 +48,7 @@ describe('SSR Flow Integration', () => {
 
 	it('should handle multiple SSR data points', async () => {
 		const app = new Hono()
-		app.use('*', createPounceMiddleware())
+		app.use('*', createSursautMiddleware())
 
 		app.get('/multi', async (c) => {
 			injectSSRData('data-1', { val: 1 })
@@ -65,7 +65,7 @@ describe('SSR Flow Integration', () => {
 
 	it('should NOT inject if response is not HTML', async () => {
 		const app = new Hono()
-		app.use('*', createPounceMiddleware())
+		app.use('*', createSursautMiddleware())
 
 		app.get('/json', async (c) => {
 			injectSSRData('data-json', { should: 'not be here' })
@@ -81,7 +81,7 @@ describe('SSR Flow Integration', () => {
 
 	it('should automatically track api() calls during SSR and inject results', async () => {
 		const app = new Hono()
-		app.use('*', createPounceMiddleware())
+		app.use('*', createSursautMiddleware())
 
 		// Mock global fetch for this test
 		const mockFetch = vi.fn().mockResolvedValue(
@@ -114,7 +114,7 @@ describe('SSR Flow Integration', () => {
 		// 2. Verify data was rendered in HTML (standard behavior)
 		expect(html).toContain('Data: {"auto":"tracked"}')
 
-		// 3. Verify Pounce automatically injected the data script for hydration
+		// 3. Verify Sursaut automatically injected the data script for hydration
 		// The ID is deterministic based on the URL
 		// We can check just for the content since ID generation is internal (though deterministic)
 		expect(html).toContain('{"auto":"tracked"}')

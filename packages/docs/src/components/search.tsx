@@ -1,4 +1,4 @@
-import { A } from '@pounce'
+import { A } from '@sursaut'
 import { reactive } from 'mutts'
 import { type NavLink, navigation } from '../nav-index'
 

@@ -1,4 +1,4 @@
-import { type Children, document, type Env, PounceElement } from '@pounce/core'
+import { type Children, document, type Env, SursautElement } from '@sursaut/core'
 import { link, type ScopedCallback } from 'mutts'
 import { mountHead } from './platform/shared.js'
 
@@ -13,9 +13,9 @@ export function useHead(content: Children, env?: Env): ScopedCallback {
 }
 
 export function Head(props: HeadProps, env: Env) {
-	return new PounceElement(
+	return new SursautElement(
 		() => {
-			const anchor = document.createComment('pounce-head')
+			const anchor = document.createComment('sursaut-head')
 			return link(anchor, mountHead(props.children, env))
 		},
 		'Head',

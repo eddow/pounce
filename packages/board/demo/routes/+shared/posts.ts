@@ -6,7 +6,7 @@ export interface PostRecord {
 
 export const posts: PostRecord[] = [
 	{ id: '1', title: 'First Post', content: 'Hello World' },
-	{ id: '2', title: 'Pounce Board', content: 'Is awesome' },
+	{ id: '2', title: 'Sursaut Board', content: 'Is awesome' },
 ]
 
 let nextId = 3

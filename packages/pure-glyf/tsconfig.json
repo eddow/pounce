@@ -17,9 +17,9 @@
 		"noFallthroughCasesInSwitch": true,
 		"skipLibCheck": true,
 		"paths": {
-			"@pounce/core": ["../core/dist/jsx.d.ts"],
-			"@pounce/core/*": ["../core/dist/*"],
-			"@pounce/ui": ["./types/pounce-ui.d.ts"]
+			"@sursaut/core": ["../core/dist/jsx.d.ts"],
+			"@sursaut/core/*": ["../core/dist/*"],
+			"@sursaut/ui": ["./types/sursaut-ui.d.ts"]
 		},
 		"declaration": true,
 		"declarationDir": "./dist",

@@ -1,4 +1,4 @@
-import type { Children, Env } from '@pounce/core'
+import type { Children, Env } from '@sursaut/core'
 import type { ScopedCallback } from 'mutts'
 import { mountHeadContent } from '../head-mount.js'
 import type { Client, HeadMount, PlatformAdapter } from './types.js'
@@ -24,7 +24,7 @@ export const setHeadMount = (impl: HeadMount | null) => {
 function ensure(operation: string): PlatformAdapter {
 	if (!_platform)
 		throw new Error(
-			`[@pounce/kit] No platform adapter set (${operation}). Import @pounce/kit/dom (browser) or call setPlatform() with an SSR/test adapter.`
+			`[@sursaut/kit] No platform adapter set (${operation}). Import @sursaut/kit/dom (browser) or call setPlatform() with an SSR/test adapter.`
 		)
 	return _platform
 }
@@ -46,6 +46,6 @@ export function mountHead(content: Children, env?: Env): ScopedCallback {
 	if (platformMount) return platformMount(content, env)
 	if (typeof document !== 'undefined') return mountHeadContent(document.head, content, env)
 	throw new Error(
-		'[@pounce/kit] No head mount configured. Import @pounce/kit/dom, provide a platform adapter with mountHead(), or call setHeadMount().'
+		'[@sursaut/kit] No head mount configured. Import @sursaut/kit/dom, provide a platform adapter with mountHead(), or call setHeadMount().'
 	)
 }

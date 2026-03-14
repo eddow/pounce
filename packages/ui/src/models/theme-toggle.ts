@@ -1,4 +1,4 @@
-import { document } from '@pounce/core'
+import { document } from '@sursaut/core'
 import { reactive } from 'mutts'
 
 export type ThemeValue = 'auto' | 'light' | 'dark'

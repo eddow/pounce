@@ -1,11 +1,11 @@
-import type { Children as SourceChildren, PounceElement, Env } from '../lib/pounce-element'
+import type { Children as SourceChildren, SursautElement, Env } from '../lib/sursaut-element'
 import type { StyleInput } from '../lib/styles'
 import type { EffectAccess, EffectCloser } from 'mutts'
 
 declare global {
 	var h: (type: any, props?: any, ...children: any[]) => JSX.Element
 	var Fragment: (props: any, env?: any) => any
-	const window: never // Prevent accidental window usage in SSR - import from @pounce/core instead
+	const window: never // Prevent accidental window usage in SSR - import from @sursaut/core instead
 	type ComponentFunction<P extends Record<string, any> = any, E extends Env = Env> = (
 		props: P,
 		env: E
@@ -33,7 +33,7 @@ declare global {
 			| undefined
 			| (() => Children)
 		interface ChildrenCollection {
-			readonly __pounce_children_collection: unique symbol
+			readonly __sursaut_children_collection: unique symbol
 			readonly length?: never
 			[n: number]: never
 		}
@@ -56,7 +56,7 @@ declare global {
 		interface ElementChildrenAttribute {
 			children: any
 		}
-		type Element = PounceElement
+		type Element = SursautElement
 		interface ElementClass {
 			template: any
 		}
@@ -127,7 +127,7 @@ declare global {
 			| { children: Children }
 			| ({
 					children?: any
-					// PounceElement class - encapsulates JSX element creation and rendering
+					// SursautElement class - encapsulates JSX element creation and rendering
 					this?: ThisBinding<N>
 					if?: any
 					else?: true

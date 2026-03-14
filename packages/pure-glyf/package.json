@@ -44,10 +44,10 @@
 			"import": "./dist/generator.js",
 			"require": "./dist/generator.cjs"
 		},
-		"./pounce": {
-			"types": "./dist/pounce.d.ts",
-			"import": "./dist/pounce.js",
-			"require": "./dist/pounce.cjs"
+		"./sursaut": {
+			"types": "./dist/sursaut.d.ts",
+			"import": "./dist/sursaut.js",
+			"require": "./dist/sursaut.cjs"
 		},
 		"./src": "./src/index.ts",
 		"./src/*": "./src/*"
@@ -62,8 +62,8 @@
 		"preview": "vite preview"
 	},
 	"devDependencies": {
-		"@pounce/core": "workspace:*",
-		"@pounce/ui": "workspace:*",
+		"@sursaut/core": "workspace:*",
+		"@sursaut/ui": "workspace:*",
 		"@types/node": "25.1.0",
 		"rollup": "4.57.1",
 		"tsx": "^4.21.0",
@@ -72,8 +72,8 @@
 		"vite-plugin-dts": "^4.5.3"
 	},
 	"peerDependencies": {
-		"@pounce/core": "workspace:*",
-		"@pounce/ui": "workspace:*",
+		"@sursaut/core": "workspace:*",
+		"@sursaut/ui": "workspace:*",
 		"rollup": "^4.0.0",
 		"vite": "^7.0.0"
 	},

@@ -1,6 +1,6 @@
-import { h } from '@pounce/core'
-import { renderToStringAsync } from '@pounce/core/node'
-import { Head } from '@pounce/kit/node'
+import { h } from '@sursaut/core'
+import { renderToStringAsync } from '@sursaut/core/node'
+import { Head } from '@sursaut/kit/node'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
 	escapeJson,
@@ -20,12 +20,12 @@ describe('ssr utils', () => {
 		it('should inject script tags into HTML', () => {
 			const html = '<html><head></head><body></body></html>'
 			const responses = {
-				'user-1': { id: 'pounce-data-1', data: { name: 'John' } },
+				'user-1': { id: 'sursaut-data-1', data: { name: 'John' } },
 			}
 
 			const result = injectApiResponses(html, responses)
 			expect(result).toContain(
-				'<script type="application/json" id="pounce-data-1">{"name":"John"}</script>'
+				'<script type="application/json" id="sursaut-data-1">{"name":"John"}</script>'
 			)
 			expect(result).toContain('</head>')
 		})
@@ -33,7 +33,7 @@ describe('ssr utils', () => {
 		it('should escape special characters for XSS safety', () => {
 			const html = '<html><body></body></html>'
 			const responses = {
-				malicious: { id: 'pounce-xss', data: { html: '</script><script>alert(1)</script>' } },
+				malicious: { id: 'sursaut-xss', data: { html: '</script><script>alert(1)</script>' } },
 			}
 
 			const result = injectApiResponses(html, responses)

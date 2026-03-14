@@ -1,4 +1,4 @@
-import { type Env, latch } from '@pounce/core'
+import { type Env, latch } from '@sursaut/core'
 import { reactive } from 'mutts'
 import { MiniCounter } from './components/MiniCounter'
 

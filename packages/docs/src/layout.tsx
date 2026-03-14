@@ -13,7 +13,7 @@ import {
 	ThemeToggle,
 	type ThemeValue,
 	Toolbar,
-} from '@pounce'
+} from '@sursaut'
 import { reactive } from 'mutts'
 import PageNav from './components/page-nav'
 import Search from './components/search'
@@ -69,7 +69,7 @@ export function DocsApp(_props: {}, _env: Env) {
 				<aside class="docs-sidebar" use={sizeableSidebar}>
 					<div class="docs-sidebar-brand">
 						<A href="/" class="docs-brand-mark" onClick={closeMobileNav}>
-							<div class="docs-brand-pill">Pounce</div>
+							<div class="docs-brand-pill">Sursaut</div>
 							<div class="docs-brand-title">Affirmative UI</div>
 							<div class="docs-brand-copy">
 								Direct DOM reactivity, explicit layers, and a web stack shaped around what should
@@ -81,7 +81,7 @@ export function DocsApp(_props: {}, _env: Env) {
 					<PageNav onNavigate={closeMobileNav} />
 					<div class="docs-sidebar-footer">
 						<a href="https://www.npmjs.com/package/mutts">mutts</a>
-						<a href="https://github.com/eddow/pounce">GitHub</a>
+						<a href="https://github.com/eddow/sursaut">GitHub</a>
 					</div>
 				</aside>
 				<div class="docs-main">
@@ -95,7 +95,7 @@ export function DocsApp(_props: {}, _env: Env) {
 									☰
 								</button>
 								<div class="docs-topbar-copy">
-									<Heading level={5}>Pounce Docs</Heading>
+									<Heading level={5}>Sursaut Docs</Heading>
 									<Text class="docs-topbar-subtitle">Affirmative UI for the web</Text>
 								</div>
 								<Toolbar.Spacer />

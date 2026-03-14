@@ -1,16 +1,16 @@
 /**
- * Request Context for pounce-board
+ * Request Context for sursaut-board
  * Handles thread-local storage for SSR data, configuration, and interceptors.
  *
  * NOTE: This file is server-side only due to AsyncLocalStorage usage.
- * The client-side context.ts in @pounce/core handles browser environments.
+ * The client-side context.ts in @sursaut/core handles browser environments.
  */
 import type { AsyncLocalStorage as NodeAsyncLocalStorage } from 'node:async_hooks'
 // Define the Interceptor type here to avoid circular imports if possible,
 // or import strictly as type.
 // We'll import InterceptorMiddleware from client.ts, but only as type.
-import type { InterceptorMiddleware } from '@pounce/kit'
-import { setGetContext } from '@pounce/kit'
+import type { InterceptorMiddleware } from '@sursaut/kit'
+import { setGetContext } from '@sursaut/kit'
 
 export interface InterceptorEntry {
 	pattern: string | RegExp
@@ -42,19 +42,19 @@ export interface RequestScope {
 }
 
 declare global {
-	var __POUNCE_STORAGE__: NodeAsyncLocalStorage<RequestScope> | undefined
-	var __POUNCE_CONTEXT__: RequestScope | null | undefined
+	var __SURSAUT_STORAGE__: NodeAsyncLocalStorage<RequestScope> | undefined
+	var __SURSAUT_CONTEXT__: RequestScope | null | undefined
 }
 
 import type { RouteRegistry } from './client.js'
 
 /** @internal */
 export function getStorage(): NodeAsyncLocalStorage<RequestScope> | null {
-	return globalThis.__POUNCE_STORAGE__ || null
+	return globalThis.__SURSAUT_STORAGE__ || null
 }
 
 export function setStorage(storage: NodeAsyncLocalStorage<RequestScope>) {
-	globalThis.__POUNCE_STORAGE__ = storage
+	globalThis.__SURSAUT_STORAGE__ = storage
 }
 
 async function ensureStorage(): Promise<NodeAsyncLocalStorage<RequestScope> | null> {
@@ -62,13 +62,13 @@ async function ensureStorage(): Promise<NodeAsyncLocalStorage<RequestScope> | nu
 		return null
 	}
 
-	if (globalThis.__POUNCE_STORAGE__) {
-		return globalThis.__POUNCE_STORAGE__
+	if (globalThis.__SURSAUT_STORAGE__) {
+		return globalThis.__SURSAUT_STORAGE__
 	}
 
 	const { AsyncLocalStorage } = await import('node:async_hooks')
 	const s = new AsyncLocalStorage<RequestScope>()
-	globalThis.__POUNCE_STORAGE__ = s
+	globalThis.__SURSAUT_STORAGE__ = s
 	return s
 }
 
@@ -82,13 +82,13 @@ export function getContext(): RequestScope | null {
 		if (store) return store
 	}
 	// Fallback for browser/single-threaded environments or shared SSR state
-	return globalThis.__POUNCE_CONTEXT__ || null
+	return globalThis.__SURSAUT_CONTEXT__ || null
 }
 
 setGetContext(() => getContext())
 
 function setGlobalCtx(ctx: RequestScope | null) {
-	globalThis.__POUNCE_CONTEXT__ = ctx
+	globalThis.__SURSAUT_CONTEXT__ = ctx
 }
 
 /**
@@ -144,7 +144,7 @@ export function addContextInterceptor(pattern: string | RegExp, handler: Interce
 		// Warn? Or fallback to global registry?
 		// For now, if no context, we can't add to context.
 		// The caller should use the global 'intercept' if they want global.
-		console.warn('[pounce-board] Attempted to add context interceptor outside of a context')
+		console.warn('[sursaut-board] Attempted to add context interceptor outside of a context')
 		return () => {}
 	}
 }

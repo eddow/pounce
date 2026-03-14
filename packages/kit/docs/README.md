@@ -1,6 +1,6 @@
-# @pounce/kit Documentation
+# @sursaut/kit Documentation
 
-Application-level toolkit for Pounce apps — reactive client state, routing, API client, CSS injection, localStorage persistence, and Intl formatting.
+Application-level toolkit for Sursaut apps — reactive client state, routing, API client, CSS injection, localStorage persistence, and Intl formatting.
 
 ## Guides
 
@@ -17,22 +17,22 @@ Head management lives on the shared kit surface via `<Head>` and `useHead()`. DO
 
 ```typescript
 // Browser (auto-selected by package.json exports)
-import { client, api, Router, css } from '@pounce/kit'
+import { client, api, Router, css } from '@sursaut/kit'
 
 // Explicit browser
-import { client, api, Router, css, stored } from '@pounce/kit/dom'
+import { client, api, Router, css, stored } from '@sursaut/kit/dom'
 
 // Node helpers
-import { runWithContext, serverRouter, stored } from '@pounce/kit/node'
+import { runWithContext, serverRouter, stored } from '@sursaut/kit/node'
 
 // Intl formatting (separate entry)
-import * as Intl from '@pounce/kit/intl'
+import * as Intl from '@sursaut/kit/intl'
 ```
 
 ## Quick Start
 
 ```tsx
-import { client, Router, css } from '@pounce/kit'
+import { client, Router, css } from '@sursaut/kit'
 
 css`.nav { display: flex; gap: 1rem; }`
 

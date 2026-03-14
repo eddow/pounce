@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest'
-import { h, r, type Child } from '@pounce/core'
-import { renderToString, renderToStringAsync, withSSR } from '@pounce/core/node'
+import { h, r, type Child } from '@sursaut/core'
+import { renderToString, renderToStringAsync, withSSR } from '@sursaut/core/node'
 import { reactive } from 'mutts'
 import { createScope, runWithContext, flushSSRPromises, trackSSRPromise } from '../../src/lib/http/context.js'
 

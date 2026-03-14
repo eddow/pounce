@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { pounceCorePlugin } from '../packages/core/src/plugin/index'
+import { sursautCorePlugin } from '../packages/core/src/plugin/index'
 import { playwright } from '@vitest/browser-playwright'
 
 // @ts-expect-error Leave vite do his stuffs
@@ -12,7 +12,7 @@ const workspaceRoot = resolve(rootDir, '..')
 export const createBaseConfig = (packageDir: string) => {
 	return defineConfig({
 		plugins: [
-			pounceCorePlugin({
+			sursautCorePlugin({
 				projectRoot: workspaceRoot,
 			}),
 		],
@@ -24,18 +24,18 @@ export const createBaseConfig = (packageDir: string) => {
 					? '../mutts/src/entry-browser.dev.ts'
 					: '../mutts/src/entry-node.dev.ts'),
 				'pure-glyf': resolve(workspaceRoot, 'packages/pure-glyf/src/index.ts'),
-				'@pounce/core/testing': resolve(
+				'@sursaut/core/testing': resolve(
 					workspaceRoot,
 					'packages/core/src/testing/index.ts'
 				),
-				'@pounce/core/node': resolve(workspaceRoot, 'packages/core/src/node/index.ts'),
-				'@pounce/core': resolve(workspaceRoot, isBrowser
+				'@sursaut/core/node': resolve(workspaceRoot, 'packages/core/src/node/index.ts'),
+				'@sursaut/core': resolve(workspaceRoot, isBrowser
 					? 'packages/core/src/dom/index.ts'
 					: 'packages/core/src/node/index.ts'),
-				'@pounce/kit': resolve(workspaceRoot, 'test/ep.ts'),
-				'@pounce/ui': resolve(workspaceRoot, 'packages/ui/src'),
-				'@pounce/board': resolve(workspaceRoot, 'packages/board/src'),
-				'@pounce/core/plugin': resolve(workspaceRoot, 'packages/core/src/plugin/index.ts'),
+				'@sursaut/kit': resolve(workspaceRoot, 'test/ep.ts'),
+				'@sursaut/ui': resolve(workspaceRoot, 'packages/ui/src'),
+				'@sursaut/board': resolve(workspaceRoot, 'packages/board/src'),
+				'@sursaut/core/plugin': resolve(workspaceRoot, 'packages/core/src/plugin/index.ts'),
 			},
 		},
 		root: packageDir,

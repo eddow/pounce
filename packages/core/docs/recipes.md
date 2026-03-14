@@ -1,10 +1,10 @@
-# Pounce Recipes & Best Practices
+# Sursaut Recipes & Best Practices
 
-This guide covers common patterns for handling derived state and computed properties in Pounce/Mutts, focusing on how to avoid the "Body Access Hazard".
+This guide covers common patterns for handling derived state and computed properties in Sursaut/Mutts, focusing on how to avoid the "Body Access Hazard".
 
 ## The "Body Access Hazard"
 
-In Pounce, component functions run **once** during the initial render. They set up the reactive graph (effects, bindings) but do not re-run themselves on every update.
+In Sursaut, component functions run **once** during the initial render. They set up the reactive graph (effects, bindings) but do not re-run themselves on every update.
 
 **The Hazard:** Accessing a reactive property (like `props.count` or `state.value`) directly in the component body (outside an effect or computed) creates a dependency for the *entire component initialization*. If that property changes, the component attempts to re-run, which is inefficient and often incorrect for fine-grained reactivity.
 
@@ -42,7 +42,7 @@ Or use a getter object when the value is referenced multiple times or by derived
 For components with several defaults props, `defaults()` creates a lazy proxy — no reads happen until a property is accessed from JSX (wrapped in `r()`) or a getter.
 
 ```typescript
-import { defaults } from '@pounce/core'
+import { defaults } from '@sursaut/core'
 
 function MyLayout(props) {
   const p = defaults(props, { gap: 'md', orientation: 'horizontal' })
@@ -110,9 +110,9 @@ function TodoList(props) {
 ```
 *Note: `this` inside the memoized object refers to the memoized proxy itself, so `this.activeTodos` hits the cache.*
 
-### 2. From React/Angular to Pounce
+### 2. From React/Angular to Sursaut
 
-| Concept | React | Angular (Signals) | Pounce |
+| Concept | React | Angular (Signals) | Sursaut |
 | :--- | :--- | :--- | :--- |
 | **Component Body** | Re-runs on every render | Constructor (run once) | Run once (setup phase) |
 | **Derived State** | `useMemo(() => ...)` | `computed(() => ...)` | `memoize({ get x() ... }).x` |

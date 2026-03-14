@@ -3,14 +3,14 @@ import { createServer } from 'node:http'
 import * as path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { getRequestListener } from '@hono/node-server'
-import { h } from '@pounce/core'
-import { renderToStringAsync } from '@pounce/core/node'
-import { routeMatcher } from '@pounce/kit/router/logic'
+import { h } from '@sursaut/core'
+import { renderToStringAsync } from '@sursaut/core/node'
+import { routeMatcher } from '@sursaut/kit/router/logic'
 import { Hono } from 'hono'
 import { createServer as createViteServer } from 'vite'
-import { clearRouteTreeCache, createPounceMiddleware } from '../adapters/hono.js'
+import { clearRouteTreeCache, createSursautMiddleware } from '../adapters/hono.js'
 import { enableSSR } from '../lib/http/client.js'
-import type { PounceRequest } from '../lib/router/expose.js'
+import type { SursautRequest } from '../lib/router/expose.js'
 import { routeRegistry } from '../lib/router/expose.js'
 import { buildRouteTree, matchRoute } from '../lib/router/index.js'
 import { getSSRId, injectSSRContent, injectSSRData, withSSRContext } from '../lib/ssr/utils.js'
@@ -27,7 +27,7 @@ export interface DevServerOptions {
 }
 
 /**
- * Run the pounce-board development server.
+ * Run the sursaut-board development server.
  */
 export async function runDevServer(options: DevServerOptions = {}) {
 	enableSSR()
@@ -58,7 +58,7 @@ export async function runDevServer(options: DevServerOptions = {}) {
 			}
 		)
 		const rewritten = sourcePath.endsWith('.tsx')
-			? `import { h, Fragment } from '@pounce/core'\nconst React = { createElement: h, Fragment }\n${rewrittenImports}`
+			? `import { h, Fragment } from '@sursaut/core'\nconst React = { createElement: h, Fragment }\n${rewrittenImports}`
 			: rewrittenImports
 		fs.mkdirSync(path.dirname(targetPath), { recursive: true })
 		fs.writeFileSync(targetPath, rewritten)
@@ -120,20 +120,20 @@ export async function runDevServer(options: DevServerOptions = {}) {
 		resolve: {
 			alias: {
 				mutts: 'mutts/browser/prod',
-				'@pounce/board/client': path.resolve(__dirname, '../client/index.ts'),
-				'@pounce/board/server': path.resolve(__dirname, '../server/index.ts'),
-				'@pounce/board': path.resolve(__dirname, '../index.ts'),
+				'@sursaut/board/client': path.resolve(__dirname, '../client/index.ts'),
+				'@sursaut/board/server': path.resolve(__dirname, '../server/index.ts'),
+				'@sursaut/board': path.resolve(__dirname, '../index.ts'),
 			},
 		},
 		ssr: {
-			external: ['mutts', 'mutts/browser/prod', '@pounce/core', '@pounce/kit', '@pounce/ui'],
+			external: ['mutts', 'mutts/browser/prod', '@sursaut/core', '@sursaut/kit', '@sursaut/ui'],
 		},
 	})
 
-	// 2. Attach @pounce/board middleware
+	// 2. Attach @sursaut/board middleware
 	app.use(
 		'*',
-		createPounceMiddleware({
+		createSursautMiddleware({
 			routesDir,
 			importFn: importRouteModule,
 		})
@@ -142,7 +142,7 @@ export async function runDevServer(options: DevServerOptions = {}) {
 	vite.watcher.on('all', (event, filePath) => {
 		if (filePath.startsWith(absoluteRoutesDir)) {
 			routeImportVersion = Date.now()
-			console.log(`[pounce dev] Route change detected (${event}), refreshing route tree...`)
+			console.log(`[sursaut dev] Route change detected (${event}), refreshing route tree...`)
 			clearRouteTreeCache()
 		}
 	})
@@ -182,13 +182,13 @@ export async function runDevServer(options: DevServerOptions = {}) {
 				if (matchedRoute && (!matchedRoute.unusedPath || matchedRoute.unusedPath === '/')) {
 					const provideHandler = matchedRoute.definition.entry.provide
 					if (provideHandler) {
-						const pounceReq: PounceRequest = {
+						const sursautReq: SursautRequest = {
 							params: matchedRoute.params,
 							url,
 							raw: c.req.raw,
 							request: c.req.raw,
 						}
-						const providedData = ((await provideHandler(pounceReq)) ?? {}) as Record<
+						const providedData = ((await provideHandler(sursautReq)) ?? {}) as Record<
 							string,
 							unknown
 						>
@@ -216,7 +216,7 @@ export async function runDevServer(options: DevServerOptions = {}) {
 						collectPromises: flushSSRPromises,
 					})
 				} catch (error) {
-					console.error('[pounce-board][dev-ssr] render failed', {
+					console.error('[sursaut-board][dev-ssr] render failed', {
 						path: url.pathname,
 						params: match.params,
 						pageProps,
@@ -255,13 +255,13 @@ export async function runDevServer(options: DevServerOptions = {}) {
 		})
 	})
 
-	console.log(`\n  🚀 Pounce-Board dev server starting...`)
+	console.log(`\n  🚀 Sursaut-Board dev server starting...`)
 	server.listen(port, () => {
 		console.log(`  http://localhost:${port} (HMR: ${hmrPort})\n`)
 	})
 
 	const shutdown = async () => {
-		console.log('\n  🛑 Pounce-Board dev server shutting down...')
+		console.log('\n  🛑 Sursaut-Board dev server shutting down...')
 		await vite.close()
 		server.close(() => {
 			process.exit(0)

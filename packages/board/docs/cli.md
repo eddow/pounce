@@ -1,23 +1,23 @@
-# Pounce-Board CLI
+# Sursaut-Board CLI
 
-`@pounce/board` ships a `pounce` CLI for local development, production builds, and previewing the generated server bundle.
+`@sursaut/board` ships a `sursaut` CLI for local development, production builds, and previewing the generated server bundle.
 
 ## Running it
 
 ```bash
-pnpm exec pounce <command>
+pnpm exec sursaut <command>
 ```
 
 You can also invoke it through `npx` if the package is installed in the current project.
 
 ## Commands
 
-### `pounce dev`
+### `sursaut dev`
 
 Starts the development server with Vite middleware, SSR rendering, route discovery, and route-local `+*` import resolution.
 
 ```bash
-pounce dev [options]
+sursaut dev [options]
 ```
 
 Options:
@@ -37,15 +37,15 @@ Options:
 Example:
 
 ```bash
-pnpm exec pounce dev --port 5300 --routes ./demo/routes --html ./demo/index.html
+pnpm exec sursaut dev --port 5300 --routes ./demo/routes --html ./demo/index.html
 ```
 
-### `pounce build`
+### `sursaut build`
 
 Builds a client bundle and an SSR server bundle.
 
 ```bash
-pounce build [options]
+sursaut build [options]
 ```
 
 Options:
@@ -64,18 +64,18 @@ Current build output structure:
 Example:
 
 ```bash
-pnpm exec pounce build --out ./dist
+pnpm exec sursaut build --out ./dist
 ```
 
-### `pounce preview`
+### `sursaut preview`
 
-Starts the built server bundle from `dist/server/pounce-server-entry.js`.
+Starts the built server bundle from `dist/server/sursaut-server-entry.js`.
 
 ```bash
-pnpm exec pounce preview
+pnpm exec sursaut preview
 ```
 
-This command assumes you already ran `pounce build`.
+This command assumes you already ran `sursaut build`.
 
 ## Notes
 

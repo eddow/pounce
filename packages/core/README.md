@@ -1,8 +1,8 @@
-# Pounce-TS
+# Sursaut-TS
 
 > A lightweight, reactive web framework built with TypeScript and JSX
 
-Pounce-TS is a fine-grained reactive UI framework built on direct DOM updates and `mutts`. Components render once, then reactive attributes, directives, and effects keep the DOM in sync without component re-renders.
+Sursaut-TS is a fine-grained reactive UI framework built on direct DOM updates and `mutts`. Components render once, then reactive attributes, directives, and effects keep the DOM in sync without component re-renders.
 
 ## 🌟 Features
 
@@ -16,6 +16,13 @@ Pounce-TS is a fine-grained reactive UI framework built on direct DOM updates an
 
 ## 📖 Documentation
 
+Live documentation is available at **https://sursaut-docs-front.pages.dev/**.
+
+For the `@sursaut/core` entry point specifically, start at:
+
+- **https://sursaut-docs-front.pages.dev/core**
+- **https://sursaut-docs-front.pages.dev/getting-started**
+
 Complete documentation is available in the [docs folder](docs):
 
 - **[Getting Started](docs/getting-started.md)** - Introduction and quick start guide
@@ -26,17 +33,19 @@ Complete documentation is available in the [docs folder](docs):
 - **[API Reference](docs/api-reference.md)** - Complete API documentation
 - **[Examples](docs/examples.md)** - Complete working examples
 
+`@sursaut/core` is built on top of **[`mutts`](https://www.npmjs.com/package/mutts)** for reactivity. For documentation-oriented reading and MCP-assisted exploration of the package surface, see **[`soup-chop`](https://www.npmjs.com/package/soup-chop)**.
+
 ## 🚀 Quick Start
 
 ### Installation
 
 ```bash
-npm install @pounce/core mutts
+npm install @sursaut/core mutts
 ```
 
 ### TypeScript Configuration
 
-Pounce uses the **classic JSX transform**. In your `tsconfig.json`:
+Sursaut uses the **classic JSX transform**. In your `tsconfig.json`:
 
 ```json
 {
@@ -48,13 +57,13 @@ Pounce uses the **classic JSX transform**. In your `tsconfig.json`:
 }
 ```
 
-Do **not** use `jsx: "react-jsx"` or `jsxImportSource` with `@pounce/core`.
+Do **not** use `jsx: "react-jsx"` or `jsxImportSource` with `@sursaut/core`.
 
 ### Vite / Babel Configuration
 
-Pounce ships a plugin at `@pounce/core/plugin`. Use it to apply the JSX/Babel transform that injects `h`, `Fragment`, `c`, and `r` where needed.
+Sursaut ships a plugin at `@sursaut/core/plugin`. Use it to apply the JSX/Babel transform that injects `h`, `Fragment`, `c`, and `r` where needed.
 
-See the consuming app/package configs in this workspace for concrete setup examples. The key rule is: **classic JSX in TypeScript, Pounce plugin in the build step**.
+See the consuming app/package configs in this workspace for concrete setup examples. The key rule is: **classic JSX in TypeScript, Sursaut plugin in the build step**.
 
 ### Development
 
@@ -74,7 +83,7 @@ Here's a simple counter component:
 
 ```tsx
 import { reactive } from 'mutts'
-import { latch } from '@pounce/core'
+import { latch } from '@sursaut/core'
 
 function Counter() {
   const state = reactive({ count: 0 })
@@ -126,7 +135,7 @@ Use camelCase event handlers:
 
 ### Directives
 
-Pounce extends JSX with framework directives:
+Sursaut extends JSX with framework directives:
 
 ```tsx
 <div if={state.visible} />
@@ -141,6 +150,9 @@ Pounce extends JSX with framework directives:
 
 ## 📚 Learn More
 
+- Visit the live docs at **https://sursaut-docs-front.pages.dev/core**
+- Read about the reactive foundation in **[`mutts`](https://www.npmjs.com/package/mutts)**
+- Use **[`soup-chop`](https://www.npmjs.com/package/soup-chop)** to explore package docs and API references with MCP
 - Read the [Getting Started Guide](docs/getting-started.md)
 - Explore [Components](docs/components.md)
 - Understand [Reactivity](docs/reactivity.md)
@@ -155,7 +167,7 @@ Pounce extends JSX with framework directives:
 - **JSX** - Familiar component syntax
 - **mutts** - Reactive state management
 - **Vite** - Fast development and build tool
-- **@pounce/core/plugin** - Build-time JSX transformation and reactive enhancements
+- **@sursaut/core/plugin** - Build-time JSX transformation and reactive enhancements
 
 ## 📝 License
 

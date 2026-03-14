@@ -1,4 +1,4 @@
-import { defaults } from '@pounce/core'
+import { defaults } from '@sursaut/core'
 import { effect } from 'mutts'
 import { captureLineage } from 'mutts/debug'
 

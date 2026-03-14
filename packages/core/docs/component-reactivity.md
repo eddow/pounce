@@ -2,11 +2,11 @@
 
 ## The Rebuild Fence
 
-Pounce component constructors run **exactly once**. This is enforced by a **rebuild fence** — if the component body accidentally captures a reactive dependency, Pounce refuses to re-run the body and instead reports the problem.
+Sursaut component constructors run **exactly once**. This is enforced by a **rebuild fence** — if the component body accidentally captures a reactive dependency, Sursaut refuses to re-run the body and instead reports the problem.
 
 Re-running the entire constructor would destroy and recreate all of this, losing DOM state, breaking effect lifecycles, and wasting performance. The rebuild fence exists to keep the render-once model explicit.
 
-If the constructor body reads a reactive property as a bare statement (e.g. `state.count` or `props.value * 2` outside of JSX, a directive, or an effect), the render effect captures that dependency. When the property changes, Pounce does **not** rebuild the component body. Instead it surfaces a diagnostic controlled by `pounceOptions.checkRebuild`:
+If the constructor body reads a reactive property as a bare statement (e.g. `state.count` or `props.value * 2` outside of JSX, a directive, or an effect), the render effect captures that dependency. When the property changes, Sursaut does **not** rebuild the component body. Instead it surfaces a diagnostic controlled by `sursautOptions.checkRebuild`:
 
 1. **`checkRebuild = 'warn'`** logs a warning with the dependency chain
 2. **`checkRebuild = 'error'`** throws a `DynamicRenderingError`
@@ -15,7 +15,7 @@ If the constructor body reads a reactive property as a bare statement (e.g. `sta
 Typical warning shape:
 
 ```
-[pounce] Rebuild fence: <ComponentName> has reactive dependencies that changed, but re-running the component body is forbidden (would destroy local state and risk infinite loops).
+[sursaut] Rebuild fence: <ComponentName> has reactive dependencies that changed, but re-running the component body is forbidden (would destroy local state and risk infinite loops).
 Triggered by:
 ...
 Move the reactive read into a child element, an effect, or a directive instead.
@@ -82,7 +82,7 @@ function GoodComponent(props: { loggedIn: boolean }) {
 
 ## JSX Extensions: Meta-attributes & Meta-components
 
-Pounce extends JSX with two categories of non-standard constructs, both processed at compile time by the Babel plugin and at runtime by the reconciler.
+Sursaut extends JSX with two categories of non-standard constructs, both processed at compile time by the Babel plugin and at runtime by the reconciler.
 
 ### Meta-attributes
 
@@ -303,7 +303,7 @@ it('should render without reactivity issues', () => {
 
 If you're coming from React:
 
-| React Pattern | Pounce Pattern |
+| React Pattern | Sursaut Pattern |
 |--------------|-----------------|
 | `useState` + re-render | Direct state mutation + effect |
 | `useEffect` for side effects | `effect(() => ...)` |

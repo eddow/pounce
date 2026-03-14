@@ -1,4 +1,4 @@
-import { Badge, Chip, Inline, Pill, Select, Stack, Switch } from '@pounce'
+import { Badge, Chip, Inline, Pill, Select, Stack, Switch } from '@sursaut'
 import { reactive } from 'mutts'
 import { ApiTable, Demo, Section } from '../../components'
 
@@ -95,7 +95,7 @@ function ChipDemo() {
 	const state = reactive({
 		variant: 'secondary',
 		dismissible: true,
-		tags: reactive(['TypeScript', 'Pounce', 'Mutts', 'PicoCSS']),
+		tags: reactive(['TypeScript', 'Sursaut', 'Mutts', 'PicoCSS']),
 	})
 
 	function remove(tag: string) {
@@ -104,7 +104,7 @@ function ChipDemo() {
 	}
 
 	function reset() {
-		state.tags.splice(0, state.tags.length, 'TypeScript', 'Pounce', 'Mutts', 'PicoCSS')
+		state.tags.splice(0, state.tags.length, 'TypeScript', 'Sursaut', 'Mutts', 'PicoCSS')
 	}
 
 	return (

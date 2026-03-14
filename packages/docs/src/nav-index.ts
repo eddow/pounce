@@ -18,7 +18,7 @@ export const navigation: NavSection[] = [
 		],
 	},
 	{
-		title: '@pounce/core',
+		title: '@sursaut/core',
 		collapsible: true,
 		links: [
 			{ title: 'Overview', href: '/core' },
@@ -32,7 +32,7 @@ export const navigation: NavSection[] = [
 		],
 	},
 	{
-		title: '@pounce/kit',
+		title: '@sursaut/kit',
 		collapsible: true,
 		links: [
 			{ title: 'Overview', href: '/kit' },
@@ -45,7 +45,7 @@ export const navigation: NavSection[] = [
 		],
 	},
 	{
-		title: '@pounce/ui',
+		title: '@sursaut/ui',
 		collapsible: true,
 		links: [
 			{ title: 'Overview', href: '/ui' },
@@ -77,7 +77,7 @@ export const navigation: NavSection[] = [
 		],
 	},
 	{
-		title: '@pounce/board',
+		title: '@sursaut/board',
 		collapsible: true,
 		links: [
 			{ title: 'Overview', href: '/board' },

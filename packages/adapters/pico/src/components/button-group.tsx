@@ -1,4 +1,4 @@
-import { type ButtonGroupNavOptions, setupButtonGroupNav } from '@pounce/ui/models'
+import { type ButtonGroupNavOptions, setupButtonGroupNav } from '@sursaut/ui/models'
 
 export type ButtonGroupProps = {
 	orientation?: ButtonGroupNavOptions['orientation']

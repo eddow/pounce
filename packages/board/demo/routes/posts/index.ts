@@ -1,10 +1,10 @@
-import { expose } from '@pounce/board'
-import type { PounceRequest } from '@pounce/board'
+import { expose } from '@sursaut/board'
+import type { SursautRequest } from '@sursaut/board'
 import { createPost, posts } from '+shared/posts'
 
 export default expose({
   middle: [
-    async (req: PounceRequest, next) => {
+    async (req: SursautRequest, next) => {
       const start = Date.now()
       const res = await next()
       res.headers.set('X-Response-Time', `${Date.now() - start}ms`)

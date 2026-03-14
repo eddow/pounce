@@ -1,17 +1,17 @@
 /**
- * Request Context for @pounce/kit
+ * Request Context for @sursaut/kit
  * Shared types and context management with pluggable hooks.
- * ALS-backed implementation is provided by the consuming framework (e.g. @pounce/board).
+ * ALS-backed implementation is provided by the consuming framework (e.g. @sursaut/board).
  */
 import type { InterceptorMiddleware } from './base-client.js'
 
-const CONTEXT_KEY = Symbol.for('__POUNCE_CONTEXT__')
+const CONTEXT_KEY = Symbol.for('__SURSAUT_CONTEXT__')
 
-type PounceGlobals = {
+type SursautGlobals = {
 	[CONTEXT_KEY]?: RequestScope | null
 }
 
-const globals = globalThis as unknown as PounceGlobals
+const globals = globalThis as unknown as SursautGlobals
 
 export interface InterceptorEntry {
 	pattern: string | RegExp
@@ -43,7 +43,7 @@ export interface RequestScope {
  */
 export let getContext: () => RequestScope | null = () => globals[CONTEXT_KEY] || null
 
-/** @internal — set by consuming framework (e.g. @pounce/board) to inject ALS-aware implementation */
+/** @internal — set by consuming framework (e.g. @sursaut/board) to inject ALS-aware implementation */
 export function setGetContext(impl: () => RequestScope | null) {
 	getContext = impl
 }
@@ -75,7 +75,7 @@ export function addContextInterceptor(pattern: string | RegExp, handler: Interce
 			if (index !== -1) ctx.interceptors.splice(index, 1)
 		}
 	} else {
-		console.warn('[@pounce/kit] Attempted to add context interceptor outside of a context')
+		console.warn('[@sursaut/kit] Attempted to add context interceptor outside of a context')
 		return () => {}
 	}
 }

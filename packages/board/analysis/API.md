@@ -73,7 +73,7 @@ Executes a middleware stack.
 ### Handler Functions
 HTTP handlers are declared inside `expose()`:
 ```ts
-import { expose } from '@pounce/board/server'
+import { expose } from '@sursaut/board/server'
 
 export default expose({
   get: async ({ params }) => {

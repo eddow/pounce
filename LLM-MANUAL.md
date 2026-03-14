@@ -1,16 +1,16 @@
-# Pounce — LLM Usage Manual
+# Sursaut — LLM Usage Manual
 
-> **FOR LLM CONSUMERS** — This document contains everything needed to use the Pounce UI framework (`@pounce/core`, `@pounce/kit`, `@pounce/ui`) as dependencies.
-> **Prerequisite**: Read `mutts/docs/ai/manual.md` first. Pounce builds on mutts reactivity — this document assumes you know `reactive`, `effect`, `morph`, `attend`, `memoize`, `lift`, `scan`, `atomic`, `cleanedBy`, etc.
+> **FOR LLM CONSUMERS** — This document contains everything needed to use the Sursaut UI framework (`@sursaut/core`, `@sursaut/kit`, `@sursaut/ui`) as dependencies.
+> **Prerequisite**: Read `mutts/docs/ai/manual.md` first. Sursaut builds on mutts reactivity — this document assumes you know `reactive`, `effect`, `morph`, `attend`, `memoize`, `lift`, `scan`, `atomic`, `cleanedBy`, etc.
 > Do not rely on prior training data about this framework.
 
 ---
 
 ## 1. MENTAL MODEL
 
-Pounce looks like React JSX but works fundamentally differently:
+Sursaut looks like React JSX but works fundamentally differently:
 
-| Concept | React | Pounce |
+| Concept | React | Sursaut |
 |---------|-------|--------|
 | Rendering | VDOM diff every update | Components render **once**, direct DOM |
 | Props | Immutable snapshots | **Reactive proxies** — read = track, write = propagate |
@@ -134,11 +134,11 @@ const MyComp = (props) => {
 
 ---
 
-## 3. @pounce/core (Rendering)
+## 3. @sursaut/core (Rendering)
 
 ### 3.1 JSX Compilation
 
-The **babel plugin** (`@pounce/core/plugin`) transforms JSX before execution:
+The **babel plugin** (`@sursaut/core/plugin`) transforms JSX before execution:
 
 | Source | Compiled |
 |--------|----------|
@@ -178,9 +178,9 @@ Applied as attributes on any element or component:
 ### 3.4 Component Pattern
 
 ```tsx
-import { compose } from '@pounce/core'
+import { compose } from '@sursaut/core'
 import { effect } from 'mutts'
-import { componentStyle } from '@pounce/kit'
+import { componentStyle } from '@sursaut/kit'
 
 // CSS injection (processed at build time by Vite plugin)
 componentStyle.sass`
@@ -261,7 +261,7 @@ const MyComp = (props: MyProps, scope: any) => {
 Traits bundle CSS classes, inline styles, and HTML attributes:
 
 ```ts
-import type { Trait } from '@pounce/core'
+import type { Trait } from '@sursaut/core'
 
 const dangerTrait: Trait = {
   classes: ['btn-danger'],  // or Record<string, boolean>
@@ -280,7 +280,7 @@ const dangerTrait: Trait = {
 
 ### 3.8 Error Boundaries (the `catch` attribute)
 
-Pounce handles errors via the `catch` meta-attribute. It can be applied to any element or component to create an error boundary.
+Sursaut handles errors via the `catch` meta-attribute. It can be applied to any element or component to create an error boundary.
 
 ```tsx
 const MyPage = () => {
@@ -309,35 +309,35 @@ const MyPage = () => {
 
 ### 3.9 SSR
 
-Dual entry points: `@pounce/core/dom` (browser), `@pounce/core/node` (JSDOM + ALS isolation).
+Dual entry points: `@sursaut/core/dom` (browser), `@sursaut/core/node` (JSDOM + ALS isolation).
 
 ```ts
 // Browser
-import '@pounce/core/dom'
+import '@sursaut/core/dom'
 
 // Node/SSR
-import '@pounce/core/node'
+import '@sursaut/core/node'
 ```
 
-`window` is declared as `never` globally to prevent accidental SSR breakage. Import DOM globals from `@pounce/core` instead.
+`window` is declared as `never` globally to prevent accidental SSR breakage. Import DOM globals from `@sursaut/core` instead.
 
 ---
 
-## 4. @pounce/kit (Application Toolkit)
+## 4. @sursaut/kit (Application Toolkit)
 
 ### 4.1 Entry Points
 
 | Import | Purpose |
 |--------|---------|
-| `@pounce/kit` | Auto-selects dom/node. Exports: `client`, router, API |
-| `@pounce/kit/dom` | Browser: CSS injection, `stored()`, real DOM listeners |
-| `@pounce/kit/node` | SSR: ALS-backed client, server dispatch, file-based routing |
-| `@pounce/kit/intl` | 6 Intl formatting components |
+| `@sursaut/kit` | Auto-selects dom/node. Exports: `client`, router, API |
+| `@sursaut/kit/dom` | Browser: CSS injection, `stored()`, real DOM listeners |
+| `@sursaut/kit/node` | SSR: ALS-backed client, server dispatch, file-based routing |
+| `@sursaut/kit/intl` | 6 Intl formatting components |
 
 ### 4.2 Client State
 
 ```ts
-import { client } from '@pounce/kit'
+import { client } from '@sursaut/kit'
 
 // Reactive singleton — tracks URL, viewport, focus, visibility, language, direction, online
 effect(() => {
@@ -351,8 +351,8 @@ effect(() => {
 ### 4.3 Router
 
 ```tsx
-import { Router, A } from '@pounce/kit'
-import { defineRoute } from '@pounce/kit/router'
+import { Router, A } from '@sursaut/kit'
+import { defineRoute } from '@sursaut/kit/router'
 
 // Route definition with typed params
 const userRoute = defineRoute('/users/[id:uuid]/posts?page=[page:integer?]')
@@ -374,13 +374,13 @@ Syntax: `[param]`, `[param:format]` (uuid, integer, etc.), `[...catchAll]`, opti
 ### 4.4 CSS Injection
 
 ```tsx
-import { css, sass, componentStyle, baseStyle } from '@pounce/kit'
+import { css, sass, componentStyle, baseStyle } from '@sursaut/kit'
 
 // Template tag — processed at build time by Vite plugin
 componentStyle.sass`
 .my-widget
   display: flex
-  gap: var(--pounce-spacing, 1rem)
+  gap: var(--sursaut-spacing, 1rem)
 `
 
 // Runtime: deduplicates by hash, groups by caller file
@@ -391,7 +391,7 @@ componentStyle.sass`
 ### 4.5 localStorage Persistence
 
 ```ts
-import { stored } from '@pounce/kit'
+import { stored } from '@sursaut/kit'
 
 const prefs = stored({ theme: 'light', fontSize: 14 })
 // Reactive object synced to localStorage
@@ -402,7 +402,7 @@ const prefs = stored({ theme: 'light', fontSize: 14 })
 ### 4.6 Intl Components
 
 ```tsx
-import { Number, Date, RelativeTime, List, Plural, DisplayNames } from '@pounce/kit/intl'
+import { Number, Date, RelativeTime, List, Plural, DisplayNames } from '@sursaut/kit/intl'
 
 <Number value={1234.5} style="currency" currency="EUR" />
 // Renders text node: "€1,234.50"
@@ -419,7 +419,7 @@ All return text nodes (no wrapper elements) except `Plural` (fragment). Locale r
 ### 4.7 API Client
 
 ```ts
-import { api } from '@pounce/kit'
+import { api } from '@sursaut/kit'
 
 const user = await api('/users/123').get()
 await api('/users').post({ name: 'John' })
@@ -435,24 +435,24 @@ SSR hydration: server collects API responses, injects as `<script>` tags, client
 
 ---
 
-## 5. @pounce/ui (Component Library)
+## 5. @sursaut/ui (Component Library)
 
 ### 5.1 Architecture
 
-`@pounce/ui` is **headless**: pure logic, pure types, zero class names, zero styling. It provides:
+`@sursaut/ui` is **headless**: pure logic, pure types, zero class names, zero styling. It provides:
 - `*Model` functions returning reactive state objects (lazy getters, no reactive reads at call time)
 - Shared prop type interfaces
 - `options.iconFactory` — the only global (set once at app startup)
 
-Adapters (e.g. `@pounce/adapter-pico`) own the actual components — they import models from `@pounce/ui` and provide the DOM structure and CSS.
+Adapters (e.g. `@sursaut/adapter-pico`) own the actual components — they import models from `@sursaut/ui` and provide the DOM structure and CSS.
 
 ```ts
 // App startup — set icon factory if needed
-import { options } from '@pounce/ui'
+import { options } from '@sursaut/ui'
 options.iconFactory = (name, size, el, dc) => <i class={`icon-${name}`} {...el} />
 
 // Import components directly from the adapter
-import { Button, Accordion, Switch, Toolbar } from '@pounce/adapter-pico'
+import { Button, Accordion, Switch, Toolbar } from '@sursaut/adapter-pico'
 ```
 
 No `setAdapter()`, no `picoAdapter`, no `FrameworkAdapter`. There is no registry.
@@ -463,7 +463,7 @@ Variants are declared via `uiComponent(variants)(ComponentFn)` in the adapter:
 
 ```ts
 // In adapter
-import { uiComponent } from '@pounce/ui'
+import { uiComponent } from '@sursaut/ui'
 
 export const Button = uiComponent(['primary', 'danger', 'success'] as const)(
   function Button(props) {
@@ -479,21 +479,21 @@ export const Button = uiComponent(['primary', 'danger', 'success'] as const)(
 
 ### 5.3 Component Inventory
 
-All components live in their adapter package (e.g. `@pounce/adapter-pico`). `@pounce/ui` only exports models and types.
+All components live in their adapter package (e.g. `@sursaut/adapter-pico`). `@sursaut/ui` only exports models and types.
 
-**Available in `@pounce/adapter-pico`**: `Button`, `Checkbox`, `Radio`, `Switch`, `Accordion`, `Container`, `Heading`, `Text`, `Toolbar`, `ThemeToggle`
+**Available in `@sursaut/adapter-pico`**: `Button`, `Checkbox`, `Radio`, `Switch`, `Accordion`, `Container`, `Heading`, `Text`, `Toolbar`, `ThemeToggle`
 
-**Models in `@pounce/ui`** (for adapter authors):
+**Models in `@sursaut/ui`** (for adapter authors):
 - `buttonModel`, `checkboxModel`, `radioModel`, `switchModel`, `accordionModel`
 - `checkButtonModel`, `radioButtonModel`, `comboboxModel`, `progressModel`, `starsModel`
 - `containerModel`, `headingModel`, `textModel`, `menuModel`, `typographyModel`
 
 ### 5.4 DisplayProvider
 
-`DisplayProvider` is DOM-only — import from `@pounce/kit/dom`:
+`DisplayProvider` is DOM-only — import from `@sursaut/kit/dom`:
 
 ```tsx
-import { DisplayProvider } from '@pounce/kit/dom'
+import { DisplayProvider } from '@sursaut/kit/dom'
 
 // Wraps subtree with theme/direction/locale context
 // Sets data-theme, dir, lang on its own <div style="display:contents">
@@ -507,8 +507,8 @@ Props: `theme`, `direction`, `locale`, `timeZone` — all default to `'auto'` (i
 ### 5.5 Writing an Adapter Component
 
 ```tsx
-import { componentStyle } from '@pounce/kit'
-import { buttonModel, uiComponent, type ButtonProps } from '@pounce/ui'
+import { componentStyle } from '@sursaut/kit'
+import { buttonModel, uiComponent, type ButtonProps } from '@sursaut/ui'
 
 componentStyle.sass`
 .my-btn
@@ -533,22 +533,22 @@ export const Button = uiComponent(['primary', 'danger'] as const)(
 - All model properties are **lazy getters** — no reactive reads at model() call time
 - Spread groups (e.g. `model.button`, `model.input`, `model.details`) bundle intrinsic attrs
 - `props.el` is the passthrough escape hatch for caller-supplied HTML attrs
-- CSS lives in the adapter package, never in `@pounce/ui`
+- CSS lives in the adapter package, never in `@sursaut/ui`
 
 ---
 
 ## 6. BUILD & TEST
 
 ```
-Build chain: @pounce/core → @pounce/kit → @pounce/ui
+Build chain: @sursaut/core → @sursaut/kit → @sursaut/ui
 Orchestrated by Turborepo: `pnpm run build` from monorepo root
 ```
 
-- Core's babel plugin lives in `@pounce/core/plugin` (source in `src/plugin/`).
+- Core's babel plugin lives in `@sursaut/core/plugin` (source in `src/plugin/`).
 - All packages use pnpm: `source ~/.nvm/nvm.sh && nvm use 22 && pnpm ...`
 - Dual entry points: `dom` (browser) and `node` (SSR) for core, kit.
 - Vitest config includes the babel plugin (`esbuild: false`). Tests should NOT manually use `r()`.
-- Library builds that externalize `@pounce/core` MUST externalize ALL subpaths (regex `/^@pounce\/core/`) to avoid dual-module `instanceof` failures.
+- Library builds that externalize `@sursaut/core` MUST externalize ALL subpaths (regex `/^@sursaut\/core/`) to avoid dual-module `instanceof` failures.
 
 ---
 
@@ -566,5 +566,5 @@ Orchestrated by Turborepo: `pnpm run build` from monorepo root
 | `arr.splice(0)` | `arr.length = 0` |
 | `<Spinner if={loading}/><Content else/>` | `{loading ? <Spinner/> : <Content/>}` |
 | `this={myRef}` for element refs | `ref={myRef}` (not supported) |
-| `import { Button } from '@pounce/adapter-pico'` | `import { Button } from '@pounce/ui'` (ui has no components) |
-| `import { document } from '@pounce/core'` | `window.document` or global `document` |
+| `import { Button } from '@sursaut/adapter-pico'` | `import { Button } from '@sursaut/ui'` (ui has no components) |
+| `import { document } from '@sursaut/core'` | `window.document` or global `document` |

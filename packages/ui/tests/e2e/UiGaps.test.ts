@@ -13,7 +13,7 @@ test.describe('Overlay / Dialog', () => {
 
 		await open.click()
 		await expect(dialog).toBeVisible()
-		await expect(dt(page, 'overlay-message')).toContainText('Pounce overlay stack')
+		await expect(dt(page, 'overlay-message')).toContainText('Sursaut overlay stack')
 
 		await dismiss.click()
 		await expect(dialog).not.toBeVisible()

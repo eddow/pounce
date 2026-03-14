@@ -21,7 +21,7 @@
 		],
 		"types": [
 			"node",
-			"@pounce/core"
+			"@sursaut/core"
 		],
 		"paths": {
 			"~/lib/*": [
@@ -33,37 +33,37 @@
 			"~/cli/*": [
 				"./src/cli/*"
 			],
-			"pounce-board": [
+			"sursaut-board": [
 				"./src/server/index.ts"
 			],
-			"pounce-board/client": [
+			"sursaut-board/client": [
 				"./src/client/index.ts"
 			],
-			"pounce-board/server": [
+			"sursaut-board/server": [
 				"./src/server/index.ts"
 			],
-			"pounce-ts": [
+			"sursaut-ts": [
 				"../core/src/lib/index.ts"
 			],
-			"pounce-ts/*": [
+			"sursaut-ts/*": [
 				"../core/src/*"
 			],
-			"pounce-ui": [
+			"sursaut-ui": [
 				"../ui/src/index.ts"
 			],
-			"pounce-ui/*": [
+			"sursaut-ui/*": [
 				"../ui/src/*"
 			],
-			"@pounce/kit": [
+			"@sursaut/kit": [
 				"../kit/src/index.ts"
 			],
-			"@pounce/kit/*": [
+			"@sursaut/kit/*": [
 				"../kit/src/*"
 			],
-			"@pounce/board": [
+			"@sursaut/board": [
 				"./src/index.ts"
 			],
-			"@pounce/board/*": [
+			"@sursaut/board/*": [
 				"./src/*"
 			],
 			"mutts": [

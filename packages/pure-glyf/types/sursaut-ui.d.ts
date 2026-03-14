@@ -1,5 +1,5 @@
-declare module '@pounce/ui' {
-	import type { JSX } from '@pounce/core'
+declare module '@sursaut/ui' {
+	import type { JSX } from '@sursaut/core'
 
 	export type IconFactory = (
 		name: string,

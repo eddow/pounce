@@ -1,5 +1,5 @@
-import { h, latch } from '@pounce/core'
-import { buildRouteTree, getSSRData, getSSRId, matchRoute } from '@pounce/board/client'
+import { h, latch } from '@sursaut/core'
+import { buildRouteTree, getSSRData, getSSRId, matchRoute } from '@sursaut/board/client'
 
 let listenersInstalled = false
 
@@ -16,7 +16,7 @@ async function loadPageProps(pathname: string, params: Record<string, string>) {
 
 	const response = await fetch(pathname, {
 		headers: {
-			'X-Pounce-Provide': 'true',
+			'X-Sursaut-Provide': 'true',
 			Accept: 'application/json',
 		},
 	})

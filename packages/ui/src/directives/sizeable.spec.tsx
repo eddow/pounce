@@ -1,5 +1,5 @@
-import { ReactiveProp } from '@pounce/core'
-import { markMounted, markUnmounted } from '@pounce/core/testing'
+import { ReactiveProp } from '@sursaut/core'
+import { markMounted, markUnmounted } from '@sursaut/core/testing'
 import { type EffectAccess, effect } from 'mutts'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { sizeable } from './sizeable'

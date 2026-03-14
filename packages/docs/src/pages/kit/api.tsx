@@ -1,7 +1,7 @@
 import { ApiTable, Code, PackageHeader, Section } from '../../components'
 
 const factorySnippet = `// Browser — auto-configured with fetch
-import { api, defineRoute } from '@pounce'
+import { api, defineRoute } from '@sursaut'
 
 // Inline — quick one-off calls
 const user = await api('/users/[id]').get({ id: '123' })
@@ -21,7 +21,7 @@ await users.byId({ id: '123' }).delete()
 // POST with body (path only, no params)
 const created = await api('/users').post({ name: 'Alice' })`
 
-const interceptorSnippet = `import { intercept } from '@pounce'
+const interceptorSnippet = `import { intercept } from '@sursaut'
 
 // Global interceptor for all /api/** requests
 intercept('/api/**', async (req, next) => {
@@ -38,8 +38,8 @@ intercept('/api/**', async (req, next) => {
 })`
 
 const ssrSnippet = `// Server-side (Node.js) — uses smart executor
-import { api } from '@pounce/kit/node'
-import { withSSR } from '@pounce/kit/node'
+import { api } from '@sursaut/kit/node'
+import { withSSR } from '@sursaut/kit/node'
 
 // SSR: API calls are tracked for hydration
 const { result, context } = await withSSR(async () => {
@@ -50,9 +50,9 @@ export default function KitApiPage() {
 	return (
 		<article>
 			<PackageHeader
-				name="@pounce/kit"
+				name="@sursaut/kit"
 				description="Lightweight, type-safe API client with SSR hydration and interceptor support."
-				install="pnpm add @pounce/kit"
+				install="pnpm add @sursaut/kit"
 			/>
 
 			<Section title="API Client">
@@ -135,7 +135,7 @@ await users.byId({ id: '123' }).delete()
 								'Registers a global interceptor matching a URL pattern or regex. Returns an unsubscribe function.',
 						},
 						{
-							name: 'PounceResponse',
+							name: 'SursautResponse',
 							type: 'class',
 							description: 'Extended Response with .json<T>() typing and .hydrated for SSR data.',
 						},

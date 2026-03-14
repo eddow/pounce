@@ -39,8 +39,8 @@ export type MenuBarModel = {
 // ── A11y helpers ──────────────────────────────────────────────────────────────
 
 function reportA11yIssue(message: string): void {
-	const strict = (globalThis as { PounceA11y?: { STRICT?: boolean } }).PounceA11y?.STRICT === true
-	const prefix = '[@pounce/ui/menu a11y]'
+	const strict = (globalThis as { SursautA11y?: { STRICT?: boolean } }).SursautA11y?.STRICT === true
+	const prefix = '[@sursaut/ui/menu a11y]'
 	if (strict) throw new Error(`${prefix} ${message}`)
 	console.warn(`${prefix} ${message}`)
 }

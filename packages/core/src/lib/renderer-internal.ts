@@ -1,6 +1,6 @@
 import { biDi, captioned, effect, reactiveOptions, root, type ScopedCallback } from 'mutts'
 import { CompositeAttributes, ReactiveProp } from './composite-attributes'
-import { pounceOptions, testing } from './debug'
+import { sursautOptions, testing } from './debug'
 import { classNames } from './styles'
 
 export function isFunction(value: any): value is Function {
@@ -46,7 +46,7 @@ export function listen(
 const componentRebuildTracker = new WeakMap<Function, { count: number; startTime: number }>()
 
 export function checkComponentRebuild(componentCtor: Function) {
-	const { maxRebuildsPerWindow, rebuildWindowMs } = pounceOptions
+	const { maxRebuildsPerWindow, rebuildWindowMs } = sursautOptions
 	if (maxRebuildsPerWindow <= 0) return // Disabled
 
 	const now = Date.now()
@@ -61,7 +61,7 @@ export function checkComponentRebuild(componentCtor: Function) {
 
 	if (tracker.count > maxRebuildsPerWindow) {
 		reactiveOptions.warn(
-			`[pounce] Component "${componentCtor.name}" rebuilt ${tracker.count} times in ${rebuildWindowMs}ms - possible infinite loop!`
+			`[sursaut] Component "${componentCtor.name}" rebuilt ${tracker.count} times in ${rebuildWindowMs}ms - possible infinite loop!`
 		)
 		// Reset to avoid spamming, then pause for debugging
 		tracker.count = 0

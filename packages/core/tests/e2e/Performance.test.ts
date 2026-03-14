@@ -18,7 +18,7 @@ interface TestPerfCounters {
 
 declare global {
 	interface Window {
-		__POUNCE_PERF__: TestPerfCounters
+		__SURSAUT_PERF__: TestPerfCounters
 	}
 }
 
@@ -33,7 +33,7 @@ function getMeasures(page: import('@playwright/test').Page, prefix: string) {
 
 function getCounters(page: import('@playwright/test').Page) {
 	return page.evaluate(() => {
-		const c = window.__POUNCE_PERF__
+		const c = window.__SURSAUT_PERF__
 		return {
 			componentRenders: c.componentRenders,
 			elementRenders: c.elementRenders,
@@ -129,17 +129,17 @@ test.describe('Performance budgets', () => {
 		expect(initialCounters.effectCreations).toBeLessThan(600)
 
 		// Reset counters so reactions from mount don't pollute the increment measurement
-		await page.evaluate(() => window.__POUNCE_PERF__.reset())
+		await page.evaluate(() => window.__SURSAUT_PERF__.reset())
 
 		// Trigger reactive update
 		await page.click('#app .increment')
 		await page.waitForFunction(
-			() => (window as any).__POUNCE_PERF__.effectReactions > 0,
+			() => (window as any).__SURSAUT_PERF__.effectReactions > 0,
 			{ timeout: 5000 }
 		)
 
 		const afterIncrement = await page.evaluate(() => {
-			const c = window.__POUNCE_PERF__
+			const c = window.__SURSAUT_PERF__
 			return { reactions: c.effectReactions, byName: c.byName, byNameReactions: c.byNameReactions }
 		})
 		// A single increment should trigger a bounded number of reactions (measured: ~39)

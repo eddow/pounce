@@ -54,13 +54,13 @@ importers:
       '@picocss/pico':
         specifier: ^2.1.1
         version: 2.1.1
-      '@pounce/core':
+      '@sursaut/core':
         specifier: workspace:*
         version: link:../../core
-      '@pounce/kit':
+      '@sursaut/kit':
         specifier: workspace:*
         version: link:../../kit
-      '@pounce/ui':
+      '@sursaut/ui':
         specifier: workspace:*
         version: link:../../ui
       '@tabler/icons':
@@ -93,13 +93,13 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.9
         version: 1.19.9(hono@4.11.7)
-      '@pounce/core':
+      '@sursaut/core':
         specifier: link:../core
         version: link:../core
-      '@pounce/kit':
+      '@sursaut/kit':
         specifier: link:../kit
         version: link:../kit
-      '@pounce/ui':
+      '@sursaut/ui':
         specifier: link:../ui
         version: link:../ui
       cac:
@@ -200,16 +200,16 @@ importers:
       '@picocss/pico':
         specifier: ^2
         version: 2.1.1
-      '@pounce/adapter-pico':
+      '@sursaut/adapter-pico':
         specifier: workspace:*
         version: link:../adapters/pico
-      '@pounce/core':
+      '@sursaut/core':
         specifier: workspace:*
         version: link:../core
-      '@pounce/kit':
+      '@sursaut/kit':
         specifier: workspace:*
         version: link:../kit
-      '@pounce/ui':
+      '@sursaut/ui':
         specifier: workspace:*
         version: link:../ui
       highlight.js:
@@ -237,7 +237,7 @@ importers:
 
   packages/kit:
     dependencies:
-      '@pounce/core':
+      '@sursaut/core':
         specifier: workspace:*
         version: link:../core
       arktype:
@@ -274,10 +274,10 @@ importers:
 
   packages/pure-glyf:
     devDependencies:
-      '@pounce/core':
+      '@sursaut/core':
         specifier: workspace:*
         version: link:../core
-      '@pounce/ui':
+      '@sursaut/ui':
         specifier: workspace:*
         version: link:../ui
       '@types/node':
@@ -301,10 +301,10 @@ importers:
 
   packages/ui:
     dependencies:
-      '@pounce/core':
+      '@sursaut/core':
         specifier: workspace:*
         version: link:../core
-      '@pounce/kit':
+      '@sursaut/kit':
         specifier: workspace:*
         version: link:../kit
       mutts:

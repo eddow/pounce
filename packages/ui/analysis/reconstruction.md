@@ -1,4 +1,4 @@
-# @pounce/ui Reconstruction Walkthrough
+# @sursaut/ui Reconstruction Walkthrough
 
 **Date**: 2026-02-19  
 **Architect**: Cascade  
@@ -8,10 +8,10 @@
 
 ## 1. Why a Rewrite?
 
-The old `@pounce/ui` (now in `packages/adapted-ui/`) had a fundamental architectural inversion:
+The old `@sursaut/ui` (now in `packages/adapted-ui/`) had a fundamental architectural inversion:
 
 ```
-App → @pounce/ui Button → checks adapter registry → falls back to vanilla classes
+App → @sursaut/ui Button → checks adapter registry → falls back to vanilla classes
 ```
 
 **Problems diagnosed:**
@@ -21,23 +21,23 @@ App → @pounce/ui Button → checks adapter registry → falls back to vanilla 
 // adapted-ui/src/components/forms.tsx:128
 function toneClass(variant?: string): string | undefined {
     if (!variant || Object.keys(variantProps(variant)).length > 0) return undefined
-    return `pounce-control-${variant}`
+    return `sursaut-control-${variant}`
 }
 ```
-This function exists because the adapter system couldn't cleanly handle variant-to-class mapping for form controls. It's a workaround for a broken model — if the adapter doesn't know the variant, fall back to a hardcoded `pounce-control-*` class. The variant system and the class fallback system were fighting each other.
+This function exists because the adapter system couldn't cleanly handle variant-to-class mapping for form controls. It's a workaround for a broken model — if the adapter doesn't know the variant, fall back to a hardcoded `sursaut-control-*` class. The variant system and the class fallback system were fighting each other.
 
 ### 1.2 Hardcoded fallbacks everywhere
 Every component had patterns like:
 ```typescript
-adapter.classes?.base || 'pounce-button'
-adapter.classes?.iconOnly || 'pounce-button-icon-only'
+adapter.classes?.base || 'sursaut-button'
+adapter.classes?.iconOnly || 'sursaut-button-icon-only'
 ```
 These aren't true fallbacks — they're **vanilla defaults masquerading as generic code**. The entire SASS block in each component file is vanilla-specific styling that ships to every consumer regardless of their CSS framework.
 
 ### 1.3 Pico adapter was just class name remapping
 `adapted-ui/packages/adapters/pico/src/components.ts` was 254 lines of:
 ```typescript
-Button: { classes: { base: 'pounce-button', iconOnly: 'pounce-button-icon-only' } }
+Button: { classes: { base: 'sursaut-button', iconOnly: 'sursaut-button-icon-only' } }
 ```
 It couldn't express Pico's actual semantics: Pico styles `<button>` natively — no classes needed at all. The adapter model couldn't represent "use native element, no classes."
 
@@ -52,11 +52,11 @@ The `renderStructure` callback in `BaseAdaptation` was the adapter's way to comp
 ## 2. The New Architecture: Adapter as Front
 
 ```
-App → @pounce/pico Button → useButton() from @pounce/ui → zero styling
+App → @sursaut/pico Button → useButton() from @sursaut/ui → zero styling
 ```
 
 ### 2.1 Core principle
-`@pounce/ui` is now **headless**: pure logic, pure types, zero class names, zero SASS. It provides:
+`@sursaut/ui` is now **headless**: pure logic, pure types, zero class names, zero SASS. It provides:
 - `use*` hooks returning reactive state objects
 - Shared prop type interfaces
 - The `<Icon>` component + `setIconFactory()` (the only true cross-cutting concern)
@@ -71,7 +71,7 @@ Everything else (variants, class names, DOM structure) belongs to the adapter.
 
 ### 2.3 Hook pattern
 ```typescript
-// @pounce/ui
+// @sursaut/ui
 export function useButton(props: ButtonProps): ButtonState {
     return {
         get onClick() { ... },      // lazy getter — no reactive read at call time
@@ -80,8 +80,8 @@ export function useButton(props: ButtonProps): ButtonState {
     }
 }
 
-// @pounce/pico
-import { useButton } from '@pounce/ui'
+// @sursaut/pico
+import { useButton } from '@sursaut/ui'
 
 export const Button = (props: ButtonProps) => {
     const state = useButton(props)
@@ -93,7 +93,7 @@ export const Button = (props: ButtonProps) => {
 }
 ```
 
-All state properties are **getters** — they don't read reactive state at hook call time. The Pounce babel plugin wraps JSX attribute expressions in `r()`, so `onClick={state.onClick}` becomes reactive automatically.
+All state properties are **getters** — they don't read reactive state at hook call time. The Sursaut babel plugin wraps JSX attribute expressions in `r()`, so `onClick={state.onClick}` becomes reactive automatically.
 
 ---
 
@@ -141,7 +141,7 @@ packages/ui/
 │       ├── types.ts          # SelectProps, ComboboxProps, ComboboxOption, ...
 │       ├── use-combobox.ts   # useCombobox(props) → ComboboxState
 │       └── index.ts
-├── package.json              # @pounce/ui v2.0.0
+├── package.json              # @sursaut/ui v2.0.0
 ├── tsconfig.json
 ├── vite.config.ts
 ├── vitest.config.ts
@@ -168,7 +168,7 @@ All versions aligned with the most recent versions used across the monorepo:
 | `jsdom` | `^27.4.0` | kit |
 | `pnpm` | `10.30.0` | all packages |
 
-`tsconfig.json` follows the same pattern as `@pounce/kit`: `moduleResolution: bundler`, `jsx: react` with `jsxFactory: h`, `types: ["node", "@pounce/core"]`.
+`tsconfig.json` follows the same pattern as `@sursaut/kit`: `moduleResolution: bundler`, `jsx: react` with `jsxFactory: h`, `types: ["node", "@sursaut/core"]`.
 
 ---
 
@@ -192,7 +192,7 @@ The skeleton covers the most-used component domains. Remaining hooks to implemen
 | DisplayProvider | stays as component (no hook) | `display/` |
 | ThemeToggle | stays as component (no hook) | `display/theme-toggle.tsx` |
 
-**Rule**: Components that are purely structural/layout (no behavioral state) stay as components in the adapter. Components that have non-trivial behavioral logic (state machines, a11y, event handling) get a `use*` hook in `@pounce/ui`.
+**Rule**: Components that are purely structural/layout (no behavioral state) stay as components in the adapter. Components that have non-trivial behavioral logic (state machines, a11y, event handling) get a `use*` hook in `@sursaut/ui`.
 
 ---
 
@@ -201,7 +201,7 @@ The skeleton covers the most-used component domains. Remaining hooks to implemen
 ### Before (adapted-ui)
 ```typescript
 // adapter registers config
-import { setAdapter } from '@pounce/ui'
+import { setAdapter } from '@sursaut/ui'
 setAdapter({
     components: {
         Button: { classes: { base: 'my-btn' } }
@@ -209,7 +209,7 @@ setAdapter({
 })
 
 // app uses generic component
-import { Button } from '@pounce/ui'
+import { Button } from '@sursaut/ui'
 <Button.primary>Click</Button.primary>
 ```
 
@@ -217,7 +217,7 @@ import { Button } from '@pounce/ui'
 ```typescript
 // adapter exports its own components
 // @my-adapter/button.tsx
-import { useButton, type ButtonProps } from '@pounce/ui'
+import { useButton, type ButtonProps } from '@sursaut/ui'
 
 export const Button = (props: ButtonProps) => {
     const state = useButton(props)
@@ -235,22 +235,22 @@ import { Button } from '@my-adapter'
 setAdapter({ iconFactory: (name, size, ctx) => <i class={`icon-${name}`} /> })
 
 // After
-import { options } from '@pounce/ui'
+import { options } from '@sursaut/ui'
 options.iconFactory = (name, size, dc) => <i class={`icon-${name}`} />
 ```
-The `DisplayContext` parameter is removed — icons don't need theme/direction context at the `@pounce/ui` level. If an adapter needs it, it wraps `setIconFactory` with its own context.
+The `DisplayContext` parameter is removed — icons don't need theme/direction context at the `@sursaut/ui` level. If an adapter needs it, it wraps `setIconFactory` with its own context.
 
 ---
 
 ## 8. Test Strategy
 
-- **`@pounce/ui` tests**: Unit-test hooks in isolation. No DOM needed for most — hooks return plain objects.
-- **Adapter tests**: Test the rendered JSX structure. Use `jsdom` + pounce test utilities.
+- **`@sursaut/ui` tests**: Unit-test hooks in isolation. No DOM needed for most — hooks return plain objects.
+- **Adapter tests**: Test the rendered JSX structure. Use `jsdom` + sursaut test utilities.
 - **No test adapter to publish**: A minimal test setup in `vitest.config.ts` suffices (inherits from monorepo base config).
 
 ```typescript
 // Example: testing useButton in isolation
-import { useButton } from '@pounce/ui'
+import { useButton } from '@sursaut/ui'
 
 test('disabled button has no onClick', () => {
     const state = useButton({ disabled: true, onClick: vi.fn() })
@@ -276,10 +276,10 @@ test('icon-only when icon present and no children', () => {
   - Dot-syntax accessors (`Button.primary`)
   - Dev-mode unknown variant warnings
 - **Documentation**: LLM.md updated to reflect actual implementation
-- **Barrel Plugin**: The docs app (`packages/docs`) already has this right in `vite.config.ts` — it configures the `@pounce` barrel plugin with the `adapter` and imports components from `@pounce`.
+- **Barrel Plugin**: The docs app (`packages/docs`) already has this right in `vite.config.ts` — it configures the `@sursaut` barrel plugin with the `adapter` and imports components from `@sursaut`.
 
 ### 🚧 In Progress
-- **Reference Adapter**: `@pounce/adapter-pico` skeleton created
+- **Reference Adapter**: `@sursaut/adapter-pico` skeleton created
   - Package structure, factory, setup utilities
   - Button, Checkbox, Radio, Switch implemented
   - CSS customizations for PicoCSS

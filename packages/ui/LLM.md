@@ -1,10 +1,10 @@
-# @pounce/ui LLM Cheat Sheet
+# @sursaut/ui LLM Cheat Sheet
 
-Read [pounce core's LLM](../core/LLM.md) and [kit's LLM](../kit/LLM.md).
+Read [sursaut core's LLM](../core/LLM.md) and [kit's LLM](../kit/LLM.md).
 
 ## Overview
 
-**Headless** UI primitives for Pounce applications. Zero styling, zero class names, zero opinions on CSS frameworks. Provides:
+**Headless** UI primitives for Sursaut applications. Zero styling, zero class names, zero opinions on CSS frameworks. Provides:
 - Behavioral logic (state, a11y, event handling) via composable `*Model` functions
 - Shared prop interfaces that adapters extend
 - Icon registration via `options.iconFactory`
@@ -14,15 +14,15 @@ Read [pounce core's LLM](../core/LLM.md) and [kit's LLM](../kit/LLM.md).
 
 ## Architecture: Adapter as Front
 
-**Old model (adapted-ui)**: App → `@pounce/ui` Button → checks adapter registry → falls back to vanilla classes.
+**Old model (adapted-ui)**: App → `@sursaut/ui` Button → checks adapter registry → falls back to vanilla classes.
 
-**New model**: App → `@pounce/pico` Button → uses `buttonModel()` from `@pounce/ui` → zero styling.
+**New model**: App → `@sursaut/pico` Button → uses `buttonModel()` from `@sursaut/ui` → zero styling.
 
 ```
-@pounce/ui (headless)
+@sursaut/ui (headless)
   └── buttonModel(props) → { button: { onClick, disabled, aria-label, ... }, icon: { position, span, element }, ... }
 
-@pounce/pico (styled)
+@sursaut/pico (styled)
   └── Button = picoComponent(function Button(props) {
         const model = buttonModel(props)
         return (
@@ -36,7 +36,7 @@ Read [pounce core's LLM](../core/LLM.md) and [kit's LLM](../kit/LLM.md).
 
 ## `env.dc` — DisplayContext
 
-`@pounce/kit` injects a `DisplayContext` into the Pounce `Env` under the key `dc`.
+`@sursaut/kit` injects a `DisplayContext` into the Sursaut `Env` under the key `dc`.
 Components and hooks access it as `env.dc`. It carries:
 - `direction: 'ltr' | 'rtl'`
 - `theme: string`
@@ -54,7 +54,7 @@ Models do **not** take `env` — direction-awareness is handled via logical CSS,
 Single mutable config object.
 
 ```ts
-import { options } from '@pounce/ui'
+import { options } from '@sursaut/ui'
 options.iconFactory = (name, size, el, dc) => <i class={`icon-${name}`} />
 ```
 
@@ -141,10 +141,10 @@ See `src/models.md` for the full recipe before creating/modifying models.
 
 | Import | Who uses it | What it exports |
 |---|---|---|
-| `@pounce/ui` | App consumers | Complete components (`InfiniteScroll`) + everything in `./internal` |
-| `@pounce/ui/internal` | Adapter authors | Models, props types, `uiComponent`, `gather`, `options`, directives, overlays, shared types/utils |
+| `@sursaut/ui` | App consumers | Complete components (`InfiniteScroll`) + everything in `./internal` |
+| `@sursaut/ui/internal` | Adapter authors | Models, props types, `uiComponent`, `gather`, `options`, directives, overlays, shared types/utils |
 
-Adapters should import from `@pounce/ui/internal` rather than `@pounce/ui` to make the dependency boundary explicit.
+Adapters should import from `@sursaut/ui/internal` rather than `@sursaut/ui` to make the dependency boundary explicit.
 
 ## Source Map
 
@@ -185,7 +185,7 @@ Each component file is self-contained: types + hook + helpers in one file. No pe
 
 ## Directives
 
-Directives are plain DOM functions — not hooks. They follow the Pounce `use:name={value}` directive signature:
+Directives are plain DOM functions — not hooks. They follow the Sursaut `use:name={value}` directive signature:
 `(target: Node | Node[], value: T, scope?: Record<PropertyKey, unknown>) => (() => void) | undefined`
 
 | Directive | Value type | Description |

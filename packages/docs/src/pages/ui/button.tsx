@@ -1,4 +1,4 @@
-import { Button, ButtonGroup, Inline, Select, Stack, Switch } from '@pounce'
+import { Button, ButtonGroup, Inline, Select, Stack, Switch } from '@sursaut'
 import { reactive } from 'mutts'
 import { ApiTable, Code, Demo, Section } from '../../components'
 
@@ -21,7 +21,7 @@ const variantDotSyntax = `// Variant dot-syntax — shorthand for variant="..."
 // asVariant() creates these automatically from the adapter's
 // variant list. Any variant defined in the adapter is available.`
 
-const loadingState = `import { Button, loading } from '@pounce'
+const loadingState = `import { Button, loading } from '@sursaut'
 
 function SaveButton(_props: {}, env: Env) {
   env.loading = loading

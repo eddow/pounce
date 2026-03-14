@@ -90,7 +90,7 @@ export function withSSR<T>(fn: (dom: { document: Document; window: Window }) => 
 }
 
 /**
- * Renders a @pounce/core element to a string synchronously.
+ * Renders a @sursaut/core element to a string synchronously.
  * Useful for basic SSR.
  */
 export function renderToString(element: JSX.Element, env: Env = rootEnv): string {
@@ -103,7 +103,7 @@ export function renderToString(element: JSX.Element, env: Env = rootEnv): string
 }
 
 /**
- * Renders a @pounce/core element to a string asynchronously.
+ * Renders a @sursaut/core element to a string asynchronously.
  * It waits for any promises collected via the provided callback.
  */
 export async function renderToStringAsync(

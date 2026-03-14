@@ -1,5 +1,5 @@
 /**
- * Performance instrumentation shim for @pounce/core
+ * Performance instrumentation shim for @sursaut/core
  * Conditionally exports native Performance API in development
  */
 

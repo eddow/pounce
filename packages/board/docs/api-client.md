@@ -1,11 +1,11 @@
 # API Client
 
-The universal `api()` client in `@pounce/board` handles local SSR dispatch, hydration reuse, and normal browser fetches through one interface.
+The universal `api()` client in `@sursaut/board` handles local SSR dispatch, hydration reuse, and normal browser fetches through one interface.
 
 ## Basic usage
 
 ```ts
-import { api, defineRoute } from '@pounce/board'
+import { api, defineRoute } from '@sursaut/board'
 
 // Inline paths — quick one-off calls
 const post = await api('/posts/[id]').get<{ id: string; title: string }>({ id: '1' })
@@ -35,7 +35,7 @@ const allPosts = await posts.list().get<{ id: string; title: string }[]>()
 The package also exposes direct methods bound to the current route:
 
 ```ts
-import { get, post } from '@pounce/board'
+import { get, post } from '@sursaut/board'
 
 const current = await get<{ ok: true }>()
 const updated = await post<{ ok: true }>({ enabled: true })
@@ -65,7 +65,7 @@ const posts = initial ?? (await request)
 Use `intercept()` to register request/response middleware around the client.
 
 ```ts
-import { intercept } from '@pounce/board'
+import { intercept } from '@sursaut/board'
 
 const unregister = intercept('**', async (req, next) => {
 	req.headers.set('X-App-Version', '1.0.0')
@@ -98,13 +98,13 @@ Interceptors are:
 
 ## Response mutation
 
-Board uses `PounceResponse`, which supports repeated body reads and body replacement through `setData()`.
+Board uses `SursautResponse`, which supports repeated body reads and body replacement through `setData()`.
 
 ```ts
-import { intercept, PounceResponse } from '@pounce/board'
+import { intercept, SursautResponse } from '@sursaut/board'
 
 intercept('/posts/**', async (req, next) => {
-	const response = PounceResponse.from(await next(req))
+	const response = SursautResponse.from(await next(req))
 	const data = await response.json()
 	if (data && typeof data === 'object' && 'error' in data) {
 		response.setData({ ...data, userMessage: 'Something went wrong' })
@@ -118,7 +118,7 @@ intercept('/posts/**', async (req, next) => {
 Global timeout:
 
 ```ts
-import { api, config } from '@pounce/board'
+import { api, config } from '@sursaut/board'
 
 config.timeout = 5_000
 await api('/slow').get()
@@ -135,7 +135,7 @@ await api('/slow', { timeout: 30_000 }).get()
 Global configuration:
 
 ```ts
-import { api, config } from '@pounce/board'
+import { api, config } from '@sursaut/board'
 
 config.retries = 3
 config.retryDelay = 1_000

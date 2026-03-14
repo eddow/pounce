@@ -1,6 +1,6 @@
-# Reactivity in Pounce-TS
+# Reactivity in Sursaut-TS
 
-Pounce-TS uses the `mutts` reactivity engine to automatically track dependencies and update the DOM when state changes.
+Sursaut-TS uses the `mutts` reactivity engine to automatically track dependencies and update the DOM when state changes.
 
 ## Reactive State
 
@@ -156,7 +156,7 @@ function Counter() {
 
 ### Array Utilities
 
-Pounce-TS provides utility functions for reactive arrays:
+Sursaut-TS provides utility functions for reactive arrays:
 
 ```tsx
 import { array } from '../lib/utils'

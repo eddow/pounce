@@ -1,4 +1,4 @@
-import type { DisplayContext } from '@pounce/kit'
+import type { DisplayContext } from '@sursaut/kit'
 
 /**
  * Wraps array children in a `<span>` so they form a single flex item (needed when CSS `order` is used).
@@ -9,7 +9,7 @@ export function gather(children: JSX.Children): JSX.Element {
 }
 
 /** Generates a short random DOM-safe id string */
-export function generateId(prefix = 'pounce'): string {
+export function generateId(prefix = 'sursaut'): string {
 	return `${prefix}-${Math.random().toString(36).slice(2, 9)}`
 }
 

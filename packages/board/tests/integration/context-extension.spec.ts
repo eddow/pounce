@@ -4,9 +4,9 @@
 
 import { describe, it, expect } from 'vitest'
 import type { RequestContext, Middleware } from '../../src/server/index.js'
-import { runMiddlewares } from '@pounce/kit/api/core'
+import { runMiddlewares } from '@sursaut/kit/api/core'
 
-/** Test-local generic handler type since RouteHandler was widened in @pounce/kit */
+/** Test-local generic handler type since RouteHandler was widened in @sursaut/kit */
 type TestHandler = (context: RequestContext) => Promise<{ status: number; data?: any; error?: string }>
 
 // Extend RequestContext for testing

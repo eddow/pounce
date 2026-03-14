@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"baseUrl": ".",
 		"paths": {
-			"@pounce/kit": [
+			"@sursaut/kit": [
 				"../src/dom/index.ts"
 			]
 		}

@@ -4,25 +4,25 @@
 		"baseUrl": ".",
 		"rootDir": "../../../../../",
 		"paths": {
-			"@pounce/core": [
+			"@sursaut/core": [
 				"../../../core/src/index.ts"
 			],
-			"@pounce/core/*": [
+			"@sursaut/core/*": [
 				"../../../core/src/*"
 			],
-			"@pounce/kit": [
+			"@sursaut/kit": [
 				"../../../kit/src/index.ts"
 			],
-			"@pounce/kit/*": [
+			"@sursaut/kit/*": [
 				"../../../kit/src/*"
 			],
-			"@pounce/ui": [
+			"@sursaut/ui": [
 				"../../../ui/src/index.ts"
 			],
-			"@pounce/ui/*": [
+			"@sursaut/ui/*": [
 				"../../../ui/src/*"
 			],
-			"@pounce/ui/models": [
+			"@sursaut/ui/models": [
 				"../../../ui/src/models/index.ts"
 			],
 			"mutts": [
@@ -31,10 +31,10 @@
 			"mutts/*": [
 				"../../../../../mutts/src/*"
 			],
-			"@pounce/adapter-pico": [
+			"@sursaut/adapter-pico": [
 				"../src/index.ts"
 			],
-			"@pounce/adapter-pico/css": [
+			"@sursaut/adapter-pico/css": [
 				"../src/pico.sass"
 			]
 		}

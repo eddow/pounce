@@ -1,4 +1,4 @@
-import { type Env, PounceElement } from '@pounce/core'
+import { type Env, SursautElement } from '@sursaut/core'
 import { useDisplayContext } from './display'
 
 const caches = new Map()
@@ -37,7 +37,7 @@ export interface IntlNumberProps extends Intl.NumberFormatOptions {
 
 /** Formats a number according to locale. Returns a text node. */
 export function Number(props: IntlNumberProps, env: Env) {
-	return PounceElement.text(() =>
+	return SursautElement.text(() =>
 		cachedIntl(globalThis.Intl.NumberFormat)(resolveLocale(env, props.locale), props).format(
 			props.value
 		)
@@ -53,7 +53,7 @@ export interface IntlDateProps extends Intl.DateTimeFormatOptions {
 
 /** Formats a date/time according to locale. Returns a text node. */
 export function Date(props: IntlDateProps, env: Env) {
-	return PounceElement.text(() =>
+	return SursautElement.text(() =>
 		cachedIntl(globalThis.Intl.DateTimeFormat)(resolveLocale(env, props.locale), {
 			...props,
 			timeZone: props.timeZone ?? env.timeZone,
@@ -73,7 +73,7 @@ export interface IntlRelativeTimeProps extends Intl.RelativeTimeFormatOptions {
 
 /** Formats a relative time (e.g. "3 days ago") according to locale. Returns a text node. */
 export function RelativeTime(props: IntlRelativeTimeProps, env: Env) {
-	return PounceElement.text(() =>
+	return SursautElement.text(() =>
 		cachedIntl(globalThis.Intl.RelativeTimeFormat)(resolveLocale(env, props.locale), props).format(
 			props.value,
 			props.unit
@@ -90,7 +90,7 @@ export interface IntlListProps extends Intl.ListFormatOptions {
 
 /** Formats a list (e.g. "Alice, Bob, and Charlie") according to locale. Returns a text node. */
 export function List(props: IntlListProps, env: Env) {
-	return PounceElement.text(() =>
+	return SursautElement.text(() =>
 		cachedIntl(globalThis.Intl.ListFormat)(resolveLocale(env, props.locale), props).format(
 			props.value
 		)
@@ -114,7 +114,7 @@ export interface IntlPluralProps extends Intl.PluralRulesOptions, IntlPluralCase
 
 /** Selects JSX content based on the plural category of `value`. Returns a fragment. */
 export function Plural(props: IntlPluralProps, env: Env) {
-	return PounceElement.text(() => {
+	return SursautElement.text(() => {
 		const item =
 			props[
 				cachedIntl(globalThis.Intl.PluralRules)(resolveLocale(env, props.locale), props).select(
@@ -134,7 +134,7 @@ export interface IntlDisplayNamesProps extends Intl.DisplayNamesOptions {
 
 /** Resolves a code to its display name (e.g. "fr" → "French"). Returns a text node. */
 export function DisplayNames(props: IntlDisplayNamesProps, env: Env) {
-	return PounceElement.text(
+	return SursautElement.text(
 		() =>
 			cachedIntl(globalThis.Intl.DisplayNames)(resolveLocale(env, props.locale), props).of(
 				props.value

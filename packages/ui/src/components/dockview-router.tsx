@@ -1,4 +1,4 @@
-import { defaults } from '@pounce/core'
+import { defaults } from '@sursaut/core'
 import {
 	type ClientRouteDefinition,
 	client,
@@ -14,7 +14,7 @@ import {
 	type RouterOnRouteStart,
 	type RouteSpecification,
 	routerModel,
-} from '@pounce/kit'
+} from '@sursaut/kit'
 import type { DockviewApi, DockviewOptions, SerializedDockview } from 'dockview-core'
 import { caught, effect, reactive } from 'mutts'
 import {

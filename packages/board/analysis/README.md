@@ -1,4 +1,4 @@
-# Pounce Framework
+# Sursaut Framework
 
 The source of truth is [api-routing](./api-routing.md)
 
@@ -10,9 +10,9 @@ The source of truth is [api-routing](./api-routing.md)
 ✅ **SSR data injection** – Script-tag based hydration
 ✅ **Explicit middleware** – Per-route middleware stacks
 ✅ **External API proxies** – Typed legacy system integration
-✅ **Framework** – pounce-board is to pounce-ts what sveltekit is to svelte
+✅ **Framework** – sursaut-board is to sursaut-ts what sveltekit is to svelte
 
-npm install pounce-board
+npm install sursaut-board
 ```
 
 ### 2. Project Structure
@@ -30,7 +30,7 @@ npm install pounce-board
 ### 3. Define a Route
 ```ts
 // routes/users/[id]/index.ts
-import { expose } from '@pounce/board/server'
+import { expose } from '@sursaut/board/server'
 
 export default expose<{ id: string }>({
 	get: async ({ params }) => {
@@ -45,7 +45,7 @@ export default expose<{ id: string }>({
 ### 4. Add Middleware
 ```ts
 // routes/users/[id]/common.ts
-import type { Middleware } from "pounce/http";
+import type { Middleware } from "sursaut/http";
 
 export const middleware: Middleware[] = [
   async (ctx, next) => {
@@ -58,8 +58,8 @@ export const middleware: Middleware[] = [
 ### 5. Use in Frontend
 ```tsx
 // routes/users/[id]/index.tsx
-import { api } from "pounce/http";
-import { getSSRData } from "pounce/ssr";
+import { api } from "sursaut/http";
+import { getSSRData } from "sursaut/ssr";
 
 export default function UserPage({ params }) {
   const initialData = getSSRData<User>(`user-${params.id}`);

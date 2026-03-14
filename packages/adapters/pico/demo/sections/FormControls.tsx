@@ -1,4 +1,4 @@
-import { Checkbox, Progress, Radio, Switch } from '@pounce/adapter-pico'
+import { Checkbox, Progress, Radio, Switch } from '@sursaut/adapter-pico'
 import { reactive } from 'mutts'
 import { DemoCard, DemoGrid, DemoSection, DemoState } from './shared'
 

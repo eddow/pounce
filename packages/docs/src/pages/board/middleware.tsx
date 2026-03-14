@@ -1,7 +1,7 @@
 import { Code, PackageHeader, Section } from '../../components'
 
 const middlewareSnippet = `// routes/api/common.ts
-import type { Middleware } from '@pounce/board/server'
+import type { Middleware } from '@sursaut/board/server'
 
 export const middleware: Middleware[] = [
   async (ctx, next) => {
@@ -12,7 +12,7 @@ export const middleware: Middleware[] = [
   }
 ]`
 
-const interceptorSnippet = `import { intercept } from '@pounce/board'
+const interceptorSnippet = `import { intercept } from '@sursaut/board'
 
 intercept('/api/**', async (req, next) => {
   req.headers.set('X-App-ID', 'demo-app')
@@ -52,7 +52,7 @@ export default function BoardMiddlewarePage() {
 						handlers during SSR dispatch.
 					</li>
 					<li>
-						<strong>Modification</strong>: Interceptors use the <code>PounceResponse</code> class,
+						<strong>Modification</strong>: Interceptors use the <code>SursautResponse</code> class,
 						which allows modifying bodies multiple times.
 					</li>
 				</ul>

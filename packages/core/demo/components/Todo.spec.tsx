@@ -1,4 +1,4 @@
-import { h, rootEnv } from '@pounce/core'
+import { h, rootEnv } from '@sursaut/core'
 import { morph, reactive } from 'mutts'
 import { describe, expect, it } from 'vitest'
 import TodoWebComponent, { type Todo } from './Todo'

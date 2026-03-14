@@ -84,14 +84,14 @@ test.describe('Env component', () => {
 	})
 
 	test('rendering events captured on toggle', async ({ page }) => {
-		await page.evaluate(() => window.__pounceEvents?.reset())
+		await page.evaluate(() => window.__sursautEvents?.reset())
 		
 		const visibleContent = page.locator('[data-testid="visible-content"]')
 		await expect(visibleContent.locator('p.visible')).toBeVisible()
 		
 		await page.click('[data-action="toggle"]')
 		
-		const events = await page.evaluate(() => window.__pounceEvents?.renderingEvents || [])
+		const events = await page.evaluate(() => window.__sursautEvents?.renderingEvents || [])
 		const eventTypes = events.map(e => e.event)
 		
 		expect(eventTypes.some(e => e.includes('reconcile (+'))).toBeTruthy()

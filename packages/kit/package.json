@@ -1,7 +1,7 @@
 {
-	"name": "@pounce/kit",
+	"name": "@sursaut/kit",
 	"version": "1.0.0",
-	"description": "Routing, i18n, and application utilities for Pounce",
+	"description": "Routing, i18n, and application utilities for Sursaut",
 	"type": "module",
 	"sideEffects": [
 		"./dist/dom.js",
@@ -12,7 +12,7 @@
 		"./src/node/context.ts"
 	],
 	"keywords": [
-		"pounce",
+		"sursaut",
 		"router",
 		"i18n",
 		"kit"
@@ -21,7 +21,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/eddow/pounce.git"
+		"url": "git+https://github.com/eddow/sursaut.git"
 	},
 	"types": "./dist/dom.d.ts",
 	"exports": {
@@ -80,7 +80,7 @@
 		"perf": "VITE_PERF=true VITE_PERF_LOG=true pnpm run test:e2e"
 	},
 	"dependencies": {
-		"@pounce/core": "workspace:*",
+		"@sursaut/core": "workspace:*",
 		"arktype": "^2.1.0",
 		"mutts": "link:../../../mutts"
 	},

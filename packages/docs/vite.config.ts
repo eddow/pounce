@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
-import { pounceBarrelPlugin, pounceMinimalPackage } from '@pounce/core/plugin'
+import { sursautBarrelPlugin, sursautMinimalPackage } from '@sursaut/core/plugin'
 
 export default defineConfig({
   root: resolve(import.meta.dirname, '.'),
   plugins: [
-    ...pounceMinimalPackage(),
-    pounceBarrelPlugin({ skeleton: 'front-end', adapter: '@pounce/adapter-pico' }),
+    ...sursautMinimalPackage(),
+    sursautBarrelPlugin({ skeleton: 'front-end', adapter: '@sursaut/adapter-pico' }),
   ],
   build: {
     chunkSizeWarningLimit: 600,

@@ -1,9 +1,9 @@
 /**
- * Extended Response class for Pounce-Board interceptors
+ * Extended Response class for Sursaut-Board interceptors
  * Supports caching the body to allow multiple reads (by interceptors and consumers)
  * and allows body modification via setJson()
  */
-export class PounceResponse extends Response {
+export class SursautResponse extends Response {
 	private _bufferCache: ArrayBuffer | null = null
 	private _jsonCache: any = null
 	private _textCache: string | null = null
@@ -15,7 +15,7 @@ export class PounceResponse extends Response {
 	private async _getBuffer(): Promise<ArrayBuffer> {
 		if (this._bufferCache) return this._bufferCache
 		if (this._bodyRead && !this._bufferCache) {
-			throw new Error('[@pounce/board] Body already read or locked')
+			throw new Error('[@sursaut/board] Body already read or locked')
 		}
 		this._bodyRead = true
 		this._bufferCache = await super.arrayBuffer()
@@ -74,8 +74,8 @@ export class PounceResponse extends Response {
 	/**
 	 * Override clone to carry over the cache state
 	 */
-	override clone(): PounceResponse {
-		const cloned = new PounceResponse(this._bufferCache || this.body, {
+	override clone(): SursautResponse {
+		const cloned = new SursautResponse(this._bufferCache || this.body, {
 			status: this.status,
 			statusText: this.statusText,
 			headers: this.headers,
@@ -90,13 +90,13 @@ export class PounceResponse extends Response {
 		return cloned
 	}
 
-	static from(response: Response): PounceResponse {
-		if (response instanceof PounceResponse) return response
+	static from(response: Response): SursautResponse {
+		if (response instanceof SursautResponse) return response
 
 		// If the body is already disturbed, we can't pass it to the constructor.
 		// We create a response with a null body but mark it as read.
 		const body = response.bodyUsed ? null : response.body
-		const res = new PounceResponse(body, response)
+		const res = new SursautResponse(body, response)
 
 		if (response.bodyUsed) {
 			res._bodyRead = true

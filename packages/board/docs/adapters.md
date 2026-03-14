@@ -1,36 +1,36 @@
 # Server Adapters
 
-`@pounce/board` is currently centered around a Hono adapter for serving both API and UI routes from the same route tree.
+`@sursaut/board` is currently centered around a Hono adapter for serving both API and UI routes from the same route tree.
 
 ## Hono adapter
 
-Import adapter helpers from `@pounce/board/server`:
+Import adapter helpers from `@sursaut/board/server`:
 
 ```ts
-import { createPounceApp, createPounceMiddleware } from '@pounce/board/server'
+import { createSursautApp, createSursautMiddleware } from '@sursaut/board/server'
 ```
 
-## `createPounceApp`
+## `createSursautApp`
 
 The simplest setup is to create a ready-to-use Hono app:
 
 ```ts
-import { createPounceApp } from '@pounce/board/server'
+import { createSursautApp } from '@sursaut/board/server'
 
-const app = createPounceApp({
+const app = createSursautApp({
 	routesDir: './routes',
 })
 
 export default app
 ```
 
-## `createPounceMiddleware`
+## `createSursautMiddleware`
 
 If you already have a Hono app, attach board middleware manually:
 
 ```ts
 import { Hono } from 'hono'
-import { createPounceMiddleware } from '@pounce/board/server'
+import { createSursautMiddleware } from '@sursaut/board/server'
 
 const app = new Hono()
 
@@ -41,7 +41,7 @@ app.use('*', async (c, next) => {
 
 app.use(
 	'*',
-	createPounceMiddleware({
+	createSursautMiddleware({
 		routesDir: './routes',
 	})
 )
@@ -78,7 +78,7 @@ On each request, the middleware:
 - UI requests
   - board enables SSR and lets downstream HTML rendering run inside the active SSR context
 - internal page-prop fetches
-  - detected via `X-Pounce-Provide: true`
+  - detected via `X-Sursaut-Provide: true`
   - resolved through the composed `provide()` chain
 
 ## Cache invalidation in development

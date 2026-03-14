@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { latch, document, r, ReactiveProp } from '@pounce/core'
+import { latch, document, r, ReactiveProp } from '@sursaut/core'
 
 describe('aria-current [object Object] bug', () => {
 	let container: HTMLElement

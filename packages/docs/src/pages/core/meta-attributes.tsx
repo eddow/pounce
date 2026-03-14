@@ -8,7 +8,7 @@ const state = reactive({ el: null as HTMLElement | null })
 function App() {
   return (
     <div this={state.el}>
-      Hello Pounce!
+      Hello Sursaut!
     </div>
   )
 }
@@ -53,7 +53,7 @@ function Nav(_p: {}, env: any) {
 }`
 
 const useMeta = `// 'use' applies a directive function to the DOM element
-import { tooltip } from '@pounce'
+import { tooltip } from '@sursaut'
 
 function App() {
   return (
@@ -103,14 +103,14 @@ export default function MetaAttributesPage() {
 		<article>
 			<h1>Meta-attributes</h1>
 			<p>
-				Special JSX attributes handled natively by the Pounce reconciler. They control an element's
+				Special JSX attributes handled natively by the Sursaut reconciler. They control an element's
 				behavior, lifecycle, or rendering logic without requiring special wrapper components.
 			</p>
 
 			<Section title="this">
 				<p>
 					The <code>this</code> attribute synchronizes the rendered element or component instance to
-					a reactive variable. This is Pounce's native alternative to "refs".
+					a reactive variable. This is Sursaut's native alternative to "refs".
 				</p>
 				<Code code={thisMeta} lang="tsx" />
 			</Section>

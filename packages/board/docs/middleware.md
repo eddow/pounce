@@ -1,13 +1,13 @@
 # Middleware System
 
-`@pounce/board` uses a hierarchical middleware model defined through `expose()`. Middleware is attached to route modules, inherited across descendant route paths, and executed in ancestor-to-descendant order for API endpoint requests.
+`@sursaut/board` uses a hierarchical middleware model defined through `expose()`. Middleware is attached to route modules, inherited across descendant route paths, and executed in ancestor-to-descendant order for API endpoint requests.
 
 ## Where middleware lives
 
 Middleware is declared in sibling route `.ts` files, not in `common.ts` files.
 
 ```ts
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 export default expose({
 	middle: [async (req, next) => next()],
@@ -29,14 +29,14 @@ For a request like `GET /users/123`, the chain can look like:
 Each middleware receives:
 
 - `req`
-  - a `PounceRequest` with `params`, `url`, and `raw`
+  - a `SursautRequest` with `params`, `url`, and `raw`
 - `next`
   - a function returning the downstream `Response`
 
 ## Defining middleware
 
 ```ts
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 async function logRequest(req: any, next: () => Promise<Response>) {
 	const start = performance.now()
@@ -57,7 +57,7 @@ export default expose({
 
 - for normal API endpoint requests
   - board runs the middleware chain and then the matched verb handler
-- for internal SPA page-prop fetches using `X-Pounce-Provide: true`
+- for internal SPA page-prop fetches using `X-Sursaut-Provide: true`
   - board invokes the composed `provide()` chain directly
   - endpoint middleware is intentionally skipped
 
@@ -68,7 +68,7 @@ This separation avoids leaking endpoint-only concerns such as auth guards or API
 ### Authentication
 
 ```ts
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 async function requireAuth(req: any, next: () => Promise<Response>) {
 	const auth = req.raw.headers.get('Authorization')
@@ -87,7 +87,7 @@ export default expose({
 ### Logging / timing
 
 ```ts
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 async function withTiming(_req: any, next: () => Promise<Response>) {
 	const start = performance.now()
@@ -104,7 +104,7 @@ export default expose({
 ### Parent `provide()` composition
 
 ```ts
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 export default expose({
 	provide: async () => ({ currentUser: { id: 'admin' } }),

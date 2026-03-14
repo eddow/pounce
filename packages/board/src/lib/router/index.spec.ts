@@ -250,7 +250,7 @@ describe('router', () => {
 		})
 
 		it('should ignore +* files and directories when using filesystem scan', async () => {
-			const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'pounce-board-routes-'))
+			const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'sursaut-board-routes-'))
 
 			try {
 				await fs.writeFile(

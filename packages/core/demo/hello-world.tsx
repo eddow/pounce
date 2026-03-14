@@ -1,4 +1,4 @@
-import type { Env } from '@pounce/core'
+import type { Env } from '@sursaut/core'
 
 export interface HelloWorldProps {
 	name?: string
@@ -11,7 +11,7 @@ export function HelloWorld(props: HelloWorldProps, _env: Env) {
 			<h1 class="greeting">
 				{props.greeting ?? 'Hello'}, {props.name ?? 'World'}!
 			</h1>
-			<p class="message">Welcome to Pounce components</p>
+			<p class="message">Welcome to Sursaut components</p>
 		</div>
 	)
 }

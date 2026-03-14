@@ -256,20 +256,20 @@ describe('Phase 5: Customization model support', () => {
 
 		expect(deserialized).toBeDefined()
 		expect(deserialized.container).toBeDefined()
-		expect(deserialized.container.toolbarStack.top.slots[0].toolbar.items).toBeDefined()
-		expect(deserialized.container.toolbarStack.top.slots[0].toolbar.items[0].kind).toBe(
+		expect(deserialized.container.toolbarStack.top[0].slots[0].toolbar.items).toBeDefined()
+		expect(deserialized.container.toolbarStack.top[0].slots[0].toolbar.items[0].kind).toBe(
 			'item-group'
 		)
-		expect(deserialized.container.toolbarStack.top.slots[0].toolbar.items[0].group).toBeDefined()
-		expect(deserialized.container.toolbarStack.top.slots[0].toolbar.items[0].group.entryId).toBe(
+		expect(deserialized.container.toolbarStack.top[0].slots[0].toolbar.items[0].group).toBeDefined()
+		expect(deserialized.container.toolbarStack.top[0].slots[0].toolbar.items[0].group.entryId).toBe(
 			'ui.theme'
 		)
-		expect(deserialized.container.toolbarStack.top.slots[0].toolbar.items[0].group.options).toEqual(
-			['light', 'dark']
-		)
-		expect(deserialized.container.toolbarStack.top.slots[0].toolbar.items[0].group.presenter).toBe(
-			'radio-group'
-		)
+		expect(
+			deserialized.container.toolbarStack.top[0].slots[0].toolbar.items[0].group.options
+		).toEqual(['light', 'dark'])
+		expect(
+			deserialized.container.toolbarStack.top[0].slots[0].toolbar.items[0].group.presenter
+		).toBe('radio-group')
 	})
 
 	it('demonstrates comprehensive customization workflow', () => {

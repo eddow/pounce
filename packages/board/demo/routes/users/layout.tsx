@@ -1,4 +1,4 @@
-import type { Child } from '@pounce/core'
+import type { Child } from '@sursaut/core'
 
 interface Props { siteName: string; children: Child }
 

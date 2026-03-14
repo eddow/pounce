@@ -1,6 +1,6 @@
 # Demo App Walkthrough
 
-A single test consumer app that exercises every `@pounce/board` feature. Replaces the three legacy consumers (`minimal-app`, `blog-app`, `e-commerce-app`).
+A single test consumer app that exercises every `@sursaut/board` feature. Replaces the three legacy consumers (`minimal-app`, `blog-app`, `e-commerce-app`).
 
 ---
 
@@ -42,14 +42,14 @@ packages/board/demo/
 
 ```ts
 import { Hono } from 'hono'
-import { createPounceMiddleware } from '@pounce/board/adapters/hono'
+import { createSursautMiddleware } from '@sursaut/board/adapters/hono'
 
 const app = new Hono()
-app.use('*', createPounceMiddleware({ routesDir: './routes' }))
+app.use('*', createSursautMiddleware({ routesDir: './routes' }))
 export default app
 ```
 
-**Features exercised:** Hono adapter, `createPounceMiddleware`, glob-based route discovery.
+**Features exercised:** Hono adapter, `createSursautMiddleware`, glob-based route discovery.
 
 ---
 
@@ -58,11 +58,11 @@ export default app
 ### `routes/index.ts` — global config provider
 
 ```ts
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 export default expose({
   provide: async (req) => ({
-    siteName: 'Pounce Demo',
+    siteName: 'Sursaut Demo',
     buildTime: new Date().toISOString(),
   }),
 })
@@ -73,7 +73,7 @@ Every page and layout in the app receives `siteName` and `buildTime` as props vi
 ### `routes/layout.tsx` — root shell
 
 ```tsx
-import type { Child } from '@pounce/core'
+import type { Child } from '@sursaut/core'
 
 interface Props { siteName: string; children: Child }
 
@@ -118,7 +118,7 @@ export default function HomePage({ siteName, buildTime }: Props) {
 ### `routes/(auth)/login.ts`
 
 ```ts
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 export default expose({
   post: async (req) => {
@@ -141,18 +141,18 @@ The `(auth)` directory is a route group — parenthesized segments are stripped 
 ### `routes/posts/index.ts` — list/create + middleware
 
 ```ts
-import { expose } from '@pounce/board'
-import type { PounceRequest } from '@pounce/board'
+import { expose } from '@sursaut/board'
+import type { SursautRequest } from '@sursaut/board'
 
 const posts = [
   { id: '1', title: 'First Post', content: 'Hello World' },
-  { id: '2', title: 'Pounce Board', content: 'Is awesome' },
+  { id: '2', title: 'Sursaut Board', content: 'Is awesome' },
 ]
 let nextId = 3
 
 export default expose({
   middle: [
-    async (req: PounceRequest, next) => {
+    async (req: SursautRequest, next) => {
       const start = Date.now()
       const res = await next()
       res.headers.set('X-Response-Time', `${Date.now() - start}ms`)
@@ -202,8 +202,8 @@ export default function PostsPage({ posts }: Props) {
 ### `routes/posts/[id]/index.ts` — single post CRUD + provide
 
 ```ts
-import { expose } from '@pounce/board'
-import type { PounceRequest } from '@pounce/board'
+import { expose } from '@sursaut/board'
+import type { SursautRequest } from '@sursaut/board'
 
 // Imported from sibling for shared state (test fixture; real apps use a DB)
 import { posts } from '../index.js'
@@ -244,7 +244,7 @@ export default expose<{ id: string }>({
 ### `routes/posts/[id]/index.tsx` — post detail page
 
 ```tsx
-import type { InferVerb } from '@pounce/board'
+import type { InferVerb } from '@sursaut/board'
 import type PostRoute from './index'
 
 type Post = InferVerb<typeof PostRoute, 'get'>
@@ -268,7 +268,7 @@ export default function PostDetail({ post }: Props) {
 ### `routes/posts/[id]/comments.ts` — SSE stream
 
 ```ts
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 export default expose<{ id: string }>({
   stream: async function* (req) {
@@ -281,7 +281,7 @@ export default expose<{ id: string }>({
 })
 ```
 
-**Features exercised:** `stream` verb — returns an async generator, consumed on the client via `@pounce/kit`'s SSE client.
+**Features exercised:** `stream` verb — returns an async generator, consumed on the client via `@sursaut/kit`'s SSE client.
 
 ---
 
@@ -290,10 +290,10 @@ export default expose<{ id: string }>({
 ### `routes/users/index.ts` — auth guard middleware + schema
 
 ```ts
-import { expose } from '@pounce/board'
-import type { PounceRequest, MiddleNext } from '@pounce/board'
+import { expose } from '@sursaut/board'
+import type { SursautRequest, MiddleNext } from '@sursaut/board'
 
-const requireAuth = async (req: PounceRequest, next: MiddleNext) => {
+const requireAuth = async (req: SursautRequest, next: MiddleNext) => {
   const token = req.raw.headers.get('Authorization')
   if (!token) return new Response('Unauthorized', { status: 401 })
   ;(req as any).user = { id: 'admin', role: 'root' }
@@ -317,7 +317,7 @@ export default expose({
 ### `routes/users/layout.tsx` — nested layout
 
 ```tsx
-import type { Child } from '@pounce/core'
+import type { Child } from '@sursaut/core'
 
 interface Props { siteName: string; children: Child }
 
@@ -336,7 +336,7 @@ Layout receives provide from root (`siteName`) and its own level (`users`), but 
 ### `routes/users/[id]/index.ts` — typed dynamic params + provide
 
 ```ts
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 import { users } from '../index.js'
 
@@ -357,8 +357,8 @@ export default expose<{ id: string }>({
 ### `routes/users/[id]/index.tsx` — client-side type-safe API call
 
 ```tsx
-import { api } from '@pounce/board'
-import type { InferVerb, InferPath } from '@pounce/board'
+import { api } from '@sursaut/board'
+import type { InferVerb, InferPath } from '@sursaut/board'
 import type UserRoute from './index'
 
 type User = InferVerb<typeof UserRoute, 'get'>
@@ -386,7 +386,7 @@ export default function UserDetail({ user }: Props) {
 ### `lib/external-api.ts`
 
 ```ts
-import { defineProxy } from '@pounce/board'
+import { defineProxy } from '@sursaut/board'
 
 export interface Comment {
   id: number

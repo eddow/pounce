@@ -2,7 +2,7 @@ import {
 	type ParsedPathSegment,
 	parsePathSegment,
 	type RouteParams,
-} from '@pounce/kit/router/logic'
+} from '@sursaut/kit/router/logic'
 
 /**
  * Convert a file path to a file:// URL without encoding special characters like brackets.
@@ -90,7 +90,7 @@ export type RouteTreeNode = {
 }
 
 /**
- * Segment info derived from pounce-ts parsePathSegment.
+ * Segment info derived from sursaut-ts parsePathSegment.
  * Adapts ParsedPathSegment to the format used by buildRouteTree.
  */
 export interface SegmentInfo {
@@ -101,7 +101,7 @@ export interface SegmentInfo {
 }
 
 /**
- * Parse dynamic segment from path segment using pounce-ts core.
+ * Parse dynamic segment from path segment using sursaut-ts core.
  * Adapts the ParsedPathSegment to SegmentInfo format for tree building.
  *
  * [id] -> { isDynamic: true, paramName: 'id' }
@@ -158,7 +158,7 @@ export function matchRoute(urlPath: string, routeTree: RouteTreeNode): RouteMatc
 		layouts: any[]
 	} | null {
 		if (depth > 50) {
-			console.warn('[pounce-board] Route matching depth exceeded')
+			console.warn('[sursaut-board] Route matching depth exceeded')
 			return null
 		}
 		// Base case: If we've consumed all segments, check for component at this node
@@ -476,16 +476,16 @@ export async function buildRouteTree(
 					baseUrl = fileStem === 'index' ? `/${urlPathDir}` : `/${urlPathDir}/${fileStem}`
 				}
 				// Temporary Global Injection
-				;(globalThis as any).__POUNCE_CURRENT_FILE__ = fullPath
-				;(globalThis as any).__POUNCE_CURRENT_BASE_URL__ = baseUrl.replace(/\\/g, '/')
+				;(globalThis as any).__SURSAUT_CURRENT_FILE__ = fullPath
+				;(globalThis as any).__SURSAUT_CURRENT_BASE_URL__ = baseUrl.replace(/\\/g, '/')
 
 				try {
 					await loader()
 				} catch (e) {
 					console.error(`Failed to process API route ${fullPath}`, e)
 				} finally {
-					delete (globalThis as any).__POUNCE_CURRENT_FILE__
-					delete (globalThis as any).__POUNCE_CURRENT_BASE_URL__
+					delete (globalThis as any).__SURSAUT_CURRENT_FILE__
+					delete (globalThis as any).__SURSAUT_CURRENT_BASE_URL__
 				}
 			}
 		}
@@ -493,7 +493,7 @@ export async function buildRouteTree(
 
 	async function scan(dir: string, node: RouteTreeNode) {
 		if (relativeDepth(routesDir, dir) > 20) {
-			console.warn(`[pounce-board] Route recursion depth exceeded at ${dir}`)
+			console.warn(`[sursaut-board] Route recursion depth exceeded at ${dir}`)
 			return
 		}
 

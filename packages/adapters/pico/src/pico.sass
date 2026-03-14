@@ -1,47 +1,47 @@
 // Import PicoCSS
 @import '@picocss/pico/css/pico.css'
 
-// Pounce-specific customizations for PicoCSS
+// Sursaut-specific customizations for PicoCSS
 :root
   // Base spacing — alias for Pico's spacing unit
-  --pounce-spacing: var(--pico-spacing)
+  --sursaut-spacing: var(--pico-spacing)
   // Additional spacing scale
-  --pounce-spacing-xs: calc(var(--pico-spacing) * 0.5)
-  --pounce-spacing-sm: calc(var(--pico-spacing) * 0.75)
-  --pounce-spacing-lg: calc(var(--pico-spacing) * 1.5)
-  --pounce-spacing-xl: calc(var(--pico-spacing) * 2)
+  --sursaut-spacing-xs: calc(var(--pico-spacing) * 0.5)
+  --sursaut-spacing-sm: calc(var(--pico-spacing) * 0.75)
+  --sursaut-spacing-lg: calc(var(--pico-spacing) * 1.5)
+  --sursaut-spacing-xl: calc(var(--pico-spacing) * 2)
   
   // Border radius variations
-  --pounce-border-radius-sm: calc(var(--pico-border-radius) * 0.5)
-  --pounce-border-radius-lg: calc(var(--pico-border-radius) * 1.5)
+  --sursaut-border-radius-sm: calc(var(--pico-border-radius) * 0.5)
+  --sursaut-border-radius-lg: calc(var(--pico-border-radius) * 1.5)
   
   // Component-specific variables
-  --pounce-card-padding: var(--pounce-spacing)
-  --pounce-card-gap: var(--pounce-spacing)
+  --sursaut-card-padding: var(--sursaut-spacing)
+  --sursaut-card-gap: var(--sursaut-spacing)
   
   // Animation durations
-  --pounce-transition-fast: 150ms
-  --pounce-transition-normal: 250ms
-  --pounce-transition-duration: 0.3s
+  --sursaut-transition-fast: 150ms
+  --sursaut-transition-normal: 250ms
+  --sursaut-transition-duration: 0.3s
 
 [data-theme="light"],
 :root:not([data-theme="dark"])
-  --pounce-primary: #007bff
-  --pounce-overlay-bg: #ffffff
-  --pounce-overlay-color: #11191f
+  --sursaut-primary: #007bff
+  --sursaut-overlay-bg: #ffffff
+  --sursaut-overlay-color: #11191f
 
 [data-theme="dark"]
-  --pounce-overlay-bg: #1e293b
-  --pounce-overlay-color: #e2e8f0
+  --sursaut-overlay-bg: #1e293b
+  --sursaut-overlay-color: #e2e8f0
 
 @media (prefers-color-scheme: dark)
   :root:not([data-theme="light"])
-    --pounce-overlay-bg: #1e293b
-    --pounce-overlay-color: #e2e8f0
+    --sursaut-overlay-bg: #1e293b
+    --sursaut-overlay-color: #e2e8f0
 
 // Badge & Pill
-.pounce-badge,
-.pounce-pill
+.sursaut-badge,
+.sursaut-pill
   display: inline-flex
   align-items: center
   gap: 0.25em
@@ -78,13 +78,13 @@
     background: #b45309
     color: #fff
 
-.pounce-pill
+.sursaut-pill
   border-radius: 999px
 
 // Button variant styles (PicoCSS already handles most)
 .btn
   font-weight: 500
-  transition: all var(--pounce-transition-fast) ease-in-out
+  transition: all var(--sursaut-transition-fast) ease-in-out
   
   &.btn-ghost
     background: transparent
@@ -95,7 +95,7 @@
       border-color: var(--pico-border-color)
 
 // Menu item button (used when MenuItem has no href)
-button.pounce-menu-item
+button.sursaut-menu-item
   display: block
   width: 100%
   text-align: left
@@ -114,18 +114,18 @@ button.pounce-menu-item
 .card
   background: var(--pico-background-color)
   border: 1px solid var(--pico-border-color)
-  border-radius: var(--pounce-border-radius)
-  padding: var(--pounce-card-padding)
+  border-radius: var(--sursaut-border-radius)
+  padding: var(--sursaut-card-padding)
   
   &__header
     border-bottom: 1px solid var(--pico-border-color)
-    margin-bottom: var(--pounce-card-gap)
-    padding-bottom: var(--pounce-card-gap)
+    margin-bottom: var(--sursaut-card-gap)
+    padding-bottom: var(--sursaut-card-gap)
     
   &__footer
     border-top: 1px solid var(--pico-border-color)
-    margin-top: var(--pounce-card-gap)
-    padding-top: var(--pounce-card-gap)
+    margin-top: var(--sursaut-card-gap)
+    padding-top: var(--sursaut-card-gap)
 
 // Form controls enhancements
 input[type="checkbox"],
@@ -143,36 +143,36 @@ select:focus
   outline: 2px solid var(--pico-primary-color)
   outline-offset: 2px
 
-.pounce-overlay-manager
-  &.pounce-fixed
+.sursaut-overlay-manager
+  &.sursaut-fixed
     position: fixed
     inset: 0
     pointer-events: none
     z-index: 1000
 
-  &.pounce-local
+  &.sursaut-local
     position: absolute
     inset: 0
     pointer-events: none
 
-  .pounce-backdrop
+  .sursaut-backdrop
     position: fixed
     inset: 0
     background: rgba(0, 0, 0, 0.5)
     pointer-events: auto
     backdrop-filter: blur(2px)
 
-  .pounce-layer
+  .sursaut-layer
     position: fixed
     inset: 0
     pointer-events: none
     display: flex
 
-    &.pounce-mode-modal
+    &.sursaut-mode-modal
       align-items: center
       justify-content: center
 
-    &.pounce-mode-toast
+    &.sursaut-mode-toast
       top: 1rem
       right: 1rem
       left: auto
@@ -180,36 +180,36 @@ select:focus
       flex-direction: column
       gap: 0.5rem
 
-    &.pounce-mode-drawer-left
+    &.sursaut-mode-drawer-left
       justify-content: flex-start
 
-    &.pounce-mode-drawer-right
+    &.sursaut-mode-drawer-right
       justify-content: flex-end
 
     > *
       pointer-events: auto
 
-.pounce-dialog
-  background: var(--pounce-overlay-bg, #fff)
-  color: var(--pounce-overlay-color, inherit)
+.sursaut-dialog
+  background: var(--sursaut-overlay-bg, #fff)
+  color: var(--sursaut-overlay-color, inherit)
   border-radius: var(--pico-border-radius)
   padding: 1.5rem
   min-width: min(90vw, 32rem)
   max-width: 90vw
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2)
 
-  .pounce-dialog-header
+  .sursaut-dialog-header
     margin-bottom: 1rem
     font-weight: bold
     font-size: 1.25rem
 
-  .pounce-dialog-footer
+  .sursaut-dialog-footer
     display: flex
     justify-content: flex-end
     gap: 0.5rem
     margin-top: 1.5rem
 
-.pounce-toast
+.sursaut-toast
   padding: 0.75rem 1rem
   border-radius: var(--pico-border-radius)
   background-color: #1e3a2d
@@ -222,14 +222,14 @@ select:focus
   align-items: center
   gap: 0.75rem
 
-  .pounce-toast-icon
+  .sursaut-toast-icon
     flex: 0 0 auto
 
-  .pounce-toast-content
+  .sursaut-toast-content
     flex: 1 1 auto
     min-width: 0
 
-  .pounce-toast-close
+  .sursaut-toast-close
     margin-left: auto
     padding: 0
     border: none
@@ -254,7 +254,7 @@ select:focus
     color: #14532d
     border-color: #86efac
 
-  &.pounce-variant-success
+  &.sursaut-variant-success
     background-color: #14532d
     color: #dcfce7
     border-color: #166534
@@ -266,7 +266,7 @@ select:focus
       color: #14532d
       border-color: #86efac
 
-  &.pounce-variant-danger
+  &.sursaut-variant-danger
     background-color: #7f1d1d
     color: #fee2e2
     border-color: #991b1b
@@ -278,7 +278,7 @@ select:focus
       color: #7f1d1d
       border-color: #fca5a5
 
-  &.pounce-variant-warning
+  &.sursaut-variant-warning
     background-color: #78350f
     color: #fef3c7
     border-color: #92400e
@@ -290,7 +290,7 @@ select:focus
       color: #78350f
       border-color: #fcd34d
 
-  &.pounce-variant-info
+  &.sursaut-variant-info
     background-color: #1e3a8a
     color: #dbeafe
     border-color: #1d4ed8
@@ -302,48 +302,48 @@ select:focus
       color: #1e3a8a
       border-color: #93c5fd
 
-.pounce-drawer
+.sursaut-drawer
   height: 100%
   width: min(80vw, 24rem)
-  background: var(--pounce-overlay-bg, #fff)
-  color: var(--pounce-overlay-color, inherit)
+  background: var(--sursaut-overlay-bg, #fff)
+  color: var(--sursaut-overlay-color, inherit)
   box-shadow: 0 0 24px rgba(0, 0, 0, 0.15)
   display: flex
   flex-direction: column
 
-  .pounce-drawer-header
+  .sursaut-drawer-header
     padding: 1rem 1.5rem
     border-bottom: 1px solid var(--pico-muted-border-color)
     display: flex
     align-items: center
     justify-content: space-between
 
-  .pounce-drawer-body
+  .sursaut-drawer-body
     flex: 1
     overflow-y: auto
     padding: 1.5rem
 
-  .pounce-drawer-footer
+  .sursaut-drawer-footer
     padding: 1rem 1.5rem
     border-top: 1px solid var(--pico-muted-border-color)
 
-.pounce-overlay-item
-  &.pounce-closing
+.sursaut-overlay-item
+  &.sursaut-closing
     pointer-events: none
     
-    .pounce-mode-modal &
-      animation: pounce-dialog-out var(--pounce-transition-duration) ease-in forwards
+    .sursaut-mode-modal &
+      animation: sursaut-dialog-out var(--sursaut-transition-duration) ease-in forwards
     
-    .pounce-mode-drawer-left &
-      animation: pounce-drawer-out-left var(--pounce-transition-duration) ease-in forwards
+    .sursaut-mode-drawer-left &
+      animation: sursaut-drawer-out-left var(--sursaut-transition-duration) ease-in forwards
     
-    .pounce-mode-drawer-right &
-      animation: pounce-drawer-out-right var(--pounce-transition-duration) ease-in forwards
+    .sursaut-mode-drawer-right &
+      animation: sursaut-drawer-out-right var(--sursaut-transition-duration) ease-in forwards
     
-    .pounce-mode-toast &
-      animation: pounce-toast-out var(--pounce-transition-duration) ease-in forwards
+    .sursaut-mode-toast &
+      animation: sursaut-toast-out var(--sursaut-transition-duration) ease-in forwards
 
-@keyframes pounce-dialog-out
+@keyframes sursaut-dialog-out
   from
     opacity: 1
     transform: scale(1)
@@ -351,19 +351,19 @@ select:focus
     opacity: 0
     transform: scale(0.95)
 
-@keyframes pounce-drawer-out-left
+@keyframes sursaut-drawer-out-left
   from
     transform: translateX(0)
   to
     transform: translateX(-100%)
 
-@keyframes pounce-drawer-out-right
+@keyframes sursaut-drawer-out-right
   from
     transform: translateX(0)
   to
     transform: translateX(100%)
 
-@keyframes pounce-toast-out
+@keyframes sursaut-toast-out
   from
     opacity: 1
     transform: translateY(0)

@@ -10,7 +10,7 @@ export {
 export * from './composite-attributes'
 export * from './debug'
 export * from './jsx-factory'
-export * from './pounce-element'
 export * from './reconciler'
 export type { StyleInput } from './styles'
+export * from './sursaut-element'
 export * from './utils'

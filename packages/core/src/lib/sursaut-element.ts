@@ -13,7 +13,7 @@ import {
 } from 'mutts'
 import { perf } from '../perf'
 import { type CompositeAttributesMeta, collapse, type ReactiveProp } from './composite-attributes'
-import { pounceOptions } from './debug'
+import { sursautOptions } from './debug'
 import { devCatchElement } from './dev-catch'
 import { getEnvPath } from './utils'
 
@@ -35,7 +35,7 @@ export class DynamicRenderingError extends Error {
  */
 export type NodeDesc = Node | string | number
 
-export type Child = Node | string | number | null | undefined | PounceElement
+export type Child = Node | string | number | null | undefined | SursautElement
 export type Children = Child | readonly Children[] | ReactiveProp<Children>
 
 function arrayed<T>(v: T | readonly T[]): readonly T[] {
@@ -122,12 +122,12 @@ function formatReasonText(reason: CleanupReason): string[] {
 //#endregion
 export type Env<T = any> = Record<PropertyKey, T>
 /**
- * PounceElement class - encapsulates JSX element creation and rendering
+ * SursautElement class - encapsulates JSX element creation and rendering
  */
 @unreactive
-export class PounceElement {
+export class SursautElement {
 	[CompareSymbol](other: unknown, deepCompare: (a: any, b: any) => boolean): boolean {
-		if (!(other instanceof PounceElement)) return false
+		if (!(other instanceof SursautElement)) return false
 		if (this.tag !== other.tag) return false
 		if (this.isReactivityLeaf !== other.isReactivityLeaf) return false
 		if (this.isSingleNode !== other.isSingleNode) return false
@@ -138,10 +138,10 @@ export class PounceElement {
 
 	// Core properties
 	static text(retrieve: () => string | number) {
-		return new PounceElement(
+		return new SursautElement(
 			() => {
 				let node: Text | undefined
-				effect`PounceElement.text`(() => {
+				effect`SursautElement.text`(() => {
 					if (node) node.data = String(retrieve())
 					else node = document.createTextNode(String(retrieve()))
 				})
@@ -272,16 +272,16 @@ Note: "à la morph" means it can be attended - if it uses array-diff
 		let partial: Node | readonly Node[] | undefined
 		const stopRender = effect`render:${tagName}`(({ reaction }) => {
 			if (reaction) {
-				if (!pounceOptions.checkRebuild) return
+				if (!sursautOptions.checkRebuild) return
 				const reasons =
 					reaction === true ? ['(no dependency chain available)'] : formatReasonText(reaction)
 				const msg = [
-					`[pounce] Rebuild fence: <${tagName}> has reactive dependencies that changed, but re-running the component body is forbidden (would destroy local state and risk infinite loops).`,
+					`[sursaut] Rebuild fence: <${tagName}> has reactive dependencies that changed, but re-running the component body is forbidden (would destroy local state and risk infinite loops).`,
 					'Triggered by:',
 					...reasons,
 					'\nMove the reactive read into a child element, an effect, or a directive instead.',
 				].join('\n')
-				if (pounceOptions.checkRebuild === 'error') throw new DynamicRenderingError(msg)
+				if (sursautOptions.checkRebuild === 'error') throw new DynamicRenderingError(msg)
 				reactiveOptions.warn(msg)
 			} else {
 				partial = this.produce(env)
@@ -298,8 +298,8 @@ Note: "à la morph" means it can be attended - if it uses array-diff
 		const rv = arrayed(partial!)
 		// Anchor the render effect to the DOM output so GC doesn't collect it
 		// (root effects use FinalizationRegistry — if nobody holds the cleanup, GC kills all children)
-		return link(rv || ([new Text('Throwing PounceElement')] as readonly Node[]), stopRender)
+		return link(rv || ([new Text('Throwing SursautElement')] as readonly Node[]), stopRender)
 	}
 }
-export type Component<P = {}, M = Env> = (props: P, meta?: M) => PounceElement
-export const emptyChild = new PounceElement(() => [], 'empty', undefined, true, true)
+export type Component<P = {}, M = Env> = (props: P, meta?: M) => SursautElement
+export const emptyChild = new SursautElement(() => [], 'empty', undefined, true, true)

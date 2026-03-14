@@ -1,5 +1,5 @@
-import { gather } from '@pounce/ui'
-import { type ButtonProps as BaseButtonProps, buttonModel } from '@pounce/ui/models'
+import { gather } from '@sursaut/ui'
+import { type ButtonProps as BaseButtonProps, buttonModel } from '@sursaut/ui/models'
 import { type PicoButtonLikeProps, picoButtonClass, picoComponent } from '../factory'
 
 export type ButtonProps = PicoButtonLikeProps<BaseButtonProps>

@@ -1,5 +1,5 @@
 /**
- * Unified route parsing and matching for pounce ecosystem.
+ * Unified route parsing and matching for sursaut ecosystem.
  *
  * Syntax: [paramName:format?]
  * - [id] — required string param
@@ -119,7 +119,7 @@ function parseParamToken(token: string): ParsedParamToken {
 
 /**
  * Parse a single path segment into structured form.
- * Used internally and by @pounce/board for file-based routing.
+ * Used internally and by @sursaut/board for file-based routing.
  */
 export function parsePathSegment(segment: string): ParsedPathSegment {
 	// Catch-all: [...slug]

@@ -18,7 +18,7 @@ interface TestPerfCounters {
 
 declare global {
 	interface Window {
-		__POUNCE_PERF__: TestPerfCounters
+		__SURSAUT_PERF__: TestPerfCounters
 	}
 }
 
@@ -28,7 +28,7 @@ test('report performance counters', async ({ page }) => {
 	// Wait for any post-mount microtasks
 	await page.waitForTimeout(500)
 
-	const counters = await page.evaluate(() => window.__POUNCE_PERF__)
+	const counters = await page.evaluate(() => window.__SURSAUT_PERF__)
 	const domStats = await page.evaluate(() => {
 		const stats: Record<string, number> = {}
 		const walk = (node: Node) => {
@@ -41,7 +41,7 @@ test('report performance counters', async ({ page }) => {
 		return stats
 	})
 
-	console.log('\n🚀 Pounce Performance Report')
+	console.log('\n🚀 Sursaut Performance Report')
 	console.log('============================')
 	console.log(`Effect Creations: ${counters.effectCreations}`)
 	console.log(`Effect Reactions: ${counters.effectReactions}`)

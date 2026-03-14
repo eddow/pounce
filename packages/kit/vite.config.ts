@@ -3,7 +3,7 @@ import { defineConfig } from 'vite'
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'node:url'
-import { pounceCorePackage } from '@pounce/core/plugin'
+import { sursautCorePackage } from '@sursaut/core/plugin'
 
 const projectRootDir = dirname(fileURLToPath(import.meta.url))
 const isWatch = process.argv.includes('--watch')
@@ -31,7 +31,7 @@ function ensureStableTypeEntrypoints() {
 export default defineConfig({
   plugins: [
     ...(isWatch ? [ensureStableTypeEntrypoints()] : []),
-    ...pounceCorePackage({
+    ...sursautCorePackage({
       core: {
         projectRoot: projectRootDir,
       },
@@ -64,7 +64,7 @@ export default defineConfig({
     rollupOptions: {
       external: [
         'mutts',
-        /^@pounce\//,
+        /^@sursaut\//,
         'jsdom',
         'arktype',
         'node:async_hooks',

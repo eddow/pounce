@@ -1,24 +1,24 @@
 # Route API documentation (`expose`)
 
-Pounce utilizes the `expose()` API routing engine to declare server-side HTTP endpoints and data loaders adjacent to your UI components. It cleanly handles type inference, middleware encapsulation, routing nested endpoints, and server-side data cascading logic across directory trees.
+Sursaut utilizes the `expose()` API routing engine to declare server-side HTTP endpoints and data loaders adjacent to your UI components. It cleanly handles type inference, middleware encapsulation, routing nested endpoints, and server-side data cascading logic across directory trees.
 
 ## 1. Syntax Overview
 
-A `.ts` companion file placed next to a `.tsx` component file acts as its endpoint router and data loader. Call the default import `expose` exported from `@pounce/board` to scaffold the tree structure natively.
+A `.ts` companion file placed next to a `.tsx` component file acts as its endpoint router and data loader. Call the default import `expose` exported from `@sursaut/board` to scaffold the tree structure natively.
 
 ```typescript
 // routes/users/[id]/index.ts
-import { expose, type PounceRequest } from '@pounce/board'
+import { expose, type SursautRequest } from '@sursaut/board'
 
 export default expose({
 	// HTTP Verbs
-	get: async (req: PounceRequest<{ id: string }>) => {
+	get: async (req: SursautRequest<{ id: string }>) => {
 		return { success: true, user: req.params.id }
 	},
 
 	// Nested sub-paths must be prefixed with '/'
 	'/settings': {
-		post: async (req: PounceRequest<{ id: string }>) => {
+		post: async (req: SursautRequest<{ id: string }>) => {
 			return { settingsSaved: true }
 		}
 	}
@@ -27,11 +27,11 @@ export default expose({
 
 ## 2. Server-side Pre-loading (`provide`)
 
-The `provide` loader is executed exclusively by Pounce during SSR (Server-Side Rendering) or when bridging SPA navigation. It runs on the server and provides serialized JSON data downward over the `.tsx` DOM component as props.
+The `provide` loader is executed exclusively by Sursaut during SSR (Server-Side Rendering) or when bridging SPA navigation. It runs on the server and provides serialized JSON data downward over the `.tsx` DOM component as props.
 
 ```typescript
 // routes/users/index.ts
-import { expose } from '@pounce/board'
+import { expose } from '@sursaut/board'
 
 export default expose({
 	provide: async (req) => {
@@ -58,14 +58,14 @@ export default expose({
 ### Inheritance
 Like `provide`, `middle` definitions cascade down. A `requireAuth` placed inside `routes/dashboard/index.ts` automatically asserts over all direct HTTP verb handlers inside `dashboard/index.ts` natively, and continues to waterfall down into `dashboard/reports/index.ts`. Next-level `middle` pushes sequentially down the middleware chain stack.
 
-## 4. Native Typing and `@pounce/kit` `api()`
+## 4. Native Typing and `@sursaut/kit` `api()`
 
-Extract HTTP response types purely via generics into the `@pounce/kit` Universal `api()` client. No duplicated manual interfaces. 
+Extract HTTP response types purely via generics into the `@sursaut/kit` Universal `api()` client. No duplicated manual interfaces. 
 
 ```tsx
 import type UsersRoute from './index.ts'
-import { InferVerb } from '@pounce/board'
-import { api } from '@pounce/kit/api/core'
+import { InferVerb } from '@sursaut/board'
+import { api } from '@sursaut/kit/api/core'
 
 async function fetchUser() {
     // Automatically typed to return { success: boolean, user: string }

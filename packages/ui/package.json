@@ -1,11 +1,11 @@
 {
-	"name": "@pounce/ui",
+	"name": "@sursaut/ui",
 	"version": "1.0.0",
-	"description": "Headless UI primitives for Pounce applications",
+	"description": "Headless UI primitives for Sursaut applications",
 	"type": "module",
 	"sideEffects": false,
 	"keywords": [
-		"pounce",
+		"sursaut",
 		"headless",
 		"ui",
 		"components",
@@ -15,7 +15,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/eddow/pounce.git"
+		"url": "git+https://github.com/eddow/sursaut.git"
 	},
 	"exports": {
 		".": {
@@ -59,8 +59,8 @@
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@pounce/core": "workspace:*",
-		"@pounce/kit": "workspace:*",
+		"@sursaut/core": "workspace:*",
+		"@sursaut/kit": "workspace:*",
 		"mutts": "link:../../../mutts"
 	},
 	"peerDependencies": {

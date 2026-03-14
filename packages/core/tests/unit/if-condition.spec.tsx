@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { latch, document } from '@pounce/core'
+import { latch, document } from '@sursaut/core'
 import { reactive } from 'mutts'
 
 describe('if={condition} on intrinsic elements', () => {
@@ -154,7 +154,7 @@ describe('if={condition} on intrinsic elements', () => {
 
 	it('if={} on a conditional element returned by a ReactiveProp getter is respected', () => {
 		// Regression: a ReactiveProp in a static children array (isReactive(flatInput)=false,
-		// needsMorph=true) that resolves to a conditional PounceElement after collapse().
+		// needsMorph=true) that resolves to a conditional SursautElement after collapse().
 		// anyConditional must be true (via needsMorph) so lift:conditioned runs.
 		const state = reactive({ show: false })
 		const child = <span if={state.show} class="target">visible</span>

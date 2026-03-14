@@ -1,14 +1,14 @@
 ** TODO: Once api-routing is functional, tested and use **
 
-# Pounce Framework: The "Deck" Architecture (Workspaces & Panels)
+# Sursaut Framework: The "Deck" Architecture (Workspaces & Panels)
 
 ## 1. The Paradigm Shift: Pages vs. Workspaces
 
-The core Pounce engine uses the `expose` function to map URLs to standard web pages and API endpoints (`/routes/users.ts` $\to$ `myapp.com/users`).
+The core Sursaut engine uses the `expose` function to map URLs to standard web pages and API endpoints (`/routes/users.ts` $\to$ `myapp.com/users`).
 
 However, for complex, IDE-like, or dashboard-heavy applications (using layout managers like Dockview or GoldenLayout), the concept of "URL Routing" breaks down. Users stay on `myapp.com`, but the screen is divided into multiple independent **Panels** (Widgets/Micro-Frontends) that can be dragged, dropped, and resized.
 
-To solve this, Pounce introduces the **Deck Architecture**. 
+To solve this, Sursaut introduces the **Deck Architecture**. 
 
 
 
@@ -28,7 +28,7 @@ The mental model remains identical: One file = One feature.
 **The Server API (Panel Definition):**
 ```typescript
 // panels/user-list.ts
-import { expose } from '@pounce/board';
+import { expose } from '@sursaut/board';
 
 export default expose({
     // 1. Initial Data Loader (Used when the panel is opened)
@@ -47,7 +47,7 @@ export default expose({
 In a routed app, the server only needs to execute one provide function per request (e.g., loading the profile page).
 In a Deck app, a user might load their workspace and instantly require five different panels to render simultaneously. Making five separate HTTP requests on initial load creates a slow, waterfall-like user experience.
 
-The Solution: POST /__pounce/batch-provide
+The Solution: POST /__sursaut/batch-provide
 The Board Engine automatically aggregates all provide functions from your panels. It exposes a hidden "Batch Provider" endpoint.
 
 When the client loads the workspace layout, it requests all necessary data in a single network call:
@@ -90,7 +90,7 @@ Even though a panel is rendered inside a complex Dockview layout, the components
 ```typescript
 // panels/chat.tsx
 import type ChatAPI from './chat.ts';
-import { api, type InferProvide } from '@pounce/kit';
+import { api, type InferProvide } from '@sursaut/kit';
 
 export default function ChatPanel({ data }: { data: InferProvide<typeof ChatAPI> }) {
     const sendMessage = async (text) => {
@@ -103,5 +103,5 @@ export default function ChatPanel({ data }: { data: InferProvide<typeof ChatAPI>
 ```
 
 ## Summary
-The Deck architecture transforms Pounce from a website builder into an operating-system-level framework. By decoupling the provide loaders from the URL and attaching them to Panel IDs, developers get the organization of file-system routing combined with the flexibility of a modern Workspace UI.
+The Deck architecture transforms Sursaut from a website builder into an operating-system-level framework. By decoupling the provide loaders from the URL and attaching them to Panel IDs, developers get the organization of file-system routing combined with the flexibility of a modern Workspace UI.
 

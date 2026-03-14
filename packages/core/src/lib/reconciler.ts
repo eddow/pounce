@@ -24,23 +24,23 @@ import {
 	type Children,
 	DynamicRenderingError,
 	type Env,
-	PounceElement,
 	rootEnv,
-} from './pounce-element'
+	SursautElement,
+} from './sursaut-element'
 import { getEnvPath } from './utils'
 
 export const latchOwners = new WeakMap<Element, string>()
 
-export function pounceElement(child: Children, env: Env): PounceElement {
-	return child instanceof PounceElement
+export function sursautElement(child: Children, env: Env): SursautElement {
+	return child instanceof SursautElement
 		? child
 		: child === null || child === undefined
-			? new PounceElement(() => [], 'empty', undefined, true, true)
+			? new SursautElement(() => [], 'empty', undefined, true, true)
 			: Array.isArray(child)
-				? new PounceElement(() => processChildren(child, env))
+				? new SursautElement(() => processChildren(child, env))
 				: child instanceof Node
-					? new PounceElement(() => child, undefined, undefined, false, true)
-					: PounceElement.text(() => String(child))
+					? new SursautElement(() => child, undefined, undefined, false, true)
+					: SursautElement.text(() => String(child))
 }
 // Deferred unlink: nodes removed during reconciliation are unlinked at end-of-batch,
 // allowing rescue if the same node is re-added before the batch completes.
@@ -65,7 +65,7 @@ function rescueNode(root: Node) {
 		if (!removedNodes.has(node)) continue
 		removedNodes.delete(node)
 		if (pendingUnlinks.has(node)) pendingUnlinks.delete(node)
-		else throw new Error('[pounce] Cannot re-add a node that has already been unlinked')
+		else throw new Error('[sursaut] Cannot re-add a node that has already been unlinked')
 	}
 }
 
@@ -144,7 +144,7 @@ export function reconcile(parent: Node, newChildren: Node | readonly Node[]): Sc
 
 /**
  * Latch reactive content onto a DOM element.
- * Polymorph: accepts PounceElement, Child[], Node, Node[], or undefined.
+ * Polymorph: accepts SursautElement, Child[], Node, Node[], or undefined.
  * Processes content through the appropriate pipeline, then reconciles into the target.
  * Includes DOMContentLoaded guard and conflict detection.
  */
@@ -162,7 +162,7 @@ export function latch(
 				? (document.querySelector(target as string) as Element | null)
 				: (target as Element | null)
 		if (!element) {
-			reactiveOptions.warn(`[pounce] latch target not found: ${target}`)
+			reactiveOptions.warn(`[sursaut] latch target not found: ${target}`)
 			return
 		}
 
@@ -171,7 +171,7 @@ export function latch(
 		const existing = latchOwners.get(element)
 		if (existing) {
 			reactiveOptions.warn(
-				`[pounce] latch conflict on <${tag}>: already latched by "${existing}". Previous content will be replaced.`
+				`[sursaut] latch conflict on <${tag}>: already latched by "${existing}". Previous content will be replaced.`
 			)
 		}
 		const label = typeof target === 'string' ? (target as string) : `<${tag}>`
@@ -216,11 +216,11 @@ export function latch(
  *
  * ARCHITECTURE — two reactive stages + ReactiveProp envelope:
  *
- * STAGE 1 — morph (children → PounceElement[] → rendered results)
+ * STAGE 1 — morph (children → SursautElement[] → rendered results)
  *   - Spreads childrenArray ([...childrenArray]) to subscribe to array mutations
  *   - Flattens nested arrays, filters falsy
  *   - Applies conditional rendering (if/when/else) via shouldRender()
- *   - Maps surviving PounceElements → rendered results via e.render(env)
+ *   - Maps surviving SursautElements → rendered results via e.render(env)
  *   - Returns: reactive array of PerhapsReactive<Node | readonly Node[]>
  *
  * STAGE 2 — ReactiveProp getter (flattening)
@@ -251,16 +251,16 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 
 	const needsMorph = isReactive(flatInput) || flatInput.some((c) => c instanceof ReactiveProp)
 
-	const flatElements: readonly PounceElement[] = needsMorph
+	const flatElements: readonly SursautElement[] = needsMorph
 		? tag(
 				'flatElements',
-				morph`flatElements`(flatInput, (c) => pounceElement(collapse(c), env), {
+				morph`flatElements`(flatInput, (c) => sursautElement(collapse(c), env), {
 					pure: (c) => !(c instanceof ReactiveProp),
 				})
 			)
-		: (flatInput.map((c) => pounceElement(c, env)) as readonly PounceElement[])
+		: (flatInput.map((c) => sursautElement(c, env)) as readonly SursautElement[])
 
-	const conditioned: readonly PounceElement[] =
+	const conditioned: readonly SursautElement[] =
 		needsMorph || flatElements.some((e) => e.guarded)
 			? tag(
 					'conditioned',
@@ -293,7 +293,7 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 								if (shouldRender) ifOccurred = true
 								if (shouldRender !== false) return e
 							})
-							.filter(Boolean) as PounceElement[]
+							.filter(Boolean) as SursautElement[]
 					})
 				)
 			: flatElements
@@ -301,9 +301,9 @@ export function processChildren(children: Children, env: Env): Node | readonly N
 	const rendered: readonly (Node | readonly Node[])[] = isReactive(conditioned)
 		? tag(
 				'rendered',
-				morph.pure`rendered`(conditioned, (e: PounceElement) => e.render(env))
+				morph.pure`rendered`(conditioned, (e: SursautElement) => e.render(env))
 			)
-		: conditioned.map((e: PounceElement) => e.render(env))
+		: conditioned.map((e: SursautElement) => e.render(env))
 
 	function recurReactive(arr: readonly (Node | readonly Node[])[]): boolean {
 		if (isReactive(arr)) return true

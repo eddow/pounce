@@ -4,14 +4,14 @@ export default function BoardIndexPage() {
 	return (
 		<article>
 			<PackageHeader
-				name="@pounce/board"
-				description="A type-safe, scaleable meta-framework for Pounce applications. Automated routing, SSR, and middleware integration."
-				install="pnpm add @pounce/board"
+				name="@sursaut/board"
+				description="A type-safe, scaleable meta-framework for Sursaut applications. Automated routing, SSR, and middleware integration."
+				install="pnpm add @sursaut/board"
 			/>
 
 			<Section title="Philosophy">
 				<p>
-					Board is designed to be the "glue" that brings Pounce Core, Kit, and UI together into a
+					Board is designed to be the "glue" that brings Sursaut Core, Kit, and UI together into a
 					cohesive application framework. It follows an <strong>Automated Integration</strong>{' '}
 					philosophy: unlike many libraries that require manual wiring of routes and middleware,
 					Board uses file-based conventions to handle the heavy lifting for you.
@@ -49,13 +49,13 @@ export default function BoardIndexPage() {
 				</p>
 				<ul>
 					<li>
-						<code>@pounce/board</code>: Universal types and utilities.
+						<code>@sursaut/board</code>: Universal types and utilities.
 					</li>
 					<li>
-						<code>@pounce/board/server</code>: Server-only router and Hono adapters.
+						<code>@sursaut/board/server</code>: Server-only router and Hono adapters.
 					</li>
 					<li>
-						<code>@pounce/board/client</code>: Hydration logic and browser-specific helpers.
+						<code>@sursaut/board/client</code>: Hydration logic and browser-specific helpers.
 					</li>
 				</ul>
 			</Section>

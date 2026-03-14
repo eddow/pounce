@@ -1,4 +1,4 @@
-import { createOverlayStack, toastSpec } from '@pounce/ui'
+import { createOverlayStack, toastSpec } from '@sursaut/ui'
 
 export default function ToastDemo() {
 	const stack = createOverlayStack({

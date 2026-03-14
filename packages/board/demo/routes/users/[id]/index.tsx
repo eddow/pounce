@@ -1,4 +1,4 @@
-import type { InferVerb } from '@pounce/board'
+import type { InferVerb } from '@sursaut/board'
 import type UserRoute from './index'
 
 type User = InferVerb<typeof UserRoute, 'get'>

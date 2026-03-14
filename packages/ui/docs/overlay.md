@@ -62,7 +62,7 @@ Important differences from older docs:
 ## Basic usage
 
 ```tsx
-import { createOverlayStack, dialogSpec } from '@pounce/ui'
+import { createOverlayStack, dialogSpec } from '@sursaut/ui'
 
 function WithOverlays(props) {
 	const state = createOverlayStack()

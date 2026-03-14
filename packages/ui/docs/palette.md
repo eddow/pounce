@@ -1,6 +1,6 @@
 # Palette
 
-The palette module is a headless command, search, and toolbar-customization system exported from the `@pounce/ui/palette` subpath.
+The palette module is a headless command, search, and toolbar-customization system exported from the `@sursaut/ui/palette` subpath.
 
 It gives you:
 
@@ -36,10 +36,10 @@ import {
 	type PaletteEntryDefinition,
 	type PaletteIntent,
 	type PaletteDisplayItem,
-} from '@pounce/ui/palette'
+} from '@sursaut/ui/palette'
 ```
 
-Use the palette subpath, not the root `@pounce/ui` entry.
+Use the palette subpath, not the root `@sursaut/ui` entry.
 
 ## Core idea
 
@@ -130,7 +130,7 @@ type PaletteEntryDefinition = {
 	id: string
 	label: string
 	description?: string
-	icon?: string | PounceElement
+	icon?: string | SursautElement
 	categories?: readonly string[]
 	schema: PaletteEntrySchema
 }
@@ -700,7 +700,7 @@ import {
 	paletteCommandBoxModel,
 	paletteToolbarModel,
 	paletteDisplayCustomizationModel,
-} from '@pounce/ui/palette'
+} from '@sursaut/ui/palette'
 
 const palette = createPaletteModel({
 	definitions: [
@@ -745,7 +745,7 @@ customization.addToToolbar('main', {
 Instead of manually authoring individual intent items, you can use item-groups for cleaner enum presentation:
 
 ```ts
-import { createPaletteModel, paletteDisplayCustomizationModel } from '@pounce/ui/palette'
+import { createPaletteModel, paletteDisplayCustomizationModel } from '@sursaut/ui/palette'
 
 const palette = createPaletteModel({
 	definitions: [
@@ -807,4 +807,4 @@ customization.addToToolbar('settings', {
 - The command-box model reuses the same underlying search model as the palette itself.
 - Presenter keys are just strings. The consuming UI decides what `radio`, `toggle`, `stash`, `slider`, or `stars` actually render.
 - Item-group presenter keys such as `radio-group` and `segmented` are also UI-owned. The palette core resolves grouped entries to derived intents but does not ship a concrete grouped widget.
-- The palette module is exported from `@pounce/ui/palette`, not from the root `@pounce/ui` entry.
+- The palette module is exported from `@sursaut/ui/palette`, not from the root `@sursaut/ui` entry.

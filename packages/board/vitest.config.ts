@@ -4,17 +4,17 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   resolve: {
     alias: {
-      'pounce-ts/server': path.resolve(__dirname, '../core/src/node/index.ts'),
-      'pounce-ts': path.resolve(__dirname, '../core/src'),
-      'pounce-ui': path.resolve(__dirname, '../ui/src'),
-      '@pounce/kit': path.resolve(__dirname, '../kit/src'),
+      'sursaut-ts/server': path.resolve(__dirname, '../core/src/node/index.ts'),
+      'sursaut-ts': path.resolve(__dirname, '../core/src'),
+      'sursaut-ui': path.resolve(__dirname, '../ui/src'),
+      '@sursaut/kit': path.resolve(__dirname, '../kit/src'),
       'mutts': path.resolve(__dirname, '../../../mutts/src'),
       'npc-script': path.resolve(__dirname, '../../../npcs/src'),
       'omni18n': path.resolve(__dirname, '../../../omni18n/src'),
-      'pounce-board/client': path.resolve(__dirname, 'src/client'),
-      'pounce-board/server': path.resolve(__dirname, 'src/server'),
-      '@pounce/board': path.resolve(__dirname, 'src'), // Local project reference
-      'pounce-board': path.resolve(__dirname, 'src'), // Default to server in Node test env
+      'sursaut-board/client': path.resolve(__dirname, 'src/client'),
+      'sursaut-board/server': path.resolve(__dirname, 'src/server'),
+      '@sursaut/board': path.resolve(__dirname, 'src'), // Local project reference
+      'sursaut-board': path.resolve(__dirname, 'src'), // Default to server in Node test env
     },
   },
   test: {

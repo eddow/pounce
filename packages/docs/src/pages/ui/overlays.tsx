@@ -1,6 +1,6 @@
 import { ApiTable, Code, Section } from '../../components'
 
-const setup = `import { StandardOverlays } from '@pounce/adapter-pico'
+const setup = `import { StandardOverlays } from '@sursaut/adapter-pico'
 
 // StandardOverlays is a wrapper component that provides
 // dialog, toast, and drawer helpers via env.
@@ -53,13 +53,13 @@ env.toast({
 })`
 
 const drawerExample = `// env.drawer is injected by StandardOverlays.
-// Drawer.show() returns a Promise that resolves when closed.
+// env.drawer(...) returns a Promise that resolves when closed.
 
 env.drawer({
   title: 'Settings',
   children: <SettingsPanel />,
   side: 'right',   // 'left' (default) | 'right'
-  footer: <Button onClick={() => close()}>Done</Button>,
+  footer: <button>Done</button>,
 })
 
 // Minimal — just content:
@@ -74,9 +74,9 @@ interface OverlaySpec {
   aria?: { label?, labelledby?, describedby? }
 }
 
-// Dialog.show(), Toast.show(), Drawer.show() each return
-// an OverlaySpec. The WithOverlays host pushes it onto
-// a reactive stack and manages transitions + focus trap.`
+// env.overlay(spec) pushes a custom overlay, while env.dialog,
+// env.toast, and env.drawer are convenience bindings on top of
+// the same stack managed by WithOverlays / StandardOverlays.`
 
 export default function OverlaysPage() {
 	return (
@@ -122,7 +122,8 @@ export default function OverlaysPage() {
 			<Section title="OverlaySpec">
 				<p>
 					All overlay types share a common <code>OverlaySpec</code> interface. You can push custom
-					overlays via <code>env.overlay(spec)</code>.
+					overlays via <code>env.overlay(spec)</code> when using <code>WithOverlays</code> or{' '}
+					<code>StandardOverlays</code>.
 				</p>
 				<Code code={overlaySpec} lang="tsx" />
 			</Section>
@@ -258,8 +259,9 @@ export default function OverlaysPage() {
 						{
 							name: 'render',
 							type: '(close: (value) => void) => JSX.Children',
-							description: 'Render function for the overlay content',
-							required: true,
+							description:
+								'Optional render function for custom overlays. Built-in modes can be rendered by the adapter from props alone.',
+							required: false,
 						},
 						{
 							name: 'dismissible',

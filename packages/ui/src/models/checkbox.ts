@@ -1,4 +1,4 @@
-import type { StyleInput } from '@pounce/core'
+import type { StyleInput } from '@sursaut/core'
 import type { CheckedProps, DisableableProps, VariantProps } from '../shared/types'
 import { type GroupCollection, hasGroupValue, toggleGroupCollectionValue } from './group'
 
@@ -41,7 +41,7 @@ export type RadioProps<Value = unknown> = ControlBaseProps & {
 	/**
 	 * Two-way binding variable for the radio group.
 	 * `checked` is derived from `group === value`.
-	 * On selection, `group` is written back to `value` (via Pounce's ReactiveProp setter).
+	 * On selection, `group` is written back to `value` (via Sursaut's ReactiveProp setter).
 	 */
 	group?: Value
 }

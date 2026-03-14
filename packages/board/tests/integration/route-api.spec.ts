@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { Hono } from 'hono'
-import { createPounceMiddleware } from '../../src/adapters/hono.js'
+import { createSursautMiddleware } from '../../src/adapters/hono.js'
 import { clearRouteTreeCache } from '../../src/adapters/hono.js'
-import { expose, type PounceRequest } from '../../src/lib/router/expose.js'
+import { expose, type SursautRequest } from '../../src/lib/router/expose.js'
 
 describe('Route API Integration (Hono + expose)', () => {
 	beforeEach(() => {
 		clearRouteTreeCache()
 		// Clean up the global mutation expose applies to itself during import
-		;(globalThis as any).__POUNCE_CURRENT_FILE__ = undefined
-		;(globalThis as any).__POUNCE_CURRENT_BASE_URL__ = undefined
+		;(globalThis as any).__SURSAUT_CURRENT_FILE__ = undefined
+		;(globalThis as any).__SURSAUT_CURRENT_BASE_URL__ = undefined
 	})
 
 	it('6.5 Full request lifecycle (Hono -> expose -> middle -> handler)', async () => {
@@ -23,17 +23,17 @@ describe('Route API Integration (Hono + expose)', () => {
 		}
 
 		const app = new Hono()
-		app.use('*', createPounceMiddleware({
+		app.use('*', createSursautMiddleware({
 			routesDir: '/mock/routes',
 			globRoutes: {
 				'/mock/routes/index.tsx': async () => ({ default: () => 'app' }),
 				'/mock/routes/index.ts': async () => {
-					;(globalThis as any).__POUNCE_CURRENT_FILE__ = '/mock/routes/index.ts'
-					;(globalThis as any).__POUNCE_CURRENT_BASE_URL__ = '/'
+					;(globalThis as any).__SURSAUT_CURRENT_FILE__ = '/mock/routes/index.ts'
+					;(globalThis as any).__SURSAUT_CURRENT_BASE_URL__ = '/'
 					return {
 						default: expose({
 							middle: [rootMiddle],
-							get: async (req: PounceRequest) => ({ hello: 'world' })
+							get: async (req: SursautRequest) => ({ hello: 'world' })
 						})
 					}
 				}
@@ -50,15 +50,15 @@ describe('Route API Integration (Hono + expose)', () => {
 		expect(middleTrace).toEqual(['root-in', 'root-out'])
 	})
 
-	it('6.6 SSR cascaded provide loaders (via X-Pounce-Provide)', async () => {
+	it('6.6 SSR cascaded provide loaders (via X-Sursaut-Provide)', async () => {
 		const app = new Hono()
-		app.use('*', createPounceMiddleware({
+		app.use('*', createSursautMiddleware({
 			routesDir: '/mock/routes',
 			globRoutes: {
 				'/mock/routes/index.tsx': async () => ({ default: () => 'app' }),
 				'/mock/routes/index.ts': async () => {
-					;(globalThis as any).__POUNCE_CURRENT_FILE__ = '/mock/routes/index.ts'
-					;(globalThis as any).__POUNCE_CURRENT_BASE_URL__ = '/'
+					;(globalThis as any).__SURSAUT_CURRENT_FILE__ = '/mock/routes/index.ts'
+					;(globalThis as any).__SURSAUT_CURRENT_BASE_URL__ = '/'
 					return {
 						default: expose({
 							provide: async () => ({ rootData: true })
@@ -66,8 +66,8 @@ describe('Route API Integration (Hono + expose)', () => {
 					}
 				},
 				'/mock/routes/users/index.ts': async () => {
-					;(globalThis as any).__POUNCE_CURRENT_FILE__ = '/mock/routes/users/index.ts'
-					;(globalThis as any).__POUNCE_CURRENT_BASE_URL__ = '/users'
+					;(globalThis as any).__SURSAUT_CURRENT_FILE__ = '/mock/routes/users/index.ts'
+					;(globalThis as any).__SURSAUT_CURRENT_BASE_URL__ = '/users'
 					return {
 						default: expose({
 							provide: async (req: any) => {
@@ -79,12 +79,12 @@ describe('Route API Integration (Hono + expose)', () => {
 			}
 		}))
 
-		// 6.7 SPA navigation provide fetch (Testing X-Pounce-Provide header on Hono)
+		// 6.7 SPA navigation provide fetch (Testing X-Sursaut-Provide header on Hono)
 		const res = await app.request('http://localhost/users', {
 			method: 'GET',
 			headers: {
 				accept: 'application/json',
-				'X-Pounce-Provide': 'true'
+				'X-Sursaut-Provide': 'true'
 			}
 		})
 

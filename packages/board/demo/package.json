@@ -1,10 +1,10 @@
 {
-	"name": "@pounce/demo-app",
+	"name": "@sursaut/demo-app",
 	"private": true,
 	"type": "module",
 	"dependencies": {
-		"@pounce/board": "workspace:*",
-		"@pounce/core": "workspace:*",
+		"@sursaut/board": "workspace:*",
+		"@sursaut/core": "workspace:*",
 		"hono": "^4.0.0"
 	}
 }

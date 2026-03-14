@@ -1,5 +1,5 @@
-import { h, type Env } from '@pounce/core'
-import { Button, Menu, MenuItem, StandardOverlays } from '@pounce/adapter-pico'
+import { h, type Env } from '@sursaut/core'
+import { Button, Menu, MenuItem, StandardOverlays } from '@sursaut/adapter-pico'
 import { reactive } from 'mutts'
 import { DemoSection, DemoState } from './shared'
 

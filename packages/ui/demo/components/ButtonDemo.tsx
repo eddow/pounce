@@ -1,4 +1,4 @@
-import { buttonModel } from '@pounce/ui'
+import { buttonModel } from '@sursaut/ui'
 import { reactive } from 'mutts'
 
 export default function ButtonDemo() {

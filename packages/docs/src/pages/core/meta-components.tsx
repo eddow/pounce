@@ -52,7 +52,7 @@ function Header() {
 
 // Equivalent to <> ... </> (JSX Fragment) but accepts meta-attributes`
 
-const envMeta = `import { extend } from '@pounce'
+const envMeta = `import { extend } from '@sursaut'
 
 // <env> injects values into the env chain without a DOM wrapper
 function App(_props: {}, env: any) {

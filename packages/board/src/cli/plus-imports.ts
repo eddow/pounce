@@ -98,7 +98,7 @@ export function resolvePlusImport(
 
 export function plusImportResolverPlugin(options: PlusImportResolverOptions): Plugin {
 	return {
-		name: 'pounce-board-plus-import-resolver',
+		name: 'sursaut-board-plus-import-resolver',
 		enforce: 'pre',
 		resolveId(source, importer) {
 			return resolvePlusImport(source, importer, options)

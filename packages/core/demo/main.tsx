@@ -1,8 +1,8 @@
 /**
- * Main entry point for Pounce-TS application
+ * Main entry point for Sursaut-TS application
  */
 
-import { latch } from '@pounce/core'
+import { latch } from '@sursaut/core'
 import { reactive } from 'mutts'
 import CounterComponent from './components/Counter'
 import TodoComponent, { type Todo } from './components/Todo'
