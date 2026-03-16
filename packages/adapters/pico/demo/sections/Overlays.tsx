@@ -1,13 +1,20 @@
-import { h, type Env } from '@sursaut/core'
 import { Button, Menu, MenuItem, StandardOverlays } from '@sursaut/adapter-pico'
+import type { Env } from '@sursaut/core'
 import { reactive } from 'mutts'
 import { DemoSection, DemoState } from './shared'
 
 const TOAST_VARIANTS = [
 	{ label: 'Success', fn: (env: Env) => env.toast?.success?.('Operation completed successfully.') },
 	{ label: 'Error', fn: (env: Env) => env.toast?.error?.('Something went wrong.') },
-	{ label: 'Info', fn: (env: Env) => env.toast?.({ message: 'Here is some information.', variant: 'info' }) },
-	{ label: 'Warning', fn: (env: Env) => env.toast?.({ message: 'Please review before continuing.', variant: 'warning' }) },
+	{
+		label: 'Info',
+		fn: (env: Env) => env.toast?.({ message: 'Here is some information.', variant: 'info' }),
+	},
+	{
+		label: 'Warning',
+		fn: (env: Env) =>
+			env.toast?.({ message: 'Please review before continuing.', variant: 'warning' }),
+	},
 ] as const
 
 function OverlayTriggers(props: { state: { lastResult: string } }, env: Env) {
@@ -27,7 +34,9 @@ function OverlayTriggers(props: { state: { lastResult: string } }, env: Env) {
 
 	return (
 		<div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
-			<Button variant="primary" onClick={openDialog}>Dialog</Button>
+			<Button variant="primary" onClick={openDialog}>
+				Dialog
+			</Button>
 			<Menu summary="Toast">
 				<div role="menu" style="display:flex;flex-direction:column;">
 					<for each={TOAST_VARIANTS}>
@@ -35,7 +44,9 @@ function OverlayTriggers(props: { state: { lastResult: string } }, env: Env) {
 					</for>
 				</div>
 			</Menu>
-			<Button outline onClick={openDrawer}>Drawer</Button>
+			<Button outline onClick={openDrawer}>
+				Drawer
+			</Button>
 		</div>
 	)
 }

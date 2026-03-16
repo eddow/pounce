@@ -12,6 +12,7 @@ import {
 	Stack,
 	Switch,
 } from '@sursaut'
+import { splitButtonModel, splitRadioButtonModel } from '@sursaut/ui/models'
 import { reactive } from 'mutts'
 import { ApiTable, Demo, Section } from '../../components'
 
@@ -59,6 +60,37 @@ const multiselectSource = `<Multiselect
 >
   <Button>Pick fruits</Button>
 </Multiselect>`
+
+const splitButtonSource = `const model = splitButtonModel({
+  value: state.action,
+  items: [
+    { value: 'save', label: 'Save', onClick: () => run('Save') },
+    { value: 'saveAs', label: 'Save as…', onClick: () => run('Save as…') },
+    { value: 'share', label: 'Share', onClick: () => run('Share') },
+  ],
+  onValueChange: (value) => (state.action = value),
+})
+
+<button {...model.button}>{model.selected?.label}</button>
+<button {...model.trigger}>▾</button>`
+
+const splitRadioButtonSource = `const model = splitRadioButtonModel({
+  items: [
+    { value: 'left', label: 'Left' },
+    { value: 'center', label: 'Center' },
+    { value: 'right', label: 'Right' },
+  ],
+  get group() {
+    return state.align
+  },
+  set group(value) {
+    state.align = value
+  },
+  onClick: (value) => run(\`Align \${value}\`),
+})
+
+<button {...model.button}>{model.selected?.label}</button>
+<button {...model.trigger}>▾</button>`
 
 function SelectDemo() {
 	const state = reactive({ variant: 'primary', fullWidth: false, value: '' })
@@ -309,6 +341,95 @@ function MultiselectDemo() {
 				<Button>Pick fruits ({selected.size})</Button>
 			</Multiselect>
 			<span style="opacity: 0.6">selected: {[...selected].join(', ') || '(none)'}</span>
+		</Stack>
+	)
+}
+
+function SplitButtonDemo() {
+	const state = reactive({ action: 'save' as 'save' | 'saveAs' | 'share', lastAction: 'none' })
+	const model = splitButtonModel({
+		get value() {
+			return state.action
+		},
+		items: [
+			{ value: 'save' as const, label: 'Save', onClick: () => (state.lastAction = 'Save') },
+			{
+				value: 'saveAs' as const,
+				label: 'Save as…',
+				onClick: () => (state.lastAction = 'Save as…'),
+			},
+			{ value: 'share' as const, label: 'Share', onClick: () => (state.lastAction = 'Share') },
+		],
+		onValueChange: (value: 'save' | 'saveAs' | 'share') => {
+			state.action = value
+		},
+	})
+	return (
+		<Stack gap="md">
+			<div style="position: relative; display: inline-flex; width: fit-content;">
+				<Button {...model.button}>{model.selected?.label ?? 'Choose action'}</Button>
+				<Button {...model.trigger}>▾</Button>
+				<Stack
+					if={model.open}
+					gap="xs"
+					style="position: absolute; top: calc(100% + 4px); left: 0; min-width: 180px; padding: 6px; border: 1px solid var(--pico-muted-border-color); border-radius: 8px; background: var(--pico-background-color); z-index: 1;"
+					{...model.menu}
+				>
+					<for each={model.items}>
+						{(item) => (
+							<Button {...item.button}>{item.item.label ?? String(item.item.value)}</Button>
+						)}
+					</for>
+				</Stack>
+			</div>
+			<span style="opacity: 0.6">
+				selected: {state.action} · last run: {state.lastAction}
+			</span>
+		</Stack>
+	)
+}
+
+function SplitRadioButtonDemo() {
+	const state = reactive({ align: 'left' as 'left' | 'center' | 'right', lastAction: 'none' })
+	const model = splitRadioButtonModel({
+		items: [
+			{ value: 'left' as const, label: 'Left' },
+			{ value: 'center' as const, label: 'Center' },
+			{ value: 'right' as const, label: 'Right' },
+		],
+		get group() {
+			return state.align
+		},
+		set group(value) {
+			state.align = value
+		},
+		onClick: (value: 'left' | 'center' | 'right' | undefined) => {
+			if (value) state.lastAction = `Align ${value}`
+		},
+	})
+	return (
+		<Stack gap="md">
+			<div style="position: relative; display: inline-flex; width: fit-content;">
+				<Button {...model.button}>{model.selected?.label ?? 'Choose alignment'}</Button>
+				<Button {...model.trigger}>▾</Button>
+				<Stack
+					if={model.open}
+					gap="xs"
+					style="position: absolute; top: calc(100% + 4px); left: 0; min-width: 180px; padding: 6px; border: 1px solid var(--pico-muted-border-color); border-radius: 8px; background: var(--pico-background-color); z-index: 1;"
+					{...model.menu}
+				>
+					<for each={model.items}>
+						{(item) => (
+							<Button {...item.button} variant={item.checked ? 'primary' : undefined}>
+								{item.item.label ?? String(item.item.value)}
+							</Button>
+						)}
+					</for>
+				</Stack>
+			</div>
+			<span style="opacity: 0.6">
+				alignment: {state.align} · last run: {state.lastAction}
+			</span>
 		</Stack>
 	)
 }
@@ -707,6 +828,125 @@ export default function FormsPage() {
 							name: 'el',
 							type: 'JSX.IntrinsicElements["details"]',
 							description: 'Pass-through attributes on the <details> wrapper',
+							required: false,
+						},
+					]}
+				/>
+			</Section>
+			<Section title="SplitButton">
+				<p>
+					Split action button. The main button re-runs the selected action, and the trigger opens a
+					menu to choose another action. Selecting from the menu both selects and executes it. It
+					consumes arranged scope; split controls default to <code>joined=true</code> and can flip
+					vertical through explicit or ambient organization props.
+				</p>
+				<Demo title="SplitButton" source={splitButtonSource} component={<SplitButtonDemo />} />
+				<ApiTable
+					props={[
+						{
+							name: 'value',
+							type: 'T',
+							description: 'Currently selected item value',
+							required: false,
+						},
+						{
+							name: 'items',
+							type: 'Array<{ value: T; label?: JSX.Children; disabled?: boolean; onClick?: (value, e) => void }>',
+							description: 'Available actions shown in the menu',
+							required: true,
+						},
+						{
+							name: 'onValueChange',
+							type: '(value: T) => void',
+							description: 'Called when a menu item becomes selected',
+							required: false,
+						},
+						{
+							name: 'onClick',
+							type: '(value: T | undefined, e: MouseEvent) => void',
+							description: 'Primary action callback, also called after menu activation',
+							required: false,
+						},
+						{
+							name: 'disabled',
+							type: 'boolean',
+							description: 'Disables both the primary button and the trigger',
+							required: false,
+						},
+						{
+							name: 'menuAriaLabel',
+							type: 'string',
+							description: 'Accessible label for the menu trigger/menu',
+							required: false,
+						},
+						{
+							name: 'orientation',
+							type: "'horizontal' | 'vertical'",
+							description: 'Organization axis, also used for split layout and menu anchoring',
+							required: false,
+						},
+						{
+							name: 'joined',
+							type: 'boolean',
+							description: 'Whether the main button and trigger are visually joined. Default: true',
+							required: false,
+						},
+					]}
+				/>
+			</Section>
+			<Section title="SplitRadioButton">
+				<p>
+					Split button with exclusive menu choices. Menu items expose radio semantics and selecting
+					one updates the current primary action. It also consumes arranged scope, including
+					vertical layout and the default <code>joined=true</code> split styling.
+				</p>
+				<Demo
+					title="SplitRadioButton"
+					source={splitRadioButtonSource}
+					component={<SplitRadioButtonDemo />}
+				/>
+				<ApiTable
+					props={[
+						{
+							name: 'group',
+							type: 'T',
+							description: 'Current selected value in the shared radio group',
+							required: false,
+						},
+						{
+							name: 'items',
+							type: 'Array<{ value: T; label?: JSX.Children; disabled?: boolean }>',
+							description: 'Exclusive menu choices',
+							required: true,
+						},
+						{
+							name: 'onClick',
+							type: '(value: T | undefined, e: MouseEvent) => void',
+							description: 'Called for the current primary action and after menu selection',
+							required: false,
+						},
+						{
+							name: 'disabled',
+							type: 'boolean',
+							description: 'Disables the control',
+							required: false,
+						},
+						{
+							name: 'menuAriaLabel',
+							type: 'string',
+							description: 'Accessible label for the menu trigger/menu',
+							required: false,
+						},
+						{
+							name: 'orientation',
+							type: "'horizontal' | 'vertical'",
+							description: 'Organization axis, also used for split layout and menu anchoring',
+							required: false,
+						},
+						{
+							name: 'joined',
+							type: 'boolean',
+							description: 'Whether the main button and trigger are visually joined. Default: true',
 							required: false,
 						},
 					]}

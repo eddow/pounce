@@ -3,17 +3,22 @@ import { executePaletteIntent } from './dispatch'
 import { createPaletteIntentSource } from './intents'
 import type { PaletteKeyBinding, PaletteKeys } from './keys'
 import { createPaletteKeys } from './keys'
-import { createPaletteRegistry } from './registry'
+import { createPaletteRegistry, paletteRegistryEntries, resolvePaletteEntry } from './registry'
+import {
+	getKeywordSourceKeywords,
+	matchesEnumSelector,
+	matchesKeywordQuery,
+	normalizeKeywords,
+} from './selector'
 import type {
 	PaletteDisplayConfiguration,
 	PaletteDisplayItem,
-	PaletteEntryDefinition,
-	PaletteEntryId,
+	PaletteEntry,
+	PaletteEnumOption,
 	PaletteGroupedProposition,
 	PaletteIntent,
-	PaletteIntentId,
 	PaletteIntentSource,
-	PaletteItemGroupDefinition,
+	PaletteKeywordSource,
 	PaletteMatch,
 	PaletteQuery,
 	PaletteRegistry,
@@ -22,31 +27,35 @@ import type {
 	PaletteResolvedIntent,
 	PaletteRuntimeState,
 	PaletteSearch,
-	PaletteState,
 	PaletteToolbar,
 	PaletteToolbarSlot,
 	PaletteToolbarTrack,
 } from './types'
 
 function emptyToolbarTrack(): PaletteToolbarTrack {
-	return {
-		slots: [],
-	}
+	return []
 }
 
-function normalizeTrack(track: PaletteToolbarTrack | undefined): PaletteToolbarTrack {
+function normalizeTrack(
+	track: PaletteToolbarTrack | PaletteToolbarSlot[] | undefined
+): PaletteToolbarTrack {
 	if (!track) return emptyToolbarTrack()
-	if ('slots' in track) {
-		return {
-			slots: track.slots.map((slot) => ({
-				toolbar: slot.toolbar,
-				space: Number.isFinite(slot.space) ? Math.min(1, Math.max(0, slot.space)) : 0,
-			})),
-		}
+	if (Array.isArray(track)) {
+		return track.map((slot) => ({
+			toolbar: slot.toolbar,
+			space: Number.isFinite(slot.space) ? Math.min(1, Math.max(0, slot.space)) : 0,
+		}))
 	}
-	const legacyTrack = track as PaletteToolbarTrack & {
+	const legacyTrack = track as {
+		readonly slots?: readonly PaletteToolbarSlot[]
 		readonly toolbars?: readonly PaletteToolbar[]
 		readonly spaces?: readonly number[]
+	}
+	if (legacyTrack.slots) {
+		return legacyTrack.slots.map((slot) => ({
+			toolbar: slot.toolbar,
+			space: Number.isFinite(slot.space) ? Math.min(1, Math.max(0, slot.space)) : 0,
+		}))
 	}
 	const toolbars = legacyTrack.toolbars ?? []
 	const fallbackSpaces = Array.from(
@@ -57,24 +66,32 @@ function normalizeTrack(track: PaletteToolbarTrack | undefined): PaletteToolbarT
 		legacyTrack.spaces?.length === toolbars.length
 			? legacyTrack.spaces
 			: legacyTrack.spaces?.length === toolbars.length + 1
-				? legacyTrack.spaces.slice(0, -1)
+				? legacyTrack.spaces
+						.map((_, index, actualSpaces) => {
+							const remaining = actualSpaces
+								.slice(index)
+								.reduce((sum, value) => sum + Math.max(value, 0), 0)
+							const actualSpace = Math.max(actualSpaces[index] ?? 0, 0)
+							return remaining > 0 ? Math.min(1, Math.max(0, actualSpace / remaining)) : 0
+						})
+						.slice(0, -1)
 				: fallbackSpaces
 	const slots: PaletteToolbarSlot[] = toolbars.map((toolbar, index) => ({
 		toolbar,
 		space: spaces[index] ?? fallbackSpaces[index] ?? 0,
 	}))
-	return { slots }
+	return slots
 }
 
 function isToolbarTrack(
-	value: readonly PaletteToolbarTrack[] | PaletteToolbarTrack
+	value: readonly (PaletteToolbarTrack | PaletteToolbarSlot[])[] | PaletteToolbarTrack
 ): value is PaletteToolbarTrack {
-	return 'slots' in value
+	return Array.isArray(value) && (value.length === 0 || 'toolbar' in value[0])
 }
 
 function normalizeTracks(
-	tracks: readonly PaletteToolbarTrack[] | PaletteToolbarTrack | undefined
-): readonly PaletteToolbarTrack[] {
+	tracks: readonly (PaletteToolbarTrack | PaletteToolbarSlot[])[] | undefined
+): PaletteToolbarTrack[] {
 	if (!tracks) return [emptyToolbarTrack()]
 	if (!isToolbarTrack(tracks))
 		return tracks.length > 0 ? tracks.map((track) => normalizeTrack(track)) : [emptyToolbarTrack()]
@@ -85,91 +102,74 @@ export interface PaletteModel {
 	readonly registry: PaletteRegistry
 	readonly intents: PaletteIntentSource
 	readonly keys: PaletteKeys
-	readonly state: PaletteState
 	readonly runtime: PaletteRuntimeState
 	readonly display: PaletteDisplayConfiguration
 	readonly search: PaletteSearch
 
-	run(intentId: PaletteIntentId): unknown
-	derive(entryId: PaletteEntryId): readonly PaletteIntent[]
-	resolveEntry(entryId: PaletteEntryId): PaletteEntryDefinition | undefined
-	resolveIntent(intentId: PaletteIntentId):
+	run(intentId: string): unknown
+	derive(entryId: string): readonly PaletteIntent[]
+	resolveEntry(entryId: string): PaletteEntry | undefined
+	resolveIntent(intentId: string):
 		| {
 				readonly intent: PaletteIntent
-				readonly entry: PaletteEntryDefinition
+				readonly entry: PaletteEntry
 		  }
 		| undefined
 	resolveDisplayItem(item: PaletteDisplayItem): PaletteResolvedDisplayItem | undefined
 }
 
-function entryMatchesCategories(
-	entry: PaletteEntryDefinition,
-	categories: ReadonlySet<string>
-): boolean {
-	if (categories.size === 0) return true
-	const entryCategories = entry.categories ?? []
-	return [...categories].some((category) => entryCategories.includes(category))
+function entryKeywordSource(entry: PaletteEntry): PaletteKeywordSource {
+	return {
+		id: entry.id,
+		keywords: entry.categories,
+	}
 }
 
-function intentMatchesCategories(
+function intentKeywordSource(intent: PaletteIntent, entry: PaletteEntry): PaletteKeywordSource {
+	return {
+		id: intent.id,
+		keywords: [
+			...(intent.categories ?? []),
+			...getKeywordSourceKeywords(entryKeywordSource(entry)),
+		],
+	}
+}
+
+function entryMatchesQuery(entry: PaletteEntry, query: PaletteQuery): boolean {
+	return matchesKeywordQuery(entryKeywordSource(entry), {
+		keywords: query.keywords ?? [],
+		free: query.free,
+	})
+}
+
+function intentMatchesQuery(
 	intent: PaletteIntent,
-	entry: PaletteEntryDefinition,
-	categories: ReadonlySet<string>
+	entry: PaletteEntry,
+	query: PaletteQuery
 ): boolean {
-	if (categories.size === 0) return true
-	const intentCategories = intent.categories ?? []
-	const entryCategories = entry.categories ?? []
-	return [...categories].some(
-		(category) => intentCategories.includes(category) || entryCategories.includes(category)
-	)
+	return matchesKeywordQuery(intentKeywordSource(intent, entry), {
+		keywords: query.keywords ?? [],
+		free: query.free,
+	})
 }
 
-function entryMatchesText(entry: PaletteEntryDefinition, textQuery: string | undefined): boolean {
-	if (!textQuery) return true
-	const searchText = [entry.label, entry.id, entry.description, ...(entry.categories ?? [])]
-		.filter((value) => value !== undefined)
-		.join(' ')
-		.toLowerCase()
-	return textQuery
-		.split(/\s+/)
-		.filter((term) => term.length > 0)
-		.every((term) => searchText.includes(term))
-}
-
-function intentMatchesText(
-	intent: PaletteIntent,
-	entry: PaletteEntryDefinition,
-	textQuery: string | undefined
-): boolean {
-	if (!textQuery) return true
-	const searchText = [
-		intent.label ?? entry.label,
-		intent.id,
-		intent.description,
-		entry.description,
-		...(intent.categories ?? []),
-		...(entry.categories ?? []),
-	]
-		.filter((value) => value !== undefined)
-		.join(' ')
-		.toLowerCase()
-	return textQuery
-		.split(/\s+/)
-		.filter((term) => term.length > 0)
-		.every((term) => searchText.includes(term))
+function normalizeEnumOption<T extends string>(
+	option: T | PaletteEnumOption<T>
+): PaletteEnumOption<T> {
+	return typeof option === 'string' ? { id: option } : option
 }
 
 function resolveDerivedIntent(
 	registry: PaletteRegistry,
 	intents: PaletteIntentSource,
-	intentId: PaletteIntentId
+	intentId: string
 ):
 	| {
 			readonly intent: PaletteIntent
-			readonly entry: PaletteEntryDefinition
+			readonly entry: PaletteEntry
 	  }
 	| undefined {
-	for (const entry of registry.entries) {
+	for (const entry of paletteRegistryEntries(registry)) {
 		for (const intent of intents.derive(entry)) {
 			if (intent.id === intentId) {
 				return { intent, entry }
@@ -179,28 +179,28 @@ function resolveDerivedIntent(
 	return undefined
 }
 
-function collectResolvedIntents(
+export function collectResolvedIntents(
 	registry: PaletteRegistry,
 	intents: PaletteIntentSource
 ): readonly {
 	readonly intent: PaletteIntent
-	readonly entry: PaletteEntryDefinition
+	readonly entry: PaletteEntry
 }[] {
 	const resolved = new Map<
-		PaletteIntentId,
+		string,
 		{
 			readonly intent: PaletteIntent
-			readonly entry: PaletteEntryDefinition
+			readonly entry: PaletteEntry
 		}
 	>()
 
 	for (const intent of intents.intents) {
-		const entry = registry.get(intent.targetId)
+		const entry = resolvePaletteEntry(registry, intent.targetId)
 		if (!entry) continue
 		resolved.set(intent.id, { intent, entry })
 	}
 
-	for (const entry of registry.entries) {
+	for (const entry of paletteRegistryEntries(registry)) {
 		for (const intent of intents.derive(entry)) {
 			if (!resolved.has(intent.id)) {
 				resolved.set(intent.id, { intent, entry })
@@ -211,49 +211,42 @@ function collectResolvedIntents(
 	return Array.from(resolved.values())
 }
 
-function resolveItemGroup(
+function resolveEnumEditorSubset(
 	palette: PaletteModel,
-	group: PaletteItemGroupDefinition
+	entry: PaletteEntry,
+	selector: string | readonly string[]
 ): readonly PaletteResolvedIntent[] | undefined {
-	const entry = palette.resolveEntry(group.entryId)
-	if (!entry) return undefined
-
-	if (group.kind === 'enum-options') {
-		if (entry.schema.type !== 'enum') {
-			return undefined
-		}
-
-		const enumOptions = entry.schema.options.map((opt) =>
-			typeof opt === 'string' ? opt : opt.value
+	if (entry.schema.type !== 'enum') return undefined
+	return entry.schema.options
+		.map(normalizeEnumOption)
+		.filter((option) =>
+			matchesEnumSelector(
+				{ id: option.id, keywords: [...(option.categories ?? []), ...(option.keywords ?? [])] },
+				selector
+			)
 		)
-
-		return group.options
-			.filter((option) => enumOptions.includes(option))
-			.map((option) => {
-				const intentId = `${group.entryId}:set:${option}`
-				const resolved = palette.resolveIntent(intentId)
-				if (!resolved) {
-					throw new Error(`Derived intent not found for ${intentId}`)
-				}
-				return {
-					kind: 'intent' as const,
-					intent: resolved.intent,
-					entry: resolved.entry,
-				}
-			})
-	}
-
-	return undefined
+		.map((option) => option.id)
+		.map((option) => {
+			const intentId = `${entry.id}:set:${option}`
+			const resolved = palette.resolveIntent(intentId)
+			if (!resolved) {
+				throw new Error(`Derived intent not found for ${intentId}`)
+			}
+			return {
+				kind: 'intent' as const,
+				intent: resolved.intent,
+				entry: resolved.entry,
+			}
+		})
 }
 
 export function createPaletteModel(options?: {
-	definitions?: readonly PaletteEntryDefinition[]
+	definitions?: PaletteRegistry
 	intents?: readonly PaletteIntent[]
 	bindings?: readonly PaletteKeyBinding[]
-	state?: PaletteState
 	display?: PaletteDisplayConfiguration
 	runtime?: PaletteRuntimeState
-	derive?: (entry: PaletteEntryDefinition) => readonly PaletteIntent[]
+	derive?: (entry: PaletteEntry) => readonly PaletteIntent[]
 }): PaletteModel {
 	const registry = createPaletteRegistry(options?.definitions)
 	const intents = createPaletteIntentSource({
@@ -262,16 +255,13 @@ export function createPaletteModel(options?: {
 	})
 	const keys = createPaletteKeys(options?.bindings)
 
-	const state = reactive(options?.state ?? {})
 	const runtime = reactive(options?.runtime ?? {})
 
 	function generateGroupedPropositions(
 		existingResults: PaletteMatch[],
-		textQuery?: string,
-		categoryFilter?: Set<string>
+		query?: PaletteQuery
 	): PaletteGroupedProposition[] {
-		void textQuery
-		void categoryFilter
+		void query
 		const propositions: PaletteGroupedProposition[] = []
 		const intentsByEntry = new Map<string, PaletteResolvedIntent[]>()
 
@@ -324,6 +314,7 @@ export function createPaletteModel(options?: {
 	const display = reactive({
 		...(options?.display ?? {}),
 		container: {
+			...(options?.display?.container ?? {}),
 			toolbarStack: {
 				top: normalizeTracks(options?.display?.container?.toolbarStack.top),
 				right: normalizeTracks(options?.display?.container?.toolbarStack.right),
@@ -332,19 +323,19 @@ export function createPaletteModel(options?: {
 			},
 			editMode: false,
 			parkedToolbars: [...(options?.display?.container?.parkedToolbars ?? [])],
-			...(options?.display?.container ?? {}),
 		},
 	})
 
 	const search: PaletteSearch = (query: PaletteQuery) =>
 		lift`createPaletteModel.search`(() => {
-			const textQuery = query.text?.toLowerCase().trim()
-			const categoryFilter = new Set(query.categories ?? [])
+			const normalizedQuery: PaletteQuery = {
+				keywords: normalizeKeywords(query.keywords),
+				free: query.free,
+			}
 			const results: PaletteMatch[] = []
 
 			for (const resolved of collectResolvedIntents(registry, intents)) {
-				if (!intentMatchesCategories(resolved.intent, resolved.entry, categoryFilter)) continue
-				if (!intentMatchesText(resolved.intent, resolved.entry, textQuery)) continue
+				if (!intentMatchesQuery(resolved.intent, resolved.entry, normalizedQuery)) continue
 				results.push({
 					kind: 'intent',
 					intent: resolved.intent,
@@ -352,18 +343,17 @@ export function createPaletteModel(options?: {
 				})
 			}
 
-			for (const entry of registry.entries) {
+			for (const entry of paletteRegistryEntries(registry)) {
 				if (results.some((result) => result.kind === 'intent' && result.entry.id === entry.id))
 					continue
-				if (!entryMatchesCategories(entry, categoryFilter)) continue
-				if (!entryMatchesText(entry, textQuery)) continue
+				if (!entryMatchesQuery(entry, normalizedQuery)) continue
 				results.push({
 					kind: 'entry',
 					entry,
 				})
 			}
 
-			results.push(...generateGroupedPropositions(results, textQuery, categoryFilter))
+			results.push(...generateGroupedPropositions(results, normalizedQuery))
 			return results
 		})
 
@@ -371,12 +361,11 @@ export function createPaletteModel(options?: {
 		registry,
 		intents,
 		keys,
-		state,
 		runtime,
 		display,
 		search,
 
-		run(intentId: PaletteIntentId): unknown {
+		run(intentId: string): unknown {
 			const resolved = this.resolveIntent(intentId)
 			if (!resolved) {
 				throw new Error(`Intent not found: ${intentId}`)
@@ -384,20 +373,20 @@ export function createPaletteModel(options?: {
 			return executePaletteIntent(this, resolved.intent)
 		},
 
-		derive(entryId: PaletteEntryId): readonly PaletteIntent[] {
+		derive(entryId: string): readonly PaletteIntent[] {
 			const entry = this.resolveEntry(entryId)
 			if (!entry) return []
 			return this.intents.derive(entry)
 		},
 
-		resolveEntry(entryId: PaletteEntryId): PaletteEntryDefinition | undefined {
-			return this.registry.get(entryId)
+		resolveEntry(entryId: string): PaletteEntry | undefined {
+			return resolvePaletteEntry(this.registry, entryId)
 		},
 
-		resolveIntent(intentId: PaletteIntentId):
+		resolveIntent(intentId: string):
 			| {
 					readonly intent: PaletteIntent
-					readonly entry: PaletteEntryDefinition
+					readonly entry: PaletteEntry
 			  }
 			| undefined {
 			const intent = this.intents.get(intentId)
@@ -423,22 +412,15 @@ export function createPaletteModel(options?: {
 			} else if (item.kind === 'editor') {
 				const entry = this.resolveEntry(item.entryId)
 				if (!entry) return undefined
+				const resolvedIntents =
+					item.selector !== undefined
+						? resolveEnumEditorSubset(this, entry, item.selector)
+						: undefined
 
 				return {
 					...item,
 					entry,
-				}
-			} else if (item.kind === 'item-group') {
-				const entry = this.resolveEntry(item.group.entryId)
-				if (!entry) return undefined
-
-				const resolvedItems = resolveItemGroup(this, item.group)
-				if (!resolvedItems) return undefined
-
-				return {
-					...item,
-					entry,
-					resolvedItems,
+					resolvedIntents,
 				}
 			}
 			return undefined

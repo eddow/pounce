@@ -1,5 +1,5 @@
 import { Dockview, type DockviewHeaderAction, type DockviewWidget } from '@sursaut/ui/dockview'
-import { Orientation, type DockviewApi, type SerializedDockview } from 'dockview-core'
+import { type DockviewApi, Orientation, type SerializedDockview } from 'dockview-core'
 import { effect, reactive, untracked } from 'mutts'
 
 type DemoContext = {
@@ -72,7 +72,9 @@ function createDefaultLayout(): SerializedDockview {
 }
 
 const CounterWidget: DockviewWidget<CounterParams, DemoContext> = (props) => {
-	const state = reactive({ value: untracked`DockviewDemo.CounterWidget.initial`(() => props.params.initial) })
+	const state = reactive({
+		value: untracked`DockviewDemo.CounterWidget.initial`(() => props.params.initial),
+	})
 
 	effect`DockviewDemo.CounterWidget.syncContext`(() => {
 		props.context.badge = String(state.value)
@@ -86,7 +88,10 @@ const CounterWidget: DockviewWidget<CounterParams, DemoContext> = (props) => {
 			style="height: 100%; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #0f172a; color: white; box-sizing: border-box;"
 		>
 			<h3 style="margin: 0;">Counter widget</h3>
-			<div data-test={`dockview-counter-value-${props.params.panelId}`} style="font-size: 28px; font-weight: 700;">
+			<div
+				data-test={`dockview-counter-value-${props.params.panelId}`}
+				style="font-size: 28px; font-weight: 700;"
+			>
 				{state.value}
 			</div>
 			<div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -119,7 +124,9 @@ const CounterWidget: DockviewWidget<CounterParams, DemoContext> = (props) => {
 }
 
 const NotesWidget: DockviewWidget<NotesParams, DemoContext> = (props) => {
-	const state = reactive({ text: untracked`DockviewDemo.NotesWidget.initial`(() => props.params.initial) })
+	const state = reactive({
+		text: untracked`DockviewDemo.NotesWidget.initial`(() => props.params.initial),
+	})
 
 	effect`DockviewDemo.NotesWidget.syncContext`(() => {
 		props.context.badge = String(state.text.length)
@@ -161,11 +168,7 @@ const LiveTab: DockviewWidget<{ panelId: string }, DemoContext> = (props, scope)
 				data-test={`dockview-tab-dot-${props.params.panelId}`}
 				style={`width: 8px; height: 8px; border-radius: 999px; flex: 0 0 auto; background: ${accent()};`}
 			></span>
-			<span
-				data-test={`dockview-tab-title-${props.params.panelId}`}
-				class="title"
-				title={label()}
-			>
+			<span data-test={`dockview-tab-title-${props.params.panelId}`} class="title" title={label()}>
 				{label()}
 			</span>
 			<span
@@ -313,7 +316,11 @@ export default function DockviewDemo() {
 	}
 
 	const saveLayout = () => {
-		state.savedLayout = JSON.stringify(state.api?.toJSON() ?? state.layout ?? createDefaultLayout(), null, 2)
+		state.savedLayout = JSON.stringify(
+			state.api?.toJSON() ?? state.layout ?? createDefaultLayout(),
+			null,
+			2
+		)
 	}
 
 	const restoreLayout = () => {
@@ -346,18 +353,38 @@ export default function DockviewDemo() {
 	}
 
 	return (
-		<div data-test="dockview-demo" style="padding: 20px; background: #0f172a; border-radius: 8px; color: white;">
+		<div
+			data-test="dockview-demo"
+			style="padding: 20px; background: #0f172a; border-radius: 8px; color: white;"
+		>
 			<h2>Dockview Primitive Demo</h2>
 			<p style="color: #94a3b8; max-width: 72ch;">
-				This demo exercises dynamic panels, layout persistence, group header actions, and custom tabs that react to shared widget context.
+				This demo exercises dynamic panels, layout persistence, group header actions, and custom
+				tabs that react to shared widget context.
 			</p>
 			<div style="display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0;">
-				<button data-test="dockview-add-counter" onClick={addCounter}>Add Counter</button>
-				<button data-test="dockview-add-notes" onClick={addNotes}>Add Notes</button>
-				<button data-test="dockview-split-active-right" onClick={splitActiveRight}>Split Active Right</button>
-				<button data-test="dockview-save-layout" onClick={saveLayout}>Save Layout</button>
-				<button data-test="dockview-restore-layout" onClick={restoreLayout} disabled={!state.savedLayout}>Restore Saved</button>
-				<button data-test="dockview-reset-layout" onClick={resetLayout}>Reset Layout</button>
+				<button data-test="dockview-add-counter" onClick={addCounter}>
+					Add Counter
+				</button>
+				<button data-test="dockview-add-notes" onClick={addNotes}>
+					Add Notes
+				</button>
+				<button data-test="dockview-split-active-right" onClick={splitActiveRight}>
+					Split Active Right
+				</button>
+				<button data-test="dockview-save-layout" onClick={saveLayout}>
+					Save Layout
+				</button>
+				<button
+					data-test="dockview-restore-layout"
+					onClick={restoreLayout}
+					disabled={!state.savedLayout}
+				>
+					Restore Saved
+				</button>
+				<button data-test="dockview-reset-layout" onClick={resetLayout}>
+					Reset Layout
+				</button>
 				<button
 					data-test="dockview-close-active"
 					onClick={closeActive}
@@ -386,13 +413,17 @@ export default function DockviewDemo() {
 				</div>
 				<div style="display: flex; flex-direction: column; gap: 12px;">
 					<div style="padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #1e293b;">
-						<div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; margin-bottom: 6px;">Runtime</div>
+						<div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; margin-bottom: 6px;">
+							Runtime
+						</div>
 						<div data-test="dockview-api-state">API: {state.api ? 'ready' : 'pending'}</div>
 						<div data-test="dockview-panel-count">Panels: {state.panelCount}</div>
 						<div data-test="dockview-active-panel">Active: {state.activePanelId ?? 'none'}</div>
 					</div>
 					<div style="padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #1e293b;">
-						<div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; margin-bottom: 6px;">Saved Layout</div>
+						<div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; margin-bottom: 6px;">
+							Saved Layout
+						</div>
 						<pre
 							data-test="dockview-saved-layout"
 							style="margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; color: #cbd5e1; max-height: 220px; overflow: auto;"

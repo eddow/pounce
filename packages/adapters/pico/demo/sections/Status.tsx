@@ -42,7 +42,9 @@ export default function StatusSection() {
 					</div>
 				</DemoCard>
 				<DemoCard title="Chip" footer={<DemoState label="Dismissals" value={state.dismissed} />}>
-					<Chip dismissible onDismiss={() => state.dismissed++}>Removable filter</Chip>
+					<Chip dismissible onDismiss={() => state.dismissed++}>
+						Removable filter
+					</Chip>
 				</DemoCard>
 				<DemoCard title="Stars" footer={<DemoState label="Rating" value={state.rating} />}>
 					<Stars

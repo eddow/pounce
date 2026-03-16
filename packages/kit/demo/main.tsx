@@ -45,10 +45,7 @@ componentStyle.css`
 function A(props: LinkProps) {
 	const model = linkModel(props)
 	return (
-		<a
-			{...props}
-			{...model}
-		>
+		<a {...props} {...model}>
 			{props.children}
 		</a>
 	)

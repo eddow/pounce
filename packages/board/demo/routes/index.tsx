@@ -1,4 +1,7 @@
-interface Props { siteName: string; buildTime: string }
+interface Props {
+	siteName: string
+	buildTime: string
+}
 
 export default function IndexPage(props: Props) {
 	return (

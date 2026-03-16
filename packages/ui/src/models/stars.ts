@@ -1,5 +1,6 @@
 import { defaults } from '@sursaut/core'
 import { componentStyle } from '@sursaut/kit'
+import type { ArrangedProps } from '../shared/types'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -8,7 +9,7 @@ export type StarsValue = number | readonly [number, number]
 /** Status of a single star position */
 export type StarStatus = 'before' | 'inside' | 'after' | 'zero'
 
-export type StarsProps = {
+export type StarsProps = ArrangedProps & {
 	/** Current rating — single number or `[min, max]` range. */
 	value: StarsValue
 	/** Number of stars to display. @default 5 */
@@ -159,7 +160,12 @@ export function starsModel(props: StarsProps): StarsModel {
 						state.draggingEnd = 'max'
 					} else {
 						const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-						state.draggingEnd = e.clientX - rect.left < rect.width / 2 ? 'min' : 'max'
+						const orientation = props.orientation ?? 'horizontal'
+						if (orientation === 'vertical') {
+							state.draggingEnd = e.clientY - rect.top < rect.height / 2 ? 'min' : 'max'
+						} else {
+							state.draggingEnd = e.clientX - rect.left < rect.width / 2 ? 'min' : 'max'
+						}
 					}
 				}
 			}

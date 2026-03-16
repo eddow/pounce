@@ -1,4 +1,11 @@
-import { applyAutoFocus, createOverlayStack, dialogSpec, drawerSpec, toastSpec, trapFocus } from '@sursaut/ui'
+import {
+	applyAutoFocus,
+	createOverlayStack,
+	dialogSpec,
+	drawerSpec,
+	toastSpec,
+	trapFocus,
+} from '@sursaut/ui'
 import { reactive } from 'mutts'
 
 export default function OverlayDemo() {
@@ -23,40 +30,40 @@ export default function OverlayDemo() {
 		lastOverlayTrigger = (e?.currentTarget as HTMLElement | null) ?? null
 		stack
 			.push(
-			dialogSpec({
-				title: 'A Headless Dialog',
-				render: (close) => (
-					<div
-						data-test="overlay-dialog"
-						use={bindOverlaySurface}
-						role="dialog"
-						aria-modal="true"
-						style="background: #1e293b; color: white; padding: 24px; border-radius: 12px; border: 1px solid #475569; position: relative;"
-					>
-						<h3 data-test="overlay-title" style="margin-top: 0;">
-							Interactive Overlay
-						</h3>
-						<p data-test="overlay-message">This dialog is part of the Sursaut overlay stack.</p>
-						<div style="display: flex; gap: 8px;">
-							<button
-								data-test="confirm-overlay"
-								style="background: #16a34a; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;"
-								onClick={() => close('ok')}
-							>
-								Confirm
-							</button>
-							<button
-								data-test="dismiss-overlay"
-								style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;"
-								onClick={() => close(null)}
-							>
-								Cancel
-							</button>
+				dialogSpec({
+					title: 'A Headless Dialog',
+					render: (close) => (
+						<div
+							data-test="overlay-dialog"
+							use={bindOverlaySurface}
+							role="dialog"
+							aria-modal="true"
+							style="background: #1e293b; color: white; padding: 24px; border-radius: 12px; border: 1px solid #475569; position: relative;"
+						>
+							<h3 data-test="overlay-title" style="margin-top: 0;">
+								Interactive Overlay
+							</h3>
+							<p data-test="overlay-message">This dialog is part of the Sursaut overlay stack.</p>
+							<div style="display: flex; gap: 8px;">
+								<button
+									data-test="confirm-overlay"
+									style="background: #16a34a; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;"
+									onClick={() => close('ok')}
+								>
+									Confirm
+								</button>
+								<button
+									data-test="dismiss-overlay"
+									style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;"
+									onClick={() => close(null)}
+								>
+									Cancel
+								</button>
+							</div>
 						</div>
-					</div>
-				),
-			})
-		)
+					),
+				})
+			)
 			.then((result) => {
 				state.lastResult = result === null ? 'null' : String(result)
 			})
@@ -127,19 +134,28 @@ export default function OverlayDemo() {
 					</p>
 				</div>
 
-				<div data-test="drawer-demo" style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px;">
+				<div
+					data-test="drawer-demo"
+					style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px;"
+				>
 					<h3 style="margin-top: 0; margin-bottom: 8px;">Drawer</h3>
 					<div style="display: flex; gap: 8px; flex-wrap: wrap;">
 						<button data-test="open-drawer-left" onClick={(e: MouseEvent) => openDrawer('left', e)}>
 							Left
 						</button>
-						<button data-test="open-drawer-right" onClick={(e: MouseEvent) => openDrawer('right', e)}>
+						<button
+							data-test="open-drawer-right"
+							onClick={(e: MouseEvent) => openDrawer('right', e)}
+						>
 							Right
 						</button>
 					</div>
 				</div>
 
-				<div data-test="toast-demo" style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px;">
+				<div
+					data-test="toast-demo"
+					style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px;"
+				>
 					<h3 style="margin-top: 0; margin-bottom: 8px;">Toast</h3>
 					<div style="display: flex; gap: 8px; flex-wrap: wrap;">
 						<button data-test="toast-info" onClick={() => notify('primary')}>
@@ -183,7 +199,10 @@ export default function OverlayDemo() {
 									${side === 'left' ? 'left: 0; top: 0; bottom: 0; width: 300px;' : ''}
 									${side === 'right' ? 'right: 0; top: 0; bottom: 0; width: 300px;' : ''}`}
 								>
-									<div data-test="drawer-title" style="padding: 16px; border-bottom: 1px solid #334155; font-weight: bold;">
+									<div
+										data-test="drawer-title"
+										style="padding: 16px; border-bottom: 1px solid #334155; font-weight: bold;"
+									>
 										{entry.props?.title}
 									</div>
 									{entry.render?.(entry.resolve) ?? entry.props?.children}

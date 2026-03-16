@@ -16,7 +16,8 @@ export default function CardsSection() {
 				</Card.Header>
 				<Card.Body>
 					<p style="margin: 0;">
-						Cards stay intentionally thin: semantic structure comes from the adapter wrapper, content stays yours.
+						Cards stay intentionally thin: semantic structure comes from the adapter wrapper,
+						content stays yours.
 					</p>
 				</Card.Body>
 				<Card.Footer>

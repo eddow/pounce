@@ -5,7 +5,14 @@ import '../../src/styles/sizeable.sass'
 
 export default function SizeableDemo() {
 	const state = reactive({ width: 200 })
-	const dir = sizeable(r(() => state.width, (v) => { state.width = v }))
+	const dir = sizeable(
+		r(
+			() => state.width,
+			(v) => {
+				state.width = v
+			}
+		)
+	)
 	return (
 		<div data-test="sizeable-demo">
 			<p style="color: #94a3b8; margin-bottom: 16px;">
@@ -20,9 +27,7 @@ export default function SizeableDemo() {
 					use={dir}
 					style="background: #0f172a; width: var(--sizeable-width, 200px); min-width: 80px; max-width: 500px; flex-shrink: 0;"
 				>
-					<div style="padding: 12px; color: #94a3b8; font-size: 13px;">
-						Sidebar
-					</div>
+					<div style="padding: 12px; color: #94a3b8; font-size: 13px;">Sidebar</div>
 				</div>
 				<div style="flex: 1 1 0%; background: #1e293b; padding: 12px; color: #94a3b8; font-size: 13px; overflow: auto;">
 					Main content

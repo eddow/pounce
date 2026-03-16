@@ -3,7 +3,9 @@ import type UserRoute from './index'
 
 type User = InferVerb<typeof UserRoute, 'get'>
 
-interface Props { user: User | null }
+interface Props {
+	user: User | null
+}
 
 export default function UserDetail(props: Props) {
 	if (!props.user) return <p>User not found.</p>

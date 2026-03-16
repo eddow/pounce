@@ -16,19 +16,13 @@ export function DemoSection(props: {
 
 export function DemoGrid(props: { children?: JSX.Children }) {
 	return (
-		<div
-			style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: start;"
-		>
+		<div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: start;">
 			{props.children}
 		</div>
 	)
 }
 
-export function DemoCard(props: {
-	title: string
-	children?: JSX.Children
-	footer?: JSX.Children
-}) {
+export function DemoCard(props: { title: string; children?: JSX.Children; footer?: JSX.Children }) {
 	return (
 		<article style="margin: 0; display: grid; gap: 0.75rem;">
 			<header>

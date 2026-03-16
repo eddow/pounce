@@ -3,7 +3,10 @@ import type PostRoute from './index'
 
 type Post = InferVerb<typeof PostRoute, 'get'>
 
-interface Props { post: Post | null; siteName: string }
+interface Props {
+	post: Post | null
+	siteName: string
+}
 
 export default function PostDetail(props: Props) {
 	if (!props.post) return <p>Post not found.</p>

@@ -1,0 +1,18 @@
+:root,
+.sursaut-display-provider {
+	--pico-primary: #ff2e63;
+	--pico-primary-hover: #08d9d6;
+	--pico-primary-focus: #ffd166;
+	--pico-color: #1e272e;
+	--pico-muted-color: #59656d;
+	--pico-background-color: #f0f0f0;
+	--pico-card-background-color: #ffffff;
+	--pico-muted-border-color: #d4d9dc;
+	--pico-form-element-active-border-color: #ff2e63;
+	--pico-form-element-focus-color: rgba(255, 46, 99, 0.22);
+	--pico-ins-color: #ffd166;
+	--pico-del-color: #ff6b9d;
+	--docs-secondary: #08d9d6;
+	--docs-accent: #ffd166;
+	--docs-error: #ff6b9d;
+}

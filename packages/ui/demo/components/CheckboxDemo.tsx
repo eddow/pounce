@@ -21,7 +21,8 @@ export default function CheckboxDemo() {
 		<div data-test="checkbox-demo" style="padding: 20px; background: #1e293b; border-radius: 8px;">
 			<h2>Checkbox Primitive Demo</h2>
 			<p data-test="checkbox-status">
-				Status: {state.checked ? 'Checked' : state.checked === false ? 'Unchecked' : 'Indeterminate'}
+				Status:{' '}
+				{state.checked ? 'Checked' : state.checked === false ? 'Unchecked' : 'Indeterminate'}
 			</p>
 
 			<div style="margin-bottom: 16px;">
@@ -38,10 +39,7 @@ export default function CheckboxDemo() {
 				<button data-test="toggle-disabled" onClick={() => (state.disabled = !state.disabled)}>
 					Toggle Disabled
 				</button>
-				<button
-					data-test="toggle-indeterminate"
-					onClick={() => (state.checked = undefined)}
-				>
+				<button data-test="toggle-indeterminate" onClick={() => (state.checked = undefined)}>
 					Set Indeterminate
 				</button>
 			</div>

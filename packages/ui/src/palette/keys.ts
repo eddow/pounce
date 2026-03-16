@@ -1,195 +1,91 @@
-import { lift, reactive } from 'mutts'
-import type { PaletteEntryId, PaletteIntentId } from './types'
+import type { PaletteKeyBindings, PaletteKeys, PaletteKeystroke } from './types'
 
-export type PaletteKeystroke = string
+const MODIFIER_ORDER = ['Ctrl', 'Alt', 'Shift', 'Meta'] as const
 
-export type PaletteKeyBindingTarget =
-	| {
-			readonly kind: 'intent'
-			readonly intentId: PaletteIntentId
-	  }
-	| {
-			readonly kind: 'entry'
-			readonly entryId: PaletteEntryId
-	  }
-
-export type PaletteKeyBinding = PaletteKeyBindingTarget & {
-	readonly keystroke: PaletteKeystroke
-}
-
-export interface PaletteKeys {
-	readonly bindings: readonly PaletteKeyBinding[]
-	findByKeystroke(keystroke: PaletteKeystroke): readonly PaletteKeyBinding[]
-	findByIntent(intentId: PaletteIntentId): readonly PaletteKeyBinding[]
-	findByEntry(entryId: PaletteEntryId): readonly PaletteKeyBinding[]
-	getIntentKeystroke(intentId: PaletteIntentId): PaletteKeystroke | undefined
-	getEntryKeystroke(entryId: PaletteEntryId): PaletteKeystroke | undefined
-	bind(binding: PaletteKeyBinding): void
-	unbindKeystroke(keystroke: PaletteKeystroke): void
-	unbindIntent(intentId: PaletteIntentId): void
-	unbindEntry(entryId: PaletteEntryId): void
-	rebindIntent(intentId: PaletteIntentId, keystroke: PaletteKeystroke): void
-	rebindEntry(entryId: PaletteEntryId, keystroke: PaletteKeystroke): void
-	resolve(event: KeyboardEvent): readonly PaletteKeyBinding[]
-}
-
-function normalizeKeyName(key: string): string {
-	if (key === ' ') return 'Space'
-	const lowered = key.toLowerCase()
-	switch (lowered) {
+function normalizeModifier(value: string): string | undefined {
+	switch (value.trim().toLowerCase()) {
 		case 'ctrl':
 		case 'control':
 			return 'Ctrl'
-		case 'meta':
-		case 'cmd':
-		case 'command':
-		case 'super':
-			return 'Meta'
 		case 'alt':
 		case 'option':
 			return 'Alt'
 		case 'shift':
 			return 'Shift'
-		case 'esc':
-			return 'Escape'
-		case 'spacebar':
-			return 'Space'
+		case 'meta':
+		case 'cmd':
+		case 'command':
+		case 'super':
+			return 'Meta'
 		default:
-			if (lowered.length === 1) return lowered.toUpperCase()
-			return lowered.charAt(0).toUpperCase() + lowered.slice(1)
+			return undefined
 	}
 }
 
-const MODIFIER_ORDER = ['Ctrl', 'Meta', 'Alt', 'Shift'] as const
-
-function joinKeystroke(modifiers: readonly string[], key: string): PaletteKeystroke {
-	return [...modifiers, key].join('+')
+function normalizeKey(value: string): string {
+	const trimmed = value.trim()
+	if (trimmed.length === 1) return trimmed.toUpperCase()
+	switch (trimmed.toLowerCase()) {
+		case ' ':
+		case 'space':
+		case 'spacebar':
+			return 'Space'
+		case 'escape':
+			return 'Esc'
+		default:
+			return trimmed[0]?.toUpperCase() + trimmed.slice(1)
+	}
 }
 
-export function parseKeystroke(value: string): PaletteKeystroke {
-	const parts = value
+export function normalizePaletteKeystroke(input: PaletteKeystroke): PaletteKeystroke {
+	const parts = input
 		.split('+')
-		.map((part) => normalizeKeyName(part.trim()))
-		.filter(Boolean)
+		.map((part) => part.trim())
+		.filter((part) => part.length > 0)
 	if (parts.length === 0) return ''
-	const key = parts[parts.length - 1]
-	const modifiers = MODIFIER_ORDER.filter((modifier) => parts.slice(0, -1).includes(modifier))
-	return joinKeystroke(modifiers, key)
-}
 
-export function normalizeKeystroke(event: KeyboardEvent): PaletteKeystroke {
-	const modifiers = MODIFIER_ORDER.filter((modifier) => {
-		switch (modifier) {
-			case 'Ctrl':
-				return event.ctrlKey
-			case 'Meta':
-				return event.metaKey
-			case 'Alt':
-				return event.altKey
-			case 'Shift':
-				return event.shiftKey
+	const modifiers = new Set<string>()
+	let key = ''
+	for (const part of parts) {
+		const modifier = normalizeModifier(part)
+		if (modifier) {
+			modifiers.add(modifier)
+			continue
 		}
-	})
-	return joinKeystroke(modifiers, normalizeKeyName(event.key))
+		key = normalizeKey(part)
+	}
+
+	const orderedModifiers = MODIFIER_ORDER.filter((modifier) => modifiers.has(modifier))
+	return [...orderedModifiers, key].filter((part) => part.length > 0).join('+')
 }
 
-export function formatKeystroke(keystroke: PaletteKeystroke | undefined): string | undefined {
-	if (!keystroke) return undefined
-	return parseKeystroke(keystroke)
+export function paletteKeystrokeFromEvent(event: KeyboardEvent): PaletteKeystroke {
+	const modifiers: string[] = []
+	if (event.ctrlKey) modifiers.push('Ctrl')
+	if (event.altKey) modifiers.push('Alt')
+	if (event.shiftKey) modifiers.push('Shift')
+	if (event.metaKey) modifiers.push('Meta')
+	return [...modifiers, normalizeKey(event.key)].join('+')
 }
 
-function sameTarget(left: PaletteKeyBinding, right: PaletteKeyBinding): boolean {
-	if (left.kind !== right.kind) return false
-	return left.kind === 'intent'
-		? left.intentId === (right as Extract<PaletteKeyBinding, { kind: 'intent' }>).intentId
-		: left.entryId === (right as Extract<PaletteKeyBinding, { kind: 'entry' }>).entryId
-}
-
-export function createPaletteKeys(bindings?: readonly PaletteKeyBinding[]): PaletteKeys {
-	const state = reactive<{ bindings: PaletteKeyBinding[] }>({
-		bindings: [...(bindings ?? [])].map((binding) => ({
-			...binding,
-			keystroke: parseKeystroke(binding.keystroke),
-		})),
-	})
-
-	const byKeystroke = (keystroke: PaletteKeystroke) =>
-		lift`paletteKeys.byKeystroke`(() => {
-			const normalized = parseKeystroke(keystroke)
-			return state.bindings.filter((binding) => binding.keystroke === normalized)
-		})
-
-	const byIntent = (intentId: PaletteIntentId) =>
-		lift`paletteKeys.byIntent`(() =>
-			state.bindings.filter((binding) => binding.kind === 'intent' && binding.intentId === intentId)
-		)
-
-	const byEntry = (entryId: PaletteEntryId) =>
-		lift`paletteKeys.byEntry`(() =>
-			state.bindings.filter((binding) => binding.kind === 'entry' && binding.entryId === entryId)
-		)
-
-	function replace(next: readonly PaletteKeyBinding[]) {
-		state.bindings = [...next]
+export function createPaletteKeys(bindings?: PaletteKeyBindings): PaletteKeys {
+	const normalizedBindings: PaletteKeyBindings = {}
+	for (const [keystroke, toolId] of Object.entries(bindings ?? {})) {
+		normalizedBindings[normalizePaletteKeystroke(keystroke)] = toolId
 	}
 
 	return {
 		get bindings() {
-			return state.bindings
+			return normalizedBindings
 		},
-		findByKeystroke(keystroke: PaletteKeystroke) {
-			return byKeystroke(keystroke)
-		},
-		findByIntent(intentId: PaletteIntentId) {
-			return byIntent(intentId)
-		},
-		findByEntry(entryId: PaletteEntryId) {
-			return byEntry(entryId)
-		},
-		getIntentKeystroke(intentId: PaletteIntentId) {
-			return this.findByIntent(intentId)[0]?.keystroke
-		},
-		getEntryKeystroke(entryId: PaletteEntryId) {
-			return this.findByEntry(entryId)[0]?.keystroke
-		},
-		bind(binding: PaletteKeyBinding) {
-			const normalized = { ...binding, keystroke: parseKeystroke(binding.keystroke) }
-			const existing = state.bindings.filter(
-				(candidate) =>
-					candidate.keystroke === normalized.keystroke && !sameTarget(candidate, normalized)
-			)
-			replace([
-				...existing,
-				...state.bindings.filter((candidate) => !sameTarget(candidate, normalized)),
-				normalized,
-			])
-		},
-		unbindKeystroke(keystroke: PaletteKeystroke) {
-			const normalized = parseKeystroke(keystroke)
-			replace(state.bindings.filter((binding) => binding.keystroke !== normalized))
-		},
-		unbindIntent(intentId: PaletteIntentId) {
-			replace(
-				state.bindings.filter(
-					(binding) => binding.kind !== 'intent' || binding.intentId !== intentId
-				)
-			)
-		},
-		unbindEntry(entryId: PaletteEntryId) {
-			replace(
-				state.bindings.filter((binding) => binding.kind !== 'entry' || binding.entryId !== entryId)
-			)
-		},
-		rebindIntent(intentId: PaletteIntentId, keystroke: PaletteKeystroke) {
-			this.unbindIntent(intentId)
-			this.bind({ kind: 'intent', intentId, keystroke })
-		},
-		rebindEntry(entryId: PaletteEntryId, keystroke: PaletteKeystroke) {
-			this.unbindEntry(entryId)
-			this.bind({ kind: 'entry', entryId, keystroke })
+		findByTool(toolId: string) {
+			return Object.entries(normalizedBindings)
+				.filter(([, bindingToolId]) => bindingToolId === toolId)
+				.map(([keystroke]) => keystroke)
 		},
 		resolve(event: KeyboardEvent) {
-			return this.findByKeystroke(normalizeKeystroke(event))
+			const keystroke = paletteKeystrokeFromEvent(event)
+			return normalizedBindings[keystroke]
 		},
 	}
 }

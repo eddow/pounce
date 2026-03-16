@@ -25,16 +25,22 @@ componentStyle.sass`
 .code-block
 	margin: 1rem 0
 	border-radius: 0.5rem
-	overflow: hidden
+	min-width: 0
+	max-width: 100%
+	overflow-x: auto
+	overflow-y: hidden
 	
 	pre
 		margin: 0
 		padding: 0
-		overflow: hidden
+		min-width: 0
+		overflow: visible
 
 	.hljs
 		display: block
 		border-radius: 0.5rem
+		min-width: 100%
+		width: max-content
 	
 	code
 		font-family: 'Fira Code', 'Consolas', monospace

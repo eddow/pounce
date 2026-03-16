@@ -12,3 +12,5 @@ export function markUnmounted(root: Node) {
 	mountedNodes.delete(root)
 	return root
 }
+
+// TODO: e2e test element.isConnected tracks reactive isConnected in browser (I saw it not working)

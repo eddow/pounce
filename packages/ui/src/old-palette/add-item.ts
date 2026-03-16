@@ -1,35 +1,27 @@
 import type { PaletteModel } from './model'
+import { paletteRegistryEntries } from './registry'
+import { getEnumSelectorKey, normalizeEnumSelector } from './selector'
 import type {
 	PaletteDisplayItem,
 	PaletteEditorDisplayItem,
-	PaletteEntryDefinition,
+	PaletteEntry,
 	PaletteIntent,
 	PaletteIntentDisplayItem,
-	PaletteItemGroupDefinition,
-	PaletteItemGroupDisplayItem,
 } from './types'
 
 export type PaletteAddItemIntentCandidate = {
 	readonly kind: 'intent'
 	readonly intent: PaletteIntent
-	readonly entry: PaletteEntryDefinition
+	readonly entry: PaletteEntry
 }
 
 export type PaletteAddItemEditorCandidate = {
 	readonly kind: 'editor'
-	readonly entry: PaletteEntryDefinition
+	readonly entry: PaletteEntry
+	readonly displayItem: PaletteEditorDisplayItem
 }
 
-export type PaletteAddItemItemGroupCandidate = {
-	readonly kind: 'item-group'
-	readonly entry: PaletteEntryDefinition
-	readonly group: PaletteItemGroupDefinition
-}
-
-export type PaletteAddItemCandidate =
-	| PaletteAddItemIntentCandidate
-	| PaletteAddItemEditorCandidate
-	| PaletteAddItemItemGroupCandidate
+export type PaletteAddItemCandidate = PaletteAddItemIntentCandidate | PaletteAddItemEditorCandidate
 
 export type PaletteAddItemModel = {
 	readonly all: readonly PaletteAddItemCandidate[]
@@ -42,7 +34,7 @@ export type PaletteAddItemModel = {
 	): readonly PaletteAddItemCandidate[]
 }
 
-function canEditEntryByDefault(entry: PaletteEntryDefinition): boolean {
+function canEditEntryByDefault(entry: PaletteEntry): boolean {
 	return entry.schema.type === 'enum' || entry.schema.type === 'number'
 }
 
@@ -50,7 +42,7 @@ function addIntentCandidate(
 	candidates: PaletteAddItemCandidate[],
 	seenIntentIds: Set<string>,
 	intent: PaletteIntent,
-	entry: PaletteEntryDefinition
+	entry: PaletteEntry
 ): void {
 	if (seenIntentIds.has(intent.id)) return
 	seenIntentIds.add(intent.id)
@@ -58,6 +50,18 @@ function addIntentCandidate(
 		kind: 'intent',
 		intent,
 		entry,
+	})
+}
+
+function addEditorCandidate(
+	candidates: PaletteAddItemCandidate[],
+	entry: PaletteEntry,
+	displayItem: PaletteEditorDisplayItem
+): void {
+	candidates.push({
+		kind: 'editor',
+		entry,
+		displayItem,
 	})
 }
 
@@ -72,22 +76,11 @@ function matchesEditorDisplayItem(
 	displayItem: PaletteEditorDisplayItem,
 	candidate: PaletteAddItemEditorCandidate
 ): boolean {
-	return displayItem.entryId === candidate.entry.id
-}
-
-function matchesItemGroupDisplayItem(
-	displayItem: PaletteItemGroupDisplayItem,
-	candidate: PaletteAddItemItemGroupCandidate
-): boolean {
-	// Compare entryId, group.kind, AND exact options subset for precise matching
-	const displayOptions = [...displayItem.group.options].sort()
-	const candidateOptions = [...candidate.group.options].sort()
-
 	return (
-		displayItem.group.entryId === candidate.entry.id &&
-		displayItem.group.kind === candidate.group.kind &&
-		displayOptions.length === candidateOptions.length &&
-		displayOptions.every((opt, index) => opt === candidateOptions[index])
+		displayItem.entryId === candidate.displayItem.entryId &&
+		displayItem.presenter === candidate.displayItem.presenter &&
+		getEnumSelectorKey(normalizeEnumSelector(displayItem.selector)) ===
+			getEnumSelectorKey(normalizeEnumSelector(candidate.displayItem.selector))
 	)
 }
 
@@ -109,29 +102,16 @@ function candidateSearchText(candidate: PaletteAddItemCandidate): string {
 			.toLowerCase()
 	}
 
-	if (candidate.kind === 'item-group') {
-		const group = candidate.group
-		const optionText = group.kind === 'enum-options' ? group.options.join(' ') : ''
-		return [
-			candidate.entry.label,
-			candidate.entry.id,
-			candidate.entry.description,
-			...(candidate.entry.categories ?? []),
-			group.kind,
-			optionText,
-			candidate.kind,
-		]
-			.filter((value) => value !== undefined)
-			.join(' ')
-			.toLowerCase()
-	}
-
 	return [
 		candidate.entry.label,
 		candidate.entry.id,
 		candidate.entry.description,
 		...(candidate.entry.categories ?? []),
 		candidate.entry.schema.type,
+		candidate.displayItem.presenter,
+		...(typeof candidate.displayItem.selector === 'string'
+			? [candidate.displayItem.selector]
+			: (candidate.displayItem.selector ?? [])),
 		candidate.kind,
 	]
 		.filter((value) => value !== undefined)
@@ -139,67 +119,43 @@ function candidateSearchText(candidate: PaletteAddItemCandidate): string {
 		.toLowerCase()
 }
 
-function addItemGroupCandidate(
+function addEnumSubsetEditorCandidates(
 	candidates: PaletteAddItemCandidate[],
-	entry: PaletteEntryDefinition
+	entry: PaletteEntry
 ): void {
-	if (entry.schema.type === 'enum') {
-		const enumOptions = entry.schema.options.map((opt) =>
-			typeof opt === 'string' ? opt : opt.value
-		)
-
-		if (enumOptions.length >= 2) {
-			// Strategy 1: If there are exactly 2 options, offer them as a natural pair
-			if (enumOptions.length === 2) {
-				candidates.push({
-					kind: 'item-group',
-					entry,
-					group: {
-						kind: 'enum-options',
-						entryId: entry.id,
-						options: enumOptions,
-						presenter: 'radio-group',
-					},
-				})
-				return
-			}
-
-			// Strategy 2: For themes, look for common light/dark pairs
-			const hasLight = enumOptions.includes('light')
-			const hasDark = enumOptions.includes('dark')
-			if (hasLight && hasDark) {
-				candidates.push({
-					kind: 'item-group',
-					entry,
-					group: {
-						kind: 'enum-options',
-						entryId: entry.id,
-						options: ['light', 'dark'],
-						presenter: 'radio-group',
-					},
-				})
-			}
-
-			// Strategy 3: For 3+ options, also offer the full set as a comprehensive option
-			if (enumOptions.length > 2) {
-				candidates.push({
-					kind: 'item-group',
-					entry,
-					group: {
-						kind: 'enum-options',
-						entryId: entry.id,
-						options: enumOptions,
-						presenter: 'segmented',
-					},
-				})
-			}
-		}
+	if (entry.schema.type !== 'enum') return
+	const enumOptions = entry.schema.options.map((opt) => (typeof opt === 'string' ? opt : opt.id))
+	if (enumOptions.length < 2) return
+	if (enumOptions.length === 2) {
+		addEditorCandidate(candidates, entry, {
+			kind: 'editor',
+			entryId: entry.id,
+			selector: enumOptions,
+			presenter: 'radio-group',
+		})
+		return
 	}
+	const hasLight = enumOptions.includes('light')
+	const hasDark = enumOptions.includes('dark')
+	if (hasLight && hasDark) {
+		addEditorCandidate(candidates, entry, {
+			kind: 'editor',
+			entryId: entry.id,
+			selector: ['light', 'dark'],
+			presenter: 'radio-group',
+		})
+	}
+	addEditorCandidate(candidates, entry, {
+		kind: 'editor',
+		entryId: entry.id,
+		selector: enumOptions,
+		presenter: 'segmented',
+	})
 }
 
 function collectCandidates(
 	palette: PaletteModel,
-	canEditEntry: (entry: PaletteEntryDefinition) => boolean
+	canEditEntry: (entry: PaletteEntry) => boolean
 ): readonly PaletteAddItemCandidate[] {
 	const candidates: PaletteAddItemCandidate[] = []
 	const seenIntentIds = new Set<string>()
@@ -210,23 +166,23 @@ function collectCandidates(
 		addIntentCandidate(candidates, seenIntentIds, resolved.intent, resolved.entry)
 	}
 
-	for (const entry of palette.registry.entries) {
+	for (const entry of paletteRegistryEntries(palette.registry)) {
 		for (const intent of palette.derive(entry.id)) {
 			addIntentCandidate(candidates, seenIntentIds, intent, entry)
 		}
 	}
 
-	for (const entry of palette.registry.entries) {
+	for (const entry of paletteRegistryEntries(palette.registry)) {
 		if (!canEditEntry(entry)) continue
-		candidates.push({
+		addEditorCandidate(candidates, entry, {
 			kind: 'editor',
-			entry,
+			entryId: entry.id,
 		})
 	}
 
-	// Add item-group candidates for enum entries
-	for (const entry of palette.registry.entries) {
-		addItemGroupCandidate(candidates, entry)
+	for (const entry of paletteRegistryEntries(palette.registry)) {
+		if (!canEditEntry(entry)) continue
+		addEnumSubsetEditorCandidates(candidates, entry)
 	}
 
 	return candidates
@@ -234,7 +190,7 @@ function collectCandidates(
 
 export function paletteAddItemModel(options: {
 	palette: PaletteModel
-	canEditEntry?: (entry: PaletteEntryDefinition) => boolean
+	canEditEntry?: (entry: PaletteEntry) => boolean
 }): PaletteAddItemModel {
 	const canEditEntry = options.canEditEntry ?? canEditEntryByDefault
 
@@ -253,9 +209,6 @@ export function paletteAddItemModel(options: {
 			if (displayItem.kind === 'editor' && candidate.kind === 'editor') {
 				return matchesEditorDisplayItem(displayItem, candidate)
 			}
-			if (displayItem.kind === 'item-group' && candidate.kind === 'item-group') {
-				return matchesItemGroupDisplayItem(displayItem, candidate)
-			}
 			return false
 		},
 
@@ -266,8 +219,9 @@ export function paletteAddItemModel(options: {
 			const normalizedQuery = query?.trim().toLowerCase()
 			const excluded = options?.exclude ?? []
 			return this.all.filter((candidate) => {
-				if (excluded.some((displayItem) => this.matchesDisplayItem(displayItem, candidate)))
+				if (excluded.some((displayItem) => this.matchesDisplayItem(displayItem, candidate))) {
 					return false
+				}
 				if (!normalizedQuery) return true
 				return candidateSearchText(candidate).includes(normalizedQuery)
 			})

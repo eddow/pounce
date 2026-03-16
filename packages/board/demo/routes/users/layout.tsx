@@ -1,6 +1,9 @@
 import type { Child } from '@sursaut/core'
 
-interface Props { siteName: string; children: Child }
+interface Props {
+	siteName: string
+	children: Child
+}
 
 export default function UsersLayout(props: Props) {
 	return (

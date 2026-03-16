@@ -1,4 +1,3 @@
-import { componentStyle } from '@sursaut/kit'
 import { starsModel } from '@sursaut/ui'
 import { reactive } from 'mutts'
 
@@ -83,10 +82,7 @@ export default function StarsDemo() {
 				>
 					<for each={singleModel.starItems}>
 						{(item) => (
-							<span
-								data-test={`star-single-${item.index + 1}`}
-								{...item.el}
-							>
+							<span data-test={`star-single-${item.index + 1}`} {...item.el}>
 								{starGlyph(item.status)}
 							</span>
 						)}
@@ -117,10 +113,7 @@ export default function StarsDemo() {
 				>
 					<for each={rangeModel.starItems}>
 						{(item) => (
-							<span
-								data-test={`star-range-${item.index + 1}`}
-								{...item.el}
-							>
+							<span data-test={`star-range-${item.index + 1}`} {...item.el}>
 								{starGlyph(item.status)}
 							</span>
 						)}
@@ -133,7 +126,8 @@ export default function StarsDemo() {
 					data-test="star-debug"
 					style="margin-top: 8px; font-size: 13px; font-family: monospace; color: #38bdf8;"
 				>
-					model.value={JSON.stringify(rangeModel.value)} | draggingEnd={String(rangeModel.draggingEnd)}
+					model.value={JSON.stringify(rangeModel.value)} | draggingEnd=
+					{String(rangeModel.draggingEnd)}
 				</p>
 			</div>
 		</div>

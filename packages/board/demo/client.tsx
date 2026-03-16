@@ -1,5 +1,5 @@
-import { h, latch } from '@sursaut/core'
 import { buildRouteTree, getSSRData, getSSRId, matchRoute } from '@sursaut/board/client'
+import { h, latch } from '@sursaut/core'
 
 let listenersInstalled = false
 
@@ -69,7 +69,7 @@ async function bootstrap() {
 		// Intercept link clicks
 		document.addEventListener('click', (e) => {
 			const link = (e.target as HTMLElement).closest('a')
-			if (link && link.href.startsWith(window.location.origin)) {
+			if (link?.href.startsWith(window.location.origin)) {
 				e.preventDefault()
 				window.history.pushState({}, '', link.href)
 				bootstrap()

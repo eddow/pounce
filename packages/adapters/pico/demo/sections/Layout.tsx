@@ -1,4 +1,13 @@
-import { Button, Container, Grid, Heading, Inline, Stack, Text, Toolbar } from '@sursaut/adapter-pico'
+import {
+	Button,
+	Container,
+	Grid,
+	Heading,
+	Inline,
+	Stack,
+	Text,
+	Toolbar,
+} from '@sursaut/adapter-pico'
 import { DemoCard, DemoGrid, DemoSection } from './shared'
 
 export default function LayoutSection() {

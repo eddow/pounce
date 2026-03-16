@@ -35,6 +35,20 @@ const toolbarCode = `<Toolbar>
   <Button icon="settings" />
 </Toolbar>`
 
+const arrangedCode = `import { arranged } from '@sursaut/ui'
+
+function VerticalLayout(props, scope) {
+  arranged(scope, { orientation: 'vertical', density: 'compact', align: 'stretch' })
+  return props.children
+}
+
+<VerticalLayout>
+  <Toolbar>
+    <Button icon="menu" />
+    <Button icon="settings" />
+  </Toolbar>
+</VerticalLayout>`
+
 type Align = 'start' | 'center' | 'end' | 'baseline' | 'stretch'
 type Justify = 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly'
 
@@ -305,9 +319,26 @@ export default function LayoutPage() {
 
 			<Section title="Toolbar">
 				<p>
-					Horizontal toolbar. <code>Toolbar.Spacer</code> pushes subsequent items to the right.
+					Toolbar consumes the ambient arranged scope. By default it is horizontal, but you can set{' '}
+					<code>orientation</code>, <code>density</code>, <code>align</code>, or provide them
+					ambiently with <code>arranged(scope, ...)</code>. <code>Toolbar.Spacer</code> pushes
+					subsequent items to the end of the current axis.
 				</p>
 				<Demo title="Toolbar" source={toolbarCode} component={<ToolbarDemo />} />
+			</Section>
+
+			<Section title="arranged">
+				<p>
+					<code>arranged</code> is the shared composition primitive for compound controls. It
+					propagates <code>orientation</code>, <code>density</code>, <code>joined</code>, and
+					<code>align</code> through scope, while adapters derive classes through{' '}
+					<code>arranged(...).class</code>.
+				</p>
+				<p>
+					Controls such as <code>Toolbar</code>, <code>ButtonGroup</code>, <code>SplitButton</code>,
+					<code>SplitRadioButton</code>, and <code>Stars</code> consume it directly.
+				</p>
+				<Code code={arrangedCode} lang="tsx" />
 			</Section>
 
 			<Section title="AppShell">

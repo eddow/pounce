@@ -33,3 +33,24 @@ export type ElementPassthroughProps<T extends keyof JSX.IntrinsicElements = 'div
 export type AriaLabelProps = {
 	ariaLabel?: string
 }
+
+export type ArrangedOrientation = 'horizontal' | 'vertical'
+
+export type ArrangedDensity = 'regular' | 'compact'
+
+export type ArrangedAlign = 'start' | 'center' | 'stretch'
+
+export type ArrangedProps = {
+	orientation?: ArrangedOrientation
+	density?: ArrangedDensity
+	joined?: boolean
+	align?: ArrangedAlign
+}
+
+export type ArrangedClassKey =
+	| `orientation:${ArrangedOrientation}`
+	| `density:${ArrangedDensity}`
+	| `joined:${boolean}`
+	| `align:${ArrangedAlign}`
+
+export type ArrangedClassConfig = Partial<Record<ArrangedClassKey, JSX.ClassValue>>

@@ -1,6 +1,6 @@
+import { A } from '@sursaut/adapter-pico'
 import { latch } from '@sursaut/core'
 import { type ClientRouteDefinition, Router, type RouterRender } from '@sursaut/kit'
-import { A } from '@sursaut/adapter-pico'
 import '@sursaut/adapter-pico/css'
 import ButtonsSection from './sections/Buttons'
 import CardsSection from './sections/Cards'

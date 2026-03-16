@@ -1,3 +1,4 @@
+import { type ArrangedProps, arranged } from '@sursaut/ui'
 import {
 	type ContainerProps,
 	containerModel,
@@ -11,8 +12,7 @@ import {
 
 export type { ContainerProps, HeadingProps, TextProps }
 
-export type ToolbarProps = {
-	orientation?: ToolbarNavOptions['orientation']
+export type ToolbarProps = ArrangedProps & {
 	cycleSegments?: ToolbarNavOptions['cycleSegments']
 	el?: JSX.IntrinsicElements['div']
 	children?: JSX.Children
@@ -20,6 +20,10 @@ export type ToolbarProps = {
 
 export type ToolbarSpacerProps = {
 	el?: JSX.IntrinsicElements['span']
+}
+
+function crossAlign(align: ArrangedProps['align']) {
+	return align === 'start' ? 'flex-start' : align
 }
 
 /**
@@ -82,28 +86,33 @@ export function Text(props: TextProps) {
 /**
  * Toolbar - flex container for horizontal layouts
  */
-export const Toolbar: ((props: ToolbarProps) => JSX.Element) & {
+export const Toolbar: ((props: ToolbarProps, scope: Record<string, unknown>) => JSX.Element) & {
 	Spacer: (props: ToolbarSpacerProps) => JSX.Element
 } = Object.assign(
-	(props: ToolbarProps) => (
-		<div
-			{...props.el}
-			role="toolbar"
-			use={(element: HTMLElement) =>
-				setupToolbarNav(element, {
-					orientation: props.orientation,
-					cycleSegments: props.cycleSegments,
-				})
-			}
-			style={{
-				display: 'flex',
-				alignItems: 'center',
-				gap: '0.75rem',
-			}}
-		>
-			{props.children}
-		</div>
-	),
+	(props: ToolbarProps, scope: Record<string, unknown>) => {
+		const o = arranged(scope, props)
+		return (
+			<div
+				{...props.el}
+				class={[o.class, props.el?.class]}
+				role="toolbar"
+				use={(element: HTMLElement) =>
+					setupToolbarNav(element, {
+						orientation: o.orientation,
+						cycleSegments: props.cycleSegments,
+					})
+				}
+				style={{
+					display: 'flex',
+					flexDirection: o.orientation === 'vertical' ? 'column' : 'row',
+					alignItems: crossAlign(o.align),
+					gap: o.density === 'compact' ? '0.5rem' : '0.75rem',
+				}}
+			>
+				{props.children}
+			</div>
+		)
+	},
 	{
 		Spacer: (props: ToolbarSpacerProps) => (
 			<span data-toolbar-spacer="" style={{ flex: 1 }} {...props.el} />

@@ -54,10 +54,7 @@ export default function MultiSelectDemo() {
 		>
 			<h2>MultiSelect Primitive Demo</h2>
 			<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px;">
-				<div
-					data-test="multiselect-selected"
-					style="color: #94a3b8; font-size: 14px;"
-				>
+				<div data-test="multiselect-selected" style="color: #94a3b8; font-size: 14px;">
 					Selected tags:{' '}
 					{Array.from(state.selected as Set<Language>)
 						.map((item) => item.label)
@@ -74,7 +71,12 @@ export default function MultiSelectDemo() {
 				</button>
 			</div>
 
-			<details data-test="multiselect-root" use={model.onMount} {...model.details} style="position: relative;">
+			<details
+				data-test="multiselect-root"
+				use={model.onMount}
+				{...model.details}
+				style="position: relative;"
+			>
 				<summary
 					data-test="multiselect-toggle"
 					{...model.summary}
@@ -97,7 +99,9 @@ export default function MultiSelectDemo() {
 										<div
 											style={`width: 16px; height: 16px; border: 1px solid #475569; border-radius: 3px; display: flex; align-items: center; justify-content: center; background: ${checked ? '#3b82f6' : 'transparent'};`}
 										>
-											{checked ? <div style="width: 8px; height: 8px; background: white; border-radius: 1px;" /> : null}
+											{checked ? (
+												<div style="width: 8px; height: 8px; background: white; border-radius: 1px;" />
+											) : null}
 										</div>
 										{item.label}
 									</div>

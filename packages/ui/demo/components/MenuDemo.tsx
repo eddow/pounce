@@ -26,7 +26,11 @@ export default function MenuDemo() {
 			style="padding: 20px; background: #1e293b; border-radius: 8px; color: white;"
 		>
 			<h2>Menu Primitive Demo</h2>
-			<details data-test="menu-root" {...model.details} style="position: relative; display: inline-block;">
+			<details
+				data-test="menu-root"
+				{...model.details}
+				style="position: relative; display: inline-block;"
+			>
 				<summary
 					data-test="menu-summary"
 					{...model.summary}
@@ -59,7 +63,11 @@ export default function MenuDemo() {
 							Settings
 						</a>
 					</li>
-					<li role="none" aria-hidden="true" style="height: 1px; background: #475569; margin: 4px 0;"></li>
+					<li
+						role="none"
+						aria-hidden="true"
+						style="height: 1px; background: #475569; margin: 4px 0;"
+					></li>
 					<li role="none" style="padding: 0 8px;">
 						<a
 							data-test="menu-logout"

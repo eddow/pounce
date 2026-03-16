@@ -4,6 +4,8 @@
 		"includes": [
 			"packages/**/src/**/*.ts",
 			"packages/**/src/**/*.tsx",
+			"packages/**/demo/**/*.ts",
+			"packages/**/demo/**/*.tsx",
 			"sandbox/**/*.ts"
 		]
 	},
@@ -55,14 +57,16 @@
 				"noImplicitAnyLet": "off",
 				"useIterableCallbackReturn": "off",
 				"noRedeclare": "off",
-				"noShadowRestrictedNames": "off"
+				"noShadowRestrictedNames": "off",
+				"noGlobalIsNan": { "level": "warn", "fix": "safe"}
 			},
 			"performance": {
 				"noAccumulatingSpread": "off"
 			},
 			"complexity": {
 				"noUselessFragments": "off",
-				"noBannedTypes": "off"
+				"noBannedTypes": "off",
+				"useOptionalChain": { "level": "warn", "fix": "safe"}
 			},
 			"security": {},
 			"correctness": {

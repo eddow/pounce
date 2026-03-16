@@ -141,7 +141,9 @@ export default function StorageDemo() {
 				<div class="sd-content">
 					<div class="sd-label">theme</div>
 					<div class="sd-row">
-						<span class="sd-val" data-testid="storage-theme">{prefs.theme}</span>
+						<span class="sd-val" data-testid="storage-theme">
+							{prefs.theme}
+						</span>
 						<button class="sd-btn" data-action="toggle-theme" onClick={toggleTheme}>
 							Toggle
 						</button>
@@ -154,7 +156,9 @@ export default function StorageDemo() {
 				<div class="sd-content">
 					<div class="sd-label">count</div>
 					<div class="sd-row">
-						<span class="sd-val" data-testid="storage-count">{prefs.count}</span>
+						<span class="sd-val" data-testid="storage-count">
+							{prefs.count}
+						</span>
 						<button class="sd-btn" data-action="inc-count" onClick={incCount}>
 							+
 						</button>

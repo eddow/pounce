@@ -45,6 +45,21 @@ const buttonGroupCode = `<ButtonGroup>
   <Button>Right</Button>
 </ButtonGroup>`
 
+const arrangedButtonGroupCode = `import { arranged } from '@sursaut/ui'
+
+function VerticalButtons(props, scope) {
+  arranged(scope, { orientation: 'vertical', density: 'compact' })
+  return props.children
+}
+
+<VerticalButtons>
+  <ButtonGroup>
+    <Button>Left</Button>
+    <Button>Center</Button>
+    <Button>Right</Button>
+  </ButtonGroup>
+</VerticalButtons>`
+
 function ButtonPlayground() {
 	const state = reactive({
 		variant: 'primary',
@@ -190,7 +205,12 @@ export default function ButtonPage() {
 			</Section>
 
 			<Section title="ButtonGroup">
+				<p>
+					<code>ButtonGroup</code> consumes arranged scope. Orientation drives both its layout and
+					its arrow-key navigation axis, while adapters receive the generated organization classes.
+				</p>
 				<Demo title="Button Group" source={buttonGroupCode} component={<ButtonGroupPlayground />} />
+				<Code code={arrangedButtonGroupCode} lang="tsx" />
 			</Section>
 
 			<Section title="API Reference">

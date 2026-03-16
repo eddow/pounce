@@ -55,7 +55,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@sursaut/ui/dockview': resolve(__dirname, 'src/dockview.ts'),
-			'@sursaut/ui/palette': resolve(__dirname, 'src/palette.ts'),
+			'@sursaut/ui/palette': resolve(__dirname, 'src/palette/index.ts'),
 			'@sursaut/ui': resolve(__dirname, 'src/index.ts'),
 		},
 	},

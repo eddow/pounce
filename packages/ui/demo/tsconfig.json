@@ -1,0 +1,14 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"noEmit": true,
+		"paths": {
+			"@sursaut/ui": ["../src/index.ts"],
+			"@sursaut/ui/palette": ["../src/palette/index.ts"],
+			"@sursaut/ui/dockview": ["../src/dockview.ts"]
+		}
+	},
+	"include": ["./**/*"],
+	"exclude": ["./components/old-PaletteDemo.tsx"]
+}

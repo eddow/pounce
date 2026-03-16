@@ -1,6 +1,6 @@
 import { reactive, resource } from 'mutts'
-import { ApiError } from '../../src/api/core'
 import { api, defineRoute, intercept } from '../../src/api'
+import { ApiError } from '../../src/api/core'
 import { componentStyle } from '../../src/css'
 
 type Post = { id: number; title: string; body: string; userId: number }
@@ -24,7 +24,6 @@ const state = reactive({
 })
 
 // Inline paths — quick one-off calls
-const postsApi = api('https://jsonplaceholder.typicode.com/posts')
 const postDetailApi = api('https://jsonplaceholder.typicode.com/posts/[id]')
 
 // Callable endpoints — reusable and type-safe
@@ -78,7 +77,9 @@ export default function ApiDemo() {
 			<div class="ad-card">
 				<div class="ad-content">
 					<h3>Path Params: /posts/[id]</h3>
-					<p>Post ID: <span data-testid="api-post-id">{state.postId}</span></p>
+					<p>
+						Post ID: <span data-testid="api-post-id">{state.postId}</span>
+					</p>
 					<div class="ad-ts-code">
 						<b>const</b> post = <i>resource</i>({'({ signal }) =>'}
 						<br />
@@ -100,7 +101,10 @@ export default function ApiDemo() {
 						if={post.value}
 						style="margin-top:12px;padding:12px;background:#0f172a;border-radius:6px;border:1px solid #1e293b"
 					>
-						<div style="font-weight:600;color:#f8fafc;margin-bottom:4px" data-testid="api-post-title">
+						<div
+							style="font-weight:600;color:#f8fafc;margin-bottom:4px"
+							data-testid="api-post-title"
+						>
 							{(post.value as Post).title}
 						</div>
 						<div style="font-size:12px;color:#94a3b8;line-height:1.4">

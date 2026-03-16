@@ -1,3 +1,4 @@
+import { arranged } from '@sursaut/ui'
 import { type StarItemState, type StarsProps, starsModel } from '@sursaut/ui/models'
 
 const STAR_GLYPHS: Record<string, string> = {
@@ -23,11 +24,23 @@ function StarItem(props: { item: StarItemState; size: string }) {
 	)
 }
 
-export function Stars(props: StarsProps) {
-	const model = starsModel(props)
+export function Stars(props: StarsProps, scope: Record<string, unknown>) {
+	const o = arranged(scope, props)
+	const model = starsModel({
+		...props,
+		get orientation() {
+			return o.orientation
+		},
+	})
 	return (
 		<div
-			style={{ display: 'inline-flex', alignItems: 'center', fontSize: model.size }}
+			class={o.class}
+			style={{
+				display: 'inline-flex',
+				flexDirection: o.orientation === 'vertical' ? 'column-reverse' : 'row',
+				alignItems: o.align === 'start' ? 'flex-start' : o.align,
+				fontSize: model.size,
+			}}
 			{...model.container}
 		>
 			{model.hasZeroElement && <StarItem item={model.zeroItem} size={model.size} />}

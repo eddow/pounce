@@ -1,14 +1,15 @@
-import { buildRoute, linkModel, type ClientRouteDefinition, type RouterModelRouteDefinition } from '@sursaut/kit'
+import {
+	buildRoute,
+	type ClientRouteDefinition,
+	linkModel,
+	type RouterModelRouteDefinition,
+} from '@sursaut/kit'
 import { DockviewRouter } from '@sursaut/ui/dockview'
 import { reactive } from 'mutts'
 
 type DemoRoute = ClientRouteDefinition
 
 const dockviewRouterBase = '/dockview-router'
-
-function overviewUrl() {
-	return dockviewRouterBase
-}
 
 function counterUrl(id: number) {
 	return buildRoute(`${dockviewRouterBase}/counter/[id:integer]`, { id: String(id) })
@@ -29,11 +30,14 @@ function crashCounterPanel(shouldCrash: boolean, id: string) {
 
 const OverviewPanel = () => {
 	return (
-		<div data-test="dockview-router-overview" style="height: 100%; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #0f172a; color: white; box-sizing: border-box;">
+		<div
+			data-test="dockview-router-overview"
+			style="height: 100%; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #0f172a; color: white; box-sizing: border-box;"
+		>
 			<h3 style="margin: 0;">DockviewRouter overview</h3>
 			<p style="margin: 0; color: #cbd5e1; max-width: 54ch;">
-				Use the controls around this dockview to navigate between routes. Each pushed route opens a tab,
-				and activating a different tab should replace the current URL.
+				Use the controls around this dockview to navigate between routes. Each pushed route opens a
+				tab, and activating a different tab should replace the current URL.
 			</p>
 			<div style="display: grid; gap: 8px; color: #94a3b8; font-size: 14px;">
 				<div>1. Click the route buttons to open tabs from navigation.</div>
@@ -49,7 +53,10 @@ const CounterPanel = (props: { id: string }) => {
 	const state = reactive({ count: Number(props.id) || 0, crash: false })
 	const siblingNotesUrl = notesUrl(Number(props.id) || 1)
 	return (
-		<div data-test={`dockview-router-counter-${props.id}`} style="height: 100%; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #111827; color: white; box-sizing: border-box;">
+		<div
+			data-test={`dockview-router-counter-${props.id}`}
+			style="height: 100%; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #111827; color: white; box-sizing: border-box;"
+		>
 			<h3 style="margin: 0;">Counter route {props.id}</h3>
 			<div style="font-size: 32px; font-weight: 700;">{state.count}</div>
 			{crashCounterPanel(state.crash, props.id)}
@@ -88,7 +95,10 @@ const CounterPanel = (props: { id: string }) => {
 const NotesPanel = (props: { id: string }) => {
 	const state = reactive({ text: `Notes for route ${props.id}` })
 	return (
-		<div data-test={`dockview-router-notes-${props.id}`} style="height: 100%; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #172554; color: white; box-sizing: border-box;">
+		<div
+			data-test={`dockview-router-notes-${props.id}`}
+			style="height: 100%; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #172554; color: white; box-sizing: border-box;"
+		>
 			<h3 style="margin: 0;">Notes route {props.id}</h3>
 			<textarea
 				data-test={`dockview-router-notes-input-${props.id}`}
@@ -141,10 +151,17 @@ const navLinks = [
 
 export default function DockviewRouterDemo() {
 	return (
-		<div data-test="dockview-router-demo" style="display: flex; flex-direction: column; gap: 16px; height: calc(100vh - 40px); max-height: 600px; padding: 20px; background: #0f172a; color: white; box-sizing: border-box;">
+		<div
+			data-test="dockview-router-demo"
+			style="display: flex; flex-direction: column; gap: 16px; height: calc(100vh - 40px); max-height: 600px; padding: 20px; background: #0f172a; color: white; box-sizing: border-box;"
+		>
 			<div style="display: flex; gap: 8px;">
 				<for each={navLinks}>
-					{(nav) => <a href={nav.href} {...linkModel({ href: nav.href })}>{nav.label}</a>}
+					{(nav) => (
+						<a href={nav.href} {...linkModel({ href: nav.href })}>
+							{nav.label}
+						</a>
+					)}
 				</for>
 			</div>
 			<div

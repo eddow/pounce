@@ -1,6 +1,6 @@
 import { resolve } from 'node:path'
-import { defineConfig } from 'vite'
 import { sursautCorePlugin } from '@sursaut/core/plugin'
+import { defineConfig } from 'vite'
 
 export default defineConfig({
 	root: __dirname,
@@ -9,7 +9,10 @@ export default defineConfig({
 		alias: [
 			{ find: '@sursaut/adapter-pico/css', replacement: resolve(__dirname, '../src/pico.sass') },
 			{ find: '@sursaut/adapter-pico', replacement: resolve(__dirname, '../src/index.ts') },
-			{ find: '@sursaut/ui/models', replacement: resolve(__dirname, '../../../ui/src/models/index.ts') },
+			{
+				find: '@sursaut/ui/models',
+				replacement: resolve(__dirname, '../../../ui/src/models/index.ts'),
+			},
 			{ find: '@sursaut/ui', replacement: resolve(__dirname, '../../../ui/src/index.ts') },
 		],
 	},

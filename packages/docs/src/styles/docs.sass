@@ -109,7 +109,7 @@
   .nav-chevron
     font-size: 0.8rem
     transition: transform 0.2s ease
-    color: var(--pico-muted-color, #5f6b7a)
+    color: var(--pico-accordion-close-summary-color, var(--pico-color, #333))
     margin-right: 0.5rem
 
   .nav-section
@@ -127,6 +127,12 @@
   flex: 1 1 0%
   min-width: 0
   background: var(--pico-background-color)
+
+  main
+    width: min(100%, 74rem)
+
+  article
+    min-width: 0
 
   article
     h1
@@ -160,10 +166,13 @@
 
 .docs-hero
   display: grid
-  grid-template-columns: minmax(0, 1.35fr) minmax(17rem, 0.9fr)
+  grid-template-columns: minmax(0, 1fr)
   gap: 1.75rem
   align-items: start
   margin-bottom: 2.25rem
+
+  > *
+    min-width: 0
 
   h1
     margin-bottom: 0.85rem
@@ -190,6 +199,7 @@
   display: grid
   align-content: start
   gap: 0.8rem
+  min-width: 0
   padding: 1rem 1.05rem
   border: 1px solid var(--pico-muted-border-color, #d8dee4)
   border-radius: 0.9rem
@@ -198,6 +208,18 @@
 
   pre
     margin: 0
+    max-width: 100%
+    overflow-x: auto
+
+details
+  summary
+    color: inherit
+
+    &::marker
+      color: var(--pico-muted-color, #5f6b7a)
+
+    &::-webkit-details-marker
+      color: var(--pico-muted-color, #5f6b7a)
 
 .docs-hero-panel-title
   font-weight: 600

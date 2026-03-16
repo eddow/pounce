@@ -47,27 +47,30 @@ export default function DrawerDemo() {
 					const side = entry.props?.side as 'left' | 'right' | undefined
 					const title = entry.props?.title as JSX.Children
 					return (
-					<div
-						data-test="drawer-backdrop"
-						style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;"
-						onClick={(e: MouseEvent) => {
-							if (e.target !== e.currentTarget) return
-							if (entry.dismissible !== false) entry.resolve(null)
-						}}
-					>
 						<div
-							data-test="drawer-panel"
-							style={`position: absolute; background: #1e293b; color: white; transition: all 0.3s;
+							data-test="drawer-backdrop"
+							style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;"
+							onClick={(e: MouseEvent) => {
+								if (e.target !== e.currentTarget) return
+								if (entry.dismissible !== false) entry.resolve(null)
+							}}
+						>
+							<div
+								data-test="drawer-panel"
+								style={`position: absolute; background: #1e293b; color: white; transition: all 0.3s;
 							${side === 'left' ? 'left: 0; top: 0; bottom: 0; width: 300px;' : ''}
 							${side === 'right' ? 'right: 0; top: 0; bottom: 0; width: 300px;' : ''}
 						`}
-						>
-							<div data-test="drawer-title" style="padding: 16px; border-bottom: 1px solid #334155; font-weight: bold;">
-								{title}
+							>
+								<div
+									data-test="drawer-title"
+									style="padding: 16px; border-bottom: 1px solid #334155; font-weight: bold;"
+								>
+									{title}
+								</div>
+								{entry.render?.(entry.resolve) ?? entry.props?.children}
 							</div>
-							{entry.render?.(entry.resolve) ?? entry.props?.children}
 						</div>
-					</div>
 					)
 				}}
 			</for>

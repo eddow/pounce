@@ -1,7 +1,12 @@
 import { reactive } from 'mutts'
 import { componentStyle } from '../../src/css'
 import { client } from '../../src/platform/shared'
-import { type ClientRouteDefinition, Router, type RouterRender, type RouterRouteDefinition } from '../../src/router/components'
+import {
+	type ClientRouteDefinition,
+	Router,
+	type RouterRender,
+	type RouterRouteDefinition,
+} from '../../src/router/components'
 import { defineRoute } from '../../src/router/defs'
 import { type LinkProps, linkModel } from '../../src/router/link-model'
 
@@ -52,10 +57,7 @@ function A(props: LinkProps) {
 	const model = linkModel(props)
 	const { prefetch: _prefetch, ...anchorProps } = props
 	return (
-		<a
-			{...anchorProps}
-			{...model}
-		>
+		<a {...anchorProps} {...model}>
 			{props.children}
 		</a>
 	)
@@ -130,11 +132,17 @@ const subRoutes: RouterRouteDefinition<SubRoute>[] = [
 					{userRoute.buildUrl({ id: spec.params.id })}
 				</p>
 				<nav data-testid="user-nav">
-					<A href="/router/users/1" data-testid="link-user-1">User 1</A>
+					<A href="/router/users/1" data-testid="link-user-1">
+						User 1
+					</A>
 					{' | '}
-					<A href="/router/users/2" data-testid="link-user-2">User 2</A>
+					<A href="/router/users/2" data-testid="link-user-2">
+						User 2
+					</A>
 					{' | '}
-					<A href="/router/users/42" data-testid="link-user-42">User 42</A>
+					<A href="/router/users/42" data-testid="link-user-42">
+						User 42
+					</A>
 				</nav>
 			</div>
 		),
@@ -147,7 +155,9 @@ const subRoutes: RouterRouteDefinition<SubRoute>[] = [
 				<h1>Long Page</h1>
 				<p>Scroll down to find the footer link.</p>
 				<div style="margin-top: 1800px;">
-					<A href="/router" data-testid="link-home-bottom">Back to Home</A>
+					<A href="/router" data-testid="link-home-bottom">
+						Back to Home
+					</A>
 				</div>
 			</div>
 		),
@@ -200,18 +210,40 @@ export default function RouterDemo() {
 				<code style="color:#7dd3fc">aria-current</code>.
 			</p>
 			<nav class="rd-nav">
-				<A href="/router" data-testid="nav-home">Home</A>
-				<A href="/router/about" data-testid="nav-about">About</A>
-				<A href="/router/users/1" data-testid="nav-user-1">User 1</A>
-				<A href="/router/users/2" data-testid="nav-user-2">User 2</A>
+				<A href="/router" data-testid="nav-home">
+					Home
+				</A>
+				<A href="/router/about" data-testid="nav-about">
+					About
+				</A>
+				<A href="/router/users/1" data-testid="nav-user-1">
+					User 1
+				</A>
+				<A href="/router/users/2" data-testid="nav-user-2">
+					User 2
+				</A>
 				<A href="/router/users/abc">User abc</A>
-				<A href="/router/long" data-testid="nav-long">Long</A>
-				<A href="/router/lazy" data-testid="nav-lazy">Lazy</A>
-				<A href="/router/lazy" prefetch="hover" data-testid="nav-lazy-prefetch">Lazy prefetch</A>
-				<A href="/router/lazy" prefetch="intent" data-testid="nav-lazy-intent">Lazy intent</A>
-				<A href="/router/lazy" prefetch="visible" data-testid="nav-lazy-visible">Lazy visible</A>
-				<A href="/router/lazy-pending" data-testid="nav-lazy-pending">Lazy pending</A>
-				<A href="/router/lazy-error" data-testid="nav-lazy-error">Lazy error</A>
+				<A href="/router/long" data-testid="nav-long">
+					Long
+				</A>
+				<A href="/router/lazy" data-testid="nav-lazy">
+					Lazy
+				</A>
+				<A href="/router/lazy" prefetch="hover" data-testid="nav-lazy-prefetch">
+					Lazy prefetch
+				</A>
+				<A href="/router/lazy" prefetch="intent" data-testid="nav-lazy-intent">
+					Lazy intent
+				</A>
+				<A href="/router/lazy" prefetch="visible" data-testid="nav-lazy-visible">
+					Lazy visible
+				</A>
+				<A href="/router/lazy-pending" data-testid="nav-lazy-pending">
+					Lazy pending
+				</A>
+				<A href="/router/lazy-error" data-testid="nav-lazy-error">
+					Lazy error
+				</A>
 				<A href="/router/nowhere">404</A>
 			</nav>
 			<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;font-size:13px">
@@ -223,9 +255,15 @@ export default function RouterDemo() {
 				/>
 				<A href={`/router/users/${state.customId}`}>Go</A>
 			</div>
-			<div class="rd-code" data-testid="nav-event-log" style="margin:0 0 12px; color:#a3e635; min-height:44px">
+			<div
+				class="rd-code"
+				data-testid="nav-event-log"
+				style="margin:0 0 12px; color:#a3e635; min-height:44px"
+			>
 				<for each={navState.entries}>{(entry) => <div data-testid="nav-event">{entry}</div>}</for>
-				<div if={navState.entries.length === 0} style="color:#475569">No navigation events yet</div>
+				<div if={navState.entries.length === 0} style="color:#475569">
+					No navigation events yet
+				</div>
 			</div>
 			<div class="rd-outlet">
 				<Router
@@ -234,21 +272,23 @@ export default function RouterDemo() {
 						isPerfMode
 							? undefined
 							: ({ from, navigation, route, to }) =>
-								recordNavigation(`start ${navigation} ${from ?? '(none)'} -> ${to} ${route?.path ?? '(none)'}`)
+									recordNavigation(
+										`start ${navigation} ${from ?? '(none)'} -> ${to} ${route?.path ?? '(none)'}`
+									)
 					}
 					onRouteEnd={
 						isPerfMode
 							? undefined
 							: ({ navigation, route, status, to }) =>
-								recordNavigation(`end ${status} ${navigation} ${to} ${route?.path ?? '(none)'}`)
+									recordNavigation(`end ${status} ${navigation} ${to} ${route?.path ?? '(none)'}`)
 					}
 					onRouteError={
 						isPerfMode
 							? undefined
 							: ({ error, navigation, route, to }) =>
-								recordNavigation(
-									`error ${navigation} ${to} ${route?.path ?? '(none)'} ${error instanceof Error ? error.message : String(error)}`
-								)
+									recordNavigation(
+										`error ${navigation} ${to} ${route?.path ?? '(none)'} ${error instanceof Error ? error.message : String(error)}`
+									)
 					}
 					loading={({ route }) => (
 						<div data-testid="router-loading-view" style="color:#93c5fd">
@@ -265,7 +305,9 @@ export default function RouterDemo() {
 			</div>
 			<div class="rd-code" style="margin-top:12px">
 				{'client.url.pathname = '}
-				<span class="rd-param" data-testid="current-path">{client.url.pathname}</span>
+				<span class="rd-param" data-testid="current-path">
+					{client.url.pathname}
+				</span>
 			</div>
 		</section>
 	)

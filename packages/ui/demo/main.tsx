@@ -25,10 +25,7 @@ import 'mutts/debug'
 function AppLink(props: LinkProps) {
 	const model = linkModel(props)
 	return (
-		<a
-			{...props}
-			{...model}
-		>
+		<a {...props} {...model}>
 			{props.children}
 		</a>
 	)
@@ -69,7 +66,7 @@ function DemoApp() {
 	return (
 		<div
 			data-test="demo-app"
-			style="padding: clamp(12px, 3vw, 24px); max-width: 1000px; margin: 0 auto; width: min(100%, 1000px); box-sizing: border-box; font-family: sans-serif;"
+			style="display: flex; flex-direction: column; gap: 0; height: 100vh; min-height: 0; padding: clamp(12px, 3vw, 24px); max-width: 1000px; margin: 0 auto; width: min(100%, 1000px); box-sizing: border-box; overflow: hidden; font-family: sans-serif;"
 		>
 			<h1 style="color: #f1f5f9; margin-bottom: 8px;">@sursaut/ui Demo</h1>
 			<p style="color: #94a3b8; margin-bottom: 32px;">
@@ -93,7 +90,7 @@ function DemoApp() {
 
 			<main
 				data-test="demo-content"
-				style="background: #1e293b; padding: clamp(14px, 3vw, 24px); border-radius: 12px; border: 1px solid #334155;"
+				style="display: flex; flex: 1 1 auto; min-height: 0; overflow: hidden; background: #1e293b; padding: clamp(14px, 3vw, 24px); border-radius: 12px; border: 1px solid #334155; overflow: auto;"
 			>
 				<Router routes={routes} notFound={() => <p style="color: #f87171;">404 - Not Found</p>} />
 			</main>

@@ -69,7 +69,8 @@ export default function StarsPage() {
 			<h1>Stars</h1>
 			<p>
 				Star rating with single value or range selection. Click to set value. Drag to adjust range
-				endpoints.
+				endpoints. <code>Stars</code> also consumes arranged scope; vertical orientation switches
+				both layout and the drag tie-break direction.
 			</p>
 
 			<Section title="Playground">

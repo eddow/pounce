@@ -8,7 +8,7 @@ overrides:
   '@types/node': 25.1.0
   rollup: 4.57.1
   vite: 7.3.1
-  mutts: 1.0.13
+  mutts: ^1.0.13
   typescript: 5.9.3
 
 importers:
@@ -67,7 +67,7 @@ importers:
         specifier: ^3.36.1
         version: 3.36.1
       mutts:
-        specifier: 1.0.13
+        specifier: ^1.0.13
         version: 1.0.13
       pure-glyf:
         specifier: workspace:*
@@ -109,7 +109,7 @@ importers:
         specifier: ^4.6.14
         version: 4.11.7
       mutts:
-        specifier: 1.0.13
+        specifier: ^1.0.13
         version: 1.0.13
       zod:
         specifier: ^3.24.1
@@ -158,7 +158,7 @@ importers:
         specifier: ^27.0.0
         version: 27.4.0
       mutts:
-        specifier: 1.0.13
+        specifier: ^1.0.13
         version: 1.0.13
       vite-plugin-dts:
         specifier: ^4.5.3
@@ -216,7 +216,7 @@ importers:
         specifier: ^11
         version: 11.11.1
       mutts:
-        specifier: 1.0.13
+        specifier: ^1.0.13
         version: 1.0.13
       pure-glyf:
         specifier: workspace:*
@@ -244,7 +244,7 @@ importers:
         specifier: ^2.1.0
         version: 2.1.29
       mutts:
-        specifier: 1.0.13
+        specifier: ^1.0.13
         version: 1.0.13
     devDependencies:
       '@playwright/test':
@@ -308,7 +308,7 @@ importers:
         specifier: workspace:*
         version: link:../kit
       mutts:
-        specifier: 1.0.13
+        specifier: ^1.0.13
         version: 1.0.13
     devDependencies:
       '@types/node':

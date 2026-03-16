@@ -17,7 +17,10 @@ function ThemeToggleControls(props: { settings: ThemeSettings }, env: Env) {
 	})
 
 	return (
-		<div style="display: flex; align-items: center; gap: 12px; position: relative;" use={model.clickOutside}>
+		<div
+			style="display: flex; align-items: center; gap: 12px; position: relative;"
+			use={model.clickOutside}
+		>
 			<button
 				data-test="themetoggle-main"
 				style="padding: 10px; background: #334155; border: 1px solid #475569; border-radius: 8px; color: white; cursor: pointer; display: flex; align-items: center; gap: 8px;"
@@ -176,11 +179,18 @@ function DisplayContextIllustration(_props: {}, env: Env) {
 	)
 }
 
-function ContextValue(props: { testId: string; selector: 'theme' | 'direction' | 'locale' }, env: Env) {
+function ContextValue(
+	props: { testId: string; selector: 'theme' | 'direction' | 'locale' },
+	env: Env
+) {
 	const dc = useDisplayContext(env)
 	const get = {
 		get value() {
-			return props.selector === 'theme' ? dc.theme : props.selector === 'direction' ? dc.direction : dc.locale
+			return props.selector === 'theme'
+				? dc.theme
+				: props.selector === 'direction'
+					? dc.direction
+					: dc.locale
 		},
 	}
 	return (

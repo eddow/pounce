@@ -271,7 +271,7 @@ packages/docs/
     "@sursaut/kit": "workspace:*",
     "@sursaut/ui": "workspace:*",
     "highlight.js": "^11",
-    "mutts": "link:../../../mutts",
+    "mutts": "^1.0.13",
     "pure-glyf": "workspace:*"
   },
   "devDependencies": {

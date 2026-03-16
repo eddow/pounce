@@ -1,5 +1,5 @@
 import { reactive } from 'mutts'
-import { drag, drop, dragging } from '../../src/directives/drag-drop'
+import { drag, dragging, drop } from '../../src/directives/drag-drop'
 
 export default function DragDropDemo(_: {}, scope: any) {
 	const state = reactive({
@@ -7,7 +7,7 @@ export default function DragDropDemo(_: {}, scope: any) {
 			{ id: 1, text: 'Drag Me (Item 1)' },
 			{ id: 2, text: 'Or Me (Item 2)' },
 			{ id: 3, text: "Don't forget Me (Item 3)" },
-		]
+		],
 	})
 
 	Object.assign(scope, { drag, drop, dragging })
@@ -36,7 +36,7 @@ export default function DragDropDemo(_: {}, scope: any) {
 				padding: '20px',
 				border: '1px solid #ccc',
 				borderRadius: '8px',
-				color: 'white'
+				color: 'white',
 			}}
 		>
 			<h3>Drag & Drop Demo</h3>

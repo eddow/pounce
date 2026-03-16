@@ -1,13 +1,10 @@
 import type {
 	PaletteActionDefinition,
 	PaletteBooleanDefinition,
-	PaletteCategory,
-	PaletteEntryDefinition,
-	PaletteEntryId,
+	PaletteEntry,
 	PaletteEnumDefinition,
 	PaletteEnumOption,
 	PaletteIntent,
-	PaletteIntentId,
 	PaletteIntentSource,
 	PaletteNumberDefinition,
 	PaletteStatusDefinition,
@@ -23,14 +20,14 @@ import type {
  * - entryId:mode:value (e.g., "ui.theme:set:light")
  * - entryId:mode:values (e.g., "ui.theme:flip:light-dark")
  */
-function createIntentId(entryId: PaletteEntryId, mode: string, suffix?: string): PaletteIntentId {
+function createIntentId(entryId: string, mode: string, suffix?: string): string {
 	return suffix ? `${entryId}:${mode}:${suffix}` : `${entryId}:${mode}`
 }
 
 function mergeCategories(
-	left: readonly PaletteCategory[] | undefined,
-	right: readonly PaletteCategory[] | undefined
-): readonly PaletteCategory[] | undefined {
+	left: readonly string[] | undefined,
+	right: readonly string[] | undefined
+): readonly string[] | undefined {
 	if (!left?.length) return right
 	if (!right?.length) return left
 	return Array.from(new Set([...left, ...right]))
@@ -39,14 +36,14 @@ function mergeCategories(
 function normalizeEnumOption<T extends string>(
 	option: T | PaletteEnumOption<T>
 ): PaletteEnumOption<T> {
-	return typeof option === 'string' ? { value: option } : option
+	return typeof option === 'string' ? { id: option } : option
 }
 
 /**
  * Derives intents for boolean schema entries
  */
 function deriveBooleanIntents(
-	entry: PaletteEntryDefinition & { schema: PaletteBooleanDefinition }
+	entry: PaletteEntry & { schema: PaletteBooleanDefinition }
 ): readonly PaletteIntent[] {
 	return [
 		{
@@ -76,18 +73,18 @@ function deriveBooleanIntents(
  * Derives intents for enum schema entries
  */
 function deriveEnumIntents(
-	entry: PaletteEntryDefinition & { schema: PaletteEnumDefinition }
+	entry: PaletteEntry & { schema: PaletteEnumDefinition }
 ): readonly PaletteIntent[] {
 	const options = entry.schema.options.map(normalizeEnumOption)
 	const intents: PaletteIntent[] = []
 
 	for (const option of options) {
 		intents.push({
-			id: createIntentId(entry.id, 'set', option.value),
+			id: createIntentId(entry.id, 'set', option.id),
 			targetId: entry.id,
 			mode: 'set',
-			value: option.value,
-			label: option.label ?? option.value,
+			value: option.id,
+			label: option.label ?? option.id,
 			description: option.description,
 			icon: option.icon,
 			categories: mergeCategories(entry.categories, option.categories),
@@ -105,7 +102,7 @@ function deriveEnumIntents(
  * - Absolute presets: stash intents for specific values (min, max, zero, etc.)
  */
 function deriveNumberIntents(
-	entry: PaletteEntryDefinition & { schema: PaletteNumberDefinition }
+	entry: PaletteEntry & { schema: PaletteNumberDefinition }
 ): readonly PaletteIntent[] {
 	const step = entry.schema.step ?? 1
 	const intents: PaletteIntent[] = [
@@ -165,7 +162,7 @@ function deriveNumberIntents(
 }
 
 function deriveActionIntents(
-	entry: PaletteEntryDefinition & { schema: PaletteActionDefinition }
+	entry: PaletteEntry & { schema: PaletteActionDefinition }
 ): readonly PaletteIntent[] {
 	return [
 		{
@@ -181,40 +178,40 @@ function deriveActionIntents(
 }
 
 function isBooleanEntry(
-	entry: PaletteEntryDefinition
-): entry is PaletteEntryDefinition & { schema: PaletteBooleanDefinition } {
+	entry: PaletteEntry
+): entry is PaletteEntry & { schema: PaletteBooleanDefinition } {
 	return entry.schema.type === 'boolean'
 }
 
 function isEnumEntry(
-	entry: PaletteEntryDefinition
-): entry is PaletteEntryDefinition & { schema: PaletteEnumDefinition } {
+	entry: PaletteEntry
+): entry is PaletteEntry & { schema: PaletteEnumDefinition } {
 	return entry.schema.type === 'enum'
 }
 
 function isNumberEntry(
-	entry: PaletteEntryDefinition
-): entry is PaletteEntryDefinition & { schema: PaletteNumberDefinition } {
+	entry: PaletteEntry
+): entry is PaletteEntry & { schema: PaletteNumberDefinition } {
 	return entry.schema.type === 'number'
 }
 
 function isActionEntry(
-	entry: PaletteEntryDefinition
-): entry is PaletteEntryDefinition & { schema: PaletteActionDefinition } {
+	entry: PaletteEntry
+): entry is PaletteEntry & { schema: PaletteActionDefinition } {
 	return entry.schema.type === 'action'
 }
 
 function isStatusEntry(
-	entry: PaletteEntryDefinition
-): entry is PaletteEntryDefinition & { schema: PaletteStatusDefinition } {
+	entry: PaletteEntry
+): entry is PaletteEntry & { schema: PaletteStatusDefinition } {
 	return entry.schema.type === 'status'
 }
 
 export function createPaletteIntentSource(options?: {
 	intents?: readonly PaletteIntent[]
-	derive?: (entry: PaletteEntryDefinition) => readonly PaletteIntent[]
+	derive?: (entry: PaletteEntry) => readonly PaletteIntent[]
 }): PaletteIntentSource {
-	const intents = new Map<PaletteIntentId, PaletteIntent>()
+	const intents = new Map<string, PaletteIntent>()
 
 	if (options?.intents) {
 		for (const intent of options.intents) {
@@ -222,7 +219,7 @@ export function createPaletteIntentSource(options?: {
 		}
 	}
 
-	const defaultDerive = (entry: PaletteEntryDefinition): readonly PaletteIntent[] => {
+	const defaultDerive = (entry: PaletteEntry): readonly PaletteIntent[] => {
 		if (isBooleanEntry(entry)) return deriveBooleanIntents(entry)
 		if (isEnumEntry(entry)) return deriveEnumIntents(entry)
 		if (isNumberEntry(entry)) return deriveNumberIntents(entry)
@@ -238,7 +235,7 @@ export function createPaletteIntentSource(options?: {
 			return Array.from(intents.values())
 		},
 
-		get(id: PaletteIntentId): PaletteIntent | undefined {
+		get(id: string): PaletteIntent | undefined {
 			return intents.get(id)
 		},
 
@@ -248,7 +245,7 @@ export function createPaletteIntentSource(options?: {
 			}
 		},
 
-		derive(entry: PaletteEntryDefinition): readonly PaletteIntent[] {
+		derive(entry: PaletteEntry): readonly PaletteIntent[] {
 			return derive(entry)
 		},
 	}

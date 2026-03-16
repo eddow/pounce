@@ -35,6 +35,20 @@ Button-shaped radio model.
 
 Use when the adapter renders a `<button>` that participates in a single-choice group.
 
+### `splitButtonModel`
+
+Split action button model.
+
+Use when the adapter renders a primary action button plus a secondary trigger that opens a menu of alternative actions.
+
+### `splitRadioButtonModel`
+
+Split radio-style button model.
+
+Use when the adapter renders a split action whose selected primary value is distinct from the external checked group state.
+
+See [split-button.md](./split-button.md).
+
 ## Disclosure and selection models
 
 ### `accordionModel`

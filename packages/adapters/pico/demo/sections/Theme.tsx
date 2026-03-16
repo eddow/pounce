@@ -1,6 +1,6 @@
-import { type ThemeValue } from '@sursaut/ui'
-import { DisplayProvider } from '@sursaut/kit'
 import { AppShell, Button, ThemeToggle } from '@sursaut/adapter-pico'
+import { DisplayProvider } from '@sursaut/kit'
+import type { ThemeValue } from '@sursaut/ui'
 import { reactive } from 'mutts'
 import { DemoSection, DemoState } from './shared'
 
@@ -16,7 +16,10 @@ export default function ThemeSection() {
 			>
 				<AppShell
 					header={
-						<div class="container" style="display: flex; gap: 0.75rem; align-items: center; justify-content: space-between; padding-block: 1rem;">
+						<div
+							class="container"
+							style="display: flex; gap: 0.75rem; align-items: center; justify-content: space-between; padding-block: 1rem;"
+						>
 							<strong>Pico shell</strong>
 							<ThemeToggle settings={settings} />
 						</div>
@@ -26,8 +29,12 @@ export default function ThemeSection() {
 						<div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
 							<Button onClick={() => (state.direction = 'ltr')}>LTR</Button>
 							<Button onClick={() => (state.direction = 'rtl')}>RTL</Button>
-							<Button outline onClick={() => (state.locale = 'en-US')}>en-US</Button>
-							<Button outline onClick={() => (state.locale = 'fr-FR')}>fr-FR</Button>
+							<Button outline onClick={() => (state.locale = 'en-US')}>
+								en-US
+							</Button>
+							<Button outline onClick={() => (state.locale = 'fr-FR')}>
+								fr-FR
+							</Button>
 						</div>
 						<DemoState label="Theme setting" value={settings.theme} />
 						<DemoState label="Direction" value={state.direction} />

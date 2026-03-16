@@ -41,7 +41,7 @@
 		"@sursaut/kit": "workspace:*",
 		"@sursaut/ui": "workspace:*",
 		"@tabler/icons": "^3.36.1",
-		"mutts": "link:../../../../mutts",
+		"mutts": "^1.0.13",
 		"pure-glyf": "workspace:*",
 		"sass": "^1.93.2",
 		"typescript": "^5.9.3",

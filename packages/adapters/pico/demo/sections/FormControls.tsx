@@ -56,7 +56,10 @@ export default function FormControlsSection() {
 			description="Checkbox, radio, switch and progress grouped around model-owned input semantics."
 		>
 			<DemoGrid>
-				<DemoCard title="Checkbox + Switch" footer={<DemoState label="States" value={`${state.checked} / ${state.switchOn}`} />}>
+				<DemoCard
+					title="Checkbox + Switch"
+					footer={<DemoState label="States" value={`${state.checked} / ${state.switchOn}`} />}
+				>
 					<Checkbox checked={state.checked} onChange={(next: boolean) => (state.checked = next)}>
 						Receive updates
 					</Checkbox>
@@ -65,14 +68,27 @@ export default function FormControlsSection() {
 					</Switch>
 				</DemoCard>
 				<DemoCard title="Radio group" footer={<DemoState label="Selected" value={state.radio} />}>
-					<Radio name="demo-color" value="red" group={state.radio} onChange={() => (state.radio = 'red')}>
+					<Radio
+						name="demo-color"
+						value="red"
+						group={state.radio}
+						onChange={() => (state.radio = 'red')}
+					>
 						Red
 					</Radio>
-					<Radio name="demo-color" value="blue" group={state.radio} onChange={() => (state.radio = 'blue')}>
+					<Radio
+						name="demo-color"
+						value="blue"
+						group={state.radio}
+						onChange={() => (state.radio = 'blue')}
+					>
 						Blue
 					</Radio>
 				</DemoCard>
-				<DemoCard title="Progress" footer={<DemoState label="Value" value={`${state.progress}%`} />}>
+				<DemoCard
+					title="Progress"
+					footer={<DemoState label="Value" value={`${state.progress}%`} />}
+				>
 					<Progress value={state.progress} max={100} el={{ style: 'width:100%' }} />
 					<input
 						type="range"

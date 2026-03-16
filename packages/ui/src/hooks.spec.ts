@@ -17,6 +17,8 @@ import { multiselectModel } from './models/multiselect'
 import { comboboxModel } from './models/options'
 import { progressModel } from './models/progress'
 import { radioButtonModel } from './models/radiobutton'
+import { splitButtonModel } from './models/splitbutton'
+import { splitRadioButtonModel } from './models/splitradiobutton'
 import { starsModel } from './models/stars'
 import { chipModel } from './models/status'
 import { headingModel, textModel } from './models/typography'
@@ -207,6 +209,116 @@ describe('useRadioButton', () => {
 
 	it('onClick undefined when disabled', () => {
 		expect(radioButtonModel({ disabled: true, onClick: vi.fn() }).button.onClick).toBeUndefined()
+	})
+})
+
+describe('splitButtonModel', () => {
+	it('clicks the selected item from the main button', () => {
+		const itemClick = vi.fn()
+		const onClick = vi.fn()
+		const model = splitButtonModel({
+			value: 'b',
+			items: [{ value: 'a' }, { value: 'b', onClick: itemClick }],
+			onClick,
+		})
+
+		model.button.onClick?.(new MouseEvent('click'))
+
+		expect(itemClick).toHaveBeenCalledWith('b', expect.any(MouseEvent))
+		expect(onClick).toHaveBeenCalledWith('b', expect.any(MouseEvent))
+	})
+
+	it('selects and executes an item from the menu', () => {
+		const onValueChange = vi.fn()
+		const onClick = vi.fn()
+		const model = splitButtonModel({
+			value: 'a',
+			items: [{ value: 'a' }, { value: 'b' }],
+			onValueChange,
+			onClick,
+		})
+
+		model.items[1]?.activate(new MouseEvent('click'))
+
+		expect(onValueChange).toHaveBeenCalledWith('b')
+		expect(onClick).toHaveBeenCalledWith('b', expect.any(MouseEvent))
+		expect(model.open).toBe(false)
+	})
+})
+
+describe('splitRadioButtonModel', () => {
+	it('marks the selected item as checked', () => {
+		const model = splitRadioButtonModel({
+			value: 'b',
+			group: 'b',
+			items: [{ value: 'a' }, { value: 'b' }],
+		})
+
+		expect(model.checked).toBe(true)
+		expect(model.selected?.value).toBe('b')
+		expect(model.items[0]?.checked).toBe(false)
+		expect(model.items[1]?.checked).toBe(true)
+		expect(model.button['aria-checked']).toBe('true')
+		expect(model.items[1]?.button['aria-checked']).toBe('true')
+	})
+
+	it('selects an item, updates primary value, and writes the group', () => {
+		const props = reactive({
+			value: 'a',
+			group: 'a',
+			items: [{ value: 'a' }, { value: 'b' }],
+		})
+		const onClick = vi.fn()
+		const model = splitRadioButtonModel({
+			get value() {
+				return props.value
+			},
+			onValueChange(value) {
+				props.value = value
+			},
+			get group() {
+				return props.group
+			},
+			set group(value) {
+				props.group = value
+			},
+			items: props.items,
+			onClick,
+		})
+
+		model.items[1]?.select(new MouseEvent('click'))
+
+		expect(props.group).toBe('b')
+		expect(props.value).toBe('b')
+		expect(onClick).toHaveBeenCalledWith('b', expect.any(MouseEvent))
+		expect(model.checked).toBe(true)
+		expect(model.open).toBe(false)
+	})
+
+	it('does not change selected value when group changes externally', () => {
+		const props = reactive({
+			value: 'a',
+			group: 'a',
+			items: [{ value: 'a' }, { value: 'b' }],
+		})
+		const model = splitRadioButtonModel({
+			get value() {
+				return props.value
+			},
+			get group() {
+				return props.group
+			},
+			set group(value) {
+				props.group = value
+			},
+			items: props.items,
+		})
+
+		props.group = 'b'
+
+		expect(model.selected?.value).toBe('a')
+		expect(model.checked).toBe(false)
+		expect(model.items[1]?.checked).toBe(true)
 	})
 })
 

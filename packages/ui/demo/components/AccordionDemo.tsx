@@ -65,7 +65,10 @@ export default function AccordionDemo() {
 								use={model.onMount}
 								{...model.details}
 							>
-								<summary data-test={`accordion-single-summary-${item.id}`} style="padding: 12px; background: #334155; color: white; cursor: pointer; font-weight: bold; list-style: none;">
+								<summary
+									data-test={`accordion-single-summary-${item.id}`}
+									style="padding: 12px; background: #334155; color: white; cursor: pointer; font-weight: bold; list-style: none;"
+								>
 									{item.title} {model.details.open ? '▾' : '▸'}
 								</summary>
 								<div style="padding: 12px; background: #1e293b; line-height: 1.5;">
@@ -79,7 +82,10 @@ export default function AccordionDemo() {
 
 			<h3 style="margin-bottom: 8px;">Multi-open (array group)</h3>
 			<div style="display: flex; gap: 8px; margin-bottom: 8px;">
-				<button data-test="accordion-multi-open-all" onClick={() => (state.multi = items.map((item) => item.id))}>
+				<button
+					data-test="accordion-multi-open-all"
+					onClick={() => (state.multi = items.map((item) => item.id))}
+				>
 					Open all
 				</button>
 				<button data-test="accordion-multi-clear" onClick={() => (state.multi = [])}>
@@ -107,7 +113,10 @@ export default function AccordionDemo() {
 								use={model.onMount}
 								{...model.details}
 							>
-								<summary data-test={`accordion-multi-summary-${item.id}`} style="padding: 12px; background: #334155; color: white; cursor: pointer; font-weight: bold; list-style: none;">
+								<summary
+									data-test={`accordion-multi-summary-${item.id}`}
+									style="padding: 12px; background: #334155; color: white; cursor: pointer; font-weight: bold; list-style: none;"
+								>
 									{item.title} {model.details.open ? '▾' : '▸'}
 								</summary>
 								<div style="padding: 12px; background: #1e293b; line-height: 1.5;">

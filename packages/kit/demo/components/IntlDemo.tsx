@@ -134,9 +134,18 @@ export default function IntlDemo() {
 					<div class="id-row">
 						<div class="id-content">
 							<span class="id-out" data-testid="intl-plural">
-								<Plural value={state.count} one={`${state.count} item`} other={`${state.count} items`} />
+								<Plural
+									value={state.count}
+									one={`${state.count} item`}
+									other={`${state.count} items`}
+								/>
 							</span>
-							<button class="id-locale-btn" style="margin-left:8px" data-action="inc-count" onClick={() => state.count++}>
+							<button
+								class="id-locale-btn"
+								style="margin-left:8px"
+								data-action="inc-count"
+								onClick={() => state.count++}
+							>
 								+1
 							</button>
 						</div>
