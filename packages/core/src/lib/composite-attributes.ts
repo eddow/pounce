@@ -3,6 +3,7 @@ import {
 	type EffectCleanup,
 	effect,
 	isReactive,
+	reactive,
 	reactiveOptions,
 	unreactive,
 } from 'mutts'
@@ -120,7 +121,7 @@ const propsProxy: ProxyHandler<{
 			if (prop in target.superLayer) return target.superLayer[prop]
 			const rp = target.composite.get(prop)
 			if (rp instanceof ReactiveProp) trackRead(rp)
-			return rp instanceof ReactiveProp ? rp.get() : rp
+			return rp instanceof ReactiveProp ? rp.get() : reactive(rp)
 		}
 	},
 	set(target, prop, value) {

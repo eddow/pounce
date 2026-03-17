@@ -38,6 +38,7 @@ export type CheckboxProps<Value = unknown> = ControlBaseProps & {
 
 export type RadioProps<Value = unknown> = ControlBaseProps & {
 	value?: Value
+	clearable?: boolean
 	/**
 	 * Two-way binding variable for the radio group.
 	 * `checked` is derived from `group === value`.
@@ -209,8 +210,10 @@ export function radioModel(props: RadioProps): RadioModel {
 					return props.group === props.value
 				},
 				set checked(v) {
-					if (v) props.group = props.value
-					/* if undefined state allowed? */ else props.group = undefined
+					if (v) {
+						if (props.clearable && props.group === props.value) props.group = undefined
+						else props.group = props.value
+					} else if (props.clearable) props.group = undefined
 				},
 				get disabled() {
 					return props.disabled

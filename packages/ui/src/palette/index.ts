@@ -21,7 +21,7 @@ export {
 	ToolbarTrack,
 } from './components'
 export { createPaletteKeys, normalizePaletteKeystroke, paletteKeystrokeFromEvent } from './keys'
-export { palettes, paletteTool, valueActions } from './palette'
+export { isEditing, palettes, paletteTool, valueActions } from './palette'
 export type {
 	Palette,
 	PaletteBorder,

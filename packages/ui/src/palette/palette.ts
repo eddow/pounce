@@ -6,12 +6,14 @@ import type {
 	PaletteEditorSpec,
 	PaletteScope,
 	PaletteTool,
+	PaletteToolbar,
 	PaletteToolbarItem,
 	PaletteToolEdit,
 	PaletteToolFamily,
 	PaletteToolNumber,
 	PaletteToolRun,
 	PaletteTools,
+	PaletteTrack,
 } from './types'
 
 export type PaletteValueAction<TTool extends PaletteEditableTool = PaletteEditableTool> = (
@@ -197,4 +199,11 @@ export function paletteTool(palette: Palette, runnerDesc: string): PaletteTool {
 	return resolveTool(palette.tools, runnerDesc)
 }
 
-export const palettes = reactive<{ editing?: Palette }>({})
+export const palettes = reactive<{
+	dragging?: { index: number; palette: Palette; toolbar: PaletteToolbar; track: PaletteTrack }
+	editing?: Palette
+}>({})
+
+export function isEditing(palette: Palette | undefined): boolean {
+	return palettes.editing === palette
+}

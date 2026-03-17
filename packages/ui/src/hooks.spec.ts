@@ -150,6 +150,20 @@ describe('useRadio', () => {
 	it('input.style.order is 0 when labelPosition start', () => {
 		expect(radioModel({ labelPosition: 'start' }).input.style.order).toBe(0)
 	})
+
+	it('clearable radio clears the group when re-selected', () => {
+		const props = reactive<{ group: string | undefined; value: string; clearable: boolean }>({
+			group: 'a',
+			value: 'a',
+			clearable: true,
+		})
+		const model = radioModel(props)
+		const input = document.createElement('input')
+		input.addEventListener('change', model.input.onChange as EventListener)
+		input.checked = true
+		input.dispatchEvent(new Event('change'))
+		expect(props.group).toBeUndefined()
+	})
 })
 
 describe('useSwitch', () => {
@@ -209,6 +223,17 @@ describe('useRadioButton', () => {
 
 	it('onClick undefined when disabled', () => {
 		expect(radioButtonModel({ disabled: true, onClick: vi.fn() }).button.onClick).toBeUndefined()
+	})
+
+	it('clearable radio button clears the group when clicked while checked', () => {
+		const props = reactive<{ group: string | undefined; value: string; clearable: boolean }>({
+			group: 'x',
+			value: 'x',
+			clearable: true,
+		})
+		const model = radioButtonModel(props)
+		model.button.onClick?.(new MouseEvent('click'))
+		expect(props.group).toBeUndefined()
 	})
 })
 

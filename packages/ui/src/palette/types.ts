@@ -81,6 +81,7 @@ export type PaletteBorders = { [K in PaletteRegion]: PaletteBorder }
 
 export type PaletteScope = Record<string, unknown> & {
 	palette?: Palette
+	region?: PaletteRegion
 }
 
 export type PaletteEditorFootprint = 'square' | 'free' | 'horizontal' | 'vertical'

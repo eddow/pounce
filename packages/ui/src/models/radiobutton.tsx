@@ -1,25 +1,15 @@
 import type { SursautElement } from '@sursaut/core'
 import { Icon } from '../icon'
-import type {
-	AriaLabelProps,
-	DisableableProps,
-	ElementPassthroughProps,
-	IconProps,
-	VariantProps,
-} from '../shared/types'
+import type { AriaLabelProps, ElementPassthroughProps, IconProps } from '../shared/types'
 import type { LogicalSide } from '../shared/utils'
+import type { RadioProps } from './checkbox'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
-export type RadioButtonProps<Value = unknown> = VariantProps &
+export type RadioButtonProps<Value = unknown> = RadioProps<Value> &
 	IconProps &
-	DisableableProps &
 	AriaLabelProps &
 	ElementPassthroughProps<'button'> & {
-		/** This button's value */
-		value?: Value
-		/** The currently selected value in the group — checked = (group === value) */
-		group?: Value
 		onClick?: (e: MouseEvent) => void
 		children?: JSX.Children
 	}
@@ -139,8 +129,9 @@ export function radioButtonModel<Value = unknown>(
 						props.el?.onClick?.(e)
 						if (e.defaultPrevented) return
 						props.onClick?.(e)
-						// Radio selection: write to group binding
-						if (props.value !== undefined) props.group = props.value
+						if (props.value === undefined) return
+						if (props.clearable && model.checked) props.group = undefined
+						else props.group = props.value
 					}
 				},
 				get disabled() {

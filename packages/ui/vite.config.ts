@@ -33,7 +33,7 @@ export default defineConfig({
 				dockview: resolve(__dirname, 'src/dockview.ts'),
 				index: resolve(__dirname, 'src/index.ts'),
 				models: resolve(__dirname, 'src/models/index.ts'),
-				palette: resolve(__dirname, 'src/palette.ts'),
+				palette: resolve(__dirname, 'src/palette/index.ts'),
 			},
 			formats: ['es'],
 		},

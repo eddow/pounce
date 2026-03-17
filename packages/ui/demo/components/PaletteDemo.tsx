@@ -1,22 +1,29 @@
 import { componentStyle } from '@sursaut/kit'
-import { arranged, splitButtonModel, splitRadioButtonModel, starsModel } from '@sursaut/ui'
+import {
+	arranged,
+	radioButtonModel,
+	splitButtonModel,
+	splitRadioButtonModel,
+	starsModel,
+} from '@sursaut/ui'
 import {
 	createPaletteKeys,
 	handlePaletteCommandBoxInputKeydown,
 	handlePaletteCommandChipKeydown,
 	Ide,
-	paletteCommandEntries,
-	paletteCommandBoxModel,
 	type Palette,
-	type PaletteEditorContext,
 	type PaletteBorders,
+	type PaletteEditorContext,
 	type PaletteScope,
 	type PaletteTool,
-	type PaletteToolbarItemByEditor,
 	type PaletteToolbarItem,
+	type PaletteToolbarItemByEditor,
+	paletteCommandBoxModel,
+	paletteCommandEntries,
+	palettes,
 	setPaletteCommandBoxInput,
 } from '@sursaut/ui/palette'
-import { reactive } from 'mutts'
+import { memoize, reactive, unwrap } from 'mutts'
 
 type DemoLayout = 'horizontal' | 'vertical'
 type DemoMode = 'inspect' | 'command'
@@ -32,18 +39,6 @@ type DemoState = {
 	lastAction: string
 }
 
-type DemoToolbarVariant =
-	| 'toggle'
-	| 'select'
-	| 'slider'
-	| 'stepper'
-	| 'stars'
-	| 'segmented'
-	| 'splitRadio'
-	| 'splitButton'
-	| 'button'
-	| 'commandBox'
-
 type DemoToolbarTone = 'neutral' | 'accent'
 
 type DemoToolbarItemConfigBase = {
@@ -53,14 +48,21 @@ type DemoToolbarItemConfigBase = {
 	readonly tone?: DemoToolbarTone
 }
 
+type DemoEnumSubsetConfig = DemoToolbarItemConfigBase & {
+	readonly values?: readonly string[]
+	readonly keywords?: readonly string[]
+}
+
 type DemoToolbarConfigByVariant = {
 	toggle: DemoToolbarItemConfigBase
-	select: DemoToolbarItemConfigBase
+	flip: DemoEnumSubsetConfig
+	radio: DemoEnumSubsetConfig
+	select: DemoEnumSubsetConfig
 	slider: DemoToolbarItemConfigBase
 	stepper: DemoToolbarItemConfigBase
 	stars: DemoToolbarItemConfigBase
-	segmented: DemoToolbarItemConfigBase
-	splitRadio: DemoToolbarItemConfigBase
+	segmented: DemoEnumSubsetConfig
+	splitRadio: DemoEnumSubsetConfig
 	splitButton: DemoToolbarItemConfigBase
 	button: DemoToolbarItemConfigBase
 	commandBox: DemoToolbarItemConfigBase
@@ -107,7 +109,18 @@ function setLastAction(message: string) {
 	demoState.lastAction = message
 }
 
-const commandBoxUi = reactive({ focused: false })
+const toolbarCommandBoxUi = reactive({ focused: false })
+const popupCommandBoxUi = reactive({ focused: false, open: false })
+
+function openCommandBoxPopup() {
+	popupCommandBoxUi.open = true
+	popupCommandBoxUi.focused = true
+}
+
+function closeCommandBoxPopup() {
+	popupCommandBoxUi.open = false
+	popupCommandBoxUi.focused = false
+}
 
 const initialIdeConfig: PaletteBorders = {
 	top: [
@@ -129,12 +142,20 @@ const initialIdeConfig: PaletteBorders = {
 						{
 							tool: 'layout',
 							editor: 'splitRadio',
-							config: { icon: '▤', label: 'Layout', hint: 'Split radio with quick apply + chooser' },
+							config: {
+								icon: '▤',
+								label: 'Layout',
+								hint: 'Split radio with quick apply + chooser',
+							},
 						} satisfies DemoToolbarItem,
 						{
 							tool: 'theme',
 							editor: 'select',
-							config: { icon: '🎨', label: 'Theme', hint: 'Compact text editor' },
+							config: {
+								icon: '🎨',
+								label: 'Theme',
+								hint: 'Compact text editor',
+							},
 						} satisfies DemoToolbarItem,
 					],
 				},
@@ -176,8 +197,13 @@ const initialIdeConfig: PaletteBorders = {
 					items: [
 						{
 							tool: 'theme',
-							editor: 'segmented',
-							config: { icon: '🌓', label: 'Theme', hint: 'Icon-only segmented theme picker' },
+							editor: 'flip',
+							config: {
+								icon: '🌓',
+								label: 'Theme',
+								hint: 'Single-button light/dark toggle',
+								keywords: ['light', 'dark'],
+							},
 						} satisfies DemoToolbarItem,
 						{
 							tool: 'mode',
@@ -197,8 +223,8 @@ const initialIdeConfig: PaletteBorders = {
 					items: [
 						{
 							tool: 'fontSize',
-							editor: 'stepper',
-							config: { icon: 'A', label: 'Font size', hint: 'Narrow rail slider' },
+							editor: 'slider',
+							config: { icon: 'A', label: 'Font size', hint: 'Right rail slider' },
 						} satisfies DemoToolbarItem,
 						{
 							tool: 'gameSpeed',
@@ -224,7 +250,12 @@ const initialIdeConfig: PaletteBorders = {
 						{
 							tool: 'theme',
 							editor: 'segmented',
-							config: { icon: '🌓', label: 'Theme', hint: 'Theme pills' },
+							config: {
+								icon: '🌓',
+								label: 'Theme',
+								hint: 'Theme pills',
+								values: ['light', 'dark', 'system'],
+							},
 						} satisfies DemoToolbarItem,
 					],
 				},
@@ -236,7 +267,12 @@ const initialIdeConfig: PaletteBorders = {
 						{
 							tool: 'layout',
 							editor: 'segmented',
-							config: { icon: '▤', label: 'Layout', hint: 'Horizontal/vertical chips' },
+							config: {
+								icon: '▤',
+								label: 'Layout',
+								hint: 'Horizontal/vertical chips',
+								keywords: ['row', 'column'],
+							},
 						} satisfies DemoToolbarItem,
 						{
 							tool: 'fontSize',
@@ -322,8 +358,61 @@ function compactLabel(value: string) {
 	return value
 }
 
+function normalizeSubsetToken(value: string) {
+	return value.trim().toLowerCase()
+}
+
+function enumSubsetConfig(item: PaletteToolbarItem): DemoEnumSubsetConfig | undefined {
+	const config = item.config
+	if (!config || typeof config !== 'object') return undefined
+	return config as DemoEnumSubsetConfig
+}
+
+function resolveEnumValues(
+	item: PaletteToolbarItem,
+	tool: Extract<Palette['tools'][string], { type: 'enum' }>
+) {
+	const config = enumSubsetConfig(item)
+	const explicitValues = config?.values
+	if (explicitValues?.length) {
+		const allowed = new Set(explicitValues.map(normalizeSubsetToken))
+		return tool.values.filter((value) => allowed.has(normalizeSubsetToken(value.value)))
+	}
+	const keywords = config?.keywords
+	if (!keywords?.length) return tool.values
+	const expected = new Set(keywords.map(normalizeSubsetToken))
+	return tool.values.filter((value) => {
+		const actual = new Set(
+			[value.value, value.label, ...(value.categories ?? []), ...(value.keywords ?? [])]
+				.filter((entry): entry is string => typeof entry === 'string')
+				.map(normalizeSubsetToken)
+		)
+		for (const keyword of expected) {
+			if (actual.has(keyword)) return true
+		}
+		return false
+	})
+}
+
 function layoutFromScope(scope: PaletteScope): DemoLayout {
 	return arranged(scope).orientation as DemoLayout
+}
+
+function regionFromScope(scope: PaletteScope) {
+	return scope.region ?? (layoutFromScope(scope) === 'vertical' ? 'left' : 'top')
+}
+
+function menuChevron(scope: PaletteScope) {
+	switch (regionFromScope(scope)) {
+		case 'bottom':
+			return '▴'
+		case 'left':
+			return '▸'
+		case 'right':
+			return '◂'
+		default:
+			return '▾'
+	}
 }
 
 function assignEnumValue(tool: Extract<Palette['tools'][string], { type: 'enum' }>, value: string) {
@@ -342,6 +431,7 @@ function SplitRadioEditor({
 	scope,
 }: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'enum' }>>) {
 	const direction = layoutFromScope(scope)
+	const values = resolveEnumValues(item, tool)
 	const model = splitRadioButtonModel<string>({
 		get value() {
 			return tool.value
@@ -349,7 +439,7 @@ function SplitRadioEditor({
 		set value(value) {
 			assignEnumValue(tool, value)
 		},
-		items: tool.values.map((value: (typeof tool.values)[number]) => ({
+		items: values.map((value) => ({
 			value: value.value,
 			label: value.icon ?? value.label ?? value.value,
 			disabled: value.can === false,
@@ -372,6 +462,7 @@ function SplitRadioEditor({
 		<div
 			class={[
 				'palette-demo-split',
+				'palette-demo-split-radio',
 				`palette-demo-tone-${toolbarMeta(item).tone}`,
 				`palette-demo-layout-${direction}`,
 			]}
@@ -390,9 +481,16 @@ function SplitRadioEditor({
 				{...model.trigger}
 				title={tooltip(item, 'Open choices')}
 			>
-				▾
+				{menuChevron(scope)}
 			</button>
-			<div class={['palette-demo-menu', `palette-demo-layout-${direction}`]} {...model.menu}>
+			<div
+				class={[
+					'palette-demo-menu',
+					`palette-demo-layout-${direction}`,
+					`palette-demo-region-${regionFromScope(scope)}`,
+				]}
+				{...model.menu}
+			>
 				<for each={model.items}>
 					{(entry) => (
 						<button
@@ -407,6 +505,52 @@ function SplitRadioEditor({
 					)}
 				</for>
 			</div>
+		</div>
+	)
+}
+
+function RadioEditor({
+	item,
+	tool,
+	scope,
+}: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'enum' }>>) {
+	const direction = layoutFromScope(scope)
+	const meta = toolbarMeta(item)
+	const values = resolveEnumValues(item, tool)
+	return (
+		<div
+			class={[
+				'palette-demo-radio-group',
+				`palette-demo-tone-${meta.tone}`,
+				`palette-demo-layout-${direction}`,
+			]}
+			title={tooltip(item, meta.hint)}
+		>
+			<span if={meta.icon} class="palette-demo-radio-label">
+				<span class="palette-demo-icon">{meta.icon}</span>
+				<span>{meta.label}</span>
+			</span>
+			<for each={values}>
+				{(value) => (
+					<button
+						type="button"
+						class={[
+							'palette-demo-radio-item',
+							tool.value === value.value ? 'is-selected' : undefined,
+						]}
+						disabled={value.can === false || tool.value === value.value}
+						onClick={() => {
+							tool.value = value.value
+							setLastAction(`${meta.label}: ${compactLabel(value.value)}`)
+						}}
+						title={compactLabel(value.value)}
+					>
+						<span class="palette-demo-icon">{tool.value === value.value ? '◉' : '○'}</span>
+						<span>{value.icon ?? compactIcon(value.value)}</span>
+						<span>{value.label ?? compactLabel(value.value)}</span>
+					</button>
+				)}
+			</for>
 		</div>
 	)
 }
@@ -464,6 +608,7 @@ function SplitButtonEditor({
 		<div
 			class={[
 				'palette-demo-split',
+				'palette-demo-split-button',
 				`palette-demo-tone-${toolbarMeta(item).tone}`,
 				`palette-demo-layout-${direction}`,
 			]}
@@ -483,9 +628,16 @@ function SplitButtonEditor({
 				{...model.trigger}
 				title={tooltip(item, 'Open action presets')}
 			>
-				▾
+				{menuChevron(scope)}
 			</button>
-			<div class={['palette-demo-menu', `palette-demo-layout-${direction}`]} {...model.menu}>
+			<div
+				class={[
+					'palette-demo-menu',
+					`palette-demo-layout-${direction}`,
+					`palette-demo-region-${regionFromScope(scope)}`,
+				]}
+				{...model.menu}
+			>
 				<for each={model.items}>
 					{(entry) => (
 						<button type="button" class="palette-demo-menu-item" {...entry.button}>
@@ -523,13 +675,62 @@ function ToggleEditor({
 	)
 }
 
+function FlipEditor({
+	item,
+	tool,
+}: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'enum' }>>) {
+	const meta = toolbarMeta(item)
+	const state = {
+		get values() {
+			return resolveEnumValues(item, tool)
+		},
+		get currentIndex() {
+			return state.values.findIndex((value) => value.value === tool.value)
+		},
+		get next() {
+			return state.values.length === 0
+				? undefined
+				: state.values[(state.currentIndex + 1 + state.values.length) % state.values.length]
+		},
+		get display() {
+			return state.values[state.currentIndex >= 0 ? state.currentIndex : 0]
+		},
+	}
+	return (
+		<button
+			type="button"
+			class={[
+				'palette-demo-tool',
+				'palette-demo-tool-compact',
+				`palette-demo-tone-${meta.tone}`,
+				tool.value !== tool.default ? 'is-selected' : undefined,
+			]}
+			disabled={!state.next || state.next.can === false}
+			title={tooltip(item, state.display ? compactLabel(state.display.value) : meta.hint)}
+			onClick={() => {
+				if (!state.next) return
+				tool.value = state.next.value
+				setLastAction(`${meta.label}: ${compactLabel(state.next.value)}`)
+			}}
+		>
+			<span class="palette-demo-icon">
+				{state.display?.icon ?? meta.icon ?? compactIcon(tool.value)}
+			</span>
+		</button>
+	)
+}
+
 function SelectEditor({
 	item,
 	tool,
 }: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'enum' }>>) {
 	const meta = toolbarMeta(item)
+	const values = resolveEnumValues(item, tool)
 	return (
-		<label class={['palette-demo-select', `palette-demo-tone-${meta.tone}`]} title={tooltip(item, meta.hint)}>
+		<label
+			class={['palette-demo-select', `palette-demo-tone-${meta.tone}`]}
+			title={tooltip(item, meta.hint)}
+		>
 			<span class="palette-demo-icon">{meta.icon ?? compactIcon(tool.value)}</span>
 			<select
 				value={tool.value}
@@ -538,7 +739,7 @@ function SelectEditor({
 					setLastAction(`${meta.label}: ${compactLabel(value)}`)
 				}}
 			>
-				<for each={tool.values}>
+				<for each={values}>
 					{(value) => <option value={value.value}>{value.label ?? value.value}</option>}
 				</for>
 			</select>
@@ -553,6 +754,7 @@ function SegmentedEditor({
 }: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'enum' }>>) {
 	const direction = layoutFromScope(scope)
 	const meta = toolbarMeta(item)
+	const values = resolveEnumValues(item, tool)
 	return (
 		<div
 			class={[
@@ -562,7 +764,7 @@ function SegmentedEditor({
 			]}
 			title={tooltip(item, meta.hint)}
 		>
-			<for each={tool.values}>
+			<for each={values}>
 				{(value) => (
 					<button
 						type="button"
@@ -619,14 +821,14 @@ function StarsEditor({
 			title={tooltip(item, meta.hint)}
 		>
 			<span class="palette-demo-icon">{meta.icon ?? '★'}</span>
-			<span class={['palette-demo-stars-row', `palette-demo-layout-${direction}`]} {...model.container}>
+			<span
+				class={['palette-demo-stars-row', `palette-demo-layout-${direction}`]}
+				{...model.container}
+			>
 				<for each={model.starItems}>
 					{(entry) => (
 						<span
-							class={[
-								'palette-demo-arrow',
-								entry.status === 'before' ? 'is-selected' : undefined,
-							]}
+							class={['palette-demo-arrow', entry.status === 'before' ? 'is-selected' : undefined]}
 							{...entry.el}
 							title={`${meta.label} ${entry.index + 1}`}
 						>
@@ -642,13 +844,23 @@ function StarsEditor({
 function SliderEditor({
 	item,
 	tool,
+	scope,
 }: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'number' }>>) {
+	const direction = layoutFromScope(scope)
 	const meta = toolbarMeta(item)
 	const min = tool.min ?? 0
 	const max = tool.max ?? 100
 	const step = tool.step ?? 1
 	return (
-		<label class={['palette-demo-slider', `palette-demo-tone-${meta.tone}`]} title={tooltip(item, `${meta.label} ${tool.value}`)}>
+		<label
+			class={[
+				'palette-demo-slider',
+				`palette-demo-tone-${meta.tone}`,
+				`palette-demo-layout-${direction}`,
+				`palette-demo-region-${regionFromScope(scope)}`,
+			]}
+			title={tooltip(item, `${meta.label} ${tool.value}`)}
+		>
 			<span class="palette-demo-icon">{meta.icon ?? 'A'}</span>
 			<input
 				type="range"
@@ -712,10 +924,7 @@ function StepperEditor({
 	)
 }
 
-function ButtonEditor({
-	item,
-	tool,
-}: PaletteEditorContext<Extract<PaletteTool, { run(): void }>>) {
+function ButtonEditor({ item, tool }: PaletteEditorContext<Extract<PaletteTool, { run(): void }>>) {
 	const meta = toolbarMeta(item)
 	return (
 		<button
@@ -733,39 +942,79 @@ function ButtonEditor({
 	)
 }
 
-function CommandBoxEditor({
-	item,
-}: PaletteEditorContext<Extract<PaletteTool, { run(): void }>>) {
-	const meta = toolbarMeta(item)
+type DemoCommandBoxProps = {
+	readonly commandBox: ReturnType<typeof paletteCommandBoxModel>
+	readonly editable?: boolean
+	readonly palette?: Palette
+	readonly icon?: string
+	readonly title?: string
+	readonly expanded: boolean
+	readonly floating?: boolean
+	readonly onInputFocus: () => void
+	readonly onInputBlur: (event: FocusEvent) => void
+	readonly onEscapeOrExecute: () => void
+	readonly onInputMount?: (input: HTMLInputElement) => void
+	readonly onSuggestionPick?: () => void
+}
+
+function CommandBox(props: DemoCommandBoxProps) {
+	let input: HTMLInputElement | undefined
 	const ui = {
-		get expanded() {
-			return (
-				commandBoxUi.focused ||
-				demoCommandBox.input.value.length > 0 ||
-				demoCommandBox.keywords.tokens.length > 0 ||
-				demoCommandBox.categories.active.length > 0
-			)
+		get editable() {
+			return Boolean(props.editable && props.palette)
 		},
 	}
+	const edition = memoize(() =>
+		radioButtonModel({
+			value: props.palette,
+			clearable: true,
+			get group() {
+				return palettes.editing
+			},
+			set group(value) {
+				palettes.editing = value
+			},
+			ariaLabel: 'Edit palette',
+		})
+	)
 
 	return (
 		<div
-			class={['palette-demo-command-box', ui.expanded ? 'is-expanded' : undefined]}
+			class={[
+				'palette-demo-command-box',
+				props.expanded ? 'is-expanded' : undefined,
+				props.floating ? 'is-floating' : undefined,
+			]}
 		>
-			<div class="palette-demo-command-shell" title={tooltip(item, meta.hint)}>
-				<span class="palette-demo-icon">{meta.icon ?? '⌘'}</span>
+			<div class="palette-demo-command-shell" title={props.title}>
+				<button
+					if={ui.editable}
+					type="button"
+					{...(edition().button ?? {})}
+					class={[
+						'palette-demo-command-icon',
+						'palette-demo-tool',
+						'palette-demo-tool-compact',
+						edition().checked ? 'is-selected' : undefined,
+					]}
+				>
+					✎
+				</button>
+				<span else class="palette-demo-icon">
+					{props.icon ?? '⌘'}
+				</span>
 				<div class="palette-demo-command-tokens">
-					<for each={demoCommandBox.categories.active}>
+					<for each={props.commandBox.categories.active}>
 						{(category) => (
 							<button
 								type="button"
 								class="palette-demo-command-chip"
 								onClick={() => {
-									demoCommandBox.categories.toggle(category)
+									props.commandBox.categories.toggle(category)
 								}}
 								onKeydown={(event) =>
 									handlePaletteCommandChipKeydown({
-										commandBox: demoCommandBox,
+										commandBox: props.commandBox,
 										event,
 										token: category,
 										type: 'category',
@@ -776,17 +1025,17 @@ function CommandBoxEditor({
 							</button>
 						)}
 					</for>
-					<for each={demoCommandBox.keywords.tokens}>
+					<for each={props.commandBox.keywords.tokens}>
 						{(token) => (
 							<button
 								type="button"
 								class="palette-demo-command-chip"
 								onClick={() => {
-									demoCommandBox.keywords.removeToken(token.keyword)
+									props.commandBox.keywords.removeToken(token.keyword)
 								}}
 								onKeydown={(event) =>
 									handlePaletteCommandChipKeydown({
-										commandBox: demoCommandBox,
+										commandBox: props.commandBox,
 										event,
 										token: token.keyword,
 									})
@@ -797,37 +1046,47 @@ function CommandBoxEditor({
 						)}
 					</for>
 					<input
+						this={input}
+						use={() => {
+							if (input) props.onInputMount?.(input)
+						}}
 						class="palette-demo-command-input"
-						value={demoCommandBox.input.value}
-						placeholder={demoCommandBox.input.placeholder}
+						value={props.commandBox.input.value}
+						placeholder={props.commandBox.input.placeholder}
 						onInput={(event) => {
-							setPaletteCommandBoxInput(demoCommandBox, event)
+							setPaletteCommandBoxInput(props.commandBox, event)
 						}}
 						onFocus={() => {
-							commandBoxUi.focused = true
+							props.onInputFocus()
+						}}
+						onBlur={(event) => {
+							props.onInputBlur(event)
 						}}
 						onKeydown={(event) => {
-							handlePaletteCommandBoxInputKeydown({
-								commandBox: demoCommandBox,
+							const handled = handlePaletteCommandBoxInputKeydown({
+								commandBox: props.commandBox,
 								event,
 								onAfterExecute: () => {
-									commandBoxUi.focused = false
+									props.onEscapeOrExecute()
 								},
 							})
+							if (event.key === 'Escape') props.onEscapeOrExecute()
+							return handled
 						}}
 					/>
 				</div>
 			</div>
-			<div if={ui.expanded} class="palette-demo-command-popover">
-				<div if={demoCommandBox.suggestions.length > 0} class="palette-demo-command-suggestions">
-					<for each={demoCommandBox.suggestions}>
+			<div if={props.expanded} class="palette-demo-command-popover">
+				<div if={props.commandBox.suggestions.length > 0} class="palette-demo-command-suggestions">
+					<for each={props.commandBox.suggestions}>
 						{(suggestion) => (
 							<button
 								type="button"
 								class="palette-demo-command-suggestion"
 								onClick={() => {
-									demoCommandBox.keywords.addToken(suggestion.keyword)
-									demoCommandBox.input.value = ''
+									props.commandBox.keywords.addToken(suggestion.keyword)
+									props.commandBox.input.value = ''
+									props.onSuggestionPick?.()
 								}}
 							>
 								{suggestion.keyword}
@@ -836,30 +1095,27 @@ function CommandBoxEditor({
 					</for>
 				</div>
 				<div class="palette-demo-command-results">
-					<div if={demoCommandBox.results.length === 0} class="palette-demo-command-empty">
+					<div if={props.commandBox.results.length === 0} class="palette-demo-command-empty">
 						No matching commands
 					</div>
-					<for each={demoCommandBox.results.slice(0, 6)}>
+					<for each={props.commandBox.results.slice(0, 6)}>
 						{(entry) => {
 							const state = {
-								get index() {
-									return demoCommandBox.results.findIndex((candidate) => candidate.id === entry.id)
-								},
 								get selected() {
-									return demoCommandBox.selection.item?.id === entry.id
+									return props.commandBox.selection.item?.id === entry.id
 								},
 							}
 							return (
 								<button
 									type="button"
-									class={['palette-demo-command-result', state.selected ? 'is-selected' : undefined]}
+									class={[
+										'palette-demo-command-result',
+										state.selected ? 'is-selected' : undefined,
+									]}
 									disabled={entry.can === false}
-									onMouseenter={() => {
-										state.index >= 0 ? demoCommandBox.selection.set(state.index) : demoCommandBox.selection.clear()
-									}}
 									onClick={() => {
-										demoCommandBox.execute(entry.id)
-										commandBoxUi.focused = false
+										props.commandBox.execute(entry.id)
+										props.onEscapeOrExecute()
 									}}
 								>
 									<span class="palette-demo-command-result-copy">
@@ -881,11 +1137,93 @@ function CommandBoxEditor({
 	)
 }
 
+function CommandBoxEditor({ item }: PaletteEditorContext<Extract<PaletteTool, { run(): void }>>) {
+	const meta = toolbarMeta(item)
+	let root: HTMLDivElement | undefined
+	const ui = {
+		get expanded() {
+			return (
+				toolbarCommandBoxUi.focused ||
+				toolbarCommandBox.input.value.length > 0 ||
+				toolbarCommandBox.keywords.tokens.length > 0 ||
+				toolbarCommandBox.categories.active.length > 0
+			)
+		},
+	}
+
+	return (
+		<div this={root}>
+			<CommandBox
+				commandBox={toolbarCommandBox}
+				editable={false}
+				icon={meta.icon ?? '⌘'}
+				title={tooltip(item, meta.hint)}
+				expanded={ui.expanded}
+				floating
+				onInputFocus={() => {
+					toolbarCommandBoxUi.focused = true
+				}}
+				onInputBlur={(event) => {
+					const next = event.relatedTarget instanceof Node ? event.relatedTarget : undefined
+					if (next && root?.contains(next)) return
+					toolbarCommandBoxUi.focused = false
+				}}
+				onEscapeOrExecute={() => {
+					toolbarCommandBoxUi.focused = false
+				}}
+			/>
+		</div>
+	)
+}
+
+function CommandBoxPopup() {
+	let root: HTMLDivElement | undefined
+	let input: HTMLInputElement | undefined
+
+	return (
+		<div
+			class="palette-demo-command-overlay"
+			onMousedown={(event: MouseEvent) => {
+				if (event.target === event.currentTarget) closeCommandBoxPopup()
+			}}
+		>
+			<div this={root} class="palette-demo-command-panel">
+				<CommandBox
+					expanded
+					commandBox={popupCommandBox}
+					editable
+					palette={demoPalette}
+					onInputFocus={() => {
+						popupCommandBoxUi.focused = true
+					}}
+					onInputBlur={(event) => {
+						const next = event.relatedTarget instanceof Node ? event.relatedTarget : undefined
+						if (next && root?.contains(next)) return
+						closeCommandBoxPopup()
+					}}
+					onEscapeOrExecute={() => {
+						closeCommandBoxPopup()
+					}}
+					onInputMount={(mounted) => {
+						input = mounted
+						requestAnimationFrame(() => input?.focus())
+					}}
+					onSuggestionPick={() => {
+						input?.focus()
+					}}
+				/>
+			</div>
+		</div>
+	)
+}
+
 const demoEditors: NonNullable<Palette['editors']> = {
 	boolean: {
 		toggle: { editor: ToggleEditor, flags: { footprint: 'square' } },
 	},
 	enum: {
+		flip: { editor: FlipEditor, flags: { footprint: 'square' } },
+		radio: { editor: RadioEditor, flags: { footprint: 'free' } },
 		select: { editor: SelectEditor, flags: { footprint: 'horizontal' } },
 		segmented: { editor: SegmentedEditor, flags: { footprint: 'free' } },
 		splitRadio: { editor: SplitRadioEditor, flags: { footprint: 'free' } },
@@ -1036,7 +1374,19 @@ const demoPalette: Palette = {
 				return true
 			},
 			run() {
-				commandBoxUi.focused = true
+				toolbarCommandBoxUi.focused = true
+			},
+		},
+		terminal: {
+			label: 'Terminal',
+			icon: '`',
+			categories: ['run'],
+			keywords: ['terminal', 'magic', 'popup'],
+			get can() {
+				return true
+			},
+			run() {
+				openCommandBoxPopup()
 			},
 		},
 		reset: {
@@ -1084,6 +1434,7 @@ const demoPalette: Palette = {
 		},
 	},
 	keys: createPaletteKeys({
+		'`': 'terminal',
 		N: 'notifications',
 		L: 'layout|vertical',
 		H: 'layout|horizontal',
@@ -1106,10 +1457,15 @@ const demoPalette: Palette = {
 
 const demoCommandEntries = paletteCommandEntries({
 	palette: demoPalette,
-	excludeTools: ['commandBox'],
+	excludeTools: ['commandBox', 'terminal'],
 })
 
-const demoCommandBox = paletteCommandBoxModel({
+const toolbarCommandBox = paletteCommandBoxModel({
+	entries: demoCommandEntries,
+	placeholder: 'Command…',
+})
+
+const popupCommandBox = paletteCommandBoxModel({
 	entries: demoCommandEntries,
 	placeholder: 'Command…',
 })
@@ -1131,60 +1487,66 @@ export default function PaletteDemo() {
 			center:class="palette-demo-center"
 			border:class="palette-demo-border"
 			track:class="palette-demo-track"
+			space:class="palette-demo-drop-zone"
 			toolbar:class="palette-demo-toolbar"
 		>
-			<div class="palette-demo-hero">
-				<div class="palette-demo-hero-copy">
-					<strong>Compact palette playground</strong>
-					<span>
-						Toolbar-first examples: icons, tooltips, split controls, select, slider, stars.
-					</span>
-				</div>
-				<div class={['palette-demo-hero-chip', `is-${statusTone.value}`]}>
-					{demoState.notifications ? notificationDisplay.on.icon : notificationDisplay.off.icon}{' '}
-					{demoState.notifications ? notificationDisplay.on.label : notificationDisplay.off.label}
-				</div>
-			</div>
-			<div class="palette-demo-strip">
-				<div class="palette-demo-pill">
-					{layoutDisplay[demoState.layout].icon} {layoutDisplay[demoState.layout].label}
-				</div>
-				<div class="palette-demo-pill">
-					{modeDisplay[demoState.mode].icon} {modeDisplay[demoState.mode].label}
-				</div>
-				<div class="palette-demo-pill">
-					{themeDisplay[demoState.theme].icon} {themeDisplay[demoState.theme].label}
-				</div>
-				<div class="palette-demo-pill">A {demoState.fontSize}px</div>
-				<div class="palette-demo-pill">★ x{demoState.gameSpeed}</div>
-			</div>
-			<div class="palette-demo-panel">
-				<div class="palette-demo-panel-title">Live state</div>
-				<div class="palette-demo-state-grid">
-					<div class="palette-demo-state-row">
-						<span class="palette-demo-state-key">Last action</span>
-						<span class="palette-demo-state-value">{demoState.lastAction}</span>
-					</div>
-					<div class="palette-demo-state-row">
-						<span class="palette-demo-state-key">Theme</span>
-						<span class="palette-demo-state-value">
-							{themeDisplay[demoState.theme].icon} {themeDisplay[demoState.theme].label}
+			<div
+				class={['palette-demo-center-content', popupCommandBoxUi.open ? 'is-dimmed' : undefined]}
+			>
+				<div class="palette-demo-hero">
+					<div class="palette-demo-hero-copy">
+						<strong>Compact palette playground</strong>
+						<span>
+							Toolbar-first examples: icons, tooltips, split controls, select, slider, stars.
 						</span>
 					</div>
-					<div class="palette-demo-state-row">
-						<span class="palette-demo-state-key">Mode</span>
-						<span class="palette-demo-state-value">
-							{modeDisplay[demoState.mode].icon} {modeDisplay[demoState.mode].label}
-						</span>
+					<div class={['palette-demo-hero-chip', `is-${statusTone.value}`]}>
+						{demoState.notifications ? notificationDisplay.on.icon : notificationDisplay.off.icon}{' '}
+						{demoState.notifications ? notificationDisplay.on.label : notificationDisplay.off.label}
 					</div>
-					<div class="palette-demo-state-row">
-						<span class="palette-demo-state-key">Layout</span>
-						<span class="palette-demo-state-value">
-							{layoutDisplay[demoState.layout].icon} {layoutDisplay[demoState.layout].label}
-						</span>
+				</div>
+				<div class="palette-demo-strip">
+					<div class="palette-demo-pill">
+						{layoutDisplay[demoState.layout].icon} {layoutDisplay[demoState.layout].label}
+					</div>
+					<div class="palette-demo-pill">
+						{modeDisplay[demoState.mode].icon} {modeDisplay[demoState.mode].label}
+					</div>
+					<div class="palette-demo-pill">
+						{themeDisplay[demoState.theme].icon} {themeDisplay[demoState.theme].label}
+					</div>
+					<div class="palette-demo-pill">A {demoState.fontSize}px</div>
+					<div class="palette-demo-pill">★ x{demoState.gameSpeed}</div>
+				</div>
+				<div class="palette-demo-panel">
+					<div class="palette-demo-panel-title">Live state</div>
+					<div class="palette-demo-state-grid">
+						<div class="palette-demo-state-row">
+							<span class="palette-demo-state-key">Last action</span>
+							<span class="palette-demo-state-value">{demoState.lastAction}</span>
+						</div>
+						<div class="palette-demo-state-row">
+							<span class="palette-demo-state-key">Theme</span>
+							<span class="palette-demo-state-value">
+								{themeDisplay[demoState.theme].icon} {themeDisplay[demoState.theme].label}
+							</span>
+						</div>
+						<div class="palette-demo-state-row">
+							<span class="palette-demo-state-key">Mode</span>
+							<span class="palette-demo-state-value">
+								{modeDisplay[demoState.mode].icon} {modeDisplay[demoState.mode].label}
+							</span>
+						</div>
+						<div class="palette-demo-state-row">
+							<span class="palette-demo-state-key">Layout</span>
+							<span class="palette-demo-state-value">
+								{layoutDisplay[demoState.layout].icon} {layoutDisplay[demoState.layout].label}
+							</span>
+						</div>
 					</div>
 				</div>
 			</div>
+			<CommandBoxPopup if={popupCommandBoxUi.open} />
 		</Ide>
 	)
 }
@@ -1222,6 +1584,7 @@ componentStyle.css`
 
 	.palette-demo-border {
 		position: relative;
+		z-index: 2;
 		padding: 6px;
 		border: 1px solid rgba(71, 85, 105, 0.55);
 		border-radius: 16px;
@@ -1230,23 +1593,61 @@ componentStyle.css`
 		box-sizing: border-box;
 	}
 
-	.palette-demo-root > .palette-demo-border.palette-horizontal {
-		z-index: 2;
-	}
-
 	.palette-demo-root > .palette-ide-middle {
 		position: relative;
 		z-index: 1;
 	}
 
 	.palette-demo-track {
-		gap: 6px;
+		gap: 0;
 		align-items: stretch;
 	}
 
+	.palette-demo-drop-zone {
+		position: relative;
+		min-inline-size: 0;
+		min-block-size: 0;
+		border-radius: 10px;
+		transition:
+			min-inline-size 120ms ease,
+			min-block-size 120ms ease,
+			background 120ms ease,
+			box-shadow 120ms ease;
+	}
+
+	.palette-demo-root.palette-dragging .palette-demo-border.palette-horizontal .palette-demo-drop-zone:hover {
+		min-inline-size: 1rem;
+	}
+
+	.palette-demo-root.palette-dragging .palette-demo-border.palette-vertical .palette-demo-drop-zone:hover {
+		min-block-size: 1rem;
+	}
+
+	.palette-demo-root.palette-dragging .palette-demo-border.palette-horizontal .palette-demo-drop-zone[data-proximity='true'] {
+		min-inline-size: 1rem;
+	}
+
+	.palette-demo-root.palette-dragging .palette-demo-border.palette-vertical .palette-demo-drop-zone[data-proximity='true'] {
+		min-block-size: 1rem;
+	}
+
+	.palette-demo-root.palette-dragging .palette-demo-drop-zone:hover,
+	.palette-demo-root.palette-dragging .palette-demo-drop-zone[data-proximity='true'] {
+		background: rgba(59, 130, 246, 0.08);
+	}
+
+	.palette-demo-root.palette-dragging .palette-demo-drop-zone[data-active='true'] {
+		background: rgba(59, 130, 246, 0.16);
+		box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.55);
+	}
+
+	.palette-demo-root.palette-editing .palette-demo-toolbar {
+		cursor: grab;
+	}
+
 	.palette-demo-toolbar {
-		gap: 6px;
-		padding: 4px;
+		gap: 0;
+		padding: 3px;
 		position: relative;
 		box-sizing: border-box;
 	}
@@ -1285,13 +1686,24 @@ componentStyle.css`
 	}
 
 	.palette-demo-center {
+		position: relative;
+		min-height: 0;
+		overflow: auto;
+	}
+
+	.palette-demo-center-content {
 		display: grid;
 		grid-auto-rows: max-content;
 		gap: 10px;
 		padding: 6px;
 		align-content: start;
-		min-height: 0;
-		overflow: auto;
+		min-height: 100%;
+		box-sizing: border-box;
+	}
+
+	.palette-demo-center-content.is-dimmed {
+		opacity: 0.35;
+		transition: opacity 140ms ease;
 	}
 
 	.palette-demo-hero,
@@ -1412,6 +1824,7 @@ componentStyle.css`
 		align-items: center;
 		justify-content: center;
 		gap: 6px;
+		line-height: 1;
 		border: 1px solid rgba(71, 85, 105, 0.95);
 		background: linear-gradient(180deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
 		color: inherit;
@@ -1475,8 +1888,33 @@ componentStyle.css`
 		transition: inline-size 140ms ease;
 	}
 
+	.palette-demo-command-overlay {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		padding: 1rem;
+		background: transparent;
+		z-index: 40;
+		box-sizing: border-box;
+	}
+
+	.palette-demo-command-panel {
+		inline-size: min(32rem, calc(100vw - 2rem));
+		padding: 10px;
+		border: 1px solid rgba(71, 85, 105, 0.92);
+		border-radius: 18px;
+		background: #020617;
+		box-shadow: 0 22px 44px rgba(2, 6, 23, 0.42);
+		box-sizing: border-box;
+	}
+
 	.palette-demo-command-box.is-expanded {
-		inline-size: 20rem;
+		inline-size: 100%;
+	}
+
+	.palette-demo-command-box.is-floating {
+		z-index: 5;
 	}
 
 	.palette-demo-command-shell {
@@ -1538,9 +1976,8 @@ componentStyle.css`
 	}
 
 	.palette-demo-command-popover {
-		position: absolute;
-		top: calc(100% + 6px);
-		left: 0;
+		position: relative;
+		margin-top: 6px;
 		display: grid;
 		gap: 8px;
 		inline-size: 100%;
@@ -1551,6 +1988,13 @@ componentStyle.css`
 		box-shadow: 0 16px 32px rgba(2, 6, 23, 0.35);
 		z-index: 3;
 		box-sizing: border-box;
+	}
+
+	.palette-demo-command-box.is-floating .palette-demo-command-popover {
+		position: absolute;
+		inset-inline: 0;
+		top: calc(100% + 6px);
+		inline-size: max(18rem, 100%);
 	}
 
 	.palette-demo-command-suggestions,
@@ -1602,6 +2046,7 @@ componentStyle.css`
 	}
 
 	.palette-demo-select,
+	.palette-demo-radio-group,
 	.palette-demo-slider,
 	.palette-demo-stepper,
 	.palette-demo-stars,
@@ -1609,15 +2054,16 @@ componentStyle.css`
 	.palette-demo-split {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
+		gap: 0;
 		position: relative;
 	}
 
 	.palette-demo-select,
+	.palette-demo-radio-group,
 	.palette-demo-slider,
 	.palette-demo-stepper,
 	.palette-demo-stars {
-		padding: 6px 8px;
+		padding: 3px;
 		border: 1px solid rgba(71, 85, 105, 0.95);
 		border-radius: 12px;
 		background: rgba(15, 23, 42, 0.88);
@@ -1631,15 +2077,116 @@ componentStyle.css`
 
 	.palette-demo-select select {
 		min-width: 0;
-		padding: 0.42rem 0.6rem;
-		border-radius: 8px;
+		padding: 0.42rem 0.72rem;
+		border-radius: 9px;
 		border: 1px solid rgba(71, 85, 105, 0.95);
 		background: rgba(15, 23, 42, 0.96);
 		color: inherit;
 	}
 
+	.palette-demo-select > .palette-demo-icon,
+	.palette-demo-slider > .palette-demo-icon,
+	.palette-demo-stars > .palette-demo-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-inline-size: 2rem;
+		padding-inline: 0.55rem;
+	}
+
 	.palette-demo-slider input[type='range'] {
 		inline-size: clamp(64px, 9vw, 110px);
+	}
+
+	.palette-demo-slider.palette-demo-layout-vertical {
+		inline-size: 2.375rem;
+		block-size: 2.375rem;
+		padding: 0;
+		position: relative;
+		overflow: visible;
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+		border-top-right-radius: 12px;
+		border-bottom-right-radius: 12px;
+		transition:
+			box-shadow 120ms ease;
+	}
+
+	.palette-demo-slider.palette-demo-layout-vertical.palette-demo-region-left {
+		border-top-left-radius: 12px;
+		border-bottom-left-radius: 12px;
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+	}
+
+	.palette-demo-slider.palette-demo-layout-vertical::before {
+		content: '';
+		position: absolute;
+		inset-block: 0;
+		inset-inline-end: calc(100% - 1px);
+		inline-size: 5.875rem;
+		border: 1px solid rgba(71, 85, 105, 0.9);
+		border-radius: 12px 0 0 12px;
+		background: rgba(2, 6, 23, 0.98);
+		box-shadow: 0 16px 32px rgba(2, 6, 23, 0.35);
+		opacity: 0;
+		pointer-events: none;
+		transform: translateX(0.4rem);
+		transition:
+			transform 140ms ease,
+			opacity 120ms ease;
+	}
+
+	.palette-demo-slider.palette-demo-layout-vertical:hover::before,
+	.palette-demo-slider.palette-demo-layout-vertical:focus-within::before {
+		opacity: 1;
+		transform: translateX(0);
+	}
+
+	.palette-demo-slider.palette-demo-layout-vertical > .palette-demo-icon {
+		min-inline-size: 2.375rem;
+		block-size: 2.375rem;
+		padding-inline: 0;
+		position: relative;
+		z-index: 1;
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+		border-top-right-radius: 12px;
+		border-bottom-right-radius: 12px;
+	}
+
+	.palette-demo-slider.palette-demo-layout-vertical.palette-demo-region-left > .palette-demo-icon {
+		border-top-left-radius: 12px;
+		border-bottom-left-radius: 12px;
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+	}
+
+	.palette-demo-slider.palette-demo-layout-vertical > input[type='range'] {
+		position: absolute;
+		inset-block: 0;
+		inset-inline-end: calc(100% - 1px);
+		inline-size: 5.875rem;
+		margin: 0;
+		padding: 0 0.72rem 0 0.9rem;
+		box-sizing: border-box;
+		z-index: 2;
+		background: transparent;
+		border: 0;
+		border-radius: 0;
+		opacity: 0;
+		pointer-events: none;
+		transform: translateX(0.4rem);
+		transition:
+			transform 140ms ease,
+			opacity 120ms ease;
+	}
+
+	.palette-demo-slider.palette-demo-layout-vertical:hover > input[type='range'],
+	.palette-demo-slider.palette-demo-layout-vertical:focus-within > input[type='range'] {
+		opacity: 1;
+		pointer-events: auto;
+		transform: translateX(0);
 	}
 
 	.palette-demo-stepper {
@@ -1652,7 +2199,39 @@ componentStyle.css`
 		justify-content: center;
 		gap: 6px;
 		min-inline-size: 3.2rem;
+		padding-inline: 0.72rem;
 		font-weight: 600;
+	}
+
+	.palette-demo-radio-group {
+		flex-wrap: wrap;
+	}
+
+	.palette-demo-radio-label {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 0.82rem;
+		font-weight: 700;
+		color: #94a3b8;
+	}
+
+	.palette-demo-radio-item {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 0.42rem 0.55rem;
+		border: 1px solid rgba(71, 85, 105, 0.95);
+		border-radius: 9px;
+		background: rgba(15, 23, 42, 0.94);
+		color: inherit;
+		cursor: pointer;
+		font: inherit;
+	}
+
+	.palette-demo-radio-item.is-selected {
+		border-color: rgba(96, 165, 250, 0.95);
+		box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.4) inset;
 	}
 
 	.palette-demo-stars-row {
@@ -1661,6 +2240,7 @@ componentStyle.css`
 		align-items: center;
 	}
 
+	.palette-demo-radio-group.palette-demo-layout-vertical,
 	.palette-demo-segmented.palette-demo-layout-vertical,
 	.palette-demo-stepper.palette-demo-layout-vertical,
 	.palette-demo-split.palette-demo-layout-vertical,
@@ -1686,8 +2266,155 @@ componentStyle.css`
 		width: 2rem;
 		height: 2rem;
 		padding: 0;
-		border-radius: 10px;
+		border-radius: 0 9px 9px 0;
 		cursor: pointer;
+		font-size: 0.82rem;
+		line-height: 1;
+	}
+
+	.palette-demo-split.palette-demo-layout-vertical > .palette-demo-trigger {
+		border-radius: 9px 9px 0 0;
+	}
+
+	.palette-demo-split > .palette-demo-tool,
+	.palette-demo-split > .palette-demo-trigger {
+		height: 2rem;
+	}
+
+	.palette-demo-split-button > .palette-demo-trigger {
+		width: 1.72rem;
+		font-size: 0.74rem;
+	}
+
+	.palette-demo-split-button > .palette-demo-tool {
+		height: 2rem;
+		padding-block: 0;
+	}
+
+	.palette-demo-split.palette-demo-layout-vertical > .palette-demo-tool,
+	.palette-demo-split.palette-demo-layout-vertical > .palette-demo-trigger {
+		width: 2.375rem;
+		height: 2.375rem;
+		padding: 0;
+	}
+
+	.palette-demo-split-radio.palette-demo-layout-vertical > .palette-demo-trigger {
+		width: 2.3rem;
+		font-size: 0.98rem;
+	}
+
+	.palette-demo-toolbar > * + * {
+		margin-inline-start: -1px;
+	}
+
+	.palette-demo-toolbar.palette-vertical > * + *,
+	.palette-demo-border.palette-vertical .palette-demo-toolbar > * + * {
+		margin-inline-start: 0;
+		margin-block-start: -1px;
+	}
+
+	.palette-demo-split > .palette-demo-tool,
+	.palette-demo-split > .palette-demo-trigger,
+	.palette-demo-segmented > .palette-demo-tool,
+	.palette-demo-stepper > .palette-demo-tool,
+	.palette-demo-stepper-value,
+	.palette-demo-select > .palette-demo-icon,
+	.palette-demo-select > select,
+	.palette-demo-slider > .palette-demo-icon,
+	.palette-demo-slider > input,
+	.palette-demo-stars > .palette-demo-icon,
+	.palette-demo-stars > .palette-demo-stars-row,
+	.palette-demo-radio-group > .palette-demo-radio-item {
+		margin-inline-start: -1px;
+	}
+
+	.palette-demo-split > :first-child,
+	.palette-demo-segmented > :first-child,
+	.palette-demo-stepper > :first-child,
+	.palette-demo-select > :first-child,
+	.palette-demo-slider > :first-child,
+	.palette-demo-stars > :first-child,
+	.palette-demo-radio-group > .palette-demo-radio-item:first-of-type {
+		margin-inline-start: 0;
+	}
+
+	.palette-demo-split > :first-child,
+	.palette-demo-stepper > :first-child,
+	.palette-demo-select > :first-child,
+	.palette-demo-slider > :first-child,
+	.palette-demo-stars > :first-child {
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+	}
+
+	.palette-demo-split > :last-child,
+	.palette-demo-stepper > :last-child,
+	.palette-demo-select > :last-child,
+	.palette-demo-slider > :last-child,
+	.palette-demo-stars > :last-child {
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+	}
+
+	.palette-demo-stepper > :not(:first-child):not(:last-child),
+	.palette-demo-select > :not(:first-child):not(:last-child),
+	.palette-demo-slider > :not(:first-child):not(:last-child),
+	.palette-demo-stars > :not(:first-child):not(:last-child) {
+		border-radius: 0;
+	}
+
+	.palette-demo-segmented > :not(:first-child) {
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+	}
+
+	.palette-demo-segmented > :not(:last-child) {
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+	}
+
+	.palette-demo-split.palette-demo-layout-vertical > .palette-demo-tool,
+	.palette-demo-split.palette-demo-layout-vertical > .palette-demo-trigger,
+	.palette-demo-segmented.palette-demo-layout-vertical > .palette-demo-tool,
+	.palette-demo-stepper.palette-demo-layout-vertical > .palette-demo-tool,
+	.palette-demo-stepper.palette-demo-layout-vertical > .palette-demo-stepper-value,
+	.palette-demo-stars.palette-demo-layout-vertical > .palette-demo-icon,
+	.palette-demo-stars.palette-demo-layout-vertical > .palette-demo-stars-row {
+		margin-inline-start: 0;
+		margin-block-start: -1px;
+	}
+
+	.palette-demo-split.palette-demo-layout-vertical > :first-child,
+	.palette-demo-segmented.palette-demo-layout-vertical > :first-child,
+	.palette-demo-stepper.palette-demo-layout-vertical > :first-child,
+	.palette-demo-stars.palette-demo-layout-vertical > :first-child {
+		margin-block-start: 0;
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 9px;
+	}
+
+	.palette-demo-split.palette-demo-layout-vertical > :last-child,
+	.palette-demo-stepper.palette-demo-layout-vertical > :last-child,
+	.palette-demo-stars.palette-demo-layout-vertical > :last-child {
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
+		border-top-left-radius: 9px;
+	}
+
+	.palette-demo-stepper.palette-demo-layout-vertical > :not(:first-child):not(:last-child),
+	.palette-demo-stars.palette-demo-layout-vertical > :not(:first-child):not(:last-child) {
+		border-radius: 0;
+	}
+
+	.palette-demo-segmented.palette-demo-layout-vertical > :not(:first-child) {
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
+	}
+
+	.palette-demo-segmented.palette-demo-layout-vertical > :not(:last-child) {
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
 	}
 
 	.palette-demo-menu {
@@ -1705,10 +2432,20 @@ componentStyle.css`
 		z-index: 2;
 	}
 
-	.palette-demo-menu.palette-demo-layout-vertical {
+	.palette-demo-menu.palette-demo-region-bottom {
+		top: auto;
+		bottom: calc(100% + 6px);
+	}
+
+	.palette-demo-menu.palette-demo-region-left {
 		top: 0;
 		right: auto;
 		left: calc(100% + 6px);
+	}
+
+	.palette-demo-menu.palette-demo-region-right {
+		top: 0;
+		right: calc(100% + 6px);
 	}
 
 	.palette-demo-menu[hidden] {
@@ -1732,9 +2469,12 @@ componentStyle.css`
 	.palette-demo-root.palette-demo-theme-light .palette-demo-trigger,
 	.palette-demo-root.palette-demo-theme-light .palette-demo-menu-item,
 	.palette-demo-root.palette-demo-theme-light .palette-demo-select,
+	.palette-demo-root.palette-demo-theme-light .palette-demo-radio-group,
+	.palette-demo-root.palette-demo-theme-light .palette-demo-radio-item,
 	.palette-demo-root.palette-demo-theme-light .palette-demo-slider,
 	.palette-demo-root.palette-demo-theme-light .palette-demo-stepper,
 	.palette-demo-root.palette-demo-theme-light .palette-demo-stars,
+	.palette-demo-root.palette-demo-theme-light .palette-demo-command-panel,
 	.palette-demo-root.palette-demo-theme-light .palette-demo-command-shell,
 	.palette-demo-root.palette-demo-theme-light .palette-demo-command-chip,
 	.palette-demo-root.palette-demo-theme-light .palette-demo-command-suggestion,
@@ -1748,9 +2488,20 @@ componentStyle.css`
 		color: #0f172a;
 	}
 
+	.palette-demo-root.palette-demo-theme-light .palette-demo-tool.is-selected,
+	.palette-demo-root.palette-demo-theme-light .palette-demo-menu-item.is-selected,
+	.palette-demo-root.palette-demo-theme-light .palette-demo-command-result.is-selected,
+	.palette-demo-root.palette-demo-theme-light .palette-demo-command-result:hover:not(:disabled),
+	.palette-demo-root.palette-demo-theme-light .palette-demo-radio-item.is-selected {
+		border-color: #60a5fa;
+		background: #1d4ed8;
+		color: #eff6ff;
+	}
+
 	.palette-demo-root.palette-demo-theme-light .palette-demo-hero-copy span,
 	.palette-demo-root.palette-demo-theme-light .palette-demo-panel-title,
 	.palette-demo-root.palette-demo-theme-light .palette-demo-state-key,
+	.palette-demo-root.palette-demo-theme-light .palette-demo-radio-label,
 	.palette-demo-root.palette-demo-theme-light .palette-demo-command-result-meta,
 	.palette-demo-root.palette-demo-theme-light .palette-demo-command-empty,
 	.palette-demo-root.palette-demo-theme-light .palette-demo-command-input::placeholder {
