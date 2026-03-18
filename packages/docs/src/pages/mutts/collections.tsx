@@ -5,13 +5,17 @@ const morphSnippet = `import { morph } from 'mutts'
 const source = reactive([1, 2, 3])
 
 // Each item gets a "dedicated worker" (effect)
-const doubled = morph(source, ({ value }) => {
-  console.log(\`Processing \${value}\`)
-  return value * 2
+// Arrays now receive (item, position) for index tracking
+const doubled = morph(source, (item, position) => {
+  console.log(\`Processing \${item} at index \${position.index}\`)
+  return item * 2
 })
 
-source.push(4) // Only "Processing 4" is logged
-source[0] = 10 // Only "Processing 10" is logged`
+source.push(4) // Only "Processing 4 at index 3" is logged
+source[0] = 10 // Only "Processing 10 at index 0" is logged
+
+// Position.index updates reactively during reorders
+source.unshift(0) // position.index for all items shifts automatically`
 
 export default function MuttsCollectionsPage() {
 	return (

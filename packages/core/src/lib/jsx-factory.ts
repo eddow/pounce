@@ -1,4 +1,14 @@
-import { caught, effect, isReactive, lift, link, morph, reactive, unreactive } from 'mutts'
+import {
+	caught,
+	effect,
+	isReactive,
+	lift,
+	link,
+	type MorphPosition,
+	morph,
+	reactive,
+	unreactive,
+} from 'mutts'
 import { perf } from '../perf'
 import { document } from '../shared'
 import {
@@ -41,7 +51,8 @@ export const intrinsicComponentAliases = extend(null, {
 				`[sursaut] Invalid children for 'for' component: ${JSON.stringify(props.children)}. Children must evaluate to one function.`
 			)
 		const body = collapse(Array.isArray(props.children) ? props.children[0] : props.children) as (
-			item: T
+			item: T,
+			position: MorphPosition
 		) => Children
 		if (typeof body !== 'function') {
 			throw new DynamicRenderingError(
@@ -49,10 +60,10 @@ export const intrinsicComponentAliases = extend(null, {
 			)
 		}
 		// Lock to fence on purpose
-		const forIter = (item: T) => {
+		const forIter = (item: T, position: MorphPosition) => {
 			perfCounters.forIterations++
 			perf?.mark('for:iter:start')
-			const res = body(item)
+			const res = body(item, position)
 			perf?.mark('for:iter:end')
 			perf?.measure('for:iter', 'for:iter:start', 'for:iter:end')
 			return res

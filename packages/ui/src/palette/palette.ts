@@ -1,9 +1,11 @@
 import { effect, reactive } from 'mutts'
 import type {
 	Palette,
+	PaletteBorder,
 	PaletteEditableTool,
 	PaletteEditableToolByFamily,
 	PaletteEditorSpec,
+	PaletteRegion,
 	PaletteScope,
 	PaletteTool,
 	PaletteToolbar,
@@ -200,7 +202,21 @@ export function paletteTool(palette: Palette, runnerDesc: string): PaletteTool {
 }
 
 export const palettes = reactive<{
-	dragging?: { index: number; palette: Palette; toolbar: PaletteToolbar; track: PaletteTrack }
+	dragging?: {
+		border: PaletteBorder
+		createdTracks: PaletteTrack[]
+		index: number
+		palette: Palette
+		region: PaletteRegion
+		sourceBorder: PaletteBorder
+		sourceRegion: PaletteRegion
+		sourceTrack: PaletteTrack
+		sourceTrackIndex: number
+		sourceTrackWasSingleton: boolean
+		toolbar: PaletteToolbar
+		track: PaletteTrack
+		trackIndex: number
+	}
 	editing?: Palette
 }>({})
 

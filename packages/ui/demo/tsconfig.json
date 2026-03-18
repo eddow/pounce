@@ -9,6 +9,5 @@
 			"@sursaut/ui/dockview": ["../src/dockview.ts"]
 		}
 	},
-	"include": ["./**/*"],
-	"exclude": ["./components/old-PaletteDemo.tsx"]
+	"include": ["./**/*"]
 }

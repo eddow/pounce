@@ -396,7 +396,7 @@ declare global {
 
 		interface ForElementProps<T = any> {
 			each: readonly T[]
-			children: (item: T, oldItem?: JSX.Element) => JSX.Element | null | undefined | false
+			children: (item: T, position: MorphPosition) => JSX.Element | null | undefined | false
 		}
 
 		interface IntrinsicElements

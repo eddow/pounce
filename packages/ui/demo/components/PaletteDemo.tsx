@@ -1551,6 +1551,7 @@ export default function PaletteDemo() {
 	)
 }
 
+// TODO: All this css will have to be in ui/palette
 componentStyle.css`
 	.palette-demo-root {
 		display: flex;
@@ -1615,6 +1616,29 @@ componentStyle.css`
 			box-shadow 120ms ease;
 	}
 
+	.toolbar-stack-space.palette-demo-drop-zone::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		border-radius: inherit;
+		opacity: 0;
+		transition:
+			opacity 120ms ease,
+			border-color 120ms ease,
+			box-shadow 120ms ease;
+	}
+
+	.palette-demo-root.palette-dragging .palette-demo-border.palette-horizontal .toolbar-stack-space.palette-demo-drop-zone::before {
+		border-top: 1px dotted rgba(96, 165, 250, 0.7);
+		border-bottom: 1px dotted rgba(96, 165, 250, 0.7);
+	}
+
+	.palette-demo-root.palette-dragging .palette-demo-border.palette-vertical .toolbar-stack-space.palette-demo-drop-zone::before {
+		border-left: 1px dotted rgba(96, 165, 250, 0.7);
+		border-right: 1px dotted rgba(96, 165, 250, 0.7);
+	}
+
 	.palette-demo-root.palette-dragging .palette-demo-border.palette-horizontal .palette-demo-drop-zone:hover {
 		min-inline-size: 1rem;
 	}
@@ -1629,6 +1653,26 @@ componentStyle.css`
 
 	.palette-demo-root.palette-dragging .palette-demo-border.palette-vertical .palette-demo-drop-zone[data-proximity='true'] {
 		min-block-size: 1rem;
+	}
+
+	.palette-demo-root.palette-dragging .palette-demo-border.palette-horizontal .toolbar-stack-space.palette-demo-drop-zone[data-proximity='true'] {
+		min-block-size: 1rem;
+	}
+
+	.palette-demo-root.palette-dragging .palette-demo-border.palette-vertical .toolbar-stack-space.palette-demo-drop-zone[data-proximity='true'] {
+		min-inline-size: 1rem;
+	}
+
+	.palette-demo-root.palette-dragging .toolbar-stack-space.palette-demo-drop-zone[data-proximity='true']::before {
+		opacity: 1;
+		box-shadow: 0 0 10px rgba(96, 165, 250, 0.22);
+	}
+
+	.palette-demo-root.palette-dragging .toolbar-stack-space.palette-demo-drop-zone[data-active='true']::before {
+		opacity: 1;
+		box-shadow:
+			0 0 14px rgba(96, 165, 250, 0.32),
+			inset 0 0 0 1px rgba(147, 197, 253, 0.4);
 	}
 
 	.palette-demo-root.palette-dragging .palette-demo-drop-zone:hover,
@@ -2137,6 +2181,13 @@ componentStyle.css`
 			opacity 120ms ease;
 	}
 
+	.palette-demo-slider.palette-demo-layout-vertical.palette-demo-region-left::before {
+		inset-inline-end: auto;
+		inset-inline-start: calc(100% - 1px);
+		border-radius: 0 12px 12px 0;
+		transform: translateX(-0.4rem);
+	}
+
 	.palette-demo-slider.palette-demo-layout-vertical:hover::before,
 	.palette-demo-slider.palette-demo-layout-vertical:focus-within::before {
 		opacity: 1;
@@ -2180,6 +2231,13 @@ componentStyle.css`
 		transition:
 			transform 140ms ease,
 			opacity 120ms ease;
+	}
+
+	.palette-demo-slider.palette-demo-layout-vertical.palette-demo-region-left > input[type='range'] {
+		inset-inline-end: auto;
+		inset-inline-start: calc(100% - 1px);
+		padding: 0 0.9rem 0 0.72rem;
+		transform: translateX(-0.4rem);
 	}
 
 	.palette-demo-slider.palette-demo-layout-vertical:hover > input[type='range'],

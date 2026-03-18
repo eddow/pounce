@@ -73,7 +73,7 @@ export type PaletteToolbar = {
 
 export type PaletteTrack = { space: number; toolbar: PaletteToolbar }[]
 
-export type PaletteBorder = readonly PaletteTrack[]
+export type PaletteBorder = PaletteTrack[]
 
 export type PaletteRegion = 'top' | 'right' | 'bottom' | 'left'
 
