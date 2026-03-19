@@ -1,5 +1,5 @@
 import { rootEnv } from '@sursaut/core'
-import { effect, reactive } from 'mutts'
+import { effect, reactive, unwrap } from 'mutts'
 import {
 	localDragAxisEnd,
 	localDragAxisStart,
@@ -10,21 +10,14 @@ import {
 } from '../directives'
 import type { ArrangedOrientation } from '../shared/types'
 import { arranged } from '../shared/utils'
-import {
-	hasPaletteItemTool,
-	isEditableTool,
-	isEditing,
-	isRunTool,
-	PaletteError,
-	palettes,
-	paletteTool,
-	renderPaletteEditor,
-} from './palette'
+import { hasPaletteItemTool, isEditableTool, isRunTool, PaletteError, palettes } from './palette'
 import type {
 	Palette,
 	PaletteBorder,
 	PaletteDragging,
+	PaletteItem,
 	PaletteRegion,
+	PaletteSchema,
 	PaletteScope,
 	PaletteToolbar,
 	PaletteToolbarItem,
@@ -46,6 +39,15 @@ type PaletteItemDrag = {
 	item: PaletteToolbarItem
 	itemIndex: number
 	palette: Palette
+	region: PaletteRegion
+	toolbar: PaletteToolbar
+	track: PaletteTrack
+	trackIndex: number
+}
+
+type PaletteDragOrigin = {
+	border: PaletteBorder
+	index: number
 	region: PaletteRegion
 	toolbar: PaletteToolbar
 	track: PaletteTrack
@@ -116,6 +118,60 @@ function dragAxis(direction: ArrangedOrientation): 'horizontal' | 'vertical' {
 	return direction === 'horizontal' ? 'horizontal' : 'vertical'
 }
 
+function axisValue(direction: ArrangedOrientation, point: { x: number; y: number }): number {
+	return direction === 'vertical' ? point.y : point.x
+}
+
+function rectAxisStart(
+	rect: Pick<DOMRectReadOnly, 'left' | 'top'>,
+	direction: ArrangedOrientation
+): number {
+	return direction === 'vertical' ? rect.top : rect.left
+}
+
+function rectAxisSpan(
+	rect: Pick<DOMRectReadOnly, 'width' | 'height'>,
+	direction: ArrangedOrientation
+): number {
+	return direction === 'vertical' ? rect.height : rect.width
+}
+
+function regionDirection(region: PaletteRegion): ArrangedOrientation {
+	return region === 'left' || region === 'right' ? 'vertical' : 'horizontal'
+}
+
+function draggingToolbarRect(dragging: PaletteDragging): DOMRectReadOnly | undefined {
+	for (const element of document.querySelectorAll<HTMLElement>('.toolbar[data-dragging="true"]')) {
+		if (element.dataset.paletteId !== dragging.palette.id) continue
+		if (!element.isConnected) continue
+		return element.getBoundingClientRect()
+	}
+	return undefined
+}
+
+function resizeDraggedToolbarFromPointer(
+	dragging: PaletteDragging,
+	direction: ArrangedOrientation,
+	point: { x: number; y: number },
+	anchor: number,
+	fallbackRect: DOMRectReadOnly | undefined,
+	fallbackDirection: ArrangedOrientation
+): void {
+	const rect =
+		draggingToolbarRect(dragging) ?? (direction === fallbackDirection ? fallbackRect : undefined)
+	if (!rect) return
+	const span = rectAxisSpan(rect, direction)
+	if (span <= 0) return
+	resizeToolbarFromPointer(
+		dragging.track,
+		dragging.index,
+		direction,
+		point,
+		Math.min(Math.max(anchor, 0), span),
+		span
+	)
+}
+
 function rectContainsPoint(
 	rect: Pick<DOMRectReadOnly, 'left' | 'right' | 'top' | 'bottom'>,
 	point: {
@@ -126,6 +182,16 @@ function rectContainsPoint(
 	return (
 		point.x >= rect.left && point.x <= rect.right && point.y >= rect.top && point.y <= rect.bottom
 	)
+}
+
+export interface ToolbarProps<TItem extends PaletteToolbarItem = PaletteToolbarItem> {
+	border?: PaletteBorder<TItem>
+	region?: PaletteRegion
+	toolbar: PaletteToolbar<TItem>
+	track?: PaletteTrack<TItem>
+	trackIndex?: number
+	direction: ArrangedOrientation
+	el?: JSX.IntrinsicElements['div']
 }
 
 function pointDistance(a: { x: number; y: number }, b: { x: number; y: number }): number {
@@ -191,6 +257,30 @@ function createToolbarDragging(target: PaletteToolbarDrag): PaletteDragging | un
 function createItemDragging(
 	target: PaletteItemDrag
 ): { dragging: PaletteDragging; target: PaletteToolbarDrag } | undefined {
+	if (target.toolbar.length === 1) {
+		const dragging = createToolbarDragging({
+			border: target.border,
+			direction: target.direction,
+			palette: target.palette,
+			region: target.region,
+			toolbar: target.toolbar,
+			track: target.track,
+			trackIndex: target.trackIndex,
+		})
+		if (!dragging) return undefined
+		return {
+			dragging,
+			target: {
+				border: target.border,
+				direction: target.direction,
+				palette: target.palette,
+				region: target.region,
+				toolbar: target.toolbar,
+				track: target.track,
+				trackIndex: target.trackIndex,
+			},
+		}
+	}
 	if (target.toolbar[target.itemIndex] !== target.item) return undefined
 	target.toolbar.splice(target.itemIndex, 1)
 	const toolbar = reactive<PaletteToolbar>([target.item])
@@ -227,25 +317,47 @@ function createItemDragging(
 	}
 }
 
+function hasPaletteDragMoved(dragging: PaletteDragging, origin: PaletteDragOrigin): boolean {
+	const preview = dragging.toolbarPreview
+	if (preview)
+		return unwrap(preview.toolbar) !== unwrap(origin.toolbar) || preview.index !== origin.index
+	return (
+		unwrap(dragging.border) !== unwrap(origin.border) ||
+		dragging.region !== origin.region ||
+		unwrap(dragging.toolbar) !== unwrap(origin.toolbar) ||
+		unwrap(dragging.track) !== unwrap(origin.track) ||
+		dragging.trackIndex !== origin.trackIndex ||
+		dragging.index !== origin.index
+	)
+}
+
 function startPaletteToolbarDragSession(
 	element: HTMLElement,
 	target: PaletteToolbarDrag,
 	event: PointerEvent,
-	dragging: PaletteDragging
+	dragging: PaletteDragging,
+	options?: {
+		origin?: PaletteDragOrigin
+		onClick?: () => void
+		onMoved?: () => void
+	}
 ): void {
 	let originRect: DOMRectReadOnly | undefined
 	let dragStart: { x: number; y: number } | undefined
 	let proximityTargets: PaletteDragTarget[] = []
+	let activated = false
 	const handleMove = (
 		snapshot: { current: { x: number; y: number } },
 		activeTarget: PaletteDragTarget | undefined,
-		grabOffset: number,
-		toolbarSpan: number
+		anchor: number,
+		fallbackRect: DOMRectReadOnly | undefined,
+		fallbackDirection: ArrangedOrientation
 	) => {
 		if (!palettes.dragging) return activeTarget
 		const dragging = palettes.dragging
 		const currentTrack = dragging.track
 		const currentIndex = dragging.index
+		const currentDirection = regionDirection(dragging.region)
 		if (currentIndex < 0) return activeTarget
 		const nextToolbarTarget = resolveToolbarSpaceTarget(snapshot.current)
 		const toolbarTarget =
@@ -310,13 +422,13 @@ function startPaletteToolbarDragSession(
 		if (dragging.toolbarPreview && competingTarget) clearToolbarPreview(dragging)
 		if (dragging.toolbarPreview && !competingTarget) return activeTarget
 		if (!resolvedTarget?.contained) {
-			resizeToolbarFromPointer(
-				currentTrack,
-				currentIndex,
-				target.direction,
+			resizeDraggedToolbarFromPointer(
+				dragging,
+				currentDirection,
 				snapshot.current,
-				grabOffset,
-				toolbarSpan
+				anchor,
+				fallbackRect,
+				fallbackDirection
 			)
 			return activeTarget
 		}
@@ -325,13 +437,13 @@ function startPaletteToolbarDragSession(
 			resolvedTarget.track === currentTrack &&
 			(resolvedTarget.index === currentIndex || resolvedTarget.index === currentIndex + 1)
 		) {
-			resizeToolbarFromPointer(
-				currentTrack,
-				currentIndex,
-				target.direction,
+			resizeDraggedToolbarFromPointer(
+				dragging,
+				resolvedTarget.direction,
 				snapshot.current,
-				grabOffset,
-				toolbarSpan
+				anchor,
+				fallbackRect,
+				fallbackDirection
 			)
 			return activeTarget
 		}
@@ -341,14 +453,17 @@ function startPaletteToolbarDragSession(
 				: moveToolbarToStack(dragging, target, resolvedTarget)
 		if (!nextDragging) return activeTarget
 		palettes.dragging = nextDragging
-		if (resolvedTarget.kind === 'track-space') {
-			resizeToolbarFromPointer(
-				nextDragging.track,
-				nextDragging.index,
-				target.direction,
+		if (
+			resolvedTarget.kind === 'track-space' &&
+			(resolvedTarget.direction === currentDirection || draggingToolbarRect(nextDragging))
+		) {
+			resizeDraggedToolbarFromPointer(
+				nextDragging,
+				resolvedTarget.direction,
 				snapshot.current,
-				grabOffset,
-				toolbarSpan
+				anchor,
+				fallbackRect,
+				fallbackDirection
 			)
 		}
 		return activeTarget
@@ -358,37 +473,40 @@ function startPaletteToolbarDragSession(
 	const rect = element.getBoundingClientRect()
 	originRect = rect
 	dragStart = { x: event.clientX, y: event.clientY }
-	const grabOffset =
-		target.direction === 'vertical' ? event.clientY - rect.top : event.clientX - rect.left
-	const toolbarSpan = target.direction === 'vertical' ? rect.height : rect.width
+	const anchor = axisValue(target.direction, dragStart) - rectAxisStart(rect, target.direction)
 	let activeTarget: PaletteDragTarget | undefined
-	palettes.dragging = dragging
 	startLocalDragSession({
 		event,
 		axis: dragAxis(target.direction),
 		capture: 'pointer',
 		onMove(snapshot) {
-			activeTarget = handleMove(snapshot, activeTarget, grabOffset, toolbarSpan)
+			if (!activated) {
+				if (pointDistance(snapshot.start, snapshot.current) < 4) return
+				activated = true
+				palettes.dragging = dragging
+			}
+			activeTarget = handleMove(snapshot, activeTarget, anchor, originRect, target.direction)
 		},
-		onStop() {
+		onStop(snapshot) {
 			setTargetState(activeTarget, {})
 			for (const proximityTarget of proximityTargets) setTargetState(proximityTarget, {})
 			proximityTargets = []
 			activeTarget = undefined
 			dragStart = undefined
-			if (palettes.dragging?.palette === target.palette) {
-				if (palettes.dragging.toolbarPreview) finalizeToolbarPreview(palettes.dragging)
-				else collapseDeferredSourceTrack(palettes.dragging)
+			if (!activated) {
+				if (snapshot.reason === 'up' || snapshot.reason === 'buttons') options?.onClick?.()
+				return
+			}
+			const activeDragging = palettes.dragging
+			if (unwrap(activeDragging?.palette) === unwrap(target.palette) && activeDragging) {
+				if (!options?.origin || hasPaletteDragMoved(activeDragging, options.origin))
+					options?.onMoved?.()
+				if (activeDragging.toolbarPreview) finalizeToolbarPreview(activeDragging)
+				else collapseDeferredSourceTrack(activeDragging)
 				delete palettes.dragging
 			}
 		},
 	})
-	activeTarget = handleMove(
-		{ current: { x: event.clientX, y: event.clientY } },
-		activeTarget,
-		grabOffset,
-		toolbarSpan
-	)
 }
 
 function actualTrackSpaceAt(track: PaletteTrack, index: number): number {
@@ -857,19 +975,29 @@ function setPaletteRootData(
 	else delete element.dataset[name]
 }
 
+function setPaletteRootId(element: HTMLElement | null | undefined, palette: Palette): void {
+	if (!element) return
+	element.dataset.paletteId = palette.id
+}
+
 Object.assign(rootEnv, {
 	paletteRoot(element: HTMLElement, palette: Palette): (() => void) | undefined {
 		if (!element.hasAttribute('tabindex')) {
 			element.tabIndex = 0
 		}
+		setPaletteRootId(element, palette)
 		const stopEditing = effect`palette.root.editing`(() => {
-			const editing = isEditing(palette)
+			const editing = palette.editing
 			setPaletteRootClass(element, 'palette-editing', editing)
+			setPaletteRootClass(element, 'editing', editing)
 			setPaletteRootData(element, 'editing', editing)
+			if (!editing && unwrap(palettes.inspecting?.palette) === unwrap(palette))
+				delete palettes.inspecting
 		})
 		const stopDragging = effect`palette.root.dragging`(() => {
-			const dragging = isEditing(palette) && !!palettes.dragging
+			const dragging = unwrap(palettes.dragging?.palette) === unwrap(palette)
 			setPaletteRootClass(element, 'palette-dragging', dragging)
+			setPaletteRootClass(element, 'dragging', dragging)
 			setPaletteRootData(element, 'dragging', dragging)
 		})
 
@@ -880,7 +1008,7 @@ Object.assign(rootEnv, {
 			if (!toolId) return
 			event.preventDefault()
 			event.stopPropagation()
-			const tool = paletteTool(palette, toolId)
+			const tool = palette.tool(toolId)
 			if (isRunTool(tool)) {
 				if (tool.can) tool.run()
 			} else if (isEditableTool(tool) && tool.type === 'boolean') tool.value = !tool.value
@@ -923,7 +1051,7 @@ Object.assign(rootEnv, {
 	},
 	paletteToolbarDrag(element: HTMLElement, target: PaletteToolbarDrag): (() => void) | undefined {
 		const onPointerDown = (event: PointerEvent) => {
-			if (!isEditing(target.palette)) return
+			if (!target.palette.editing) return
 			if (event.button !== 0) return
 			if (isEditableTarget(event.target)) return
 			const dragging = createToolbarDragging(target)
@@ -938,13 +1066,38 @@ Object.assign(rootEnv, {
 	},
 	paletteItemDrag(element: HTMLElement, target: PaletteItemDrag): (() => void) | undefined {
 		const onPointerDown = (event: PointerEvent) => {
-			if (!isEditing(target.palette)) return
+			if (!target.palette.editing) return
 			if (event.button !== 0) return
 			event.stopPropagation()
-			event.preventDefault()
+			palettes.inspecting = {
+				item: target.item,
+				palette: target.palette,
+				region: target.region,
+			}
+			const origin = {
+				border: target.border,
+				index: target.itemIndex,
+				region: target.region,
+				toolbar: target.toolbar,
+				track: target.track,
+				trackIndex: target.trackIndex,
+			} satisfies PaletteDragOrigin
 			const drag = createItemDragging(target)
 			if (!drag) return
-			startPaletteToolbarDragSession(element, drag.target, event, drag.dragging)
+			const sessionElement =
+				drag.dragging.toolbar === target.toolbar
+					? (element.closest<HTMLElement>('.toolbar') ?? element)
+					: element
+			startPaletteToolbarDragSession(sessionElement, drag.target, event, drag.dragging, {
+				origin,
+				onMoved: () => {
+					if (
+						unwrap(palettes.inspecting?.palette) === unwrap(target.palette) &&
+						unwrap(palettes.inspecting?.item) === unwrap(target.item)
+					)
+						delete palettes.inspecting
+				},
+			})
 		}
 
 		element.addEventListener('pointerdown', onPointerDown)
@@ -960,22 +1113,15 @@ Object.assign(rootEnv, {
 	},
 })
 
-export function Toolbar(
-	props: {
-		border?: PaletteBorder
-		region?: PaletteRegion
-		toolbar: PaletteToolbar
-		track?: PaletteTrack
-		trackIndex?: number
-		direction: ArrangedOrientation
-		el?: JSX.IntrinsicElements['div']
-	},
-	scope: PaletteScope
+export function Toolbar<TSchema extends PaletteSchema = PaletteSchema>(
+	props: ToolbarProps<PaletteItem<TSchema>>,
+	scope: PaletteScope<TSchema>
 ) {
 	const { palette } = scope
 	if (!palette) throw new Error('No palette to expose')
 	const o = arranged(scope, { density: 'compact' })
-	const dragging = () => (palettes.dragging?.palette === palette ? palettes.dragging : undefined)
+	const dragging = () =>
+		unwrap(palettes.dragging?.palette) === unwrap(palette) ? palettes.dragging : undefined
 	const isInactiveToolbarSpace = (dragging: PaletteDragging | undefined, index: number) =>
 		dragging
 			? isIgnoredToolbarSpace(
@@ -987,6 +1133,9 @@ export function Toolbar(
 		<div
 			{...props.el}
 			class={['toolbar', o.class, props.el?.class]}
+			data-palette-id={palette.id}
+			data-editing={palette.editing ? 'true' : undefined}
+			data-dragging={palettes.dragging?.toolbar === props.toolbar ? 'true' : undefined}
 			use:paletteToolbarDrag={
 				props.track
 					? {
@@ -1017,12 +1166,12 @@ export function Toolbar(
 			<for each={props.toolbar}>
 				{(item, position) => {
 					const index = position.index
-					const tool = hasPaletteItemTool(item) ? paletteTool(palette, item.tool) : undefined
+					const tool = hasPaletteItemTool(item) ? palette.tool(item.tool) : undefined
 					return (
 						<>
 							<div class="toolbar-item">
-								<div class="toolbar-item-content" use:paletteItemShield={isEditing(palette)}>
-									{renderPaletteEditor(palette, item, tool, scope)}
+								<div class="toolbar-item-content" use:paletteItemShield={palette.editing}>
+									{palette.renderEditor(item, tool, scope)}
 								</div>
 								<div
 									if={
@@ -1031,9 +1180,10 @@ export function Toolbar(
 										props.region !== undefined &&
 										props.trackIndex !== undefined &&
 										props.toolbar.length > 1 &&
-										isEditing(palette)
+										palette.editing
 									}
 									class="toolbar-item-guard"
+									data-palette-id={palette.id}
 									use:paletteItemDrag={
 										props.track &&
 										props.border !== undefined &&
@@ -1052,6 +1202,13 @@ export function Toolbar(
 												}
 											: undefined
 									}
+									onClick={() => {
+										palettes.inspecting = {
+											item,
+											palette,
+											region: props.region,
+										}
+									}}
 								/>
 							</div>
 							<div
@@ -1088,10 +1245,28 @@ export function DropZone(
 	},
 	_scope: PaletteScope
 ) {
+	const dragging = () =>
+		unwrap(palettes.dragging?.palette) === unwrap(_scope.palette) ? palettes.dragging : undefined
+	const inactive = () =>
+		dragging()
+			? isIgnoredDropZone(
+					{
+						border: props.border,
+						direction: props.direction,
+						index: props.index,
+						region: props.region,
+						track: props.track,
+						trackIndex: props.trackIndex,
+					},
+					dragging()!
+				)
+			: false
 	return (
 		<div
 			{...props.el}
-			class={['toolbar-track-space', props.el?.class]}
+			class={['toolbar-track-space', inactive() ? ' inactive' : undefined, props.el?.class]}
+			data-inactive={inactive() ? 'true' : undefined}
+			data-palette-id={_scope.palette?.id}
 			use:paletteTrackSpace={{
 				border: props.border,
 				direction: props.direction,
@@ -1119,6 +1294,7 @@ export function StackDropZone(
 		<div
 			{...props.el}
 			class={['toolbar-stack-space', 'toolbar-drop-zone', props.el?.class]}
+			data-palette-id={_scope.palette?.id}
 			use:paletteStackSpace={{
 				border: props.border,
 				direction: props.direction,
@@ -1208,6 +1384,7 @@ export function ToolbarBorder(
 		<div
 			{...props.el}
 			class={['toolbar-border', `palette-${props.direction}`]}
+			data-palette-id={scope.palette?.id}
 			use:toolbarsContainer={props.direction}
 		>
 			<StackDropZone
@@ -1279,6 +1456,7 @@ export function Parking(
 		<div
 			{...props.el}
 			class={['palette-parking', `palette-${props.direction}`]}
+			data-palette-id={scope.palette?.id}
 			use:toolbarsContainer={props.direction}
 		>
 			<for each={props.toolbars}>
@@ -1297,31 +1475,38 @@ export function Parking(
 	)
 }
 
-export interface IdeConfig {
-	top?: PaletteBorder
-	right?: PaletteBorder
-	bottom?: PaletteBorder
-	left?: PaletteBorder
+export interface IdeConfig<TItem extends PaletteToolbarItem = PaletteToolbarItem> {
+	top?: PaletteBorder<TItem>
+	right?: PaletteBorder<TItem>
+	bottom?: PaletteBorder<TItem>
+	left?: PaletteBorder<TItem>
 }
 
-export function Ide(
-	props: {
-		palette: Palette
-		config: IdeConfig
-		el?: JSX.IntrinsicElements['div']
-		center?: JSX.IntrinsicElements['div']
-		border?: JSX.IntrinsicElements['div']
-		track?: JSX.IntrinsicElements['div']
-		space?: JSX.IntrinsicElements['div']
-		toolbar?: JSX.IntrinsicElements['div']
-		parkingEl?: JSX.IntrinsicElements['div']
-		children?: JSX.Children
-	},
+export interface IdeProps<TSchema extends PaletteSchema = PaletteSchema> {
+	palette: Palette<TSchema>
+	config: IdeConfig<PaletteItem<TSchema>>
+	el?: JSX.IntrinsicElements['div']
+	center?: JSX.IntrinsicElements['div']
+	border?: JSX.IntrinsicElements['div']
+	track?: JSX.IntrinsicElements['div']
+	space?: JSX.IntrinsicElements['div']
+	toolbar?: JSX.IntrinsicElements['div']
+	parkingEl?: JSX.IntrinsicElements['div']
+	children?: JSX.Children
+}
+
+export function Ide<TSchema extends PaletteSchema = PaletteSchema>(
+	props: IdeProps<TSchema>,
 	scope: Record<string, unknown>
 ) {
 	scope.palette = props.palette
 	return (
-		<div {...props.el} class="palette-ide" use:paletteRoot={props.palette}>
+		<div
+			{...props.el}
+			class="palette-ide"
+			data-palette-id={props.palette.id}
+			use:paletteRoot={props.palette}
+		>
 			<ToolbarBorder
 				if={props.config.top !== undefined}
 				border={props.config.top ?? []}

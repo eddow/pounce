@@ -11,19 +11,22 @@ import {
 	handlePaletteCommandBoxInputKeydown,
 	handlePaletteCommandChipKeydown,
 	Ide,
-	type Palette,
+	isEditing,
+	Palette,
 	type PaletteBorders,
 	type PaletteEditorContext,
+	type PaletteItem,
+	type PaletteSchema,
 	type PaletteScope,
 	type PaletteTool,
-	type PaletteToolbarItem,
 	type PaletteToolbarItemByEditor,
 	paletteCommandBoxModel,
 	paletteCommandEntries,
 	palettes,
+	renderPaletteConfigurator,
 	setPaletteCommandBoxInput,
 } from '@sursaut/ui/palette'
-import { memoize, reactive } from 'mutts'
+import { memoize, reactive, unwrap } from 'mutts'
 
 type DemoLayout = 'horizontal' | 'vertical'
 type DemoMode = 'inspect' | 'command'
@@ -40,17 +43,19 @@ type DemoState = {
 }
 
 type DemoToolbarTone = 'neutral' | 'accent'
+type DemoChoiceDisplay = 'icon' | 'text' | 'both'
 
 type DemoToolbarItemConfigBase = {
-	readonly icon?: string
-	readonly label?: string
-	readonly hint?: string
-	readonly tone?: DemoToolbarTone
+	icon?: string
+	label?: string
+	hint?: string
+	tone?: DemoToolbarTone
 }
 
 type DemoEnumSubsetConfig = DemoToolbarItemConfigBase & {
-	readonly values?: readonly string[]
-	readonly keywords?: readonly string[]
+	choiceDisplay?: DemoChoiceDisplay
+	values?: readonly string[]
+	keywords?: readonly string[]
 }
 
 type DemoToolbarConfigByVariant = {
@@ -68,11 +73,70 @@ type DemoToolbarConfigByVariant = {
 	commandBox: DemoToolbarItemConfigBase
 }
 
-type DemoToolbarItem = PaletteToolbarItemByEditor<DemoToolbarConfigByVariant>
+type DemoToolId =
+	| 'notifications'
+	| 'layout'
+	| 'mode'
+	| 'theme'
+	| 'fontSize'
+	| 'gameSpeed'
+	| 'terminal'
+	| 'reset'
+	| 'presentation'
+	| 'inspectPreset'
 
-type ThemeValue = Extract<Palette['tools']['theme'], { type: 'enum' }>['value']
-type ModeValue = Extract<Palette['tools']['mode'], { type: 'enum' }>['value']
-type LayoutValue = Extract<Palette['tools']['layout'], { type: 'enum' }>['value']
+type DemoBooleanToolShape = Extract<PaletteTool, { type: 'boolean' }>
+type DemoNumberToolShape = Extract<PaletteTool, { type: 'number' }>
+type DemoRunToolShape = Extract<PaletteTool, { run(): void }>
+type DemoEnumValue = {
+	readonly value: DemoLayout | DemoMode | DemoTheme
+	readonly can?: boolean
+	readonly categories?: string[]
+	readonly icon?: string
+	readonly label?: string
+	readonly keywords?: string[]
+}
+type DemoEnumToolShape = Extract<PaletteTool, { type: 'enum' }> & {
+	value: DemoEnumValue['value']
+	default: DemoEnumValue['value']
+	readonly values: readonly DemoEnumValue[]
+}
+
+type DemoToolbarItem = PaletteToolbarItemByEditor<DemoToolbarConfigByVariant, DemoToolId>
+type DemoPaletteTools = {
+	notifications: DemoBooleanToolShape
+	layout: DemoEnumToolShape
+	mode: DemoEnumToolShape
+	theme: DemoEnumToolShape
+	fontSize: DemoNumberToolShape
+	gameSpeed: DemoNumberToolShape
+	terminal: DemoRunToolShape
+	reset: DemoRunToolShape
+	presentation: DemoRunToolShape
+	inspectPreset: DemoRunToolShape
+}
+type DemoPaletteSchema = PaletteSchema<
+	DemoPaletteTools,
+	DemoToolbarConfigByVariant,
+	DemoToolbarItem
+>
+type DemoPalette = Palette<DemoPaletteSchema>
+type DemoPaletteItem = PaletteItem<DemoPaletteSchema>
+type DemoPaletteBorders = PaletteBorders<DemoPaletteItem>
+type DemoEnumTool =
+	| DemoPaletteTools['layout']
+	| DemoPaletteTools['mode']
+	| DemoPaletteTools['theme']
+type DemoBooleanTool = DemoPaletteTools['notifications']
+type DemoNumberTool = DemoPaletteTools['fontSize'] | DemoPaletteTools['gameSpeed']
+type DemoRunTool =
+	| DemoPaletteTools['terminal']
+	| DemoPaletteTools['reset']
+	| DemoPaletteTools['presentation']
+	| DemoPaletteTools['inspectPreset']
+type ThemeValue = DemoTheme
+type ModeValue = DemoMode
+type LayoutValue = DemoLayout
 
 const demoState = reactive<DemoState>({
 	notifications: true,
@@ -122,7 +186,7 @@ function closeCommandBoxPopup() {
 	popupCommandBoxUi.focused = false
 }
 
-const initialIdeConfig: PaletteBorders = {
+const initialIdeConfig: DemoPaletteBorders = {
 	top: [
 		[
 			{
@@ -131,12 +195,12 @@ const initialIdeConfig: PaletteBorders = {
 					{
 						editor: 'commandBox',
 						config: { icon: '⌘', label: 'Command', hint: 'Search and run palette actions' },
-					} satisfies DemoToolbarItem,
+					},
 					{
 						tool: 'notifications',
 						editor: 'toggle',
 						config: { icon: '🔔', label: 'Notifications', hint: 'Compact icon toggle' },
-					} satisfies DemoToolbarItem,
+					},
 					{
 						tool: 'layout',
 						editor: 'splitRadio',
@@ -145,7 +209,7 @@ const initialIdeConfig: PaletteBorders = {
 							label: 'Layout',
 							hint: 'Split radio with quick apply + chooser',
 						},
-					} satisfies DemoToolbarItem,
+					},
 					{
 						tool: 'theme',
 						editor: 'select',
@@ -154,7 +218,7 @@ const initialIdeConfig: PaletteBorders = {
 							label: 'Theme',
 							hint: 'Compact text editor',
 						},
-					} satisfies DemoToolbarItem,
+					},
 				],
 			},
 			{
@@ -164,12 +228,12 @@ const initialIdeConfig: PaletteBorders = {
 						tool: 'mode',
 						editor: 'splitRadio',
 						config: { icon: '⌘', label: 'Mode', hint: 'Split radio with icon labels' },
-					} satisfies DemoToolbarItem,
+					},
 					{
 						tool: 'fontSize',
 						editor: 'slider',
 						config: { icon: 'A', label: 'Font size', hint: 'Toolbar slider' },
-					} satisfies DemoToolbarItem,
+					},
 					{
 						tool: 'reset',
 						editor: 'splitButton',
@@ -179,7 +243,7 @@ const initialIdeConfig: PaletteBorders = {
 							hint: 'Split action menu',
 							tone: 'accent',
 						},
-					} satisfies DemoToolbarItem,
+					},
 				],
 			},
 		],
@@ -198,12 +262,12 @@ const initialIdeConfig: PaletteBorders = {
 							hint: 'Single-button light/dark toggle',
 							keywords: ['light', 'dark'],
 						},
-					} satisfies DemoToolbarItem,
+					},
 					{
 						tool: 'mode',
 						editor: 'splitRadio',
 						config: { icon: '🎯', label: 'Mode', hint: 'Compact focus mode chooser' },
-					} satisfies DemoToolbarItem,
+					},
 				],
 			},
 		],
@@ -217,12 +281,12 @@ const initialIdeConfig: PaletteBorders = {
 						tool: 'fontSize',
 						editor: 'slider',
 						config: { icon: 'A', label: 'Font size', hint: 'Right rail slider' },
-					} satisfies DemoToolbarItem,
+					},
 					{
 						tool: 'gameSpeed',
 						editor: 'stars',
 						config: { icon: '★', label: 'Speed', hint: 'Stars editor' },
-					} satisfies DemoToolbarItem,
+					},
 				],
 			},
 		],
@@ -236,7 +300,7 @@ const initialIdeConfig: PaletteBorders = {
 						tool: 'gameSpeed',
 						editor: 'stars',
 						config: { icon: '▶', label: 'Playback speed', hint: 'Dense stars editor' },
-					} satisfies DemoToolbarItem,
+					},
 					{
 						tool: 'theme',
 						editor: 'segmented',
@@ -246,7 +310,7 @@ const initialIdeConfig: PaletteBorders = {
 							hint: 'Theme pills',
 							values: ['light', 'dark', 'system'],
 						},
-					} satisfies DemoToolbarItem,
+					},
 				],
 			},
 			{
@@ -261,22 +325,22 @@ const initialIdeConfig: PaletteBorders = {
 							hint: 'Horizontal/vertical chips',
 							keywords: ['row', 'column'],
 						},
-					} satisfies DemoToolbarItem,
+					},
 					{
 						tool: 'fontSize',
 						editor: 'slider',
 						config: { icon: 'A', label: 'Type scale', hint: 'Small range editor' },
-					} satisfies DemoToolbarItem,
+					},
 				],
 			},
 		],
 	],
 }
 
-function toolbarMeta(item: PaletteToolbarItem) {
+function toolbarMeta(item: DemoPaletteItem) {
 	return {
 		get config() {
-			return item.config as DemoToolbarItemConfigBase | undefined
+			return item.config
 		},
 		get editor() {
 			return item.editor
@@ -285,7 +349,7 @@ function toolbarMeta(item: PaletteToolbarItem) {
 			return typeof this.config?.icon === 'string' ? this.config.icon : undefined
 		},
 		get label() {
-			return typeof this.config?.label === 'string' ? this.config.label : item.tool ?? item.editor
+			return typeof this.config?.label === 'string' ? this.config.label : (item.tool ?? item.editor)
 		},
 		get hint() {
 			return typeof this.config?.hint === 'string' ? this.config.hint : undefined
@@ -296,9 +360,100 @@ function toolbarMeta(item: PaletteToolbarItem) {
 	}
 }
 
-function tooltip(item: PaletteToolbarItem, suffix?: string) {
+function tooltip(item: DemoPaletteItem, suffix?: string) {
 	const meta = toolbarMeta(item)
 	return suffix ? `${meta.label} · ${suffix}` : meta.label
+}
+
+type DemoEditorVariant = keyof DemoToolbarConfigByVariant
+
+type DemoEditorOption = {
+	label: string
+	value: DemoEditorVariant
+}
+
+type DemoChoiceDisplayOption = {
+	label: string
+	value: DemoChoiceDisplay
+}
+
+function isDemoEditorVariant(value: string): value is DemoEditorVariant {
+	return value in demoEditorLabels
+}
+
+function isDemoChoiceDisplay(value: string): value is DemoChoiceDisplay {
+	return value === 'icon' || value === 'text' || value === 'both'
+}
+
+const demoEditorLabels = {
+	button: 'Button',
+	commandBox: 'Command box',
+	flip: 'Flip',
+	radio: 'Radio',
+	select: 'Select',
+	segmented: 'Segmented',
+	slider: 'Slider',
+	splitButton: 'Split button',
+	splitRadio: 'Split radio',
+	stars: 'Stars',
+	stepper: 'Stepper',
+	toggle: 'Toggle',
+} satisfies Record<DemoEditorVariant, string>
+
+const demoChoiceDisplayLabels = {
+	icon: 'Icon only',
+	text: 'Text only',
+	both: 'Icon + text',
+} satisfies Record<DemoChoiceDisplay, string>
+
+const demoChoiceDisplayOptions = [
+	{ value: 'both', label: demoChoiceDisplayLabels.both },
+	{ value: 'icon', label: demoChoiceDisplayLabels.icon },
+	{ value: 'text', label: demoChoiceDisplayLabels.text },
+] satisfies readonly DemoChoiceDisplayOption[]
+
+function editorOptions(item: DemoPaletteItem): readonly DemoEditorOption[] {
+	if (!item.tool) return [{ value: 'commandBox', label: demoEditorLabels.commandBox }]
+	const tool = demoPalette.tool(item.tool)
+	if ('run' in tool)
+		return [
+			{ value: 'button', label: demoEditorLabels.button },
+			{ value: 'splitButton', label: demoEditorLabels.splitButton },
+		]
+	if (tool.type === 'boolean') return [{ value: 'toggle', label: demoEditorLabels.toggle }]
+	if (tool.type === 'enum')
+		return [
+			{ value: 'flip', label: demoEditorLabels.flip },
+			{ value: 'radio', label: demoEditorLabels.radio },
+			{ value: 'select', label: demoEditorLabels.select },
+			{ value: 'segmented', label: demoEditorLabels.segmented },
+			{ value: 'splitRadio', label: demoEditorLabels.splitRadio },
+		]
+	if (tool.type === 'number')
+		return [
+			{ value: 'slider', label: demoEditorLabels.slider },
+			{ value: 'stepper', label: demoEditorLabels.stepper },
+			{ value: 'stars', label: demoEditorLabels.stars },
+		]
+	return []
+}
+
+function setItemEditor(item: DemoPaletteItem, value: string) {
+	if (!isDemoEditorVariant(value)) return
+	item.editor = value
+	setLastAction(`${toolbarMeta(item).label}: editor → ${demoEditorLabels[value]}`)
+	if (value !== 'flip' && value !== 'radio' && value !== 'select' && value !== 'segmented' && value !== 'splitRadio') {
+		const config = ensureItemConfig<DemoToolbarItemConfigBase>(item)
+		if ('values' in config) delete (config as DemoEnumSubsetConfig).values
+		if ('keywords' in config) delete (config as DemoEnumSubsetConfig).keywords
+		if ('choiceDisplay' in config) delete (config as DemoEnumSubsetConfig).choiceDisplay
+	}
+	popupCommandBoxUi.focused = false
+}
+
+function returnToCommandPopup() {
+	openCommandBoxPopup()
+	if (unwrap(palettes.inspecting?.palette) === unwrap(demoPalette)) delete palettes.inspecting
 }
 
 function resetDefaults() {
@@ -332,16 +487,34 @@ function applyInspectorMode() {
 }
 
 function compactIcon(value: string) {
-	if (value in themeDisplay) return themeDisplay[value as DemoTheme].icon
-	if (value in modeDisplay) return modeDisplay[value as DemoMode].icon
-	if (value in layoutDisplay) return layoutDisplay[value as DemoLayout].icon
+	switch (value) {
+		case 'light':
+		case 'dark':
+		case 'system':
+			return themeDisplay[value].icon
+		case 'inspect':
+		case 'command':
+			return modeDisplay[value].icon
+		case 'horizontal':
+		case 'vertical':
+			return layoutDisplay[value].icon
+	}
 	return value
 }
 
 function compactLabel(value: string) {
-	if (value in themeDisplay) return themeDisplay[value as DemoTheme].label
-	if (value in modeDisplay) return modeDisplay[value as DemoMode].label
-	if (value in layoutDisplay) return layoutDisplay[value as DemoLayout].label
+	switch (value) {
+		case 'light':
+		case 'dark':
+		case 'system':
+			return themeDisplay[value].label
+		case 'inspect':
+		case 'command':
+			return modeDisplay[value].label
+		case 'horizontal':
+		case 'vertical':
+			return layoutDisplay[value].label
+	}
 	return value
 }
 
@@ -349,26 +522,60 @@ function normalizeSubsetToken(value: string) {
 	return value.trim().toLowerCase()
 }
 
-function enumSubsetConfig(item: PaletteToolbarItem): DemoEnumSubsetConfig | undefined {
+function enumSubsetConfig(item: DemoPaletteItem): DemoEnumSubsetConfig | undefined {
 	const config = item.config
 	if (!config || typeof config !== 'object') return undefined
-	return config as DemoEnumSubsetConfig
+	return config
 }
 
-function resolveEnumValues(
-	item: PaletteToolbarItem,
-	tool: Extract<Palette['tools'][string], { type: 'enum' }>
-) {
+function enumChoiceDisplay(item: DemoPaletteItem): DemoChoiceDisplay {
+	const value = enumSubsetConfig(item)?.choiceDisplay
+	return value === 'icon' || value === 'text' || value === 'both' ? value : 'both'
+}
+
+function enumChoiceParts(value: DemoEnumValue) {
+	return {
+		icon: value.icon ?? compactIcon(value.value),
+		label: value.label ?? compactLabel(value.value),
+	}
+}
+
+function enumChoiceText(value: DemoEnumValue, display: DemoChoiceDisplay) {
+	const parts = enumChoiceParts(value)
+	if (display === 'icon') return parts.icon
+	if (display === 'text') return parts.label
+	return `${parts.icon} ${parts.label}`
+}
+
+function EnumChoiceContent(props: {
+	value: DemoEnumValue
+	display: DemoChoiceDisplay
+	class?: string
+}) {
+	const parts = enumChoiceParts(props.value)
+	return (
+		<span class={props.class}>
+			<span if={props.display !== 'text'} class="palette-demo-icon">
+				{parts.icon}
+			</span>
+			<span if={props.display !== 'icon'}>{parts.label}</span>
+		</span>
+	)
+}
+
+function resolveEnumValues(item: DemoPaletteItem, tool: DemoEnumTool): readonly DemoEnumValue[] {
 	const config = enumSubsetConfig(item)
 	const explicitValues = config?.values
 	if (explicitValues?.length) {
 		const allowed = new Set(explicitValues.map(normalizeSubsetToken))
-		return tool.values.filter((value) => allowed.has(normalizeSubsetToken(value.value)))
+		return tool.values.filter((value: DemoEnumValue) =>
+			allowed.has(normalizeSubsetToken(value.value))
+		)
 	}
 	const keywords = config?.keywords
 	if (!keywords?.length) return tool.values
 	const expected = new Set(keywords.map(normalizeSubsetToken))
-	return tool.values.filter((value) => {
+	return tool.values.filter((value: DemoEnumValue) => {
 		const actual = new Set(
 			[value.value, value.label, ...(value.categories ?? []), ...(value.keywords ?? [])]
 				.filter((entry): entry is string => typeof entry === 'string')
@@ -381,15 +588,15 @@ function resolveEnumValues(
 	})
 }
 
-function layoutFromScope(scope: PaletteScope): DemoLayout {
-	return arranged(scope).orientation as DemoLayout
+function layoutFromScope(scope: PaletteScope<DemoPaletteSchema>): DemoLayout {
+	return arranged(scope).orientation === 'vertical' ? 'vertical' : 'horizontal'
 }
 
-function regionFromScope(scope: PaletteScope) {
+function regionFromScope(scope: PaletteScope<DemoPaletteSchema>) {
 	return scope.region ?? (layoutFromScope(scope) === 'vertical' ? 'left' : 'top')
 }
 
-function menuChevron(scope: PaletteScope) {
+function menuChevron(scope: PaletteScope<DemoPaletteSchema>) {
 	switch (regionFromScope(scope)) {
 		case 'bottom':
 			return '▴'
@@ -402,7 +609,7 @@ function menuChevron(scope: PaletteScope) {
 	}
 }
 
-function assignEnumValue(tool: Extract<Palette['tools'][string], { type: 'enum' }>, value: string) {
+function assignEnumValue(tool: DemoEnumTool, value: string) {
 	if (value === 'light' || value === 'dark' || value === 'system') {
 		tool.value = value as ThemeValue
 	} else if (value === 'inspect' || value === 'command') {
@@ -416,9 +623,10 @@ function SplitRadioEditor({
 	item,
 	tool,
 	scope,
-}: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'enum' }>>) {
+}: PaletteEditorContext<DemoEnumTool, DemoPaletteItem, DemoPaletteSchema>) {
 	const direction = layoutFromScope(scope)
 	const values = resolveEnumValues(item, tool)
+	const display = enumChoiceDisplay(item)
 	const model = splitRadioButtonModel<string>({
 		get value() {
 			return tool.value
@@ -428,7 +636,7 @@ function SplitRadioEditor({
 		},
 		items: values.map((value) => ({
 			value: value.value,
-			label: value.icon ?? value.label ?? value.value,
+			label: enumChoiceText(value, display),
 			disabled: value.can === false,
 		})),
 		get group() {
@@ -486,8 +694,13 @@ function SplitRadioEditor({
 							{...entry.button}
 							title={compactLabel(entry.item.value)}
 						>
-							<span class="palette-demo-icon">{compactIcon(entry.item.value)}</span>
-							<span>{compactLabel(entry.item.value)}</span>
+							<EnumChoiceContent
+								value={values.find((value) => value.value === entry.item.value) ?? {
+									value: entry.item.value,
+								}}
+								display={display}
+								class="palette-demo-choice"
+							/>
 						</button>
 					)}
 				</for>
@@ -500,10 +713,11 @@ function RadioEditor({
 	item,
 	tool,
 	scope,
-}: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'enum' }>>) {
+}: PaletteEditorContext<DemoEnumTool, DemoPaletteItem, DemoPaletteSchema>) {
 	const direction = layoutFromScope(scope)
 	const meta = toolbarMeta(item)
 	const values = resolveEnumValues(item, tool)
+	const display = enumChoiceDisplay(item)
 	return (
 		<div
 			class={[
@@ -533,8 +747,7 @@ function RadioEditor({
 						title={compactLabel(value.value)}
 					>
 						<span class="palette-demo-icon">{tool.value === value.value ? '◉' : '○'}</span>
-						<span>{value.icon ?? compactIcon(value.value)}</span>
-						<span>{value.label ?? compactLabel(value.value)}</span>
+						<EnumChoiceContent value={value} display={display} class="palette-demo-choice" />
 					</button>
 				)}
 			</for>
@@ -546,7 +759,7 @@ function SplitButtonEditor({
 	item,
 	tool,
 	scope,
-}: PaletteEditorContext<Extract<PaletteTool, { run(): void }>>) {
+}: PaletteEditorContext<DemoRunTool, DemoPaletteItem, DemoPaletteSchema>) {
 	const direction = layoutFromScope(scope)
 	const actions = [
 		{
@@ -640,7 +853,7 @@ function SplitButtonEditor({
 function ToggleEditor({
 	item,
 	tool,
-}: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'boolean' }>>) {
+}: PaletteEditorContext<DemoBooleanTool, DemoPaletteItem, DemoPaletteSchema>) {
 	const meta = toolbarMeta(item)
 	return (
 		<button
@@ -665,7 +878,7 @@ function ToggleEditor({
 function FlipEditor({
 	item,
 	tool,
-}: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'enum' }>>) {
+}: PaletteEditorContext<DemoEnumTool, DemoPaletteItem, DemoPaletteSchema>) {
 	const meta = toolbarMeta(item)
 	const state = {
 		get values() {
@@ -710,15 +923,20 @@ function FlipEditor({
 function SelectEditor({
 	item,
 	tool,
-}: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'enum' }>>) {
+}: PaletteEditorContext<DemoEnumTool, DemoPaletteItem, DemoPaletteSchema>) {
 	const meta = toolbarMeta(item)
 	const values = resolveEnumValues(item, tool)
+	const display = enumChoiceDisplay(item)
+	const current = values.find((value) => value.value === tool.value)
+	const currentParts = current ? enumChoiceParts(current) : undefined
 	return (
 		<label
 			class={['palette-demo-select', `palette-demo-tone-${meta.tone}`]}
 			title={tooltip(item, meta.hint)}
 		>
-			<span class="palette-demo-icon">{meta.icon ?? compactIcon(tool.value)}</span>
+			<span if={meta.icon || display !== 'text'} class="palette-demo-icon">
+				{meta.icon ?? currentParts?.icon ?? compactIcon(tool.value)}
+			</span>
 			<select
 				value={tool.value}
 				update:value={(value) => {
@@ -727,7 +945,7 @@ function SelectEditor({
 				}}
 			>
 				<for each={values}>
-					{(value) => <option value={value.value}>{value.label ?? value.value}</option>}
+					{(value) => <option value={value.value}>{enumChoiceText(value, display)}</option>}
 				</for>
 			</select>
 		</label>
@@ -738,10 +956,11 @@ function SegmentedEditor({
 	item,
 	tool,
 	scope,
-}: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'enum' }>>) {
+}: PaletteEditorContext<DemoEnumTool, DemoPaletteItem, DemoPaletteSchema>) {
 	const direction = layoutFromScope(scope)
 	const meta = toolbarMeta(item)
 	const values = resolveEnumValues(item, tool)
+	const display = enumChoiceDisplay(item)
 	return (
 		<div
 			class={[
@@ -767,8 +986,7 @@ function SegmentedEditor({
 						}}
 						title={compactLabel(value.value)}
 					>
-						<span class="palette-demo-icon">{value.icon ?? compactIcon(value.value)}</span>
-						<span>{value.label ?? value.value}</span>
+						<EnumChoiceContent value={value} display={display} class="palette-demo-choice" />
 					</button>
 				)}
 			</for>
@@ -780,7 +998,7 @@ function StarsEditor({
 	item,
 	tool,
 	scope,
-}: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'number' }>>) {
+}: PaletteEditorContext<DemoNumberTool, DemoPaletteItem, DemoPaletteSchema>) {
 	const direction = layoutFromScope(scope)
 	const meta = toolbarMeta(item)
 	const model = starsModel({
@@ -832,7 +1050,7 @@ function SliderEditor({
 	item,
 	tool,
 	scope,
-}: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'number' }>>) {
+}: PaletteEditorContext<DemoNumberTool, DemoPaletteItem, DemoPaletteSchema>) {
 	const direction = layoutFromScope(scope)
 	const meta = toolbarMeta(item)
 	const min = tool.min ?? 0
@@ -870,7 +1088,7 @@ function StepperEditor({
 	item,
 	tool,
 	scope,
-}: PaletteEditorContext<Extract<Palette['tools'][string], { type: 'number' }>>) {
+}: PaletteEditorContext<DemoNumberTool, DemoPaletteItem, DemoPaletteSchema>) {
 	const meta = toolbarMeta(item)
 	return (
 		<div
@@ -911,7 +1129,10 @@ function StepperEditor({
 	)
 }
 
-function ButtonEditor({ item, tool }: PaletteEditorContext<Extract<PaletteTool, { run(): void }>>) {
+function ButtonEditor({
+	item,
+	tool,
+}: PaletteEditorContext<DemoRunTool, DemoPaletteItem, DemoPaletteSchema>) {
 	const meta = toolbarMeta(item)
 	return (
 		<button
@@ -932,7 +1153,7 @@ function ButtonEditor({ item, tool }: PaletteEditorContext<Extract<PaletteTool, 
 type DemoCommandBoxProps = {
 	readonly commandBox: ReturnType<typeof paletteCommandBoxModel>
 	readonly editable?: boolean
-	readonly palette?: Palette
+	readonly palette?: DemoPalette
 	readonly icon?: string
 	readonly title?: string
 	readonly expanded: boolean
@@ -956,7 +1177,7 @@ function CommandBox(props: DemoCommandBoxProps) {
 			value: props.palette,
 			clearable: true,
 			get group() {
-				return palettes.editing
+				return props.palette && isEditing(props.palette) ? props.palette : undefined
 			},
 			set group(value) {
 				palettes.editing = value
@@ -1124,7 +1345,9 @@ function CommandBox(props: DemoCommandBoxProps) {
 	)
 }
 
-function CommandBoxEditor({ item }: PaletteEditorContext<undefined>) {
+function CommandBoxEditor({
+	item,
+}: PaletteEditorContext<undefined, DemoPaletteItem, DemoPaletteSchema>) {
 	const meta = toolbarMeta(item)
 	let root: HTMLDivElement | undefined
 	const ui = {
@@ -1166,16 +1389,24 @@ function CommandBoxEditor({ item }: PaletteEditorContext<undefined>) {
 function CommandBoxPopup() {
 	let root: HTMLDivElement | undefined
 	let input: HTMLInputElement | undefined
+	const closeOverlay = () => {
+		closeCommandBoxPopup()
+		if (unwrap(palettes.inspecting?.palette) === unwrap(demoPalette)) delete palettes.inspecting
+	}
 
 	return (
 		<div
 			class="palette-demo-command-overlay"
 			onMousedown={(event: MouseEvent) => {
-				if (event.target === event.currentTarget) closeCommandBoxPopup()
+				if (event.target === event.currentTarget) closeOverlay()
 			}}
 		>
 			<div this={root} class="palette-demo-command-panel">
+				<div if={centerOverlay.editingItem}>
+					<PaletteInspectorPanel />
+				</div>
 				<CommandBox
+					if={!centerOverlay.editingItem}
 					expanded
 					commandBox={popupCommandBox}
 					editable
@@ -1186,10 +1417,10 @@ function CommandBoxPopup() {
 					onInputBlur={(event) => {
 						const next = event.relatedTarget instanceof Node ? event.relatedTarget : undefined
 						if (next && root?.contains(next)) return
-						closeCommandBoxPopup()
+						closeOverlay()
 					}}
 					onEscapeOrExecute={() => {
-						closeCommandBoxPopup()
+						closeOverlay()
 					}}
 					onInputMount={(mounted) => {
 						input = mounted
@@ -1204,212 +1435,411 @@ function CommandBoxPopup() {
 	)
 }
 
-const demoEditors: Palette['editors'] = {
+function ensureItemConfig<T extends DemoToolbarConfigByVariant[keyof DemoToolbarConfigByVariant]>(
+	item: DemoPaletteItem
+): T {
+	if (!item.config || typeof item.config !== 'object') item.config = {}
+	return item.config as T
+}
+
+function setConfigText(
+	item: DemoPaletteItem,
+	key: 'icon' | 'label' | 'hint',
+	value: string
+) {
+	const config = ensureItemConfig<DemoToolbarItemConfigBase>(item)
+	config[key] = value
+}
+
+function setConfigTone(item: DemoPaletteItem, value: string) {
+	const config = ensureItemConfig<DemoToolbarItemConfigBase>(item)
+	config.tone = value === 'accent' ? 'accent' : 'neutral'
+}
+
+function setConfigChoiceDisplay(item: DemoPaletteItem, value: string) {
+	const config = ensureItemConfig<DemoEnumSubsetConfig>(item)
+	config.choiceDisplay = isDemoChoiceDisplay(value) ? value : 'both'
+}
+
+function setConfigList(item: DemoPaletteItem, key: 'values' | 'keywords', value: string) {
+	const config = ensureItemConfig<DemoEnumSubsetConfig>(item)
+	const values = value
+		.split(',')
+		.map((entry) => entry.trim())
+		.filter((entry) => entry.length > 0)
+	config[key] = values.length > 0 ? values : undefined
+}
+
+function ConfigRow(props: {
+	label: string
+	description?: string
+	children: JSX.Element | readonly JSX.Element[]
+}) {
+	return (
+		<div class="palette-demo-config-row">
+			<div class="palette-demo-config-key">
+				<strong>{props.label}</strong>
+				<span if={props.description}>{props.description}</span>
+			</div>
+			<div class="palette-demo-config-value">{props.children}</div>
+		</div>
+	)
+}
+
+function BaseConfigurator({
+	item,
+}: PaletteEditorContext<PaletteTool | undefined, DemoPaletteItem, DemoPaletteSchema>) {
+	const meta = toolbarMeta(item)
+	return (
+		<div class="palette-demo-config-table">
+			<ConfigRow label="Label">
+				<input
+					value={meta.label}
+					onInput={(event) => {
+						if (event.currentTarget instanceof HTMLInputElement)
+							setConfigText(item, 'label', event.currentTarget.value)
+					}}
+				/>
+			</ConfigRow>
+			<ConfigRow label="Icon">
+				<input
+					value={meta.icon ?? ''}
+					onInput={(event) => {
+						if (event.currentTarget instanceof HTMLInputElement)
+							setConfigText(item, 'icon', event.currentTarget.value)
+					}}
+				/>
+			</ConfigRow>
+			<ConfigRow label="Hint">
+				<input
+					value={meta.hint ?? ''}
+					onInput={(event) => {
+						if (event.currentTarget instanceof HTMLInputElement)
+							setConfigText(item, 'hint', event.currentTarget.value)
+					}}
+				/>
+			</ConfigRow>
+			<ConfigRow
+				label="Editor"
+				description="Choose how this item renders inside the toolbar."
+			>
+				<select
+					value={meta.editor}
+					update:value={(value) => {
+						setItemEditor(item, value)
+					}}
+				>
+					<for each={editorOptions(item)}>
+						{(option) => <option value={option.value}>{option.label}</option>}
+					</for>
+				</select>
+			</ConfigRow>
+			<ConfigRow
+				label="Tone"
+				description="Accent gives button-like controls brighter chrome. Neutral keeps the default understated look."
+			>
+				<select
+					value={meta.tone}
+					update:value={(value) => {
+						setConfigTone(item, value)
+					}}
+				>
+					<option value="neutral">Neutral</option>
+					<option value="accent">Accent</option>
+				</select>
+			</ConfigRow>
+		</div>
+	)
+}
+
+function EnumSubsetConfigurator({
+	item,
+	tool,
+}: PaletteEditorContext<DemoEnumTool, DemoPaletteItem, DemoPaletteSchema>) {
+	const config = enumSubsetConfig(item)
+	return (
+		<div class="palette-demo-config-stack">
+			<BaseConfigurator item={item} tool={tool} scope={{}} flags={{}} />
+			<ConfigRow
+				label="Choice display"
+				description="Choose whether enum values show their icon, text label, or both."
+			>
+				<select
+					value={enumChoiceDisplay(item)}
+					update:value={(value) => {
+						setConfigChoiceDisplay(item, value)
+					}}
+				>
+					<for each={demoChoiceDisplayOptions}>
+						{(option) => <option value={option.value}>{option.label}</option>}
+					</for>
+				</select>
+			</ConfigRow>
+			<ConfigRow label="Allowed values" description="Comma-separated subset of tool values to keep visible.">
+				<input
+					value={config?.values?.join(', ') ?? ''}
+					placeholder={tool.values.map((value) => value.value).join(', ')}
+					onInput={(event) => {
+						if (event.currentTarget instanceof HTMLInputElement)
+							setConfigList(item, 'values', event.currentTarget.value)
+					}}
+				/>
+			</ConfigRow>
+			<ConfigRow label="Keyword filter" description="Extra terms that make this item easier to find in the chooser.">
+				<input
+					value={config?.keywords?.join(', ') ?? ''}
+					placeholder="row, column"
+					onInput={(event) => {
+						if (event.currentTarget instanceof HTMLInputElement)
+							setConfigList(item, 'keywords', event.currentTarget.value)
+					}}
+				/>
+			</ConfigRow>
+		</div>
+	)
+}
+
+function PaletteInspectorPanel() {
+	return (
+		<div class="palette-demo-panel">
+			<div class="palette-demo-config-toolbar">
+				<div>
+					<div class="palette-demo-panel-title">Item configuration</div>
+				</div>
+				<button if={demoInspection.item} type="button" class="palette-demo-tool" onClick={returnToCommandPopup}>
+					OK
+				</button>
+			</div>
+			<div if={!demoPalette.editing} class="palette-demo-config-empty">
+				Enable palette edit mode, then click a toolbar item to configure it.
+			</div>
+			<div if={demoPalette.editing && !demoInspection.item} class="palette-demo-config-empty">
+				Select a toolbar item to edit its settings.
+			</div>
+			<div if={demoInspection.item} class="palette-demo-config-stack">
+				<div class="palette-demo-config-header">
+					<strong>{toolbarMeta(demoInspection.item!).label}</strong>
+					<span>{demoInspection.item?.tool ?? demoInspection.item?.editor}</span>
+				</div>
+				{renderPaletteConfigurator(
+					demoPalette,
+					demoInspection.item!,
+					demoInspection.tool,
+					demoInspection.scope
+				)}
+			</div>
+		</div>
+	)
+}
+
+const demoEditors: DemoPalette['editors'] = {
 	boolean: {
-		toggle: { editor: ToggleEditor, flags: { footprint: 'square' } },
+		toggle: { editor: ToggleEditor, configure: BaseConfigurator, flags: { footprint: 'square' } },
 	},
 	enum: {
-		flip: { editor: FlipEditor, flags: { footprint: 'square' } },
-		radio: { editor: RadioEditor, flags: { footprint: 'free' } },
-		select: { editor: SelectEditor, flags: { footprint: 'horizontal' } },
-		segmented: { editor: SegmentedEditor, flags: { footprint: 'free' } },
-		splitRadio: { editor: SplitRadioEditor, flags: { footprint: 'free' } },
+		flip: { editor: FlipEditor, configure: EnumSubsetConfigurator, flags: { footprint: 'square' } },
+		radio: { editor: RadioEditor, configure: EnumSubsetConfigurator, flags: { footprint: 'free' } },
+		select: { editor: SelectEditor, configure: EnumSubsetConfigurator, flags: { footprint: 'horizontal' } },
+		segmented: { editor: SegmentedEditor, configure: EnumSubsetConfigurator, flags: { footprint: 'free' } },
+		splitRadio: { editor: SplitRadioEditor, configure: EnumSubsetConfigurator, flags: { footprint: 'free' } },
 	},
 	number: {
-		slider: { editor: SliderEditor, flags: { footprint: 'horizontal' } },
-		stepper: { editor: StepperEditor, flags: { footprint: 'free' } },
-		stars: { editor: StarsEditor, flags: { footprint: 'free' } },
+		slider: { editor: SliderEditor, configure: BaseConfigurator, flags: { footprint: 'horizontal' } },
+		stepper: { editor: StepperEditor, configure: BaseConfigurator, flags: { footprint: 'free' } },
+		stars: { editor: StarsEditor, configure: BaseConfigurator, flags: { footprint: 'free' } },
 	},
 	item: {
-		commandBox: { editor: CommandBoxEditor, flags: { footprint: 'horizontal' } },
+		commandBox: { editor: CommandBoxEditor, configure: BaseConfigurator, flags: { footprint: 'horizontal' } },
 	},
 	run: {
-		button: { editor: ButtonEditor, flags: { footprint: 'horizontal' } },
-		splitButton: { editor: SplitButtonEditor, flags: { footprint: 'free' } },
+		button: { editor: ButtonEditor, configure: BaseConfigurator, flags: { footprint: 'horizontal' } },
+		splitButton: { editor: SplitButtonEditor, configure: BaseConfigurator, flags: { footprint: 'free' } },
 	},
 }
 
-const demoPalette: Palette = {
-	tools: {
-		notifications: {
-			type: 'boolean',
-			label: 'Notifications',
-			icon: '🔔',
-			categories: ['settings'],
-			keywords: ['alerts', 'sound', 'mute'],
-			get value() {
-				return demoState.notifications
-			},
-			set value(value) {
-				demoState.notifications = value
-			},
-			default: true,
+const demoTools: DemoPaletteTools = {
+	notifications: {
+		type: 'boolean',
+		label: 'Notifications',
+		icon: '🔔',
+		categories: ['settings'],
+		keywords: ['alerts', 'sound', 'mute'],
+		get value() {
+			return demoState.notifications
 		},
-		layout: {
-			type: 'enum',
-			label: 'Layout',
-			icon: '▤',
-			categories: ['layout'],
-			keywords: ['arrangement'],
-			get value() {
-				return demoState.layout
-			},
-			set value(value) {
-				demoState.layout = value
-			},
-			default: 'horizontal',
-			values: [
-				{
-					value: 'horizontal',
-					icon: layoutDisplay.horizontal.icon,
-					label: layoutDisplay.horizontal.label,
-					keywords: ['row'],
-				},
-				{
-					value: 'vertical',
-					icon: layoutDisplay.vertical.icon,
-					label: layoutDisplay.vertical.label,
-					keywords: ['column'],
-				},
-			],
+		set value(value) {
+			demoState.notifications = value
 		},
-		mode: {
-			type: 'enum',
-			label: 'Mode',
-			icon: '⌘',
-			categories: ['mode'],
-			keywords: ['focus'],
-			get value() {
-				return demoState.mode
-			},
-			set value(value) {
-				demoState.mode = value
-			},
-			default: 'command',
-			values: [
-				{
-					value: 'inspect',
-					icon: modeDisplay.inspect.icon,
-					label: modeDisplay.inspect.label,
-					keywords: ['debug'],
-				},
-				{
-					value: 'command',
-					icon: modeDisplay.command.icon,
-					label: modeDisplay.command.label,
-					keywords: ['keyboard'],
-				},
-			],
+		default: true,
+	},
+	layout: {
+		type: 'enum',
+		label: 'Layout',
+		icon: '▤',
+		categories: ['layout'],
+		keywords: ['arrangement'],
+		get value() {
+			return demoState.layout
 		},
-		theme: {
-			type: 'enum',
-			label: 'Theme',
-			icon: '🎨',
-			categories: ['appearance'],
-			keywords: ['color'],
-			get value() {
-				return demoState.theme
-			},
-			set value(value) {
-				demoState.theme = value
-			},
-			default: 'system',
-			values: [
-				{ value: 'light', icon: themeDisplay.light.icon, label: themeDisplay.light.label },
-				{ value: 'dark', icon: themeDisplay.dark.icon, label: themeDisplay.dark.label },
-				{ value: 'system', icon: themeDisplay.system.icon, label: themeDisplay.system.label },
-			],
+		set value(value) {
+			demoState.layout = value
 		},
-		fontSize: {
-			type: 'number',
-			label: 'Font Size',
-			icon: 'A',
-			categories: ['appearance'],
-			keywords: ['font', 'text', 'type'],
-			get value() {
-				return demoState.fontSize
+		default: 'horizontal',
+		values: [
+			{
+				value: 'horizontal',
+				icon: layoutDisplay.horizontal.icon,
+				label: layoutDisplay.horizontal.label,
+				keywords: ['row'],
 			},
-			set value(value) {
-				demoState.fontSize = value
+			{
+				value: 'vertical',
+				icon: layoutDisplay.vertical.icon,
+				label: layoutDisplay.vertical.label,
+				keywords: ['column'],
 			},
-			default: 14,
-			min: 10,
-			max: 20,
-			step: 1,
+		],
+	},
+	mode: {
+		type: 'enum',
+		label: 'Mode',
+		icon: '⌘',
+		categories: ['mode'],
+		keywords: ['focus'],
+		get value() {
+			return demoState.mode
 		},
-		gameSpeed: {
-			type: 'number',
-			label: 'Playback Speed',
-			icon: '▶',
-			categories: ['playback'],
-			keywords: ['speed', 'game', 'animation'],
-			get value() {
-				return demoState.gameSpeed
-			},
-			set value(value) {
-				demoState.gameSpeed = value
-			},
-			default: 3,
-			min: 1,
-			max: 5,
-			step: 1,
+		set value(value) {
+			demoState.mode = value
 		},
-		terminal: {
-			label: 'Terminal',
-			icon: '`',
-			categories: ['run'],
-			keywords: ['terminal', 'magic', 'popup'],
-			get can() {
-				return true
+		default: 'command',
+		values: [
+			{
+				value: 'inspect',
+				icon: modeDisplay.inspect.icon,
+				label: modeDisplay.inspect.label,
+				keywords: ['debug'],
 			},
-			run() {
-				openCommandBoxPopup()
+			{
+				value: 'command',
+				icon: modeDisplay.command.icon,
+				label: modeDisplay.command.label,
+				keywords: ['keyboard'],
 			},
+		],
+	},
+	theme: {
+		type: 'enum',
+		label: 'Theme',
+		icon: '🎨',
+		categories: ['appearance'],
+		keywords: ['color'],
+		get value() {
+			return demoState.theme
 		},
-		reset: {
-			label: 'Reset Defaults',
-			icon: '↺',
-			categories: ['presets'],
-			keywords: ['restore', 'defaults'],
-			get can() {
-				return (
-					demoState.notifications !== true ||
-					demoState.layout !== 'horizontal' ||
-					demoState.mode !== 'command' ||
-					demoState.theme !== 'system' ||
-					demoState.fontSize !== 14 ||
-					demoState.gameSpeed !== 3
-				)
-			},
-			run() {
-				resetDefaults()
-			},
+		set value(value) {
+			demoState.theme = value
 		},
-		presentation: {
-			label: 'Apply Presentation Preset',
-			icon: '🎬',
-			categories: ['presets'],
-			keywords: ['presentation', 'present'],
-			get can() {
-				return true
-			},
-			run() {
-				applyPresentationMode()
-			},
+		default: 'system',
+		values: [
+			{ value: 'light', icon: themeDisplay.light.icon, label: themeDisplay.light.label },
+			{ value: 'dark', icon: themeDisplay.dark.icon, label: themeDisplay.dark.label },
+			{ value: 'system', icon: themeDisplay.system.icon, label: themeDisplay.system.label },
+		],
+	},
+	fontSize: {
+		type: 'number',
+		label: 'Font Size',
+		icon: 'A',
+		categories: ['appearance'],
+		keywords: ['font', 'text', 'type'],
+		get value() {
+			return demoState.fontSize
 		},
-		inspectPreset: {
-			label: 'Apply Inspector Preset',
-			icon: '🧭',
-			categories: ['presets'],
-			keywords: ['inspect', 'inspector'],
-			get can() {
-				return true
-			},
-			run() {
-				applyInspectorMode()
-			},
+		set value(value) {
+			demoState.fontSize = value
+		},
+		default: 14,
+		min: 10,
+		max: 20,
+		step: 1,
+	},
+	gameSpeed: {
+		type: 'number',
+		label: 'Playback Speed',
+		icon: '▶',
+		categories: ['playback'],
+		keywords: ['speed', 'game', 'animation'],
+		get value() {
+			return demoState.gameSpeed
+		},
+		set value(value) {
+			demoState.gameSpeed = value
+		},
+		default: 3,
+		min: 1,
+		max: 5,
+		step: 1,
+	},
+	terminal: {
+		label: 'Terminal',
+		icon: '`',
+		categories: ['run'],
+		keywords: ['terminal', 'magic', 'popup'],
+		get can() {
+			return true
+		},
+		run() {
+			openCommandBoxPopup()
 		},
 	},
+	reset: {
+		label: 'Reset Defaults',
+		icon: '↺',
+		categories: ['presets'],
+		keywords: ['restore', 'defaults'],
+		get can() {
+			return (
+				demoState.notifications !== true ||
+				demoState.layout !== 'horizontal' ||
+				demoState.mode !== 'command' ||
+				demoState.theme !== 'system' ||
+				demoState.fontSize !== 14 ||
+				demoState.gameSpeed !== 3
+			)
+		},
+		run() {
+			resetDefaults()
+		},
+	},
+	presentation: {
+		label: 'Apply Presentation Preset',
+		icon: '🎬',
+		categories: ['presets'],
+		keywords: ['presentation', 'present'],
+		get can() {
+			return true
+		},
+		run() {
+			applyPresentationMode()
+		},
+	},
+	inspectPreset: {
+		label: 'Apply Inspector Preset',
+		icon: '🧭',
+		categories: ['presets'],
+		keywords: ['inspect', 'inspector'],
+		get can() {
+			return true
+		},
+		run() {
+			applyInspectorMode()
+		},
+	},
+}
+
+const demoPalette = new Palette<DemoPaletteSchema>({
+	tools: demoTools,
 	keys: createPaletteKeys({
 		'`': 'terminal',
 		N: 'notifications',
@@ -1430,7 +1860,7 @@ const demoPalette: Palette = {
 	editorDefaults: {
 		run: 'button',
 	},
-}
+})
 
 const demoCommandEntries = paletteCommandEntries({
 	palette: demoPalette,
@@ -1446,6 +1876,36 @@ const popupCommandBox = paletteCommandBoxModel({
 	entries: demoCommandEntries,
 	placeholder: 'Command…',
 })
+
+const demoInspection = {
+	get entry() {
+		return unwrap(palettes.inspecting?.palette) === unwrap(demoPalette)
+			? palettes.inspecting
+			: undefined
+	},
+	get item() {
+		return this.entry?.item as DemoPaletteItem | undefined
+	},
+	get tool() {
+		const item = this.item
+		return item?.tool ? demoPalette.tool(item.tool) : undefined
+	},
+	get scope() {
+		return {
+			palette: demoPalette,
+			region: this.entry?.region,
+		} satisfies PaletteScope<DemoPaletteSchema>
+	},
+}
+
+const centerOverlay = {
+	get visible() {
+		return popupCommandBoxUi.open || (demoPalette.editing && Boolean(demoInspection.item))
+	},
+	get editingItem() {
+		return demoPalette.editing ? demoInspection.item : undefined
+	},
+}
 
 export default function PaletteDemo() {
 	const statusTone = {
@@ -1468,7 +1928,7 @@ export default function PaletteDemo() {
 			toolbar:class="palette-demo-toolbar"
 		>
 			<div
-				class={['palette-demo-center-content', popupCommandBoxUi.open ? 'is-dimmed' : undefined]}
+				class={['palette-demo-center-content', centerOverlay.visible ? 'is-dimmed' : undefined]}
 			>
 				<div class="palette-demo-hero">
 					<div class="palette-demo-hero-copy">
@@ -1523,7 +1983,7 @@ export default function PaletteDemo() {
 					</div>
 				</div>
 			</div>
-			<CommandBoxPopup if={popupCommandBoxUi.open} />
+			<CommandBoxPopup if={centerOverlay.visible} />
 		</Ide>
 	)
 }
@@ -1831,6 +2291,78 @@ componentStyle.css`
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
 		color: #94a3b8;
+	}
+
+	.palette-demo-config-toolbar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+	.palette-demo-config-stack {
+		display: grid;
+		gap: 12px;
+	}
+
+	.palette-demo-config-header {
+		display: grid;
+		gap: 4px;
+	}
+
+	.palette-demo-config-header > span,
+	.palette-demo-config-empty,
+	.palette-demo-config-key > span {
+		color: #94a3b8;
+		font-size: 0.82rem;
+	}
+
+	.palette-demo-config-table {
+		display: grid;
+		gap: 8px;
+	}
+
+	.palette-demo-config-row {
+		display: grid;
+		grid-template-columns: minmax(8rem, 10rem) minmax(0, 1fr);
+		gap: 12px;
+		align-items: start;
+		padding: 10px 12px;
+		border-radius: 12px;
+		border: 1px solid rgba(71, 85, 105, 0.55);
+		background: rgba(15, 23, 42, 0.5);
+	}
+
+	.palette-demo-config-key {
+		display: grid;
+		gap: 4px;
+	}
+
+	.palette-demo-config-key > strong {
+		font-size: 0.84rem;
+	}
+
+	.palette-demo-config-value {
+		display: grid;
+		gap: 8px;
+		min-inline-size: 0;
+	}
+
+	.palette-demo-config-value > input,
+	.palette-demo-config-value > select {
+		inline-size: 100%;
+		min-inline-size: 0;
+		padding: 0.45rem 0.65rem;
+		border-radius: 10px;
+		border: 1px solid rgba(71, 85, 105, 0.95);
+		background: rgba(15, 23, 42, 0.96);
+		color: inherit;
+		font: inherit;
+		box-sizing: border-box;
+	}
+
+	.palette-demo-config-value > input::placeholder {
+		color: #64748b;
 	}
 
 	.palette-demo-state-grid {
@@ -2198,6 +2730,7 @@ componentStyle.css`
 	}
 
 	.palette-demo-slider.palette-demo-layout-vertical:hover::before,
+	.palette-demo-slider.palette-demo-layout-vertical:has(> input[type='range']:hover)::before,
 	.palette-demo-slider.palette-demo-layout-vertical:focus-within::before {
 		opacity: 1;
 		transform: translateX(0);
@@ -2250,6 +2783,7 @@ componentStyle.css`
 	}
 
 	.palette-demo-slider.palette-demo-layout-vertical:hover > input[type='range'],
+	.palette-demo-slider.palette-demo-layout-vertical:has(> input[type='range']:hover) > input[type='range'],
 	.palette-demo-slider.palette-demo-layout-vertical:focus-within > input[type='range'] {
 		opacity: 1;
 		pointer-events: auto;
@@ -2258,6 +2792,10 @@ componentStyle.css`
 
 	.palette-demo-stepper {
 		justify-content: center;
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
 	}
 
 	.palette-demo-stepper-value {
@@ -2266,7 +2804,11 @@ componentStyle.css`
 		justify-content: center;
 		gap: 6px;
 		min-inline-size: 3.2rem;
+		min-block-size: 2rem;
 		padding-inline: 0.72rem;
+		border: 1px solid rgba(71, 85, 105, 0.95);
+		border-radius: 0;
+		background: rgba(15, 23, 42, 0.88);
 		font-weight: 600;
 	}
 
@@ -2299,6 +2841,13 @@ componentStyle.css`
 	.palette-demo-radio-item.is-selected {
 		border-color: rgba(96, 165, 250, 0.95);
 		box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.4) inset;
+	}
+
+	.palette-demo-choice {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
 	}
 
 	.palette-demo-stars-row {
@@ -2363,6 +2912,24 @@ componentStyle.css`
 		width: 2.375rem;
 		height: 2.375rem;
 		padding: 0;
+	}
+
+	.palette-demo-stepper.palette-demo-layout-vertical > .palette-demo-stepper-value {
+		inline-size: 2.375rem;
+		min-inline-size: 2.375rem;
+		padding: 0.35rem 0;
+		box-sizing: border-box;
+		flex-direction: column;
+		gap: 2px;
+		line-height: 1;
+	}
+
+	.palette-demo-stepper.palette-demo-layout-vertical > .palette-demo-stepper-value > .palette-demo-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-inline-size: 0;
+		padding-inline: 0;
 	}
 
 	.palette-demo-split-radio.palette-demo-layout-vertical > .palette-demo-trigger {

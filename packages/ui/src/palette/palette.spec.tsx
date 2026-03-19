@@ -4,17 +4,19 @@ import {
 	isEditableTool,
 	isEditing,
 	isRunTool,
+	Palette,
 	PaletteError,
 	palettes,
 	paletteTool,
 	paletteToolFamily,
+	renderPaletteConfigurator,
 	renderPaletteEditor,
 	resolvePaletteEditor,
 } from './palette'
-import type { Palette, PaletteToolbarItem } from './types'
+import type { PaletteConfig, PaletteToolbarItem } from './types'
 
 function createPalette(): Palette {
-	return {
+	return new Palette({
 		tools: {
 			reset: {
 				label: 'Reset',
@@ -54,7 +56,7 @@ function createPalette(): Palette {
 			N: 'notifications|true',
 			'+': 'fontSize:inc',
 		}),
-	}
+	})
 }
 
 function editableTools(palette: Palette) {
@@ -83,20 +85,21 @@ describe('palette engine', () => {
 		expect(paletteToolFamily(palette.tools.fontSize)).toBe('number')
 	})
 
-	it('resolves raw tools, setters, and actions from paletteTool', () => {
+	it('resolves palette tool specs into runnable helpers', () => {
 		const palette = createPalette()
 		const { fontSize, notifications } = editableTools(palette)
 
+		expect(palette.tool('reset')).toBe(palette.tools.reset)
 		expect(paletteTool(palette, 'reset')).toBe(palette.tools.reset)
 
-		const setterRunner = paletteTool(palette, 'notifications|true')
+		const setterRunner = palette.tool('notifications|true')
 		if (!isRunTool(setterRunner)) throw new Error('Expected setter runner')
 		setterRunner.run()
 		expect(notifications.value).toBe(true)
 		setterRunner.run()
 		expect(notifications.value).toBe(false)
 
-		const actionRunner = paletteTool(palette, 'fontSize:inc')
+		const actionRunner = palette.tool('fontSize:inc')
 		if (!isRunTool(actionRunner)) throw new Error('Expected action runner')
 		expect(actionRunner.can).toBe(true)
 		actionRunner.run()
@@ -133,8 +136,8 @@ describe('palette engine', () => {
 	it('applies runner and setter wrappers when provided', () => {
 		const runnerHook = vi.fn<(spec: string) => void>()
 		const setterHook = vi.fn<(value: unknown) => void>()
-		const palette = {
-			...createPalette(),
+		const palette = new Palette({
+			...createPalette().config,
 			runner(runner, _from, spec) {
 				return {
 					get can() {
@@ -157,7 +160,7 @@ describe('palette engine', () => {
 					},
 				}
 			},
-		} satisfies Palette
+		})
 
 		const setterRunner = paletteTool(palette, 'notifications|true')
 		if (!isRunTool(setterRunner)) throw new Error('Expected setter runner')
@@ -187,8 +190,8 @@ describe('palette engine', () => {
 	})
 
 	it('resolves editor specs from item or default variant', () => {
-		const palette = {
-			...createPalette(),
+		const palette = new Palette({
+			...createPalette().config,
 			editors: {
 				run: {
 					button: {
@@ -199,17 +202,20 @@ describe('palette engine', () => {
 			editorDefaults: {
 				run: 'button',
 			},
-		} satisfies Palette
+		} satisfies PaletteConfig)
 		const item = { tool: 'reset' } satisfies PaletteToolbarItem
 
-		const spec = resolvePaletteEditor(palette, item, palette.tools.reset)
+		const spec = palette.resolveEditor(item, palette.tools.reset)
 		expect(spec?.editor({ item, tool: palette.tools.reset, scope: {}, flags: {} })).toBeTruthy()
+		expect(palette.renderEditor(item, palette.tools.reset, {})).toBeTruthy()
+		expect(resolvePaletteEditor(palette, item, palette.tools.reset)).toBe(spec)
 		expect(renderPaletteEditor(palette, item, palette.tools.reset, {})).toBeTruthy()
+		expect(palette.renderConfigurator(item, palette.tools.reset, {})).toBeUndefined()
 	})
 
 	it('throws clear editor errors when variant configuration is missing or invalid', () => {
-		const palette = {
-			...createPalette(),
+		const palette = new Palette({
+			...createPalette().config,
 			editors: {
 				run: {
 					button: {
@@ -217,35 +223,76 @@ describe('palette engine', () => {
 					},
 				},
 			},
-		} satisfies Palette
+		} satisfies PaletteConfig)
 
-		expect(() => resolvePaletteEditor(palette, { tool: 'reset' }, palette.tools.reset)).toThrow(
+		expect(() => palette.resolveEditor({ tool: 'reset' }, palette.tools.reset)).toThrow(
 			'No editor variant configured'
 		)
 		expect(() =>
-			resolvePaletteEditor(palette, { tool: 'reset', editor: 'missing' }, palette.tools.reset)
+			palette.resolveEditor({ tool: 'reset', editor: 'missing' }, palette.tools.reset)
 		).toThrow('Unknown palette editor')
 	})
 
 	it('falls back to palette.editor when no registry editor is configured', () => {
 		const render = vi.fn(() => <div data-test="fallback-editor">fallback</div>)
-		const palette = {
-			...createPalette(),
+		const palette = new Palette({
+			...createPalette().config,
 			editor: render,
-		} satisfies Palette
+		} satisfies PaletteConfig)
 
-		const rendered = renderPaletteEditor(palette, { tool: 'reset' }, palette.tools.reset, {})
+		const rendered = palette.renderEditor({ tool: 'reset' }, palette.tools.reset, {})
 		expect(rendered).toBeTruthy()
 		expect(render).toHaveBeenCalledTimes(1)
+	})
+
+	it('renders configurators from editor specs or palette fallback', () => {
+		const configure = vi.fn(() => <div data-test="run-configurator">config</div>)
+		const fallback = vi.fn(() => <div data-test="fallback-configurator">fallback</div>)
+		const palette = new Palette({
+			...createPalette().config,
+			editors: {
+				run: {
+					button: {
+						editor: () => <div>run</div>,
+						configure,
+					},
+				},
+			},
+			editorDefaults: {
+				run: 'button',
+			},
+			configurator: fallback,
+		} satisfies PaletteConfig)
+
+		const runItem = { tool: 'reset' } satisfies PaletteToolbarItem
+		expect(palette.renderConfigurator(runItem, palette.tools.reset, {})).toBeTruthy()
+		expect(renderPaletteConfigurator(palette, runItem, palette.tools.reset, {})).toBeTruthy()
+		expect(configure).toHaveBeenCalledTimes(2)
+
+		const fallbackItem = { tool: 'notifications', editor: 'missing' } as PaletteToolbarItem
+		expect(palette.renderConfigurator(fallbackItem, palette.tools.notifications, {})).toBeTruthy()
+		expect(fallback).toHaveBeenCalledTimes(1)
+
+		const fallbackPalette = new Palette({
+			...createPalette().config,
+			configurator: fallback,
+		} satisfies PaletteConfig)
+		expect(
+			fallbackPalette.renderConfigurator({ tool: 'reset' }, fallbackPalette.tools.reset, {})
+		).toBeTruthy()
+		expect(fallback).toHaveBeenCalledTimes(2)
 	})
 
 	it('tracks the editing palette identity', () => {
 		const first = createPalette()
 		const second = createPalette()
 
+		expect(first.editing).toBe(false)
 		expect(isEditing(first)).toBe(false)
 		palettes.editing = first
+		expect(first.editing).toBe(true)
 		expect(isEditing(first)).toBe(true)
+		expect(second.editing).toBe(false)
 		expect(isEditing(second)).toBe(false)
 	})
 })

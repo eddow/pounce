@@ -1,16 +1,21 @@
 import { document, rootEnv } from '@sursaut/core'
+import { unwrap } from 'mutts'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import './components'
 import { createPaletteKeys } from './keys'
-import { palettes } from './palette'
-import type { Palette } from './types'
+import { Palette, palettes } from './palette'
+import type { PaletteConfig } from './types'
 
 type PaletteRootEnv = typeof rootEnv & {
+	paletteItemDrag?: (
+		element: HTMLElement,
+		target: Record<string, unknown>
+	) => (() => void) | undefined
 	paletteRoot?: (element: HTMLElement, palette: Palette) => (() => void) | undefined
 }
 
 function testPalette(run: () => void): Palette {
-	return {
+	return new Palette({
 		tools: {
 			run: {
 				get can() {
@@ -22,7 +27,7 @@ function testPalette(run: () => void): Palette {
 		keys: createPaletteKeys({
 			N: 'run',
 		}),
-	}
+	})
 }
 
 function attachPaletteRoot(element: HTMLElement, palette: Palette): (() => void) | undefined {
@@ -34,6 +39,7 @@ describe('paletteRoot', () => {
 		document.body.replaceChildren()
 		palettes.editing = undefined
 		palettes.dragging = undefined
+		palettes.inspecting = undefined
 	})
 
 	it('ignores shortcuts triggered from editable descendants', () => {
@@ -87,7 +93,7 @@ describe('paletteRoot', () => {
 		const run = vi.fn()
 		const root = document.createElement('div')
 		document.body.appendChild(root)
-		const palette: Palette = {
+		const palette = new Palette({
 			tools: {
 				run: {
 					get can() {
@@ -99,7 +105,7 @@ describe('paletteRoot', () => {
 			keys: createPaletteKeys({
 				N: 'run',
 			}),
-		}
+		} satisfies PaletteConfig)
 		const cleanup = attachPaletteRoot(root, palette)
 
 		const event = new KeyboardEvent('keydown', { key: 'n', bubbles: true, cancelable: true })
@@ -118,14 +124,14 @@ describe('paletteRoot', () => {
 			value: false,
 			default: false,
 		}
-		const palette: Palette = {
+		const palette = new Palette({
 			tools: {
 				notifications,
 			},
 			keys: createPaletteKeys({
 				N: 'notifications',
 			}),
-		}
+		} satisfies PaletteConfig)
 		const cleanup = attachPaletteRoot(root, palette)
 
 		root.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', bubbles: true, cancelable: true }))
@@ -181,5 +187,150 @@ describe('paletteRoot', () => {
 		cleanup?.()
 		palettes.editing = undefined
 		palettes.dragging = undefined
+		palettes.inspecting = undefined
+	})
+
+	it('clicks an item to inspect it without entering dragging state', () => {
+		const root = document.createElement('div')
+		const guard = document.createElement('div')
+		const firstItem = { tool: 'run' }
+		const secondItem = { tool: 'run' }
+		const toolbar = [firstItem, secondItem]
+		const track = [{ space: 0, toolbar }]
+		const border = [track]
+		Object.defineProperties(guard, {
+			setPointerCapture: { configurable: true, value: vi.fn() },
+			releasePointerCapture: { configurable: true, value: vi.fn() },
+			hasPointerCapture: { configurable: true, value: vi.fn(() => true) },
+		})
+		root.appendChild(guard)
+		document.body.appendChild(root)
+		const palette = new Palette({
+			tools: {
+				run: {
+					get can() {
+						return true
+					},
+					run() {},
+				},
+			},
+			keys: createPaletteKeys({
+				N: 'run',
+			}),
+		} satisfies PaletteConfig)
+		palettes.editing = palette
+		const cleanup = (rootEnv as PaletteRootEnv).paletteItemDrag?.(guard, {
+			border,
+			direction: 'horizontal',
+			item: firstItem,
+			itemIndex: 0,
+			palette,
+			region: 'top',
+			toolbar,
+			track,
+			trackIndex: 0,
+		})
+		guard?.dispatchEvent(
+			new PointerEvent('pointerdown', {
+				bubbles: true,
+				cancelable: true,
+				button: 0,
+				buttons: 1,
+				pointerId: 1,
+			})
+		)
+		window.dispatchEvent(
+			new PointerEvent('pointerup', {
+				bubbles: true,
+				cancelable: true,
+				button: 0,
+				buttons: 0,
+				pointerId: 1,
+			})
+		)
+
+		expect(palettes.dragging).toBeUndefined()
+		expect(unwrap(palettes.inspecting?.palette)).toBe(palette)
+		expect(unwrap(palettes.inspecting?.item)).toBe(firstItem)
+		cleanup?.()
+	})
+
+	it('keeps an item inspected when drag activates without moving it elsewhere', () => {
+		const root = document.createElement('div')
+		const guard = document.createElement('div')
+		const firstItem = { tool: 'run' }
+		const secondItem = { tool: 'run' }
+		const toolbar = [firstItem, secondItem]
+		const track = [{ space: 0, toolbar }]
+		const border = [track]
+		Object.defineProperties(guard, {
+			setPointerCapture: { configurable: true, value: vi.fn() },
+			releasePointerCapture: { configurable: true, value: vi.fn() },
+			hasPointerCapture: { configurable: true, value: vi.fn(() => true) },
+		})
+		root.appendChild(guard)
+		document.body.appendChild(root)
+		const palette = new Palette({
+			tools: {
+				run: {
+					get can() {
+						return true
+					},
+					run() {},
+				},
+			},
+			keys: createPaletteKeys({
+				N: 'run',
+			}),
+		} satisfies PaletteConfig)
+		palettes.editing = palette
+		const cleanup = (rootEnv as PaletteRootEnv).paletteItemDrag?.(guard, {
+			border,
+			direction: 'horizontal',
+			item: firstItem,
+			itemIndex: 0,
+			palette,
+			region: 'top',
+			toolbar,
+			track,
+			trackIndex: 0,
+		})
+		guard.dispatchEvent(
+			new PointerEvent('pointerdown', {
+				bubbles: true,
+				cancelable: true,
+				button: 0,
+				buttons: 1,
+				clientX: 10,
+				clientY: 10,
+				pointerId: 1,
+			})
+		)
+		window.dispatchEvent(
+			new PointerEvent('pointermove', {
+				bubbles: true,
+				cancelable: true,
+				buttons: 1,
+				clientX: 20,
+				clientY: 10,
+				pointerId: 1,
+			})
+		)
+		window.dispatchEvent(
+			new PointerEvent('pointerup', {
+				bubbles: true,
+				cancelable: true,
+				button: 0,
+				buttons: 0,
+				clientX: 20,
+				clientY: 10,
+				pointerId: 1,
+			})
+		)
+
+		expect(palettes.dragging).toBeUndefined()
+		expect(unwrap(palettes.inspecting?.palette)).toBe(palette)
+		expect(unwrap(palettes.inspecting?.item)).toBe(firstItem)
+		cleanup?.()
 	})
 })

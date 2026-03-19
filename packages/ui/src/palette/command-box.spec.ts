@@ -2,10 +2,12 @@ import { describe, expect, it, vi } from 'vitest'
 import {
 	handlePaletteCommandBoxInputKeydown,
 	handlePaletteCommandChipKeydown,
+	Palette,
 	paletteCommandBoxModel,
 	paletteCommandEntries,
-} from './command-box'
+} from './index'
 import { createPaletteKeys } from './keys'
+import type { PaletteConfig } from './types'
 
 describe('paletteCommandBoxModel', () => {
 	it('filters entries by free text, categories, and keyword tokens', () => {
@@ -339,7 +341,7 @@ describe('paletteCommandBoxModel', () => {
 
 	it('derives command entries from palette tools, values, and value actions', () => {
 		const reset = vi.fn()
-		const palette = {
+		const palette = new Palette({
 			tools: {
 				notifications: {
 					type: 'boolean' as const,
@@ -393,7 +395,7 @@ describe('paletteCommandBoxModel', () => {
 				T: 'theme|light',
 				'+': 'fontSize:inc',
 			}),
-		}
+		} satisfies PaletteConfig)
 		const entries = paletteCommandEntries({ palette })
 
 		expect(entries.find((entry) => entry.id === 'reset')?.label).toBe('Reset Defaults')

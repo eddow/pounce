@@ -1,6 +1,6 @@
 import { lift, reactive } from 'mutts'
 import { isRunTool, paletteTool, paletteToolFamily, valueActions } from './palette'
-import type { Palette, PaletteTool, PaletteToolRun } from './types'
+import type { Palette, PaletteSchema, PaletteTool, PaletteToolRun } from './types'
 
 function normalizeCommandBoxToken(value: string): string {
 	return value.trim().toLowerCase()
@@ -84,17 +84,27 @@ function collectCommandKeywords(...sources: (string | readonly string[] | undefi
 	return uniqueNormalized(values)
 }
 
-function commandEntryMeta(palette: Palette, spec: string, fallback: string): string {
+function commandEntryMeta<TSchema extends PaletteSchema>(
+	palette: Palette<TSchema>,
+	spec: string,
+	fallback: string
+): string {
 	const keys = palette.keys.findByTool(spec)
 	return keys.length > 0 ? keys.join(' / ') : fallback
 }
 
-function commandEntryCategories(tool: PaletteTool, extra?: readonly string[]): string[] {
+function commandEntryCategories<TSchema extends PaletteSchema>(
+	tool: PaletteTool<TSchema['tools']>,
+	extra?: readonly string[]
+): string[] {
 	const categories = uniqueNormalized([...(tool.categories ?? []), ...(extra ?? [])])
 	return categories.length > 0 ? categories : [paletteToolFamily(tool)]
 }
 
-function commandRunner(palette: Palette, spec: string): PaletteToolRun {
+function commandRunner<TSchema extends PaletteSchema>(
+	palette: Palette<TSchema>,
+	spec: string
+): PaletteToolRun {
 	const runner = paletteTool(palette, spec)
 	if (!('run' in runner)) throw new Error(`Palette command "${spec}" is not runnable`)
 	return runner
@@ -126,8 +136,8 @@ function generatedCommandEntry(options: {
 	}
 }
 
-export function paletteCommandEntries(options: {
-	palette: Palette
+export function paletteCommandEntries<TSchema extends PaletteSchema>(options: {
+	palette: Palette<TSchema>
 	excludeTools?: readonly string[]
 }): readonly PaletteCommandBoxEntry[] {
 	const excluded = new Set(options.excludeTools ?? [])
