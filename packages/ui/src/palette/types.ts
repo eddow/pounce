@@ -53,23 +53,35 @@ export interface PaletteKeys {
 	resolve(event: KeyboardEvent): string | undefined
 }
 
-export type PaletteToolbarItem<TEditor extends string = string, TConfig = unknown> = Record<
-	PropertyKey,
-	unknown
-> & {
+export type PaletteToolbarItemBase = Record<PropertyKey, unknown>
+
+export type PaletteToolToolbarItem<
+	TEditor extends string = string,
+	TConfig = unknown,
+> = PaletteToolbarItemBase & {
 	readonly tool: string
 	readonly editor?: TEditor
 	readonly config?: TConfig
 }
 
+export type PaletteEditorOnlyToolbarItem<
+	TEditor extends string = string,
+	TConfig = unknown,
+> = PaletteToolbarItemBase & {
+	readonly tool?: undefined
+	readonly editor: TEditor
+	readonly config?: TConfig
+}
+
+export type PaletteToolbarItem<TEditor extends string = string, TConfig = unknown> =
+	| PaletteToolToolbarItem<TEditor, TConfig>
+	| PaletteEditorOnlyToolbarItem<TEditor, TConfig>
+
 export type PaletteToolbarItemByEditor<TEditors extends Record<string, unknown>> = {
 	[K in keyof TEditors & string]: PaletteToolbarItem<K, TEditors[K]>
 }[keyof TEditors & string]
 
-export type PaletteToolbar = {
-	readonly title?: string
-	readonly items: readonly PaletteToolbarItem[]
-}
+export type PaletteToolbar = PaletteToolbarItem[]
 
 export type PaletteTrack = { space: number; toolbar: PaletteToolbar }[]
 
@@ -91,7 +103,7 @@ export interface PaletteEditorFlags {
 }
 
 export interface PaletteEditorContext<
-	TTool extends PaletteTool = PaletteTool,
+	TTool extends PaletteTool | undefined = PaletteTool | undefined,
 	TItem extends PaletteToolbarItem = PaletteToolbarItem,
 > {
 	readonly item: TItem
@@ -101,12 +113,12 @@ export interface PaletteEditorContext<
 }
 
 export type PaletteEditorComponent<
-	TTool extends PaletteTool = PaletteTool,
+	TTool extends PaletteTool | undefined = PaletteTool | undefined,
 	TItem extends PaletteToolbarItem = PaletteToolbarItem,
 > = (context: PaletteEditorContext<TTool, TItem>) => JSX.Element
 
 export interface PaletteEditorSpec<
-	TTool extends PaletteTool = PaletteTool,
+	TTool extends PaletteTool | undefined = PaletteTool | undefined,
 	TItem extends PaletteToolbarItem = PaletteToolbarItem,
 > {
 	readonly editor: PaletteEditorComponent<TTool, TItem>
@@ -116,8 +128,15 @@ export interface PaletteEditorSpec<
 export type PaletteEditorFamilyRegistry<TFamily extends PaletteToolFamily = PaletteToolFamily> =
 	Record<string, PaletteEditorSpec<PaletteToolByFamily<TFamily>>>
 
+export type PaletteEditorOnlyRegistry = Record<
+	string,
+	PaletteEditorSpec<undefined, PaletteEditorOnlyToolbarItem>
+>
+
 export type PaletteEditorRegistry = {
 	[K in PaletteToolFamily]?: PaletteEditorFamilyRegistry<K>
+} & {
+	item?: PaletteEditorOnlyRegistry
 }
 
 export interface Palette {
@@ -127,7 +146,7 @@ export interface Palette {
 	readonly editorDefaults?: Partial<Record<PaletteToolFamily, string>>
 	readonly editor?: (
 		item: PaletteToolbarItem,
-		tool: PaletteTool,
+		tool: PaletteTool | undefined,
 		scope: PaletteScope
 	) => JSX.Element
 	readonly runner?: <TTool extends PaletteEditableTool>(
@@ -140,4 +159,33 @@ export interface Palette {
 		from: TTool,
 		value: TTool['value']
 	) => PaletteToolRun
+}
+
+export interface PaletteDragging {
+	border: PaletteBorder
+	createdTracks: PaletteTrack[]
+	index: number
+	palette: Palette
+	region: PaletteRegion
+	sourceItems: PaletteToolbar
+	sourceBorder: PaletteBorder
+	sourceRegion: PaletteRegion
+	sourceTrack: PaletteTrack
+	sourceTrackIndex: number
+	sourceTrackWasSingleton: boolean
+	toolbar: PaletteToolbar
+	toolbarPreview?: {
+		count: number
+		index: number
+		source: {
+			border: PaletteBorder
+			removedTrack: boolean
+			track: PaletteTrack
+			trackIndex: number
+			snapshot: PaletteTrack
+		}
+		toolbar: PaletteToolbar
+	}
+	track: PaletteTrack
+	trackIndex: number
 }

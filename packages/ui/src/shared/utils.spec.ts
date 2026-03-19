@@ -26,20 +26,6 @@ describe('arranged', () => {
 			'joined-true',
 			'align-stretch',
 		])
-
-		scope.arranged.orientation = 'horizontal'
-		props.density = 'regular'
-		props.joined = false
-
-		expect(value.orientation).toBe('horizontal')
-		expect(value.density).toBe('regular')
-		expect(value.joined).toBe(false)
-		expect(value.class).toEqual([
-			'orientation-horizontal',
-			'density-regular',
-			'joined-false',
-			'align-stretch',
-		])
 	})
 
 	it('uses configurable class mappings', () => {

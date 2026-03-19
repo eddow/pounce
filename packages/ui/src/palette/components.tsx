@@ -1,5 +1,5 @@
 import { rootEnv } from '@sursaut/core'
-import { effect } from 'mutts'
+import { effect, reactive } from 'mutts'
 import {
 	localDragAxisEnd,
 	localDragAxisStart,
@@ -11,20 +11,23 @@ import {
 import type { ArrangedOrientation } from '../shared/types'
 import { arranged } from '../shared/utils'
 import {
+	hasPaletteItemTool,
 	isEditableTool,
 	isEditing,
 	isRunTool,
 	PaletteError,
 	palettes,
 	paletteTool,
-	resolvePaletteEditor,
+	renderPaletteEditor,
 } from './palette'
 import type {
 	Palette,
 	PaletteBorder,
+	PaletteDragging,
 	PaletteRegion,
 	PaletteScope,
 	PaletteToolbar,
+	PaletteToolbarItem,
 	PaletteTrack,
 } from './types'
 
@@ -37,11 +40,29 @@ type PaletteTrackSpace = {
 	trackIndex: number
 }
 
+type PaletteItemDrag = {
+	border: PaletteBorder
+	direction: ArrangedOrientation
+	item: PaletteToolbarItem
+	itemIndex: number
+	palette: Palette
+	region: PaletteRegion
+	toolbar: PaletteToolbar
+	track: PaletteTrack
+	trackIndex: number
+}
+
 type PaletteStackSpace = {
 	border: PaletteBorder
 	direction: ArrangedOrientation
 	index: number
 	region: PaletteRegion
+}
+
+type PaletteToolbarSpace = {
+	direction: ArrangedOrientation
+	index: number
+	toolbar: PaletteToolbar
 }
 
 type PaletteTrackDragTarget = PaletteTrackSpace & {
@@ -57,7 +78,13 @@ type PaletteStackDragTarget = PaletteStackSpace & {
 	kind: 'stack-space'
 }
 
-type PaletteDragTarget = PaletteTrackDragTarget | PaletteStackDragTarget
+type PaletteToolbarDragTarget = PaletteToolbarSpace & {
+	contained: boolean
+	element: HTMLElement
+	kind: 'toolbar-space'
+}
+
+type PaletteDragTarget = PaletteTrackDragTarget | PaletteStackDragTarget | PaletteToolbarDragTarget
 
 type PaletteToolbarDrag = {
 	border: PaletteBorder
@@ -140,6 +167,230 @@ function expandStackSpaceRect(
 			}
 }
 
+function createToolbarDragging(target: PaletteToolbarDrag): PaletteDragging | undefined {
+	const index = target.track.findIndex((slot) => slot.toolbar === target.toolbar)
+	if (index < 0) return undefined
+	return {
+		border: target.border,
+		createdTracks: [],
+		index,
+		palette: target.palette,
+		region: target.region,
+		sourceItems: [...target.toolbar],
+		sourceBorder: target.border,
+		sourceRegion: target.region,
+		sourceTrack: target.track,
+		sourceTrackIndex: target.trackIndex,
+		sourceTrackWasSingleton: target.track.length === 1,
+		toolbar: target.toolbar,
+		track: target.track,
+		trackIndex: target.trackIndex,
+	}
+}
+
+function createItemDragging(
+	target: PaletteItemDrag
+): { dragging: PaletteDragging; target: PaletteToolbarDrag } | undefined {
+	if (target.toolbar[target.itemIndex] !== target.item) return undefined
+	target.toolbar.splice(target.itemIndex, 1)
+	const toolbar = reactive<PaletteToolbar>([target.item])
+	const track = reactive<PaletteTrack>([{ space: 0, toolbar }])
+	const border = reactive<PaletteBorder>([track])
+	const dragging: PaletteDragging = {
+		border,
+		createdTracks: [],
+		index: 0,
+		palette: target.palette,
+		region: target.region,
+		sourceItems: [target.item],
+		sourceBorder: border,
+		sourceRegion: target.region,
+		sourceTrack: track,
+		sourceTrackIndex: 0,
+		sourceTrackWasSingleton: true,
+		toolbar,
+		track,
+		trackIndex: 0,
+	}
+	previewToolbarItems(dragging, target.toolbar, target.itemIndex)
+	return {
+		dragging,
+		target: {
+			border,
+			direction: target.direction,
+			palette: target.palette,
+			region: target.region,
+			toolbar,
+			track,
+			trackIndex: 0,
+		},
+	}
+}
+
+function startPaletteToolbarDragSession(
+	element: HTMLElement,
+	target: PaletteToolbarDrag,
+	event: PointerEvent,
+	dragging: PaletteDragging
+): void {
+	let originRect: DOMRectReadOnly | undefined
+	let dragStart: { x: number; y: number } | undefined
+	let proximityTargets: PaletteDragTarget[] = []
+	const handleMove = (
+		snapshot: { current: { x: number; y: number } },
+		activeTarget: PaletteDragTarget | undefined,
+		grabOffset: number,
+		toolbarSpan: number
+	) => {
+		if (!palettes.dragging) return activeTarget
+		const dragging = palettes.dragging
+		const currentTrack = dragging.track
+		const currentIndex = dragging.index
+		if (currentIndex < 0) return activeTarget
+		const nextToolbarTarget = resolveToolbarSpaceTarget(snapshot.current)
+		const toolbarTarget =
+			nextToolbarTarget && !isIgnoredToolbarSpace(nextToolbarTarget, dragging)
+				? nextToolbarTarget
+				: undefined
+		const nextTrackTarget = resolveTrackSpaceTarget(snapshot.current)
+		const trackTarget =
+			nextTrackTarget && !isIgnoredDropZone(nextTrackTarget, dragging) ? nextTrackTarget : undefined
+		const nextStackTarget = resolveStackSpaceTarget(snapshot.current)
+		const stackTarget =
+			nextStackTarget &&
+			!(
+				originRect &&
+				isIgnoredStackSpace(nextStackTarget, snapshot.current, {
+					border: dragging.sourceBorder,
+					sourceRegion: dragging.sourceRegion,
+					sourceTrackWasSingleton: dragging.sourceTrackWasSingleton,
+					start: dragStart ?? snapshot.current,
+					region: dragging.sourceRegion,
+					trackIndex: dragging.sourceTrackIndex,
+				})
+			)
+				? nextStackTarget
+				: undefined
+		const resolvedTarget = toolbarTarget?.contained
+			? toolbarTarget
+			: !trackTarget
+				? stackTarget
+				: !stackTarget
+					? trackTarget
+					: stackTarget.contained
+						? stackTarget
+						: trackTarget.contained
+							? trackTarget
+							: trackTarget
+		for (const proximityTarget of proximityTargets) {
+			if (proximityTarget.element === resolvedTarget?.element) continue
+			if (proximityTarget.element === toolbarTarget?.element) continue
+			if (proximityTarget.element === trackTarget?.element) continue
+			if (proximityTarget.element === stackTarget?.element) continue
+			setTargetState(proximityTarget, {})
+		}
+		proximityTargets = [toolbarTarget, trackTarget, stackTarget].filter(
+			(candidate): candidate is PaletteDragTarget => Boolean(candidate)
+		)
+		if (activeTarget?.element !== resolvedTarget?.element) {
+			setTargetState(activeTarget, {})
+			activeTarget = resolvedTarget
+		}
+		for (const proximityTarget of proximityTargets) {
+			setTargetState(proximityTarget, {
+				active: proximityTarget.element === resolvedTarget?.element && proximityTarget.contained,
+				proximity: true,
+			})
+		}
+		if (resolvedTarget?.kind === 'toolbar-space') {
+			previewToolbarItems(dragging, resolvedTarget.toolbar, resolvedTarget.index)
+			return activeTarget
+		}
+		const competingTarget = resolvedTarget?.contained ? resolvedTarget : undefined
+		if (dragging.toolbarPreview && competingTarget) clearToolbarPreview(dragging)
+		if (dragging.toolbarPreview && !competingTarget) return activeTarget
+		if (!resolvedTarget?.contained) {
+			resizeToolbarFromPointer(
+				currentTrack,
+				currentIndex,
+				target.direction,
+				snapshot.current,
+				grabOffset,
+				toolbarSpan
+			)
+			return activeTarget
+		}
+		if (
+			resolvedTarget.kind === 'track-space' &&
+			resolvedTarget.track === currentTrack &&
+			(resolvedTarget.index === currentIndex || resolvedTarget.index === currentIndex + 1)
+		) {
+			resizeToolbarFromPointer(
+				currentTrack,
+				currentIndex,
+				target.direction,
+				snapshot.current,
+				grabOffset,
+				toolbarSpan
+			)
+			return activeTarget
+		}
+		const nextDragging =
+			resolvedTarget.kind === 'track-space'
+				? moveToolbarToTrack(dragging, target, resolvedTarget)
+				: moveToolbarToStack(dragging, target, resolvedTarget)
+		if (!nextDragging) return activeTarget
+		palettes.dragging = nextDragging
+		if (resolvedTarget.kind === 'track-space') {
+			resizeToolbarFromPointer(
+				nextDragging.track,
+				nextDragging.index,
+				target.direction,
+				snapshot.current,
+				grabOffset,
+				toolbarSpan
+			)
+		}
+		return activeTarget
+	}
+
+	event.preventDefault()
+	const rect = element.getBoundingClientRect()
+	originRect = rect
+	dragStart = { x: event.clientX, y: event.clientY }
+	const grabOffset =
+		target.direction === 'vertical' ? event.clientY - rect.top : event.clientX - rect.left
+	const toolbarSpan = target.direction === 'vertical' ? rect.height : rect.width
+	let activeTarget: PaletteDragTarget | undefined
+	palettes.dragging = dragging
+	startLocalDragSession({
+		event,
+		axis: dragAxis(target.direction),
+		capture: 'pointer',
+		onMove(snapshot) {
+			activeTarget = handleMove(snapshot, activeTarget, grabOffset, toolbarSpan)
+		},
+		onStop() {
+			setTargetState(activeTarget, {})
+			for (const proximityTarget of proximityTargets) setTargetState(proximityTarget, {})
+			proximityTargets = []
+			activeTarget = undefined
+			dragStart = undefined
+			if (palettes.dragging?.palette === target.palette) {
+				if (palettes.dragging.toolbarPreview) finalizeToolbarPreview(palettes.dragging)
+				else collapseDeferredSourceTrack(palettes.dragging)
+				delete palettes.dragging
+			}
+		},
+	})
+	activeTarget = handleMove(
+		{ current: { x: event.clientX, y: event.clientY } },
+		activeTarget,
+		grabOffset,
+		toolbarSpan
+	)
+}
+
 function actualTrackSpaceAt(track: PaletteTrack, index: number): number {
 	return index < track.length
 		? clampUnit(track[index].space)
@@ -159,6 +410,11 @@ function applyTrackSpaces(track: PaletteTrack, spaces: readonly number[]): void 
 		track[index].space = clampUnit(spaces[index] ?? 0)
 }
 
+/**
+ * Removes a toolbar from a track and merges its surrounding spacing into a single gap.
+ *
+ * @returns The removed toolbar slot index, or `-1` when the toolbar is not in the track.
+ */
 function removeToolbar(track: PaletteTrack, toolbar: PaletteToolbar): number {
 	const index = track.findIndex((slot) => slot.toolbar === toolbar)
 	if (index < 0) return -1
@@ -170,20 +426,9 @@ function removeToolbar(track: PaletteTrack, toolbar: PaletteToolbar): number {
 	return index
 }
 
-function removeToolbarFromBorder(
-	border: PaletteBorder,
-	track: PaletteTrack,
-	toolbar: PaletteToolbar
-): { index: number; removedTrack: boolean; trackIndex: number } | undefined {
-	const trackIndex = border.indexOf(track)
-	if (trackIndex < 0) return undefined
-	const index = removeToolbar(track, toolbar)
-	if (index < 0) return undefined
-	if (track.length > 0) return { index, removedTrack: false, trackIndex }
-	border.splice(trackIndex, 1)
-	return { index, removedTrack: true, trackIndex }
-}
-
+/**
+ * Removes the dragged toolbar from its current track and drops the whole track if it becomes empty.
+ */
 function removeToolbarFromDragTrack(
 	dragging: PaletteDragging,
 	toolbar: PaletteToolbar
@@ -202,6 +447,9 @@ function removeToolbarFromDragTrack(
 	return { index, removedTrack: true, trackIndex }
 }
 
+/**
+ * Removes a track from a border when it no longer contains any toolbars.
+ */
 function removeEmptyTrack(border: PaletteBorder, track: PaletteTrack): void {
 	if (track.length > 0) return
 	const trackIndex = border.indexOf(track)
@@ -209,12 +457,18 @@ function removeEmptyTrack(border: PaletteBorder, track: PaletteTrack): void {
 	border.splice(trackIndex, 1)
 }
 
+/**
+ * Collapses the original source track after a drag session when it started as a singleton.
+ */
 function collapseDeferredSourceTrack(dragging: PaletteDragging | undefined): void {
 	if (!dragging?.sourceTrackWasSingleton) return
 	removeEmptyTrack(dragging.sourceBorder, dragging.sourceTrack)
 	for (const track of [...dragging.createdTracks]) removeEmptyTrack(dragging.border, track)
 }
 
+/**
+ * Inserts a new single-toolbar track into a border at a clamped index.
+ */
 function insertTrackWithToolbar(
 	border: PaletteBorder,
 	index: number,
@@ -226,6 +480,9 @@ function insertTrackWithToolbar(
 	return { track, trackIndex }
 }
 
+/**
+ * Inserts a toolbar into an existing track and splits the target gap according to `split`.
+ */
 function insertToolbar(
 	track: PaletteTrack,
 	index: number,
@@ -242,6 +499,9 @@ function insertToolbar(
 	applyTrackSpaces(track, spaces)
 }
 
+/**
+ * Rebalances the spaces around an existing toolbar within a track.
+ */
 function resizeToolbar(track: PaletteTrack, index: number, split: number): void {
 	if (index < 0 || index >= track.length) return
 	const spaces = actualTrackSpaces(track)
@@ -252,6 +512,9 @@ function resizeToolbar(track: PaletteTrack, index: number, split: number): void 
 	applyTrackSpaces(track, spaces)
 }
 
+/**
+ * Computes a toolbar split from the pointer position using the surrounding track spaces.
+ */
 function resizeToolbarFromPointer(
 	track: PaletteTrack,
 	index: number,
@@ -284,10 +547,84 @@ function resizeToolbarFromPointer(
 	resizeToolbar(track, index, split)
 }
 
+/**
+ * Clears the transient toolbar-in-toolbar preview and restores the source track snapshot.
+ */
+function clearToolbarPreview(dragging: PaletteDragging): void {
+	const preview = dragging.toolbarPreview
+	if (!preview) return
+	preview.toolbar.splice(preview.index, preview.count)
+	const sourceTrack = preview.source.track
+	sourceTrack.splice(0, sourceTrack.length, ...preview.source.snapshot)
+	if (preview.source.removedTrack) {
+		preview.source.border.splice(preview.source.trackIndex, 0, sourceTrack)
+	} else applyTrackSpaces(sourceTrack, actualTrackSpaces(sourceTrack))
+	delete dragging.toolbarPreview
+}
+
+/**
+ * Applies or updates the transient preview that splices the dragged toolbar items into another toolbar.
+ */
+function previewToolbarItems(
+	dragging: PaletteDragging,
+	toolbar: PaletteToolbar,
+	index: number
+): void {
+	const activePreview =
+		dragging.toolbarPreview?.toolbar === toolbar ? dragging.toolbarPreview : undefined
+	const insertionIndex = Math.min(
+		Math.max(
+			activePreview && index > activePreview.index + activePreview.count
+				? index - activePreview.count
+				: index,
+			0
+		),
+		activePreview ? toolbar.length - activePreview.count : toolbar.length
+	)
+	if (
+		dragging.toolbarPreview?.toolbar === toolbar &&
+		dragging.toolbarPreview.index === insertionIndex
+	) {
+		return
+	}
+	clearToolbarPreview(dragging)
+	const sourceTrack = dragging.track
+	const sourceBorder = dragging.border
+	const sourceTrackIndex = sourceBorder.indexOf(sourceTrack)
+	if (sourceTrackIndex < 0) return
+	const sourceSnapshot = sourceTrack.map((slot) => ({ space: slot.space, toolbar: slot.toolbar }))
+	const removal = removeToolbarFromDragTrack(dragging, dragging.toolbar)
+	if (!removal) return
+	toolbar.splice(insertionIndex, 0, ...dragging.sourceItems)
+	dragging.toolbarPreview = {
+		count: dragging.sourceItems.length,
+		index: insertionIndex,
+		source: {
+			border: sourceBorder,
+			removedTrack: removal.removedTrack,
+			track: sourceTrack,
+			trackIndex: sourceTrackIndex,
+			snapshot: sourceSnapshot,
+		},
+		toolbar,
+	}
+}
+
+/**
+ * Commits a toolbar preview by keeping the previewed insertion and only cleaning empty session tracks.
+ */
+function finalizeToolbarPreview(dragging: PaletteDragging): void {
+	if (!dragging.toolbarPreview) return
+	delete dragging.toolbarPreview
+	for (const track of [...dragging.createdTracks]) removeEmptyTrack(dragging.border, track)
+}
+
 const trackSpaces = new Set<HTMLElement>()
 const trackSpaceMeta = new WeakMap<HTMLElement, PaletteTrackSpace>()
 const stackSpaces = new Set<HTMLElement>()
 const stackSpaceMeta = new WeakMap<HTMLElement, PaletteStackSpace>()
+const toolbarSpaces = new Set<HTMLElement>()
+const toolbarSpaceMeta = new WeakMap<HTMLElement, PaletteToolbarSpace>()
 
 function trackSpaceTargets() {
 	return Array.from(trackSpaces).flatMap((element) => {
@@ -310,6 +647,18 @@ function stackSpaceTargets() {
 		const target = stackSpaceMeta.get(element)
 		if (!target) return []
 		return [measureLocalDragTarget({ ...target, kind: 'stack-space' as const, element }, element)]
+	})
+}
+
+function toolbarSpaceTargets() {
+	return Array.from(toolbarSpaces).flatMap((element) => {
+		if (!element.isConnected) {
+			toolbarSpaces.delete(element)
+			return []
+		}
+		const target = toolbarSpaceMeta.get(element)
+		if (!target) return []
+		return [measureLocalDragTarget({ ...target, kind: 'toolbar-space' as const, element }, element)]
 	})
 }
 
@@ -344,6 +693,16 @@ function resolveTrackSpaceTarget(point: {
 	})?.value
 }
 
+function resolveToolbarSpaceTarget(point: {
+	x: number
+	y: number
+}): PaletteToolbarDragTarget | undefined {
+	return resolveLocalDragCandidate(toolbarSpaceTargets(), point, (target, state) => ({
+		contained: state.contained,
+		...target.id,
+	}))?.value
+}
+
 function resolveStackSpaceTarget(point: {
 	x: number
 	y: number
@@ -368,16 +727,6 @@ function resolveStackSpaceTarget(point: {
 	return best?.value
 }
 
-function resolvePaletteTarget(point: { x: number; y: number }): PaletteDragTarget | undefined {
-	const trackTarget = resolveTrackSpaceTarget(point)
-	const stackTarget = resolveStackSpaceTarget(point)
-	if (!trackTarget) return stackTarget
-	if (!stackTarget) return trackTarget
-	if (trackTarget.contained && !stackTarget.contained) return trackTarget
-	if (stackTarget.contained && !trackTarget.contained) return stackTarget
-	return trackTarget
-}
-
 function setTargetState(
 	target: PaletteDragTarget | undefined,
 	state: { active?: boolean; proximity?: boolean }
@@ -389,13 +738,18 @@ function setTargetState(
 	else delete target.element.dataset.proximity
 }
 
-type PaletteDragging = NonNullable<typeof palettes.dragging>
-
 function isIgnoredDropZone(target: PaletteTrackSpace, dragged: PaletteDragging): boolean {
 	if (target.track !== dragged.track) return false
 	const { index } = dragged
 	if (index < 0) return false
 	return target.index === index || target.index === index + 1
+}
+
+function isIgnoredToolbarSpace(target: PaletteToolbarSpace, dragged: PaletteDragging): boolean {
+	if (target.toolbar === dragged.toolbar) return true
+	const preview = dragged.toolbarPreview
+	if (!preview || target.toolbar !== preview.toolbar) return false
+	return target.index >= preview.index && target.index <= preview.index + preview.count
 }
 
 function isIgnoredStackSpace(
@@ -439,6 +793,7 @@ function moveToolbarToTrack(
 		index: targetTrackIndex,
 		palette: target.palette,
 		region: reorderTarget.region,
+		sourceItems: dragging.sourceItems,
 		sourceBorder: reorderTarget.border,
 		sourceRegion: reorderTarget.region,
 		sourceTrack: reorderTarget.track,
@@ -458,7 +813,9 @@ function moveToolbarToStack(
 	const removal = removeToolbarFromDragTrack(dragging, target.toolbar)
 	if (!removal) return undefined
 	const targetTrackIndex =
-		dragging.border === stackTarget.border && stackTarget.index > removal.trackIndex
+		dragging.border === stackTarget.border &&
+		stackTarget.index > removal.trackIndex &&
+		removal.removedTrack
 			? stackTarget.index - 1
 			: stackTarget.index
 	const insertion = insertTrackWithToolbar(stackTarget.border, targetTrackIndex, target.toolbar)
@@ -469,6 +826,7 @@ function moveToolbarToStack(
 		index: 0,
 		palette: target.palette,
 		region: stackTarget.region,
+		sourceItems: dragging.sourceItems,
 		sourceBorder: stackTarget.border,
 		sourceRegion: stackTarget.region,
 		sourceTrack: insertion.track,
@@ -554,175 +912,50 @@ Object.assign(rootEnv, {
 			stackSpaces.delete(element)
 		}
 	},
-	paletteToolbarDrag(element: HTMLElement, target: PaletteToolbarDrag): (() => void) | undefined {
-		let originRect: DOMRectReadOnly | undefined
-		let dragStart: { x: number; y: number } | undefined
-		let proximityTargets: PaletteDragTarget[] = []
-		const handleMove = (
-			snapshot: { current: { x: number; y: number } },
-			activeTarget: PaletteDragTarget | undefined,
-			grabOffset: number,
-			toolbarSpan: number
-		) => {
-			if (!palettes.dragging) return activeTarget
-			const dragging = palettes.dragging
-			const currentTrack = dragging.track
-			const currentIndex = dragging.index
-			if (currentIndex < 0) return activeTarget
-			const nextTrackTarget = resolveTrackSpaceTarget(snapshot.current)
-			const trackTarget =
-				nextTrackTarget && !isIgnoredDropZone(nextTrackTarget, dragging)
-					? nextTrackTarget
-					: undefined
-			const nextStackTarget = resolveStackSpaceTarget(snapshot.current)
-			const stackTarget =
-				nextStackTarget &&
-				!(
-					originRect &&
-					isIgnoredStackSpace(nextStackTarget, snapshot.current, {
-						border: dragging.sourceBorder,
-						sourceRegion: dragging.sourceRegion,
-						sourceTrackWasSingleton: dragging.sourceTrackWasSingleton,
-						start: dragStart ?? snapshot.current,
-						region: dragging.sourceRegion,
-						trackIndex: dragging.sourceTrackIndex,
-					})
-				)
-					? nextStackTarget
-					: undefined
-			const resolvedTarget = !trackTarget
-				? stackTarget
-				: !stackTarget
-					? trackTarget
-					: stackTarget.contained
-						? stackTarget
-						: trackTarget.contained
-							? trackTarget
-							: trackTarget
-			for (const proximityTarget of proximityTargets) {
-				if (proximityTarget.element === resolvedTarget?.element) continue
-				if (proximityTarget.element === trackTarget?.element) continue
-				if (proximityTarget.element === stackTarget?.element) continue
-				setTargetState(proximityTarget, {})
-			}
-			proximityTargets = [trackTarget, stackTarget].filter(
-				(candidate): candidate is PaletteDragTarget => Boolean(candidate)
-			)
-			if (activeTarget?.element !== resolvedTarget?.element) {
-				setTargetState(activeTarget, {})
-				activeTarget = resolvedTarget
-			}
-			for (const proximityTarget of proximityTargets) {
-				setTargetState(proximityTarget, {
-					active: proximityTarget.element === resolvedTarget?.element && proximityTarget.contained,
-					proximity: true,
-				})
-			}
-			if (!resolvedTarget?.contained) {
-				resizeToolbarFromPointer(
-					currentTrack,
-					currentIndex,
-					target.direction,
-					snapshot.current,
-					grabOffset,
-					toolbarSpan
-				)
-				return activeTarget
-			}
-			if (
-				resolvedTarget.kind === 'track-space' &&
-				resolvedTarget.track === currentTrack &&
-				(resolvedTarget.index === currentIndex || resolvedTarget.index === currentIndex + 1)
-			) {
-				resizeToolbarFromPointer(
-					currentTrack,
-					currentIndex,
-					target.direction,
-					snapshot.current,
-					grabOffset,
-					toolbarSpan
-				)
-				return activeTarget
-			}
-			const nextDragging =
-				resolvedTarget.kind === 'track-space'
-					? moveToolbarToTrack(dragging, target, resolvedTarget)
-					: moveToolbarToStack(dragging, target, resolvedTarget)
-			if (!nextDragging) return activeTarget
-			palettes.dragging = nextDragging
-			if (resolvedTarget.kind === 'track-space') {
-				resizeToolbarFromPointer(
-					nextDragging.track,
-					nextDragging.index,
-					target.direction,
-					snapshot.current,
-					grabOffset,
-					toolbarSpan
-				)
-			}
-			return activeTarget
+	paletteToolbarSpace(element: HTMLElement, target: PaletteToolbarSpace): (() => void) | undefined {
+		toolbarSpaces.add(element)
+		toolbarSpaceMeta.set(element, target)
+		return () => {
+			delete element.dataset.active
+			delete element.dataset.proximity
+			toolbarSpaces.delete(element)
 		}
-
+	},
+	paletteToolbarDrag(element: HTMLElement, target: PaletteToolbarDrag): (() => void) | undefined {
 		const onPointerDown = (event: PointerEvent) => {
 			if (!isEditing(target.palette)) return
 			if (event.button !== 0) return
 			if (isEditableTarget(event.target)) return
-			event.preventDefault()
-			const rect = element.getBoundingClientRect()
-			originRect = rect
-			dragStart = { x: event.clientX, y: event.clientY }
-			const grabOffset =
-				target.direction === 'vertical' ? event.clientY - rect.top : event.clientX - rect.left
-			const toolbarSpan = target.direction === 'vertical' ? rect.height : rect.width
-			let activeTarget: PaletteDragTarget | undefined
-			const index = target.track.findIndex((slot) => slot.toolbar === target.toolbar)
-			if (index < 0) return
-			palettes.dragging = {
-				border: target.border,
-				createdTracks: [],
-				index,
-				palette: target.palette,
-				region: target.region,
-				sourceBorder: target.border,
-				sourceRegion: target.region,
-				sourceTrack: target.track,
-				sourceTrackIndex: target.trackIndex,
-				sourceTrackWasSingleton: target.track.length === 1,
-				toolbar: target.toolbar,
-				track: target.track,
-				trackIndex: target.trackIndex,
-			}
-			startLocalDragSession({
-				event,
-				axis: dragAxis(target.direction),
-				capture: 'pointer',
-				onMove(snapshot) {
-					activeTarget = handleMove(snapshot, activeTarget, grabOffset, toolbarSpan)
-				},
-				onStop() {
-					setTargetState(activeTarget, {})
-					for (const proximityTarget of proximityTargets) setTargetState(proximityTarget, {})
-					proximityTargets = []
-					activeTarget = undefined
-					dragStart = undefined
-					if (palettes.dragging?.palette === target.palette) {
-						collapseDeferredSourceTrack(palettes.dragging)
-						delete palettes.dragging
-					}
-				},
-			})
-			activeTarget = handleMove(
-				{ current: { x: event.clientX, y: event.clientY } },
-				activeTarget,
-				grabOffset,
-				toolbarSpan
-			)
+			const dragging = createToolbarDragging(target)
+			if (!dragging) return
+			startPaletteToolbarDragSession(element, target, event, dragging)
 		}
 
 		element.addEventListener('pointerdown', onPointerDown)
 		return () => {
-			if (palettes.dragging?.palette === target.palette) delete palettes.dragging
 			element.removeEventListener('pointerdown', onPointerDown)
+		}
+	},
+	paletteItemDrag(element: HTMLElement, target: PaletteItemDrag): (() => void) | undefined {
+		const onPointerDown = (event: PointerEvent) => {
+			if (!isEditing(target.palette)) return
+			if (event.button !== 0) return
+			event.stopPropagation()
+			event.preventDefault()
+			const drag = createItemDragging(target)
+			if (!drag) return
+			startPaletteToolbarDragSession(element, drag.target, event, drag.dragging)
+		}
+
+		element.addEventListener('pointerdown', onPointerDown)
+		return () => {
+			element.removeEventListener('pointerdown', onPointerDown)
+		}
+	},
+	paletteItemShield(element: HTMLElement, active: boolean): (() => void) | undefined {
+		element.inert = active
+		return () => {
+			element.inert = false
 		}
 	},
 })
@@ -742,6 +975,14 @@ export function Toolbar(
 	const { palette } = scope
 	if (!palette) throw new Error('No palette to expose')
 	const o = arranged(scope, { density: 'compact' })
+	const dragging = () => (palettes.dragging?.palette === palette ? palettes.dragging : undefined)
+	const isInactiveToolbarSpace = (dragging: PaletteDragging | undefined, index: number) =>
+		dragging
+			? isIgnoredToolbarSpace(
+					{ direction: props.direction, index, toolbar: props.toolbar },
+					dragging
+				)
+			: false
 	return (
 		<div
 			{...props.el}
@@ -760,16 +1001,74 @@ export function Toolbar(
 					: undefined
 			}
 		>
-			<for each={props.toolbar.items}>
-				{(item) => {
-					const tool = paletteTool(palette, item.tool)
-					const spec = resolvePaletteEditor(palette, item, tool)
-					if (spec) {
-						const Editor = spec.editor
-						return <Editor item={item} tool={tool} scope={scope} flags={spec.flags ?? {}} />
-					}
-					if (palette.editor) return palette.editor(item, tool, scope)
-					throw new PaletteError(`No editor available for palette tool "${item.tool}"`)
+			<div
+				class={`toolbar-item-space toolbar-drop-zone${isInactiveToolbarSpace(dragging(), 0) ? ' inactive' : ''}`}
+				data-inactive={isInactiveToolbarSpace(dragging(), 0) ? 'true' : undefined}
+				use:paletteToolbarSpace={
+					isInactiveToolbarSpace(dragging(), 0)
+						? undefined
+						: {
+								direction: props.direction,
+								index: 0,
+								toolbar: props.toolbar,
+							}
+				}
+			/>
+			<for each={props.toolbar}>
+				{(item, position) => {
+					const index = position.index
+					const tool = hasPaletteItemTool(item) ? paletteTool(palette, item.tool) : undefined
+					return (
+						<>
+							<div class="toolbar-item">
+								<div class="toolbar-item-content" use:paletteItemShield={isEditing(palette)}>
+									{renderPaletteEditor(palette, item, tool, scope)}
+								</div>
+								<div
+									if={
+										!!props.track &&
+										props.border !== undefined &&
+										props.region !== undefined &&
+										props.trackIndex !== undefined &&
+										props.toolbar.length > 1 &&
+										isEditing(palette)
+									}
+									class="toolbar-item-guard"
+									use:paletteItemDrag={
+										props.track &&
+										props.border !== undefined &&
+										props.region !== undefined &&
+										props.trackIndex !== undefined
+											? {
+													border: props.border,
+													direction: props.direction,
+													item,
+													itemIndex: index,
+													palette,
+													region: props.region,
+													toolbar: props.toolbar,
+													track: props.track,
+													trackIndex: props.trackIndex,
+												}
+											: undefined
+									}
+								/>
+							</div>
+							<div
+								class={`toolbar-item-space toolbar-drop-zone${isInactiveToolbarSpace(dragging(), index + 1) ? ' inactive' : ''}`}
+								data-inactive={isInactiveToolbarSpace(dragging(), index + 1) ? 'true' : undefined}
+								use:paletteToolbarSpace={
+									isInactiveToolbarSpace(dragging(), index + 1)
+										? undefined
+										: {
+												direction: props.direction,
+												index: index + 1,
+												toolbar: props.toolbar,
+											}
+								}
+							/>
+						</>
+					)
 				}}
 			</for>
 		</div>

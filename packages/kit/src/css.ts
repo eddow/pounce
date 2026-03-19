@@ -26,6 +26,8 @@ import { flavored } from 'mutts'
 
 const ssrStyles = new Map<string, string>() // hash -> css
 const injectedStyles = new Set<string>() // hashes already in the DOM
+const styleUsageCount = new Map<string, number>()
+const styleNodes = new Map<string, Text>()
 
 function hashStrings(str: string): string {
 	let h = 5381
@@ -57,12 +59,22 @@ function getCallerId(): string {
 
 let hydrationCheckerArg: undefined | { id: string }
 
-export function __injectCSS(css: string): void {
+export function __injectCSS(css: string): () => void {
 	const hash = hashStrings(css)
 
 	if (typeof document === 'undefined') {
 		if (!ssrStyles.has(hash)) ssrStyles.set(hash, css)
-		return
+		const count = styleUsageCount.get(hash) ?? 0
+		styleUsageCount.set(hash, count + 1)
+		return () => {
+			const nextCount = (styleUsageCount.get(hash) ?? 1) - 1
+			if (nextCount > 0) {
+				styleUsageCount.set(hash, nextCount)
+				return
+			}
+			styleUsageCount.delete(hash)
+			ssrStyles.delete(hash)
+		}
 	}
 
 	if (hydrationCheckerArg === undefined) {
@@ -74,7 +86,27 @@ export function __injectCSS(css: string): void {
 		hydrationCheckerArg = { id: 'checked' }
 	}
 
-	if (injectedStyles.has(hash)) return
+	const count = styleUsageCount.get(hash) ?? 0
+	styleUsageCount.set(hash, count + 1)
+	if (count > 0) {
+		return () => {
+			const nextCount = (styleUsageCount.get(hash) ?? 1) - 1
+			if (nextCount > 0) {
+				styleUsageCount.set(hash, nextCount)
+				return
+			}
+			styleUsageCount.delete(hash)
+			injectedStyles.delete(hash)
+			const existingNode = styleNodes.get(hash)
+			existingNode?.remove()
+			styleNodes.delete(hash)
+			if (
+				existingNode?.parentNode instanceof HTMLStyleElement &&
+				existingNode.parentNode.childNodes.length === 0
+			)
+				existingNode.parentNode.remove()
+		}
+	}
 	injectedStyles.add(hash)
 
 	const callerId = getCallerId()
@@ -84,7 +116,22 @@ export function __injectCSS(css: string): void {
 		style.setAttribute('data-vite-css-id', callerId)
 		document.head.appendChild(style)
 	}
-	style.appendChild(document.createTextNode(`${css}\n`))
+	const node = document.createTextNode(`${css}\n`)
+	style.appendChild(node)
+	styleNodes.set(hash, node)
+	return () => {
+		const nextCount = (styleUsageCount.get(hash) ?? 1) - 1
+		if (nextCount > 0) {
+			styleUsageCount.set(hash, nextCount)
+			return
+		}
+		styleUsageCount.delete(hash)
+		injectedStyles.delete(hash)
+		const existingNode = styleNodes.get(hash)
+		existingNode?.remove()
+		styleNodes.delete(hash)
+		if (style.childNodes.length === 0) style.remove()
+	}
 }
 
 /**
@@ -98,19 +145,19 @@ export function getSSRStyles(): string {
 	return `<style data-hydrated-hashes="${hashes.join(',')}">${cssContent}</style>`
 }
 
-export function css(strings: TemplateStringsArray, ...values: any[]): void {
+export function css(strings: TemplateStringsArray, ...values: any[]): () => void {
 	const cssText = strings.reduce((acc, str, i) => acc + str + (values[i] ?? ''), '')
-	__injectCSS(cssText)
+	return __injectCSS(cssText)
 }
 
-export function sass(strings: TemplateStringsArray, ...values: any[]): void {
+export function sass(strings: TemplateStringsArray, ...values: any[]): () => void {
 	const cssText = strings.reduce((acc, str, i) => acc + str + (values[i] ?? ''), '')
-	__injectCSS(cssText)
+	return __injectCSS(cssText)
 }
 
-export function scss(strings: TemplateStringsArray, ...values: any[]): void {
+export function scss(strings: TemplateStringsArray, ...values: any[]): () => void {
 	const cssText = strings.reduce((acc, str, i) => acc + str + (values[i] ?? ''), '')
-	__injectCSS(cssText)
+	return __injectCSS(cssText)
 }
 
 /** Component-specific style tag. Wrapped in `@layer sursaut.components` by the Vite plugin. */

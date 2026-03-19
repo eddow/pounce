@@ -24,7 +24,8 @@ declare global {
 
 test('report performance counters', async ({ page }) => {
 	await page.goto('/')
-	await page.waitForSelector('#app')
+	await page.waitForSelector('h1')
+	await page.waitForSelector('text=Resize Sandbox')
 	// Wait for any post-mount microtasks
 	await page.waitForTimeout(500)
 

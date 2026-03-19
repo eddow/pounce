@@ -435,7 +435,6 @@ export function paletteCommandBoxModel(options: {
 			else if (data.label.startsWith(term)) score += 5
 			else if (data.searchable.includes(term)) score += 2
 		}
-		if (entry.can === false) score -= 100
 		return score
 	}
 
@@ -445,6 +444,7 @@ export function paletteCommandBoxModel(options: {
 		const keywordTerms = query.keywords.map((term) => normalizeCommandBoxToken(term))
 		return options.entries
 			.filter((entry) => {
+				if (entry.can === false) return false
 				const data = entrySearchData(entry)
 				if (!matchesAllTerms(data.searchable, freeTerms)) return false
 				if (

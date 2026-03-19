@@ -1,21 +1,19 @@
-import { effect, reactive } from 'mutts'
+import { effect, reactive, unwrap } from 'mutts'
 import type {
 	Palette,
-	PaletteBorder,
+	PaletteDragging,
 	PaletteEditableTool,
 	PaletteEditableToolByFamily,
 	PaletteEditorSpec,
-	PaletteRegion,
 	PaletteScope,
 	PaletteTool,
-	PaletteToolbar,
 	PaletteToolbarItem,
 	PaletteToolEdit,
 	PaletteToolFamily,
 	PaletteToolNumber,
 	PaletteToolRun,
 	PaletteTools,
-	PaletteTrack,
+	PaletteToolToolbarItem,
 } from './types'
 
 export type PaletteValueAction<TTool extends PaletteEditableTool = PaletteEditableTool> = (
@@ -107,11 +105,20 @@ export function paletteToolFamily(tool: PaletteTool): PaletteToolFamily {
 	return isRunTool(tool) ? 'run' : tool.type
 }
 
-export function resolvePaletteEditor<TTool extends PaletteTool, TItem extends PaletteToolbarItem>(
-	palette: Palette,
-	item: TItem,
-	tool: TTool
-): PaletteEditorSpec<TTool, TItem> | undefined {
+export function hasPaletteItemTool(item: PaletteToolbarItem): item is PaletteToolToolbarItem {
+	return typeof item.tool === 'string'
+}
+
+export function resolvePaletteEditor<
+	TTool extends PaletteTool | undefined,
+	TItem extends PaletteToolbarItem,
+>(palette: Palette, item: TItem, tool: TTool): PaletteEditorSpec<TTool, TItem> | undefined {
+	if (!hasPaletteItemTool(item)) {
+		const spec = palette.editors?.item?.[item.editor] as PaletteEditorSpec<TTool, TItem> | undefined
+		if (!spec) throw new PaletteError(`Unknown palette item editor "${item.editor}"`)
+		return spec
+	}
+	if (!tool) throw new PaletteError(`No palette tool provided for palette item "${item.tool}"`)
 	const family = paletteToolFamily(tool)
 	const registry = palette.editors?.[family]
 	if (!registry) return undefined
@@ -124,15 +131,15 @@ export function resolvePaletteEditor<TTool extends PaletteTool, TItem extends Pa
 	return spec
 }
 
-export function renderPaletteEditor<TTool extends PaletteTool, TItem extends PaletteToolbarItem>(
-	palette: Palette,
-	item: TItem,
-	tool: TTool,
-	scope: PaletteScope
-): JSX.Element {
+export function renderPaletteEditor<
+	TTool extends PaletteTool | undefined,
+	TItem extends PaletteToolbarItem,
+>(palette: Palette, item: TItem, tool: TTool, scope: PaletteScope): JSX.Element {
 	const spec = resolvePaletteEditor(palette, item, tool)
 	if (spec) return spec.editor({ item, tool, scope, flags: spec.flags ?? {} })
 	if (palette.editor) return palette.editor(item, tool, scope)
+	if (!hasPaletteItemTool(item))
+		throw new PaletteError(`No editor available for palette item "${item.editor}"`)
 	throw new PaletteError(`No editor available for palette tool "${item.tool}"`)
 }
 
@@ -202,24 +209,10 @@ export function paletteTool(palette: Palette, runnerDesc: string): PaletteTool {
 }
 
 export const palettes = reactive<{
-	dragging?: {
-		border: PaletteBorder
-		createdTracks: PaletteTrack[]
-		index: number
-		palette: Palette
-		region: PaletteRegion
-		sourceBorder: PaletteBorder
-		sourceRegion: PaletteRegion
-		sourceTrack: PaletteTrack
-		sourceTrackIndex: number
-		sourceTrackWasSingleton: boolean
-		toolbar: PaletteToolbar
-		track: PaletteTrack
-		trackIndex: number
-	}
+	dragging?: PaletteDragging
 	editing?: Palette
 }>({})
 
 export function isEditing(palette: Palette | undefined): boolean {
-	return palettes.editing === palette
+	return unwrap(palettes.editing) === unwrap(palette)
 }

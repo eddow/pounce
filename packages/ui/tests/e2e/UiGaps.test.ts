@@ -274,6 +274,95 @@ test.describe('Progress', () => {
 	})
 })
 
+test.describe('Palette', () => {
+	test('palette route exposes the current mount failure explicitly', async ({ page }) => {
+		const pageErrors: string[] = []
+		page.on('pageerror', (error) => {
+			pageErrors.push(String(error))
+		})
+
+		await page.goto('/palette')
+		await page.waitForTimeout(250)
+
+		expect(pageErrors.some((error) => error.includes('Max effect chain reached'))).toBe(true)
+		await expect(dt(page, 'palette-demo')).toHaveCount(0)
+	})
+
+	test('removing a keyword chip keeps toolbar propositions visible and refreshed', async ({ page }) => {
+		await page.goto('/palette')
+		await expect(dt(page, 'palette-demo')).toBeVisible()
+
+		const input = page.locator('.palette-demo-command-input').first()
+		const suggestions = page.locator('.palette-demo-command-suggestion')
+		const chips = page.locator('.palette-demo-command-chip')
+		const results = page.locator('.palette-demo-command-result')
+		const resultsPanel = page.locator('.palette-demo-command-results').first()
+
+		await input.click()
+		await input.fill('li')
+		await expect(suggestions).toHaveText(['light'])
+		await expect(resultsPanel).toContainText('Set Theme to Light')
+
+		await suggestions.first().click()
+		await expect(chips).toHaveText(['light'])
+		await expect(results).toHaveCount(0)
+
+		await chips.first().click()
+		await expect(chips).toHaveCount(0)
+		await expect(suggestions).toHaveCount(0)
+		await expect(resultsPanel).toContainText('Set Theme to Light')
+	})
+
+	test('removing one of multiple keywords broadens toolbar propositions', async ({ page }) => {
+		await page.goto('/palette')
+		await expect(dt(page, 'palette-demo')).toBeVisible()
+
+		const input = page.locator('.palette-demo-command-input').first()
+		const suggestions = page.locator('.palette-demo-command-suggestion')
+		const chips = page.locator('.palette-demo-command-chip')
+		const resultsPanel = page.locator('.palette-demo-command-results').first()
+
+		await input.click()
+		await input.fill('inc')
+		await expect(suggestions).toContainText(['increase'])
+		await suggestions.filter({ hasText: 'increase' }).first().click()
+		await expect(chips).toContainText(['increase'])
+
+		await input.fill('font')
+		await expect(suggestions).toContainText(['font'])
+		await suggestions.filter({ hasText: 'font' }).first().click()
+		await expect(chips).toContainText(['increase', 'font'])
+		await expect(resultsPanel).toContainText('Increase Font Size')
+
+		await chips.filter({ hasText: 'font' }).first().click()
+		await expect(chips).toContainText(['increase'])
+		await expect(resultsPanel).toContainText('Increase Font Size')
+		await expect(resultsPanel).toContainText('Increase Playback Speed')
+	})
+
+	test('keyboard-only suggestion, selection, and escape flows remain observable', async ({ page }) => {
+		await page.goto('/palette')
+		await expect(dt(page, 'palette-demo')).toBeVisible()
+
+		const input = page.locator('.palette-demo-command-input').first()
+		const chips = page.locator('.palette-demo-command-chip')
+		const resultsPanel = page.locator('.palette-demo-command-results').first()
+
+		await input.click()
+		await input.fill('da')
+		await input.press('Tab')
+		await expect(chips).toContainText(['dark'])
+
+		await input.fill('theme')
+		await input.press('ArrowDown')
+		await input.press('Escape')
+		await expect(input).toHaveValue('theme')
+		await input.press('Escape')
+		await expect(input).toHaveValue('')
+		await expect(resultsPanel).toBeVisible()
+	})
+})
+
 test.describe('DisplayContext', () => {
 	test('updates theme setting and reflects locale/direction context', async ({ page }) => {
 		await page.goto('/display-context')

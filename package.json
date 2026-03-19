@@ -1,5 +1,6 @@
 {
 	"name": "@sursaut/monorepo",
+	"description": "Scalable UI Reactivity System And Underlying Template",
 	"private": true,
 	"license": "MIT",
 	"scripts": {

@@ -44,15 +44,6 @@ function arrangedComputer(
 	props: ArrangedProps = {}
 ): ArrangedState {
 	const inherited = (scope as ArrangedScope).arranged
-	if (
-		inherited &&
-		props.orientation === undefined &&
-		props.density === undefined &&
-		props.joined === undefined &&
-		props.align === undefined
-	) {
-		return inherited
-	}
 
 	return (scope.arranged = extend(inherited ?? null, {
 		get orientation() {

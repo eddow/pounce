@@ -70,8 +70,13 @@ function releasePointerCapture(
 	capture: LocalDragCapturePolicy
 ): void {
 	if (capture !== 'pointer' || pointerId === undefined) return
+	if (!element.isConnected) return
 	if (!element.hasPointerCapture(pointerId)) return
-	element.releasePointerCapture(pointerId)
+	try {
+		element.releasePointerCapture(pointerId)
+	} catch {
+		return
+	}
 }
 
 export function startLocalDragSession<TPayload = unknown>(
@@ -183,7 +188,13 @@ export function startLocalDragSession<TPayload = unknown>(
 	}
 
 	if (capture === 'pointer' && source === 'pointer' && element && pointerId !== undefined) {
-		element.setPointerCapture(pointerId)
+		if (element.isConnected) {
+			try {
+				element.setPointerCapture(pointerId)
+			} catch {
+				// Ignore capture failures when the pointer source is removed during drag startup.
+			}
+		}
 	}
 
 	if (source === 'pointer') {

@@ -23,7 +23,7 @@ import {
 	palettes,
 	setPaletteCommandBoxInput,
 } from '@sursaut/ui/palette'
-import { memoize, reactive, unwrap } from 'mutts'
+import { memoize, reactive } from 'mutts'
 
 type DemoLayout = 'horizontal' | 'vertical'
 type DemoMode = 'inspect' | 'command'
@@ -127,65 +127,60 @@ const initialIdeConfig: PaletteBorders = {
 		[
 			{
 				space: 0.1,
-				toolbar: {
-					items: [
-						{
-							tool: 'commandBox',
-							editor: 'commandBox',
-							config: { icon: '⌘', label: 'Command', hint: 'Search and run palette actions' },
-						} satisfies DemoToolbarItem,
-						{
-							tool: 'notifications',
-							editor: 'toggle',
-							config: { icon: '🔔', label: 'Notifications', hint: 'Compact icon toggle' },
-						} satisfies DemoToolbarItem,
-						{
-							tool: 'layout',
-							editor: 'splitRadio',
-							config: {
-								icon: '▤',
-								label: 'Layout',
-								hint: 'Split radio with quick apply + chooser',
-							},
-						} satisfies DemoToolbarItem,
-						{
-							tool: 'theme',
-							editor: 'select',
-							config: {
-								icon: '🎨',
-								label: 'Theme',
-								hint: 'Compact text editor',
-							},
-						} satisfies DemoToolbarItem,
-					],
-				},
+				toolbar: [
+					{
+						editor: 'commandBox',
+						config: { icon: '⌘', label: 'Command', hint: 'Search and run palette actions' },
+					} satisfies DemoToolbarItem,
+					{
+						tool: 'notifications',
+						editor: 'toggle',
+						config: { icon: '🔔', label: 'Notifications', hint: 'Compact icon toggle' },
+					} satisfies DemoToolbarItem,
+					{
+						tool: 'layout',
+						editor: 'splitRadio',
+						config: {
+							icon: '▤',
+							label: 'Layout',
+							hint: 'Split radio with quick apply + chooser',
+						},
+					} satisfies DemoToolbarItem,
+					{
+						tool: 'theme',
+						editor: 'select',
+						config: {
+							icon: '🎨',
+							label: 'Theme',
+							hint: 'Compact text editor',
+						},
+					} satisfies DemoToolbarItem,
+				],
 			},
 			{
 				space: 0.5,
-				toolbar: {
-					items: [
-						{
-							tool: 'mode',
-							editor: 'splitRadio',
-							config: { icon: '⌘', label: 'Mode', hint: 'Split radio with icon labels' },
-						} satisfies DemoToolbarItem,
-						{
-							tool: 'fontSize',
-							editor: 'slider',
-							config: { icon: 'A', label: 'Font size', hint: 'Toolbar slider' },
-						} satisfies DemoToolbarItem,
-						{
-							tool: 'reset',
-							editor: 'splitButton',
-							config: {
-								icon: '↺',
-								label: 'Reset',
-								hint: 'Split action menu',
-								tone: 'accent',
-							},
-						} satisfies DemoToolbarItem,
-					],
-				},
+				toolbar: [
+					{
+						tool: 'mode',
+						editor: 'splitRadio',
+						config: { icon: '⌘', label: 'Mode', hint: 'Split radio with icon labels' },
+					} satisfies DemoToolbarItem,
+					{
+						tool: 'fontSize',
+						editor: 'slider',
+						config: { icon: 'A', label: 'Font size', hint: 'Toolbar slider' },
+					} satisfies DemoToolbarItem,
+					{
+						tool: 'reset',
+						editor: 'splitButton',
+						config: {
+							icon: '↺',
+							label: 'Reset',
+							hint: 'Split action menu',
+							tone: 'accent',
+						},
+					} satisfies DemoToolbarItem,
+				],
 			},
 		],
 	],
@@ -193,25 +188,23 @@ const initialIdeConfig: PaletteBorders = {
 		[
 			{
 				space: 1,
-				toolbar: {
-					items: [
-						{
-							tool: 'theme',
-							editor: 'flip',
-							config: {
-								icon: '🌓',
-								label: 'Theme',
-								hint: 'Single-button light/dark toggle',
-								keywords: ['light', 'dark'],
-							},
-						} satisfies DemoToolbarItem,
-						{
-							tool: 'mode',
-							editor: 'splitRadio',
-							config: { icon: '🎯', label: 'Mode', hint: 'Compact focus mode chooser' },
-						} satisfies DemoToolbarItem,
-					],
-				},
+				toolbar: [
+					{
+						tool: 'theme',
+						editor: 'flip',
+						config: {
+							icon: '🌓',
+							label: 'Theme',
+							hint: 'Single-button light/dark toggle',
+							keywords: ['light', 'dark'],
+						},
+					} satisfies DemoToolbarItem,
+					{
+						tool: 'mode',
+						editor: 'splitRadio',
+						config: { icon: '🎯', label: 'Mode', hint: 'Compact focus mode chooser' },
+					} satisfies DemoToolbarItem,
+				],
 			},
 		],
 	],
@@ -219,20 +212,18 @@ const initialIdeConfig: PaletteBorders = {
 		[
 			{
 				space: 0,
-				toolbar: {
-					items: [
-						{
-							tool: 'fontSize',
-							editor: 'slider',
-							config: { icon: 'A', label: 'Font size', hint: 'Right rail slider' },
-						} satisfies DemoToolbarItem,
-						{
-							tool: 'gameSpeed',
-							editor: 'stars',
-							config: { icon: '★', label: 'Speed', hint: 'Stars editor' },
-						} satisfies DemoToolbarItem,
-					],
-				},
+				toolbar: [
+					{
+						tool: 'fontSize',
+						editor: 'slider',
+						config: { icon: 'A', label: 'Font size', hint: 'Right rail slider' },
+					} satisfies DemoToolbarItem,
+					{
+						tool: 'gameSpeed',
+						editor: 'stars',
+						config: { icon: '★', label: 'Speed', hint: 'Stars editor' },
+					} satisfies DemoToolbarItem,
+				],
 			},
 		],
 	],
@@ -240,47 +231,43 @@ const initialIdeConfig: PaletteBorders = {
 		[
 			{
 				space: 0.58,
-				toolbar: {
-					items: [
-						{
-							tool: 'gameSpeed',
-							editor: 'stars',
-							config: { icon: '▶', label: 'Playback speed', hint: 'Dense stars editor' },
-						} satisfies DemoToolbarItem,
-						{
-							tool: 'theme',
-							editor: 'segmented',
-							config: {
-								icon: '🌓',
-								label: 'Theme',
-								hint: 'Theme pills',
-								values: ['light', 'dark', 'system'],
-							},
-						} satisfies DemoToolbarItem,
-					],
-				},
+				toolbar: [
+					{
+						tool: 'gameSpeed',
+						editor: 'stars',
+						config: { icon: '▶', label: 'Playback speed', hint: 'Dense stars editor' },
+					} satisfies DemoToolbarItem,
+					{
+						tool: 'theme',
+						editor: 'segmented',
+						config: {
+							icon: '🌓',
+							label: 'Theme',
+							hint: 'Theme pills',
+							values: ['light', 'dark', 'system'],
+						},
+					} satisfies DemoToolbarItem,
+				],
 			},
 			{
 				space: 0.42,
-				toolbar: {
-					items: [
-						{
-							tool: 'layout',
-							editor: 'segmented',
-							config: {
-								icon: '▤',
-								label: 'Layout',
-								hint: 'Horizontal/vertical chips',
-								keywords: ['row', 'column'],
-							},
-						} satisfies DemoToolbarItem,
-						{
-							tool: 'fontSize',
-							editor: 'slider',
-							config: { icon: 'A', label: 'Type scale', hint: 'Small range editor' },
-						} satisfies DemoToolbarItem,
-					],
-				},
+				toolbar: [
+					{
+						tool: 'layout',
+						editor: 'segmented',
+						config: {
+							icon: '▤',
+							label: 'Layout',
+							hint: 'Horizontal/vertical chips',
+							keywords: ['row', 'column'],
+						},
+					} satisfies DemoToolbarItem,
+					{
+						tool: 'fontSize',
+						editor: 'slider',
+						config: { icon: 'A', label: 'Type scale', hint: 'Small range editor' },
+					} satisfies DemoToolbarItem,
+				],
 			},
 		],
 	],
@@ -298,7 +285,7 @@ function toolbarMeta(item: PaletteToolbarItem) {
 			return typeof this.config?.icon === 'string' ? this.config.icon : undefined
 		},
 		get label() {
-			return typeof this.config?.label === 'string' ? this.config.label : item.tool
+			return typeof this.config?.label === 'string' ? this.config.label : item.tool ?? item.editor
 		},
 		get hint() {
 			return typeof this.config?.hint === 'string' ? this.config.hint : undefined
@@ -1098,7 +1085,7 @@ function CommandBox(props: DemoCommandBoxProps) {
 					<div if={props.commandBox.results.length === 0} class="palette-demo-command-empty">
 						No matching commands
 					</div>
-					<for each={props.commandBox.results.slice(0, 6)}>
+					<for else each={props.commandBox.results.slice(0, 6)}>
 						{(entry) => {
 							const state = {
 								get selected() {
@@ -1137,7 +1124,7 @@ function CommandBox(props: DemoCommandBoxProps) {
 	)
 }
 
-function CommandBoxEditor({ item }: PaletteEditorContext<Extract<PaletteTool, { run(): void }>>) {
+function CommandBoxEditor({ item }: PaletteEditorContext<undefined>) {
 	const meta = toolbarMeta(item)
 	let root: HTMLDivElement | undefined
 	const ui = {
@@ -1217,7 +1204,7 @@ function CommandBoxPopup() {
 	)
 }
 
-const demoEditors: NonNullable<Palette['editors']> = {
+const demoEditors: Palette['editors'] = {
 	boolean: {
 		toggle: { editor: ToggleEditor, flags: { footprint: 'square' } },
 	},
@@ -1233,9 +1220,11 @@ const demoEditors: NonNullable<Palette['editors']> = {
 		stepper: { editor: StepperEditor, flags: { footprint: 'free' } },
 		stars: { editor: StarsEditor, flags: { footprint: 'free' } },
 	},
+	item: {
+		commandBox: { editor: CommandBoxEditor, flags: { footprint: 'horizontal' } },
+	},
 	run: {
 		button: { editor: ButtonEditor, flags: { footprint: 'horizontal' } },
-		commandBox: { editor: CommandBoxEditor, flags: { footprint: 'horizontal' } },
 		splitButton: { editor: SplitButtonEditor, flags: { footprint: 'free' } },
 	},
 }
@@ -1365,18 +1354,6 @@ const demoPalette: Palette = {
 			max: 5,
 			step: 1,
 		},
-		commandBox: {
-			label: 'Command Box',
-			icon: '⌘',
-			categories: ['run'],
-			keywords: ['search', 'command'],
-			get can() {
-				return true
-			},
-			run() {
-				toolbarCommandBoxUi.focused = true
-			},
-		},
 		terminal: {
 			label: 'Terminal',
 			icon: '`',
@@ -1457,7 +1434,7 @@ const demoPalette: Palette = {
 
 const demoCommandEntries = paletteCommandEntries({
 	palette: demoPalette,
-	excludeTools: ['commandBox', 'terminal'],
+	excludeTools: ['terminal'],
 })
 
 const toolbarCommandBox = paletteCommandBoxModel({
@@ -1696,6 +1673,39 @@ componentStyle.css`
 		box-sizing: border-box;
 	}
 
+	.palette-demo-toolbar::before {
+		content: '';
+		position: absolute;
+		inset: -6px;
+		border-radius: 14px;
+		opacity: 0;
+		pointer-events: none;
+		background: rgba(96, 165, 250, 0.08);
+		box-shadow:
+			0 0 0 1px rgba(147, 197, 253, 0.26),
+			0 0 0 4px rgba(96, 165, 250, 0.14);
+		transition:
+			opacity 120ms ease,
+			background-color 120ms ease,
+			box-shadow 120ms ease;
+	}
+
+	.palette-demo-root.palette-editing .toolbar:hover::before {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	.palette-demo-root.palette-editing .toolbar:hover {
+		z-index: 2;
+	}
+
+	.palette-demo-root.palette-editing .toolbar:hover::before {
+		background: rgba(96, 165, 250, 0.12);
+		box-shadow:
+			0 0 0 1px rgba(191, 219, 254, 0.45),
+			0 0 0 5px rgba(96, 165, 250, 0.18);
+	}
+
 	.palette-demo-border.palette-horizontal {
 		inline-size: 100%;
 	}
@@ -1707,7 +1717,6 @@ componentStyle.css`
 	}
 
 	.palette-demo-border.palette-horizontal .palette-demo-toolbar {
-		flex-wrap: wrap;
 		align-items: center;
 		align-self: stretch;
 	}

@@ -66,5 +66,6 @@ const App = () => (
 	</>
 )
 
-// Initialize the app using the automated latch helper
-latch('#mini', <App />)
+export function initMini() {
+	latch('#mini', <App />)
+}

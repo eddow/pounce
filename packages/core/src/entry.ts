@@ -1,6 +1,6 @@
+import { initDemo } from '../demo/main'
+import { initMini } from '../demo/mini'
 import { initTests } from '../tests/e2e/fixtures/main'
-import '../demo/main'
-import '../demo/mini'
 
 /**
  * Entry point that determines whether to load the main demos
@@ -13,8 +13,10 @@ function entry() {
 	if (hash && /^[A-Z]/.test(hash)) {
 		console.log('[sursaut] Entry: Loading test fixtures')
 		initTests()
+		return
 	}
-	// Main demo mounts by default (already imported via side effects)
+	initMini()
+	initDemo()
 }
 
 // Use microtask to ensure all modules are fully evaluated before starting

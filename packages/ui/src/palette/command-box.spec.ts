@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
-import { paletteCommandBoxModel, paletteCommandEntries } from './command-box'
+import {
+	handlePaletteCommandBoxInputKeydown,
+	handlePaletteCommandChipKeydown,
+	paletteCommandBoxModel,
+	paletteCommandEntries,
+} from './command-box'
 import { createPaletteKeys } from './keys'
 
 describe('paletteCommandBoxModel', () => {
@@ -35,6 +40,56 @@ describe('paletteCommandBoxModel', () => {
 		expect(model.results.map((entry) => entry.id)).toEqual(['theme-dark'])
 	})
 
+	it('parses categories and known keywords from input while keeping remaining free text', () => {
+		const model = paletteCommandBoxModel({
+			entries: [
+				{
+					id: 'theme-light',
+					label: 'Theme Light Accent',
+					keywords: ['light'],
+					categories: ['appearance'],
+					run() {},
+				},
+			],
+		})
+
+		model.input.value = 'LIGHT #appearance accent light'
+
+		expect(model.query.free).toBe('accent')
+		expect(Array.from(model.query.keywords)).toEqual(['light'])
+		expect(Array.from(model.query.categories)).toEqual(['appearance'])
+		expect(model.results.map((entry) => entry.id)).toEqual(['theme-light'])
+	})
+
+	it('proposes only commands whose can state is true', () => {
+		const model = paletteCommandBoxModel({
+			entries: [
+				{ id: 'enabled', label: 'Enabled Command', keywords: ['alpha'], can: true, run() {} },
+				{ id: 'disabled', label: 'Disabled Command', keywords: ['alpine'], can: false, run() {} },
+			],
+		})
+
+		expect(model.results.map((entry) => entry.id)).toEqual(['enabled'])
+
+		model.input.value = 'al'
+		expect(model.results.map((entry) => entry.id)).toEqual(['enabled'])
+		expect(model.suggestions.map((entry) => entry.keyword)).toEqual(['alpha'])
+	})
+
+	it('ranks exact label matches ahead of prefix and generic searchable matches', () => {
+		const model = paletteCommandBoxModel({
+			entries: [
+				{ id: 'contains', label: 'Beta Alpha', run() {} },
+				{ id: 'exact', label: 'Alpha', run() {} },
+				{ id: 'prefix', label: 'Alpha Beta', run() {} },
+			],
+		})
+
+		model.input.value = 'alpha'
+
+		expect(model.results.map((entry) => entry.id)).toEqual(['exact', 'prefix', 'contains'])
+	})
+
 	it('offers keyword suggestions and consumes matching suggestion on tab', () => {
 		const model = paletteCommandBoxModel({
 			entries: [
@@ -51,6 +106,29 @@ describe('paletteCommandBoxModel', () => {
 		expect(event.defaultPrevented).toBe(true)
 		expect(model.keywords.tokens.map((entry) => entry.keyword)).toEqual(['dark'])
 		expect(model.input.value).toBe('')
+	})
+
+	it('hides category suggestions and excludes already active keywords from suggestions', () => {
+		const model = paletteCommandBoxModel({
+			entries: [
+				{
+					id: 'font-size',
+					label: 'Font Size',
+					keywords: ['font', 'type'],
+					categories: ['appearance'],
+					run() {},
+				},
+			],
+		})
+
+		model.input.value = '#app'
+		expect(Array.from(model.suggestions)).toEqual([])
+
+		model.input.value = 'fo'
+		expect(model.suggestions.map((entry) => entry.keyword)).toEqual(['font'])
+
+		model.keywords.addToken('font')
+		expect(model.suggestions.map((entry) => entry.keyword)).toEqual([])
 	})
 
 	it('navigates and executes the selected result, then clears state', () => {
@@ -99,6 +177,28 @@ describe('paletteCommandBoxModel', () => {
 		expect(model.selection.index).toBe(-1)
 	})
 
+	it('clears selection first and filters second on escape', () => {
+		const model = paletteCommandBoxModel({
+			entries: [
+				{ id: 'alpha', label: 'Alpha', keywords: ['one'], run() {} },
+				{ id: 'beta', label: 'Beta', keywords: ['two'], run() {} },
+			],
+		})
+
+		model.input.value = 'a'
+		model.handleKeyDown(new KeyboardEvent('keydown', { key: 'ArrowDown', cancelable: true }))
+		expect(model.selection.index).toBe(0)
+
+		const clearSelection = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true })
+		expect(model.handleKeyDown(clearSelection)).toBe(true)
+		expect(model.selection.index).toBe(-1)
+		expect(model.input.value).toBe('a')
+
+		const clearFilters = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true })
+		expect(model.handleKeyDown(clearFilters)).toBe(true)
+		expect(model.input.value).toBe('')
+	})
+
 	it('uses backspace to remove the last keyword token before categories', () => {
 		const model = paletteCommandBoxModel({
 			entries: [{ id: 'alpha', label: 'Alpha', run() {} }],
@@ -121,6 +221,120 @@ describe('paletteCommandBoxModel', () => {
 		})
 		expect(model.handleKeyDown(removeCategory)).toBe(true)
 		expect(Array.from(model.categories.active)).toHaveLength(0)
+	})
+
+	it('restores neutral results after removing the last keyword token', () => {
+		const model = paletteCommandBoxModel({
+			entries: [
+				{ id: 'preset', label: 'Apply Inspector Preset', run() {} },
+				{ id: 'fontSize:inc', label: 'Increase Font Size', keywords: ['increase'], run() {} },
+				{
+					id: 'gameSpeed:inc',
+					label: 'Increase Playback Speed',
+					keywords: ['increase'],
+					run() {},
+				},
+			],
+		})
+
+		expect(model.results.map((entry) => entry.id)).toEqual([
+			'preset',
+			'fontSize:inc',
+			'gameSpeed:inc',
+		])
+
+		model.input.value = 'inc'
+		model.keywords.addToken('increase')
+		model.input.value = ''
+		expect(model.keywords.tokens.map((token) => token.keyword)).toEqual(['increase'])
+		expect(model.results.map((entry) => entry.id)).toEqual(['fontSize:inc', 'gameSpeed:inc'])
+
+		model.keywords.removeToken('increase')
+		expect(model.keywords.tokens).toHaveLength(0)
+		expect(Array.from(model.query.keywords)).toEqual([])
+		expect(model.query.free).toBe('')
+		expect(model.results.map((entry) => entry.id)).toEqual([
+			'preset',
+			'fontSize:inc',
+			'gameSpeed:inc',
+		])
+	})
+
+	it('broadens results immediately when removing one of multiple keywords', () => {
+		const model = paletteCommandBoxModel({
+			entries: [
+				{
+					id: 'fontSize:inc',
+					label: 'Increase Font Size',
+					keywords: ['increase', 'font'],
+					run() {},
+				},
+				{
+					id: 'gameSpeed:inc',
+					label: 'Increase Playback Speed',
+					keywords: ['increase', 'speed'],
+					run() {},
+				},
+			],
+		})
+
+		model.keywords.addToken('increase')
+		model.keywords.addToken('font')
+		expect(model.results.map((entry) => entry.id)).toEqual(['fontSize:inc'])
+
+		model.keywords.removeToken('font')
+		expect(model.keywords.tokens.map((token) => token.keyword)).toEqual(['increase'])
+		expect(model.results.map((entry) => entry.id)).toEqual(['fontSize:inc', 'gameSpeed:inc'])
+	})
+
+	it('switches from manual search state back to local input edits', () => {
+		const model = paletteCommandBoxModel({
+			entries: [
+				{ id: 'alpha', label: 'Alpha', keywords: ['one'], categories: ['first'], run() {} },
+				{ id: 'beta', label: 'Beta', keywords: ['two'], categories: ['second'], run() {} },
+			],
+		})
+
+		model.search({ free: 'alpha', keywords: ['one'], categories: ['first'] })
+		expect(model.query.free).toBe('alpha')
+		expect(Array.from(model.query.keywords)).toEqual(['one'])
+		expect(Array.from(model.query.categories)).toEqual(['first'])
+
+		model.input.value = 'beta'
+		expect(model.query.free).toBe('beta')
+		expect(Array.from(model.query.keywords)).toEqual([])
+		expect(Array.from(model.query.categories)).toEqual([])
+	})
+
+	it('handles chip and input helper keydown wrappers', () => {
+		const run = vi.fn()
+		const model = paletteCommandBoxModel({
+			entries: [{ id: 'alpha', label: 'Alpha', keywords: ['alpha'], run }],
+		})
+
+		model.keywords.addToken('alpha')
+		const removeToken = new KeyboardEvent('keydown', { key: 'Backspace', cancelable: true })
+		expect(
+			handlePaletteCommandChipKeydown({ commandBox: model, event: removeToken, token: 'alpha' })
+		).toBe(true)
+		expect(removeToken.defaultPrevented).toBe(true)
+		expect(model.keywords.tokens).toHaveLength(0)
+
+		const ignored = new KeyboardEvent('keydown', { key: 'ArrowRight', cancelable: true })
+		expect(
+			handlePaletteCommandChipKeydown({ commandBox: model, event: ignored, token: 'alpha' })
+		).toBe(false)
+
+		model.input.value = 'alpha'
+		const enter = new KeyboardEvent('keydown', { key: 'Enter', cancelable: true })
+		expect(
+			handlePaletteCommandBoxInputKeydown({
+				commandBox: model,
+				event: enter,
+				onAfterExecute: run,
+			})
+		).toBe(true)
+		expect(run).toHaveBeenCalledTimes(2)
 	})
 
 	it('derives command entries from palette tools, values, and value actions', () => {
